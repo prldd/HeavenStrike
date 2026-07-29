@@ -24,6 +24,15 @@ func _init() -> void:
 	assert(simulator.record("test", {"value": 7}).sequence == 1)
 	assert(simulator.replay_data().events.size() == 1)
 	assert(simulator.replay_data().seed == 4242)
+	var replay_history_path := "user://smoke_replay_history.json"
+	for replay_seed in range(12):
+		simulator.reset(replay_seed)
+		simulator.record("test", {"seed": replay_seed})
+		assert(simulator.archive_replay(replay_history_path))
+	var replay_history := BattleSimulatorScript.load_replay_history(replay_history_path)
+	assert(replay_history.size() == 10)
+	assert(replay_history[0].seed == 11)
+	assert(replay_history[9].seed == 2)
 	var damage_target := {"id": 99, "hp": 5, "max_hp": 5}
 	assert(BattleSimulatorScript.apply_unit_damage(damage_target, 3).after == 2)
 	assert(BattleSimulatorScript.apply_unit_healing(damage_target, 2).after == 4)

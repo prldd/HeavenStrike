@@ -102,11 +102,40 @@ static func load_replay(path: String) -> Dictionary:
 		return {}
 	return parsed
 
+static func load_replay_history(path: String) -> Array:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return []
+	var parsed = JSON.parse_string(file.get_as_text())
+	if parsed is not Dictionary or parsed.get("replays", []) is not Array:
+		return []
+	var valid_replays: Array = []
+	for replay in parsed.replays:
+		if replay is Dictionary \
+				and int(replay.get("version", 0)) == 1 \
+				and replay.get("events", []) is Array:
+			valid_replays.append(replay)
+	return valid_replays
+
 func save_replay(path: String, metadata: Dictionary = {}) -> bool:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return false
 	file.store_string(replay_json(metadata))
+	return true
+
+func archive_replay(path: String, metadata: Dictionary = {}, limit := 10) -> bool:
+	var history := load_replay_history(path)
+	history.push_front(replay_data(metadata))
+	if history.size() > limit:
+		history.resize(limit)
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(JSON.stringify({
+		"version": 1,
+		"replays": history
+	}, "\t"))
 	return true
 
 static func find_target(actor: Dictionary, units: Array):

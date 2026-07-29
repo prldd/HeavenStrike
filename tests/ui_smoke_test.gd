@@ -121,6 +121,14 @@ func _run() -> void:
 	assert(game.result_primary_button.text == "PLAY AGAIN")
 	assert(game.result_menu_button.visible)
 	game.overlay.visible = false
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://replay_history.json"))
+	var older_replay := BattleSimulatorScript.new()
+	older_replay.reset(555)
+	older_replay.record("battle_started", {"player_hp": 20, "enemy_hp": 20})
+	older_replay.record("battle_finished", {
+		"winner": 0, "player_hp": 20, "enemy_hp": 20
+	})
+	assert(older_replay.archive_replay("user://replay_history.json"))
 	var replay := BattleSimulatorScript.new()
 	replay.reset(777)
 	replay.record("battle_started", {
@@ -136,6 +144,7 @@ func _run() -> void:
 		"winner": 0, "player_hp": 20, "enemy_hp": 20
 	})
 	assert(replay.save_replay("user://last_replay.json"))
+	assert(replay.archive_replay("user://replay_history.json"))
 	game._show_main_menu()
 	assert(not game.replay_button.disabled)
 	game._open_last_replay()
@@ -153,8 +162,17 @@ func _run() -> void:
 	await game._apply_next_replay_event()
 	assert(game.units.size() == 1)
 	assert(game.replay_timeline_label.text.contains("SEED 777"))
+	assert(game.replay_timeline_label.text.contains("REPLAY 1 / 2"))
+	assert(not game.replay_previous_button.disabled)
+	assert(game.replay_next_button.disabled)
 	await game._apply_next_replay_event()
 	assert(game.status_message.contains("verified"))
+	game._open_older_replay()
+	assert(game.replay_timeline_label.text.contains("SEED 555"))
+	assert(game.replay_previous_button.disabled)
+	assert(not game.replay_next_button.disabled)
+	game._open_newer_replay()
+	assert(game.replay_timeline_label.text.contains("SEED 777"))
 	game._close_replay()
 	assert(game.menu_button.visible)
 	assert(game.end_button.visible)

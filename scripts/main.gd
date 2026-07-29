@@ -64,7 +64,6 @@ var hover_stats_label: Label
 var hover_ability_label: Label
 var speed_button: Button
 var audio_button: Button
-var pause_button: Button
 var animation_button: Button
 var motion_button: Button
 var battle_audio: BattleAudio
@@ -79,6 +78,8 @@ var replay_button: Button
 var replay_panel: PanelContainer
 var replay_play_button: Button
 var replay_timeline_label: Label
+var replay_previous_button: Button
+var replay_next_button: Button
 var replay_squad_overlay: ColorRect
 var replay_player_squad_grid: GridContainer
 var replay_enemy_squad_grid: GridContainer
@@ -141,6 +142,11 @@ var replay_mode := false
 var replay_playing := false
 var replay_data: Dictionary = {}
 var replay_event_index := 0
+var replay_history: Array = []
+var replay_history_index := 0
+
+const REPLAY_PATH := "user://last_replay.json"
+const REPLAY_HISTORY_PATH := "user://replay_history.json"
 
 func _ready() -> void:
 	_build_interface()
@@ -246,14 +252,6 @@ func _build_interface() -> void:
 	audio_button.custom_minimum_size.x = 96
 	audio_button.pressed.connect(_cycle_audio)
 	action_row.add_child(audio_button)
-
-	pause_button = Button.new()
-	pause_button.text = "PAUSE"
-	pause_button.tooltip_text = "Pause or resume battle resolution."
-	pause_button.custom_minimum_size.x = 68
-	pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
-	pause_button.pressed.connect(_toggle_pause)
-	action_row.add_child(pause_button)
 
 	animation_button = Button.new()
 	animation_button.text = "ANIM ON"
@@ -367,10 +365,6 @@ func _cycle_audio() -> void:
 	battle_audio.cycle_volume()
 	audio_button.text = battle_audio.label()
 	_save_battle_settings()
-
-func _toggle_pause() -> void:
-	get_tree().paused = not get_tree().paused
-	pause_button.text = "RESUME" if get_tree().paused else "PAUSE"
 
 func _toggle_animation_skip() -> void:
 	skip_animations = not skip_animations
@@ -1087,6 +1081,14 @@ func _build_replay_controls() -> void:
 	replay_timeline_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	replay_timeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(replay_timeline_label)
+	replay_previous_button = Button.new()
+	replay_previous_button.text = "◀ OLDER"
+	replay_previous_button.pressed.connect(_open_older_replay)
+	row.add_child(replay_previous_button)
+	replay_next_button = Button.new()
+	replay_next_button.text = "NEWER ▶"
+	replay_next_button.pressed.connect(_open_newer_replay)
+	row.add_child(replay_next_button)
 
 func _build_replay_squad_overlay() -> void:
 	replay_squad_overlay = ColorRect.new()
@@ -1245,7 +1247,8 @@ func _show_main_menu() -> void:
 	combat_log_panel.visible = false
 	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
 	resume_button.disabled = saved_run.is_empty()
-	replay_button.disabled = not FileAccess.file_exists("user://last_replay.json")
+	replay_button.disabled = not FileAccess.file_exists(REPLAY_HISTORY_PATH) \
+		and not FileAccess.file_exists(REPLAY_PATH)
 	resume_button.text = "RESUME MISSION"
 	if not saved_run.is_empty():
 		resume_button.text = "RESUME · %s · BATTLE %d" % [
@@ -1260,13 +1263,25 @@ func _open_mission_select() -> void:
 	_rebuild_mission_list()
 
 func _open_last_replay() -> void:
-	var loaded: Dictionary = BattleSimulatorScript.load_replay("user://last_replay.json")
-	if loaded.is_empty():
+	replay_history = BattleSimulatorScript.load_replay_history(REPLAY_HISTORY_PATH)
+	if replay_history.is_empty():
+		var legacy_replay: Dictionary = BattleSimulatorScript.load_replay(REPLAY_PATH)
+		if not legacy_replay.is_empty():
+			replay_history.append(legacy_replay)
+	if replay_history.is_empty():
 		replay_button.disabled = true
 		return
+	replay_history_index = 0
 	replay_mode = true
 	replay_playing = false
-	replay_data = loaded
+	_load_replay_at_index()
+
+func _load_replay_at_index() -> void:
+	if replay_history_index < 0 or replay_history_index >= replay_history.size():
+		return
+	replay_playing = false
+	replay_play_button.text = "PLAY"
+	replay_data = replay_history[replay_history_index]
 	replay_event_index = 0
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
@@ -1297,6 +1312,18 @@ func _open_last_replay() -> void:
 			break
 	_update_replay_timeline()
 	_refresh()
+
+func _open_older_replay() -> void:
+	if replay_history_index + 1 >= replay_history.size():
+		return
+	replay_history_index += 1
+	_load_replay_at_index()
+
+func _open_newer_replay() -> void:
+	if replay_history_index <= 0:
+		return
+	replay_history_index -= 1
+	_load_replay_at_index()
 
 func _close_replay() -> void:
 	replay_playing = false
@@ -1423,9 +1450,12 @@ func _verify_replay_result(event: Dictionary) -> void:
 
 func _update_replay_timeline() -> void:
 	var count: int = replay_data.get("events", []).size()
-	replay_timeline_label.text = "REPLAY  %d / %d  ·  SEED %s" % [
+	replay_timeline_label.text = "REPLAY %d / %d  ·  EVENT %d / %d  ·  SEED %s" % [
+		replay_history_index + 1, replay_history.size(),
 		replay_event_index, count, str(replay_data.get("seed", 0))
 	]
+	replay_previous_button.disabled = replay_history_index + 1 >= replay_history.size()
+	replay_next_button.disabled = replay_history_index <= 0
 
 func _rebuild_mission_list() -> void:
 	for child in mission_list.get_children():
@@ -2532,10 +2562,12 @@ func _check_game_over() -> bool:
 		"player_hp": player_hp,
 		"enemy_hp": enemy_hp
 	})
-	battle_simulator.save_replay("user://last_replay.json", {
+	var replay_metadata := {
 		"mission_id": current_mission_id,
 		"encounter_index": current_encounter_index
-	})
+	}
+	battle_simulator.save_replay(REPLAY_PATH, replay_metadata)
+	battle_simulator.archive_replay(REPLAY_HISTORY_PATH, replay_metadata)
 	overlay.visible = true
 	reward_reveal.visible = false
 	result_menu_button.visible = false
