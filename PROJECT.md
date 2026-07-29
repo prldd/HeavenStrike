@@ -134,7 +134,7 @@ The player has traded immediate power for pressure in one lane and durability in
 
 ## Commander Powers
 
-Each Commander equips one power for battle. The planned skills are Rally, Bloodlust, Aid, Healing Wave, Shield, Last Stand, Lightning Burst, and Firestorm. The current prototype implements Rally. Friendly-unit effects normally last one turn unless a skill explicitly states otherwise.
+Each Commander equips one power for battle: Rally, Bloodlust, Aid, Healing Wave, Shield, Last Stand, Lightning Burst, or Firestorm. Friendly-unit effects normally last one turn unless a skill explicitly states otherwise.
 
 Commander selection changes a squad's strategy without adding another unit to the board.
 
@@ -160,7 +160,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 
 Online play and live-service systems are outside the first release. The battle simulation must be complete and reliable before multiplayer is considered.
 
-Campaign mission selection flows from the world map into squad selection and then battle. Missions may later contain multiple consecutive battles; reward itemization will be implemented after the battle sequence is stable.
+Campaign mission selection flows from the world map into squad selection and then one to three consecutive battles. The battlefield, decks, Mana, and Captain-skill use reset between encounters, while the player's Captain carries remaining HP forward. In-progress runs can be resumed. Reward itemization will be implemented after the battle sequence is stable.
 
 ## Progression
 

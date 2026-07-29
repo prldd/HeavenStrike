@@ -10,6 +10,9 @@ const MISSIONS := [
 		"title": "Broken Skyway",
 		"briefing": "Repel a scouting crew from the abandoned eastern causeway.",
 		"enemy_hp": 8,
+		"encounters": [
+			{"title": "Causeway Scouts", "enemy_hp": 8, "squad_offset": 0, "skill": "Aid"}
+		],
 		"reward": "Dawnmender"
 	},
 	{
@@ -17,6 +20,10 @@ const MISSIONS := [
 		"title": "The Iron Crossing",
 		"briefing": "Break through a defensive formation guarding the weather route.",
 		"enemy_hp": 11,
+		"encounters": [
+			{"title": "Outer Guard", "enemy_hp": 9, "squad_offset": 2, "skill": "Shield"},
+			{"title": "Iron Captain", "enemy_hp": 11, "squad_offset": 4, "skill": "Bloodlust"}
+		],
 		"reward": "Mosscaller"
 	},
 	{
@@ -24,6 +31,10 @@ const MISSIONS := [
 		"title": "Stormglass Reach",
 		"briefing": "Survive long-range fire while a storm closes over the battlefield.",
 		"enemy_hp": 14,
+		"encounters": [
+			{"title": "Stormglass Battery", "enemy_hp": 11, "squad_offset": 5, "skill": "Lightning Burst"},
+			{"title": "Reach Commander", "enemy_hp": 14, "squad_offset": 7, "skill": "Healing Wave"}
+		],
 		"reward": "Aurora Sage"
 	},
 	{
@@ -31,6 +42,11 @@ const MISSIONS := [
 		"title": "Siege of Aster",
 		"briefing": "Defeat the expedition fleet before it anchors above Aster.",
 		"enemy_hp": 17,
+		"encounters": [
+			{"title": "Vanguard Wing", "enemy_hp": 12, "squad_offset": 8, "skill": "Rally"},
+			{"title": "Siege Deck", "enemy_hp": 14, "squad_offset": 10, "skill": "Firestorm"},
+			{"title": "Aster Admiral", "enemy_hp": 17, "squad_offset": 12, "skill": "Last Stand"}
+		],
 		"reward": "Veteran Commander Crest"
 	},
 	{
@@ -38,6 +54,11 @@ const MISSIONS := [
 		"title": "Heart of the Tempest",
 		"briefing": "Take control of the ancient engine at the center of the storm.",
 		"enemy_hp": 20,
+		"encounters": [
+			{"title": "Tempest Gate", "enemy_hp": 14, "squad_offset": 11, "skill": "Shield"},
+			{"title": "Engine Wardens", "enemy_hp": 17, "squad_offset": 14, "skill": "Firestorm"},
+			{"title": "Tempest Sovereign", "enemy_hp": 20, "squad_offset": 17, "skill": "Lightning Burst"}
+		],
 		"reward": "Campaign Complete"
 	}
 ]
@@ -95,3 +116,16 @@ static func enemy_squad_names(mission_id: int, roster: Array) -> Array:
 		if names.size() >= 15:
 			break
 	return names
+
+static func encounter(mission_id: int, encounter_index: int) -> Dictionary:
+	if mission_id < 0 or mission_id >= MISSIONS.size():
+		return {}
+	var encounters: Array = MISSIONS[mission_id].encounters
+	if encounter_index < 0 or encounter_index >= encounters.size():
+		return {}
+	return encounters[encounter_index]
+
+static func encounter_count(mission_id: int) -> int:
+	if mission_id < 0 or mission_id >= MISSIONS.size():
+		return 0
+	return MISSIONS[mission_id].encounters.size()

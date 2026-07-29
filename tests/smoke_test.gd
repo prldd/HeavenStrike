@@ -5,6 +5,7 @@ const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
+const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -21,9 +22,14 @@ func _init() -> void:
 	assert(repaired_squad.count("Cloudstep") == 2)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
 	assert(SquadStoreScript.sanitize([], roster).size() == SquadStoreScript.SQUAD_SIZE)
+	assert(CaptainSkillsScript.SKILLS.size() == 8)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 5)
 	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.enemy_hp) == [8, 11, 14, 17, 20])
+	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.encounters.size()) == [1, 2, 2, 3, 3])
+	assert(CampaignStoreScript.encounter_count(3) == 3)
+	assert(CampaignStoreScript.encounter(3, 2).title == "Aster Admiral")
+	assert(CampaignStoreScript.encounter(99, 0).is_empty())
 	assert(CampaignStoreScript.is_available(0, []))
 	assert(not CampaignStoreScript.is_available(1, []))
 	assert(CampaignStoreScript.is_available(1, [0]))
@@ -63,6 +69,32 @@ func _init() -> void:
 	assert(BattleRulesScript.locked_mana(mana_units, 0) == 5)
 	assert(BattleRulesScript.available_mana(8, mana_units, 0) == 3)
 	assert(BattleRulesScript.available_mana(10, [mana_units[1]], 0) == 7)
+
+	var skill_ally := {
+		"id": 20, "side": 0, "name": "Test Ally", "atk": 2,
+		"hp": 3, "max_hp": 5, "effects": [], "taunted_by": -1
+	}
+	var skill_enemy := {
+		"id": 21, "side": 1, "name": "Test Enemy", "atk": 4,
+		"hp": 6, "max_hp": 6, "effects": [], "taunted_by": -1
+	}
+	var skill_units := [skill_ally, skill_enemy]
+	var rally: Dictionary = CaptainSkillsScript.apply("Rally", 0, skill_units, 20)
+	assert(rally.success)
+	assert(skill_ally.atk == 3)
+	assert("Rally (1 turn)" in CaptainSkillsScript.effect_summary(skill_ally))
+	CaptainSkillsScript.expire_effects(skill_units, 0)
+	assert(skill_ally.atk == 2)
+	assert(skill_ally.effects.is_empty())
+	var aid: Dictionary = CaptainSkillsScript.apply("Aid", 0, skill_units, 20)
+	assert(aid.success and skill_ally.hp == 5)
+	var shield: Dictionary = CaptainSkillsScript.apply("Shield", 0, skill_units, 20)
+	assert(shield.success and shield.shield == 5 and shield.shield_turns == 2)
+	assert(not CaptainSkillsScript.apply("Last Stand", 0, skill_units, 9).success)
+	assert(CaptainSkillsScript.apply("Last Stand", 0, skill_units, 8).success)
+	CaptainSkillsScript.expire_effects(skill_units, 0)
+	var firestorm: Dictionary = CaptainSkillsScript.apply("Firestorm", 0, skill_units, 20)
+	assert(firestorm.success and skill_enemy.hp == 4)
 
 	var preview_unit := {"id": 6, "side": 0, "kind": "Strider", "row": 1, "col": 1, "move": 3, "range": 1}
 	assert(BattleRulesScript.attack_cells(preview_unit) == [Vector2i(2, 1)])

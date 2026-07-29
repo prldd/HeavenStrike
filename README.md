@@ -31,6 +31,9 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - 18 units across six distinct classes
 - Persistent 1–15 unit squad construction with a two-copy limit
 - Five sequential campaign missions with escalating difficulty
+- One-to-three battle encounter sequences with Captain-HP attrition
+- Persistent in-progress mission runs and main-menu resume
+- Encounter transition screens with upcoming Captain information
 - Persistent mission completion and unit rewards
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles
@@ -40,6 +43,9 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Finite 15-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
 - Commander health, Rally powers, victory, defeat, and replay
+- Persistent selection of eight Captain skills
+- Timed attack effects, healing, direct damage, area damage, and Captain shields
+- Active-effect names and remaining duration in unit hover cards
 - Deterministic rules with a presentation layer separated into `BoardView`
 - Five-step in-game field briefing
 - Animated damage, healing, movement, and buff feedback

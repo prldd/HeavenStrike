@@ -6,6 +6,8 @@ const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
+const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
+const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -26,6 +28,7 @@ var menu_button: Button
 var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
+var result_primary_button: Button
 var tutorial_overlay: ColorRect
 var tutorial_page_label: Label
 var tutorial_page := 0
@@ -34,6 +37,7 @@ var squad_grid: GridContainer
 var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
+var captain_skill_option: OptionButton
 var hover_card: PanelContainer
 var hover_name_label: Label
 var hover_stats_label: Label
@@ -41,14 +45,22 @@ var hover_ability_label: Label
 var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
 var mission_list: VBoxContainer
+var resume_button: Button
 
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
 var editing_squad_names: Array = []
 var battle_deck: Array = []
 var enemy_deck: Array = []
+var player_captain_skill := "Rally"
+var editing_captain_skill := "Rally"
+var enemy_captain_skill := "Rally"
 var completed_missions: Array = []
 var current_mission_id := -1
+var current_encounter_index := 0
+var mission_run_captain_hp := STARTING_HP
+var awaiting_next_encounter := false
+var mission_finished := false
 var campaign_battle := false
 var squad_opened_from_menu := false
 var squad_opened_for_mission := false
@@ -72,6 +84,10 @@ var enemy_max_energy := 2
 var enemy_energy := 2
 var player_power_used := false
 var enemy_power_used := false
+var player_shield := 0
+var enemy_shield := 0
+var player_shield_turns := 0
+var enemy_shield_turns := 0
 var input_enabled := true
 var battle_over := false
 var status_message := ""
@@ -81,6 +97,7 @@ func _ready() -> void:
 	_build_interface()
 	completed_missions = CampaignStoreScript.load_completed()
 	squad_names = SquadStoreScript.load_squad(roster)
+	player_captain_skill = SquadStoreScript.load_captain_skill(CaptainSkillsScript.SKILLS)
 	_sanitize_squad_unlocks()
 	_start_new_match()
 	_show_main_menu()
@@ -157,7 +174,7 @@ func _build_interface() -> void:
 	power_button = Button.new()
 	power_button.text = "RALLY"
 	power_button.tooltip_text = "Once per battle: all allies gain +1 ATK."
-	power_button.custom_minimum_size.x = 120
+	power_button.custom_minimum_size.x = 160
 	power_button.pressed.connect(_use_player_power)
 	control_bar.add_child(power_button)
 
@@ -229,11 +246,11 @@ func _build_overlay() -> void:
 	overlay_detail.add_theme_color_override("font_color", Color("#afbeda"))
 	panel.add_child(overlay_detail)
 
-	var restart := Button.new()
-	restart.text = "PLAY AGAIN"
-	restart.custom_minimum_size = Vector2(180, 48)
-	restart.pressed.connect(_start_new_match)
-	panel.add_child(restart)
+	result_primary_button = Button.new()
+	result_primary_button.text = "PLAY AGAIN"
+	result_primary_button.custom_minimum_size = Vector2(180, 48)
+	result_primary_button.pressed.connect(_on_result_primary)
+	panel.add_child(result_primary_button)
 
 	var return_menu := Button.new()
 	return_menu.text = "RETURN TO MENU"
@@ -360,6 +377,24 @@ func _build_squad_builder() -> void:
 	instruction.add_theme_color_override("font_color", Color("#aebdda"))
 	layout.add_child(instruction)
 
+	var skill_row := HBoxContainer.new()
+	skill_row.add_theme_constant_override("separation", 12)
+	layout.add_child(skill_row)
+
+	var skill_label := Label.new()
+	skill_label.text = "CAPTAIN SKILL"
+	skill_label.custom_minimum_size.x = 150
+	skill_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	skill_label.add_theme_color_override("font_color", Color("#ffd166"))
+	skill_row.add_child(skill_label)
+
+	captain_skill_option = OptionButton.new()
+	captain_skill_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for skill_name in CaptainSkillsScript.SKILLS:
+		captain_skill_option.add_item("%s · %s" % [skill_name, CaptainSkillsScript.DESCRIPTIONS[skill_name]])
+	captain_skill_option.item_selected.connect(_select_captain_skill)
+	skill_row.add_child(captain_skill_option)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(scroll)
@@ -408,6 +443,8 @@ func _open_squad_builder() -> void:
 	squad_opened_for_mission = false
 	pending_mission_id = -1
 	editing_squad_names = squad_names.duplicate()
+	editing_captain_skill = player_captain_skill
+	captain_skill_option.select(CaptainSkillsScript.SKILLS.find(editing_captain_skill))
 	squad_overlay.visible = true
 	_rebuild_squad_grid()
 
@@ -425,6 +462,10 @@ func _close_squad_builder() -> void:
 func _reset_squad() -> void:
 	editing_squad_names = SquadStoreScript.default_squad(roster)
 	_rebuild_squad_grid()
+
+func _select_captain_skill(index: int) -> void:
+	if index >= 0 and index < CaptainSkillsScript.SKILLS.size():
+		editing_captain_skill = CaptainSkillsScript.SKILLS[index]
 
 func _toggle_squad_unit(unit_name: String) -> void:
 	var copies: int = editing_squad_names.count(unit_name)
@@ -472,7 +513,9 @@ func _save_squad() -> void:
 	if editing_squad_names.is_empty() or editing_squad_names.size() > SquadStoreScript.SQUAD_SIZE:
 		return
 	squad_names = editing_squad_names.duplicate()
+	player_captain_skill = editing_captain_skill
 	if SquadStoreScript.save_squad(squad_names, roster):
+		SquadStoreScript.save_captain_skill(player_captain_skill, CaptainSkillsScript.SKILLS)
 		status_message = "Squad saved. It will be used in the next battle."
 	else:
 		status_message = "Squad selected for this session, but the save file could not be written."
@@ -483,7 +526,9 @@ func _save_and_start_mission() -> void:
 	if editing_squad_names.is_empty() or pending_mission_id < 0:
 		return
 	squad_names = editing_squad_names.duplicate()
+	player_captain_skill = editing_captain_skill
 	SquadStoreScript.save_squad(squad_names, roster)
+	SquadStoreScript.save_captain_skill(player_captain_skill, CaptainSkillsScript.SKILLS)
 	var mission_id := pending_mission_id
 	squad_opened_for_mission = false
 	pending_mission_id = -1
@@ -513,7 +558,7 @@ func _build_main_menu() -> void:
 	main_menu_overlay.add_child(center)
 
 	var layout := VBoxContainer.new()
-	layout.custom_minimum_size = Vector2(460, 500)
+	layout.custom_minimum_size = Vector2(460, 560)
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
 	layout.add_theme_constant_override("separation", 16)
 	center.add_child(layout)
@@ -534,6 +579,10 @@ func _build_main_menu() -> void:
 	var campaign := _menu_action("CAMPAIGN")
 	campaign.pressed.connect(_open_mission_select)
 	layout.add_child(campaign)
+
+	resume_button = _menu_action("RESUME MISSION")
+	resume_button.pressed.connect(_resume_mission)
+	layout.add_child(resume_button)
 
 	var practice := _menu_action("PRACTICE BATTLE")
 	practice.pressed.connect(_begin_practice)
@@ -608,6 +657,14 @@ func _show_main_menu() -> void:
 	tutorial_overlay.visible = false
 	overlay.visible = false
 	hover_card.visible = false
+	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
+	resume_button.disabled = saved_run.is_empty()
+	resume_button.text = "RESUME MISSION"
+	if not saved_run.is_empty():
+		resume_button.text = "RESUME · %s · BATTLE %d" % [
+			CampaignStoreScript.MISSIONS[saved_run.mission_id].title.to_upper(),
+			saved_run.encounter_index + 1
+		]
 	_refresh()
 
 func _open_mission_select() -> void:
@@ -625,10 +682,12 @@ func _rebuild_mission_list() -> void:
 		var button := Button.new()
 		button.custom_minimum_size.y = 82
 		button.disabled = not available
-		button.text = "%s  %02d · %s  ·  %d CAPTAIN HP\n%s\nReward: %s" % [
+		button.text = "%s  %02d · %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s\nReward: %s" % [
 			"✓" if complete else ("◆" if available else "🔒"),
 			mission.id + 1,
 			mission.title.to_upper(),
+			mission.encounters.size(),
+			"" if mission.encounters.size() == 1 else "S",
 			mission.enemy_hp,
 			mission.briefing,
 			mission.reward
@@ -649,6 +708,8 @@ func _prepare_mission(mission_id: int) -> void:
 func _begin_practice() -> void:
 	campaign_battle = false
 	current_mission_id = -1
+	current_encounter_index = 0
+	awaiting_next_encounter = false
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
 	_start_new_match()
@@ -659,11 +720,32 @@ func _begin_mission(mission_id: int) -> void:
 		return
 	campaign_battle = true
 	current_mission_id = mission_id
+	current_encounter_index = 0
+	mission_run_captain_hp = STARTING_HP
+	awaiting_next_encounter = false
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
 	_start_new_match()
 	status_message = CampaignStoreScript.MISSIONS[mission_id].briefing
 	_refresh()
+	_show_tutorial_once()
+
+func _resume_mission() -> void:
+	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
+	if saved_run.is_empty():
+		return
+	if saved_run.encounter_index >= CampaignStoreScript.encounter_count(saved_run.mission_id):
+		MissionRunStoreScript.clear_run()
+		_show_main_menu()
+		return
+	campaign_battle = true
+	current_mission_id = saved_run.mission_id
+	current_encounter_index = saved_run.encounter_index
+	mission_run_captain_hp = saved_run.captain_hp
+	awaiting_next_encounter = false
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	_start_new_match()
 	_show_tutorial_once()
 
 func _show_tutorial_once() -> void:
@@ -684,7 +766,7 @@ func _open_squad_from_menu() -> void:
 
 func _build_hover_card() -> void:
 	hover_card = PanelContainer.new()
-	hover_card.custom_minimum_size = Vector2(340, 168)
+	hover_card.custom_minimum_size = Vector2(340, 190)
 	hover_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_card.z_index = 100
 	hover_card.visible = false
@@ -739,7 +821,10 @@ func _show_unit_details(unit: Dictionary) -> void:
 		definition.move,
 		definition.range
 	]
+	var active_effects: String = CaptainSkillsScript.effect_summary(unit)
 	hover_ability_label.text = definition.text
+	if not active_effects.is_empty():
+		hover_ability_label.text += "\nActive: " + active_effects
 	hover_card.visible = true
 	_position_hover_card()
 
@@ -752,7 +837,7 @@ func _process(_delta: float) -> void:
 
 func _position_hover_card() -> void:
 	var pointer := get_viewport().get_mouse_position()
-	var card_size := Vector2(340, 168)
+	var card_size := Vector2(340, 190)
 	var viewport_size := get_viewport_rect().size
 	var target := pointer + Vector2(18, 18)
 	if target.x + card_size.x > viewport_size.x - 10:
@@ -766,7 +851,8 @@ func _start_new_match() -> void:
 	player_hand.clear()
 	enemy_hand.clear()
 	battle_deck = SquadStoreScript.build_deck(squad_names, roster)
-	var enemy_squad_id := current_mission_id if campaign_battle else 0
+	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
+	var enemy_squad_id: int = encounter.get("squad_offset", 0)
 	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(enemy_squad_id, roster)
 	enemy_deck = SquadStoreScript.build_deck(enemy_squad_names, roster)
 	draw_index = 0
@@ -775,18 +861,31 @@ func _start_new_match() -> void:
 	selected_board_unit_id = -1
 	next_unit_id = 1
 	round_number = 1
-	player_hp = STARTING_HP
-	enemy_hp = STARTING_HP if not campaign_battle else CampaignStoreScript.MISSIONS[current_mission_id].enemy_hp
+	player_hp = mission_run_captain_hp if campaign_battle else STARTING_HP
+	enemy_hp = STARTING_HP if not campaign_battle else encounter.enemy_hp
 	player_max_energy = 2
 	player_energy = 2
 	enemy_max_energy = 2
 	enemy_energy = 2
 	player_power_used = false
 	enemy_power_used = false
+	player_shield = 0
+	enemy_shield = 0
+	player_shield_turns = 0
+	enemy_shield_turns = 0
+	enemy_captain_skill = encounter.get("skill", "Shield") if campaign_battle else "Shield"
 	input_enabled = true
 	battle_over = false
+	mission_finished = false
 	overlay.visible = false
 	status_message = "Select a unit card, then choose a deployment lane."
+	if campaign_battle:
+		status_message = "Battle %d/%d · %s" % [
+			current_encounter_index + 1,
+			CampaignStoreScript.encounter_count(current_mission_id),
+			encounter.title
+		]
+		MissionRunStoreScript.save_run(current_mission_id, current_encounter_index, player_hp)
 	for i in 4:
 		_draw_player_card()
 		_draw_enemy_card()
@@ -805,11 +904,13 @@ func _draw_enemy_card() -> void:
 	enemy_draw_index += 1
 
 func _refresh() -> void:
-	player_hp_label.text = "◆  %02d HP\n%d HAND · %d DECK" % [
-		player_hp, player_hand.size(), battle_deck.size() - draw_index
+	player_hp_label.text = "◆  %02d HP%s\n%d HAND · %d DECK" % [
+		player_hp, " · %d SHIELD" % player_shield if player_shield > 0 else "",
+		player_hand.size(), battle_deck.size() - draw_index
 	]
-	enemy_hp_label.text = "%02d HP  ◆\n%d HAND · %d DECK" % [
-		enemy_hp, enemy_hand.size(), enemy_deck.size() - enemy_draw_index
+	enemy_hp_label.text = "%02d HP%s  ◆\n%d HAND · %d DECK" % [
+		enemy_hp, " · %d SHIELD" % enemy_shield if enemy_shield > 0 else "",
+		enemy_hand.size(), enemy_deck.size() - enemy_draw_index
 	]
 	var locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
 	energy_label.text = "MANA  %d / %d  ·  %d LOCKED" % [player_energy, player_max_energy, locked_mana]
@@ -817,8 +918,9 @@ func _refresh() -> void:
 	hint_label.text = status_message
 	end_button.disabled = not input_enabled or battle_over
 	menu_button.disabled = not input_enabled or battle_over
-	power_button.disabled = not input_enabled or player_power_used or battle_over or units.filter(func(u): return u.side == PLAYER).is_empty()
-	power_button.text = "RALLY USED" if player_power_used else "RALLY"
+	power_button.disabled = not input_enabled or player_power_used or battle_over
+	power_button.text = "%s USED" % player_captain_skill.to_upper() if player_power_used else player_captain_skill.to_upper()
+	power_button.tooltip_text = CaptainSkillsScript.DESCRIPTIONS[player_captain_skill]
 
 	var selected := {}
 	if selected_hand_index >= 0 and selected_hand_index < player_hand.size():
@@ -936,20 +1038,17 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		"ready": false,
 		"repositioned": false,
 		"taunted_by": -1,
-		"turn_attack_bonus": 0
+		"effects": []
 	})
 	next_unit_id += 1
 
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
 		return
+	if not _apply_captain_skill(PLAYER, player_captain_skill):
+		_refresh()
+		return
 	player_power_used = true
-	for unit in units:
-		if unit.side == PLAYER:
-			unit.atk += 1
-			unit.turn_attack_bonus += 1
-			board.play_unit_effect(unit.id, "+1 ATK", Color("#ffd166"))
-	status_message = "Rally! Every allied unit gains +1 ATK."
 	_refresh()
 
 func _end_player_turn() -> void:
@@ -961,7 +1060,7 @@ func _end_player_turn() -> void:
 	status_message = "Your units advance."
 	_refresh()
 	await _resolve_side(PLAYER)
-	_expire_turn_buffs(PLAYER)
+	_expire_side_effects(PLAYER)
 	if _check_game_over():
 		return
 	await get_tree().create_timer(0.35).timeout
@@ -999,21 +1098,17 @@ func _enemy_turn() -> void:
 		await get_tree().create_timer(0.35).timeout
 		attempts += 1
 
-	if not enemy_power_used and enemy_hp <= 12:
-		enemy_power_used = true
-		for unit in units:
-			if unit.side == ENEMY:
-				unit.atk += 1
-				unit.turn_attack_bonus += 1
-				board.play_unit_effect(unit.id, "+1 ATK", Color("#ff8b70"))
-		status_message = "Enemy Rally! Hostile units gain +1 ATK."
-		_refresh()
-		await get_tree().create_timer(0.45).timeout
+	if not enemy_power_used and (round_number >= 2 or enemy_hp <= 8):
+		if _apply_captain_skill(ENEMY, enemy_captain_skill):
+			enemy_power_used = true
+			status_message = "Enemy Captain: " + status_message
+			_refresh()
+			await get_tree().create_timer(0.45).timeout
 
 	status_message = "Enemy units advance."
 	_refresh()
 	await _resolve_side(ENEMY)
-	_expire_turn_buffs(ENEMY)
+	_expire_side_effects(ENEMY)
 	if _check_game_over():
 		return
 
@@ -1131,12 +1226,13 @@ func _activate_unit(actor: Dictionary) -> void:
 	if _commander_in_range(actor):
 		var strikes := 2 if actor.kind == "Strider" else 1
 		var damage: int = actor.atk * strikes
+		var dealt: int
 		if actor.side == PLAYER:
-			enemy_hp = maxi(0, enemy_hp - damage)
-			status_message = "%s strikes the enemy Commander for %d!" % [actor.name, damage]
+			dealt = _damage_captain(ENEMY, damage)
+			status_message = "%s strikes the enemy Commander for %d!" % [actor.name, dealt]
 		else:
-			player_hp = maxi(0, player_hp - damage)
-			status_message = "%s strikes your Commander for %d!" % [actor.name, damage]
+			dealt = _damage_captain(PLAYER, damage)
+			status_message = "%s strikes your Commander for %d!" % [actor.name, dealt]
 		return
 
 func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
@@ -1206,14 +1302,67 @@ func _remove_defeated() -> void:
 	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
 	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
 
-func _expire_turn_buffs(side: int) -> void:
-	for unit in units:
-		if unit.side != side:
-			continue
-		var bonus: int = unit.get("turn_attack_bonus", 0)
-		if bonus > 0:
-			unit.atk = maxi(0, unit.atk - bonus)
-			unit.turn_attack_bonus = 0
+func _apply_captain_skill(side: int, skill_name: String) -> bool:
+	var captain_hp: int = player_hp if side == PLAYER else enemy_hp
+	var result: Dictionary = CaptainSkillsScript.apply(skill_name, side, units, captain_hp)
+	status_message = result.message
+	if not result.success:
+		return false
+
+	if result.shield > 0:
+		if side == PLAYER:
+			player_shield = result.shield
+			player_shield_turns = result.shield_turns
+		else:
+			enemy_shield = result.shield
+			enemy_shield_turns = result.shield_turns
+
+	if result.captain_damage > 0:
+		_damage_captain(ENEMY if side == PLAYER else PLAYER, result.captain_damage)
+
+	for unit_id in result.affected:
+		var target = _unit_by_id(unit_id)
+		if target != null:
+			board.play_unit_effect(target.id, "SKILL", Color("#ffd166") if side == PLAYER else Color("#ff8b9f"))
+	_remove_defeated()
+	return true
+
+func _expire_side_effects(side: int) -> void:
+	CaptainSkillsScript.expire_effects(units, side)
+	if side == PLAYER and player_shield_turns > 0:
+		player_shield_turns -= 1
+		if player_shield_turns == 0:
+			player_shield = 0
+	elif side == ENEMY and enemy_shield_turns > 0:
+		enemy_shield_turns -= 1
+		if enemy_shield_turns == 0:
+			enemy_shield = 0
+
+func _damage_captain(side: int, damage: int) -> int:
+	var remaining := damage
+	if side == PLAYER and player_shield > 0:
+		var absorbed := mini(player_shield, remaining)
+		player_shield -= absorbed
+		remaining -= absorbed
+	elif side == ENEMY and enemy_shield > 0:
+		var absorbed := mini(enemy_shield, remaining)
+		enemy_shield -= absorbed
+		remaining -= absorbed
+	if side == PLAYER:
+		player_hp = maxi(0, player_hp - remaining)
+	else:
+		enemy_hp = maxi(0, enemy_hp - remaining)
+	return remaining
+
+func _on_result_primary() -> void:
+	if awaiting_next_encounter:
+		awaiting_next_encounter = false
+		current_encounter_index += 1
+		_start_new_match()
+	elif mission_finished:
+		_show_main_menu()
+	else:
+		_start_new_match()
 
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:
@@ -1224,16 +1373,36 @@ func _check_game_over() -> bool:
 	if enemy_hp <= 0:
 		var reward_text := ""
 		if campaign_battle:
+			var encounter_count := CampaignStoreScript.encounter_count(current_mission_id)
+			if current_encounter_index + 1 < encounter_count:
+				awaiting_next_encounter = true
+				mission_run_captain_hp = player_hp
+				MissionRunStoreScript.save_run(current_mission_id, current_encounter_index + 1, mission_run_captain_hp)
+				var next_encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index + 1)
+				overlay_title.text = "BATTLE WON"
+				overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
+				overlay_detail.text = "Captain HP carried forward: %d\nNext: Battle %d/%d · %s" % [
+					player_hp, current_encounter_index + 2, encounter_count, next_encounter.title
+				]
+				result_primary_button.text = "CONTINUE MISSION"
+				_refresh()
+				return true
 			completed_missions = CampaignStoreScript.complete_mission(current_mission_id, completed_missions)
+			MissionRunStoreScript.clear_run()
+			mission_finished = true
 			var reward: String = CampaignStoreScript.MISSIONS[current_mission_id].reward
 			reward_text = "\nReward unlocked: %s" % reward
-		overlay_title.text = "VICTORY"
+		overlay_title.text = "MISSION COMPLETE" if campaign_battle else "VICTORY"
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = "The enemy weather engine is yours.\nVictory achieved in %d rounds.%s" % [round_number, reward_text]
+		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
 	else:
+		if campaign_battle:
+			MissionRunStoreScript.clear_run()
 		overlay_title.text = "DEFEAT"
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
 		overlay_detail.text = "Your skyway has fallen.\nRebuild your formation and try again."
+		result_primary_button.text = "RETRY BATTLE"
 	_refresh()
 	return true
 
