@@ -7,6 +7,7 @@ const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png"
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
 const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
 const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
+const BOARD_BACKGROUND := preload("res://assets/board-sky-citadel.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -133,29 +134,39 @@ func _cell_rect(row: int, col: int) -> Rect2:
 
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
-	draw_style_box(_box(Color("#101b33"), Color("#26385f"), 18, 2), panel)
+	draw_texture_rect(BOARD_BACKGROUND, panel, false)
+	draw_rect(panel, Color(0.025, 0.045, 0.09, 0.16))
+	draw_style_box(_box(Color.TRANSPARENT, Color("#536b91"), 18, 2), panel.grow(-1))
 
 	var grid := _grid_rect()
 	for row in ROWS:
 		for col in COLS:
 			var cell_rect := _cell_rect(row, col).grow(-3.0)
-			var base := Color("#172746") if (row + col) % 2 == 0 else Color("#1b2d50")
+			var base := (
+				Color(0.04, 0.09, 0.16, 0.25)
+				if (row + col) % 2 == 0
+				else Color(0.08, 0.12, 0.19, 0.18)
+			)
 			if col == 0:
-				base = Color("#193c59")
+				base = Color(0.04, 0.33, 0.52, 0.30)
 			elif col == COLS - 1:
-				base = Color("#4a263e")
+				base = Color(0.55, 0.08, 0.28, 0.28)
 			if row == hover_row and col == 0 and enabled and not selected_card.is_empty():
-				base = Color("#245f78")
-			draw_style_box(_box(base, Color("#30466f"), 10, 1), cell_rect)
+				base = Color(0.08, 0.62, 0.78, 0.42)
+			draw_style_box(_box(base, Color(0.55, 0.67, 0.82, 0.46), 7, 1), cell_rect)
 
+	draw_style_box(
+		_box(Color(0.025, 0.05, 0.11, 0.78), Color(0.43, 0.60, 0.78, 0.55), 8, 1),
+		Rect2(Vector2(142, 6), Vector2(minf(grid.size.x * 0.62, 590), 28))
+	)
 	draw_string(
 		get_theme_default_font(),
-		Vector2(150, 24),
+		Vector2(153, 25),
 		event_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
-		grid.size.x,
-		15,
-		Color("#b9caea")
+		minf(grid.size.x * 0.60, 570),
+		14,
+		Color("#e3edff")
 	)
 
 	var preview_id: int = selected_unit_id if selected_unit_id >= 0 else hover_unit_id
@@ -163,8 +174,8 @@ func _draw() -> void:
 	if preview_unit != null:
 		_draw_action_preview(preview_unit)
 
-	_draw_commander(Vector2(68, grid.get_center().y), false)
-	_draw_commander(Vector2(size.x - 68, grid.get_center().y), true)
+	_draw_commander(Vector2(82, grid.get_center().y), false)
+	_draw_commander(Vector2(size.x - 82, grid.get_center().y), true)
 
 	for unit in units:
 		_draw_unit(unit)
