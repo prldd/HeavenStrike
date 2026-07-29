@@ -1010,6 +1010,18 @@ func _resolve_side(side: int) -> void:
 		await get_tree().create_timer(0.32).timeout
 
 func _activate_unit(actor: Dictionary) -> void:
+	var path: Array = BattleRulesScript.traversal_cells(actor, units)
+	if not path.is_empty():
+		actor.col = path[-1].x
+		status_message = "%s advances %d space%s." % [
+			actor.name, path.size(), "" if path.size() == 1 else "s"
+		]
+		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
+		_refresh()
+		await get_tree().create_timer(0.22).timeout
+	else:
+		status_message = "%s cannot advance." % actor.name
+
 	if actor.kind == "Lifebinder":
 		var wounded = _find_wounded_ally(actor)
 		if wounded != null:
@@ -1040,27 +1052,15 @@ func _activate_unit(actor: Dictionary) -> void:
 		return
 
 	if _commander_in_range(actor):
+		var strikes := 2 if actor.kind == "Strider" else 1
+		var damage: int = actor.atk * strikes
 		if actor.side == PLAYER:
-			enemy_hp = maxi(0, enemy_hp - actor.atk)
-			status_message = "%s strikes the enemy Commander for %d!" % [actor.name, actor.atk]
+			enemy_hp = maxi(0, enemy_hp - damage)
+			status_message = "%s strikes the enemy Commander for %d!" % [actor.name, damage]
 		else:
-			player_hp = maxi(0, player_hp - actor.atk)
-			status_message = "%s strikes your Commander for %d!" % [actor.name, actor.atk]
+			player_hp = maxi(0, player_hp - damage)
+			status_message = "%s strikes your Commander for %d!" % [actor.name, damage]
 		return
-
-	var direction := 1 if actor.side == PLAYER else -1
-	var steps := 0
-	for step in actor.move:
-		var next_col: int = actor.col + direction
-		if next_col < 0 or next_col >= COLS or _unit_at(actor.row, next_col) != null:
-			break
-		actor.col = next_col
-		steps += 1
-	if steps > 0:
-		status_message = "%s advances %d space%s." % [actor.name, steps, "" if steps == 1 else "s"]
-		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
-	else:
-		status_message = "%s holds position." % actor.name
 
 func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
 	if actor.kind == "Channeler":

@@ -76,8 +76,9 @@ Each turn has four phases.
 
 3. **Resolution**
    - Units act one at a time, beginning with the unit closest to the enemy Commander.
-   - A unit attacks if a valid target is in range.
-   - Otherwise, it moves toward the enemy by up to its movement distance.
+   - A unit first moves toward the enemy by up to its movement distance.
+   - Movement stops early when another unit still occupies the next cell.
+   - After movement finishes, the unit attacks if a valid target is in range.
    - Abilities, healing, status effects, and defeated units are resolved immediately.
 
 4. **End**
@@ -90,6 +91,7 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 ## Combat Rules
 
 - A unit cannot move through another unit.
+- Frontmost units resolve first, so vacated cells are available to units moving later in the same phase.
 - Opposing units in the same lane block one another.
 - A unit attacks the nearest valid target unless an ability says otherwise.
 - Damage reduces health immediately.

@@ -53,6 +53,28 @@ func _init() -> void:
 	var attack_target := {"id": 8, "side": 1, "kind": "Duelist", "row": 1, "col": 2}
 	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit, attack_target]).is_empty())
 
+	var front_ally := {
+		"id": 9, "side": 0, "kind": "Duelist", "row": 1, "col": 3,
+		"move": 2, "range": 1, "ready": true
+	}
+	var following_ally := {
+		"id": 10, "side": 0, "kind": "Strider", "row": 1, "col": 1,
+		"move": 3, "range": 1, "ready": true
+	}
+	var following_preview: Dictionary = BattleRulesScript.projected_action(10, [front_ally, following_ally])
+	assert(following_preview.traversal == [Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1)])
+	assert(following_preview.projected_col == 4)
+	assert(following_preview.attack == [Vector2i(5, 1)])
+
+	var ranged_mover := {
+		"id": 11, "side": 0, "kind": "Artillerist", "row": 0, "col": 1,
+		"move": 1, "range": 3, "ready": true
+	}
+	var ranged_target := {"id": 12, "side": 1, "kind": "Warden", "row": 0, "col": 4}
+	var ranged_preview: Dictionary = BattleRulesScript.projected_action(11, [ranged_mover, ranged_target])
+	assert(ranged_preview.traversal == [Vector2i(2, 0)])
+	assert(ranged_preview.attack == [Vector2i(3, 0), Vector2i(4, 0), Vector2i(5, 0)])
+
 	var units := [
 		{"side": 0, "row": 1, "col": 5, "atk": 3, "hp": 4, "max_hp": 4}
 	]

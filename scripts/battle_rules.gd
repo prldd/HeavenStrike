@@ -28,18 +28,19 @@ static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> b
 	return true
 
 static func attack_cells(unit: Dictionary) -> Array:
+	return attack_cells_from(unit, unit.col)
+
+static func attack_cells_from(unit: Dictionary, origin_col: int) -> Array:
 	var cells: Array = []
 	var direction := 1 if unit.side == PLAYER else -1
 	for distance in range(1, unit.range + 1):
-		var col: int = unit.col + direction * distance
+		var col: int = origin_col + direction * distance
 		if col < 0 or col >= COLS:
 			break
 		cells.append(Vector2i(col, unit.row))
 	return cells
 
 static func traversal_cells(unit: Dictionary, units: Array) -> Array:
-	if has_target_in_range(unit, units) or commander_in_range(unit):
-		return []
 	var cells: Array = []
 	var direction := 1 if unit.side == PLAYER else -1
 	for step in range(1, unit.move + 1):
@@ -48,6 +49,36 @@ static func traversal_cells(unit: Dictionary, units: Array) -> Array:
 			break
 		cells.append(Vector2i(col, unit.row))
 	return cells
+
+static func projected_action(unit_id: int, units: Array) -> Dictionary:
+	var projected_units: Array = units.duplicate(true)
+	var selected = _unit_by_id(projected_units, unit_id)
+	if selected == null or not selected.get("ready", false):
+		return {"traversal": [], "attack": [], "origin_col": -1, "projected_col": -1}
+
+	var actors: Array = projected_units.filter(
+		func(unit): return unit.side == selected.side and unit.get("ready", false)
+	)
+	actors.sort_custom(func(a, b):
+		if a.col == b.col:
+			return a.row < b.row
+		return a.col > b.col if selected.side == PLAYER else a.col < b.col
+	)
+
+	for actor in actors:
+		var path := traversal_cells(actor, projected_units)
+		if actor.id == unit_id:
+			var destination: int = actor.col if path.is_empty() else path[-1].x
+			return {
+				"traversal": path,
+				"attack": attack_cells_from(actor, destination),
+				"origin_col": actor.col,
+				"projected_col": destination
+			}
+		if not path.is_empty():
+			actor.col = path[-1].x
+
+	return {"traversal": [], "attack": [], "origin_col": -1, "projected_col": -1}
 
 static func has_target_in_range(unit: Dictionary, units: Array) -> bool:
 	var direction := 1 if unit.side == PLAYER else -1
@@ -69,3 +100,9 @@ static func _occupied(units: Array, row: int, col: int) -> bool:
 		if unit.row == row and unit.col == col:
 			return true
 	return false
+
+static func _unit_by_id(units: Array, unit_id: int):
+	for unit in units:
+		if unit.id == unit_id:
+			return unit
+	return null

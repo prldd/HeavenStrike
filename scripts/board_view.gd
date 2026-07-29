@@ -266,14 +266,15 @@ func _draw_selection(unit: Dictionary) -> void:
 
 func _draw_action_preview(unit: Dictionary) -> void:
 	var direction := 1 if unit.side == 0 else -1
-	for cell in BattleRulesScript.attack_cells(unit):
+	var preview: Dictionary = BattleRulesScript.projected_action(unit.id, units)
+	for cell in preview.attack:
 		var attack_rect := _cell_rect(cell.y, cell.x).grow(-8)
 		var occupied_target := _enemy_at(unit, cell.y, cell.x)
 		var fill := Color(0.94, 0.31, 0.43, 0.24 if occupied_target else 0.09)
 		var width := 3 if occupied_target else 2
 		draw_style_box(_box(fill, Color("#ff667e"), 9, width), attack_rect)
 
-	for cell in BattleRulesScript.traversal_cells(unit, units):
+	for cell in preview.traversal:
 		var move_rect := _cell_rect(cell.y, cell.x).grow(-12)
 		draw_style_box(_box(Color(0.2, 0.75, 0.9, 0.14), Color("#4ec9e8"), 8, 2), move_rect)
 		var center := move_rect.get_center()
