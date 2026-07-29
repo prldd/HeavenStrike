@@ -10,6 +10,15 @@ const CLASS_NAMES := {
 	"Lifebinder": "Priest"
 }
 
+const CLASS_COLORS := {
+	"Strider": Color("#52cfff"),
+	"Duelist": Color("#ff8a54"),
+	"Warden": Color("#56d98d"),
+	"Artillerist": Color("#f2c44f"),
+	"Channeler": Color("#b987ff"),
+	"Lifebinder": Color("#ff77b2")
+}
+
 const UNITS := [
 	{"name": "Trinity Rusher", "icon": 3, "stars": 1, "kind": "Strider", "cost": 2, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action."},
 	{"name": "Claw Slicer", "icon": 9, "stars": 1, "kind": "Strider", "cost": 3, "atk": 3, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action."},
@@ -72,3 +81,6 @@ static func by_name(unit_name: String) -> Dictionary:
 
 static func display_class(kind: String) -> String:
 	return CLASS_NAMES.get(kind, kind)
+
+static func class_color(kind: String) -> Color:
+	return CLASS_COLORS.get(kind, Color("#91a7ce"))

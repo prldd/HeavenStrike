@@ -16,6 +16,7 @@ func _run() -> void:
 	assert(game.squad_overlay.get_child(0).texture != null)
 	assert(game.speed_button.text == "SPEED 1×")
 	assert(game.end_button.get_parent() != game.hint_label.get_parent())
+	assert(game.hand_row.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	game._cycle_resolution_speed()
 	assert(game.resolution_speed == 2.0)
 	assert(game.combat_log_panel != null)
@@ -66,6 +67,7 @@ func _run() -> void:
 		if count > 0:
 			owned_types += 1
 	assert(game.squad_grid.get_child_count() == owned_types)
+	assert(game.squad_grid.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	assert(game.squad_selection_grid.get_child_count() == game.editing_squad_names.size())
 	var previous_size: int = game.editing_squad_names.size()
 	game._remove_squad_unit_at(0)

@@ -14,6 +14,8 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
+	assert(UnitCatalogScript.class_color("Strider") != UnitCatalogScript.class_color("Duelist"))
+	assert(UnitCatalogScript.class_color("Warden") != UnitCatalogScript.class_color("Lifebinder"))
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
 	assert(roster.map(func(unit): return unit.icon).all(
 		func(icon_id): return icon_id >= 1 and icon_id <= 48

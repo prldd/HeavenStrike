@@ -2,6 +2,7 @@ class_name BoardView
 extends Control
 
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
@@ -20,15 +21,6 @@ signal unit_hover_ended
 const ROWS := 3
 const COLS := 7
 const BOARD_MARGIN := 16.0
-const COLORS := {
-	"Strider": Color("#66d9ff"),
-	"Duelist": Color("#ff9d66"),
-	"Warden": Color("#70e0a1"),
-	"Artillerist": Color("#ffd166"),
-	"Channeler": Color("#c99cff"),
-	"Lifebinder": Color("#ff8fbd")
-}
-
 var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
@@ -48,6 +40,7 @@ var effect_label := ""
 var effect_color := Color.WHITE
 var effect_strength := 0.0
 var commander_effect_side := -1
+var unit_visual_offsets: Dictionary = {}
 
 func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -107,6 +100,32 @@ func play_commander_effect(side: int, label: String, color: Color) -> void:
 	var tween := create_tween()
 	tween.tween_method(_set_effect_strength, 1.0, 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(_clear_effect)
+
+func animate_unit_move(
+	unit_id: int, from_row: int, from_col: int, duration: float = 0.28
+) -> void:
+	var unit = _unit_by_id(unit_id)
+	if unit == null:
+		return
+	var from_center := _cell_rect(from_row, from_col).get_center()
+	var destination_center := _cell_rect(unit.row, unit.col).get_center()
+	var starting_offset := from_center - destination_center
+	unit_visual_offsets[unit_id] = starting_offset
+	queue_redraw()
+	var tween := create_tween()
+	tween.tween_method(
+		_set_unit_visual_offset.bind(unit_id),
+		starting_offset,
+		Vector2.ZERO,
+		duration
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	unit_visual_offsets.erase(unit_id)
+	queue_redraw()
+
+func _set_unit_visual_offset(value: Vector2, unit_id: int) -> void:
+	unit_visual_offsets[unit_id] = value
+	queue_redraw()
 
 func _set_effect_strength(value: float) -> void:
 	effect_strength = value
@@ -345,14 +364,15 @@ func _draw_mana_indicator(center: Vector2, value: String, enemy: bool) -> void:
 
 func _draw_unit(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-10.0)
+	rect.position += unit_visual_offsets.get(unit.id, Vector2.ZERO)
 	var center := rect.get_center()
-	var color: Color = COLORS.get(unit.kind, Color.WHITE)
-	var side_color := Color("#ff668f") if unit.side == 1 else Color("#62e7ff")
+	var color: Color = UnitCatalogScript.class_color(unit.kind)
 
-	draw_circle(center + Vector2(0, 3), minf(rect.size.x, rect.size.y) * 0.34, Color(0, 0, 0, 0.3))
-	draw_circle(center, minf(rect.size.x, rect.size.y) * 0.32, Color(color, 0.2))
+	draw_style_box(
+		_box(Color(color, 0.10), Color(color, 0.32), 13, 1),
+		rect.grow(5)
+	)
 	_draw_unit_icon(unit, center, minf(rect.size.x, rect.size.y) * 0.68)
-	draw_arc(center, minf(rect.size.x, rect.size.y) * 0.32, 0, TAU, 32, side_color, 3)
 
 	var font := get_theme_default_font()
 	var hp_text := "%d" % unit.hp
@@ -364,7 +384,10 @@ func _draw_unit(unit: Dictionary) -> void:
 	_draw_status_badges(unit, rect)
 
 	if not unit.ready:
-		draw_circle(center, minf(rect.size.x, rect.size.y) * 0.32, Color(0.05, 0.08, 0.15, 0.48))
+		draw_style_box(
+			_box(Color(0.05, 0.08, 0.15, 0.48), Color.TRANSPARENT, 10, 0),
+			rect.grow(-3)
+		)
 		draw_string(font, Vector2(rect.position.x, rect.end.y - 7), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, Color("#b8c2d9"))
 
 func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
@@ -447,6 +470,7 @@ func _draw_commander_effect(center: Vector2) -> void:
 
 func _draw_selection(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-5)
+	rect.position += unit_visual_offsets.get(unit.id, Vector2.ZERO)
 	draw_style_box(_box(Color(0.25, 0.8, 0.9, 0.08), Color("#71e6f5"), 12, 3), rect)
 
 func _draw_action_preview(unit: Dictionary) -> void:

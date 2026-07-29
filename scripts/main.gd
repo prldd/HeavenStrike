@@ -692,7 +692,7 @@ func _rebuild_squad_grid() -> void:
 		if owned <= 0:
 			continue
 		var button: Button = SquadCardScript.new()
-		button.configure(unit.name, "barracks", _unit_icon(unit.icon))
+		button.configure(unit.name, "barracks", _unit_icon(unit.icon), -1, unit.kind)
 		button.custom_minimum_size = Vector2(0, 78)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.icon = _unit_icon(unit.icon)
@@ -716,7 +716,7 @@ func _rebuild_squad_grid() -> void:
 		if unit.is_empty():
 			continue
 		var card: Button = SquadCardScript.new()
-		card.configure(unit.name, "squad", _unit_icon(unit.icon), index)
+		card.configure(unit.name, "squad", _unit_icon(unit.icon), index, unit.kind)
 		card.custom_minimum_size = Vector2(0, 72)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
@@ -1337,11 +1337,33 @@ func _rebuild_hand() -> void:
 			card.name.to_upper(), card.cost, UnitCatalogScript.display_class(card.kind),
 			card.atk, card.hp
 		]
+		_apply_class_card_style(button, card.kind)
 		button.add_theme_font_size_override("font_size", 10)
 		button.pressed.connect(_select_card.bind(i))
 		button.mouse_entered.connect(_show_unit_details.bind(card))
 		button.mouse_exited.connect(_hide_unit_details)
 		hand_row.add_child(button)
+
+func _apply_class_card_style(button: Button, kind: String) -> void:
+	var color: Color = UnitCatalogScript.class_color(kind)
+	button.add_theme_stylebox_override("normal", _class_card_style(color, 0.13, 0.50, 1))
+	button.add_theme_stylebox_override("hover", _class_card_style(color, 0.23, 0.90, 3))
+	button.add_theme_stylebox_override("pressed", _class_card_style(color, 0.28, 1.0, 4))
+	button.add_theme_stylebox_override("disabled", _class_card_style(color, 0.07, 0.24, 0))
+
+func _class_card_style(
+	color: Color, tint: float, border_alpha: float, glow: int
+) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#0d162b").lerp(color, tint)
+	style.border_color = Color(color, border_alpha)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.shadow_color = Color(color, 0.22 if glow > 0 else 0.0)
+	style.shadow_size = glow
+	return style
 
 func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)
@@ -1415,9 +1437,14 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			status_message = _reposition_status(clicked)
 		elif BattleRulesScript.can_reposition(selected, row, units) and col == selected.col:
 			var old_row: int = selected.row
+			var old_col: int = selected.col
 			selected.row = row
 			selected_board_unit_id = selected.id
 			status_message = "%s shifts from lane %d to lane %d. Choose another lane or continue." % [selected.name, old_row + 1, row + 1]
+			input_enabled = false
+			_refresh()
+			await board.animate_unit_move(selected.id, old_row, old_col, 0.24)
+			input_enabled = true
 			board.play_unit_effect(selected.id, "SHIFT", Color("#71e6f5"))
 		else:
 			status_message = _reposition_block_reason(selected, row, col)
@@ -1458,6 +1485,10 @@ func _on_deployment_clicked(row: int) -> void:
 	player_energy -= card.cost
 	var spawned: Dictionary = _spawn_unit(card, PLAYER, row, 0)
 	status_message = "%s deployed to lane %d." % [card.name, row + 1]
+	input_enabled = false
+	_refresh()
+	await board.animate_unit_move(spawned.id, row, -1, 0.32)
+	input_enabled = true
 	var warcry_message := _resolve_warcry(spawned)
 	if not warcry_message.is_empty():
 		status_message += " " + warcry_message
@@ -1582,6 +1613,8 @@ func _enemy_turn() -> void:
 		if hand_index >= 0:
 			enemy_hand.remove_at(hand_index)
 			status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
+			_refresh()
+			await board.animate_unit_move(spawned.id, row, COLS, 0.32 / resolution_speed)
 			var warcry_message := _resolve_warcry(spawned)
 			if not warcry_message.is_empty():
 				status_message += " " + warcry_message
@@ -1633,8 +1666,11 @@ func _enemy_reposition_units() -> void:
 		var best_row: int = BattleAIScript.choose_reposition(unit, units)
 		if best_row != unit.row:
 			var old_row: int = unit.row
+			var old_col: int = unit.col
 			unit.row = best_row
 			status_message = "%s shifts from lane %d to lane %d." % [unit.name, old_row + 1, best_row + 1]
+			_refresh()
+			await board.animate_unit_move(unit.id, old_row, old_col, 0.24 / resolution_speed)
 			board.play_unit_effect(unit.id, "SHIFT", Color("#ff8b9f"))
 			_refresh()
 			await _wait(0.28)
@@ -1709,13 +1745,15 @@ func _activate_unit(actor: Dictionary) -> void:
 
 	var path: Array = BattleRulesScript.traversal_cells(actor, units)
 	if not path.is_empty():
+		var old_row: int = actor.row
+		var old_col: int = actor.col
 		actor.col = path[-1].x
 		status_message = "%s advances %d space%s." % [
 			_actor_tag(actor), path.size(), "" if path.size() == 1 else "s"
 		]
-		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
 		_refresh()
-		await _wait(0.22)
+		await board.animate_unit_move(actor.id, old_row, old_col, 0.30 / resolution_speed)
+		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
 	else:
 		status_message = "%s cannot advance." % _actor_tag(actor)
 

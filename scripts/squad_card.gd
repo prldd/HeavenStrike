@@ -1,6 +1,8 @@
 class_name SquadCard
 extends Button
 
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+
 signal unit_dropped(
 	dropped_unit_name: String, source: String, source_index: int, target_index: int
 )
@@ -11,12 +13,35 @@ var drag_texture: Texture2D
 var slot_index := -1
 
 func configure(
-	name_value: String, source_value: String, texture: Texture2D, index_value: int = -1
+	name_value: String,
+	source_value: String,
+	texture: Texture2D,
+	index_value: int = -1,
+	unit_kind: String = ""
 ) -> void:
 	unit_name = name_value
 	drag_source = source_value
 	drag_texture = texture
 	slot_index = index_value
+	_apply_class_style(UnitCatalogScript.class_color(unit_kind))
+
+func _apply_class_style(color: Color) -> void:
+	add_theme_stylebox_override("normal", _card_style(color, 0.13, 0.48, 1))
+	add_theme_stylebox_override("hover", _card_style(color, 0.23, 0.88, 3))
+	add_theme_stylebox_override("pressed", _card_style(color, 0.28, 1.0, 4))
+	add_theme_stylebox_override("disabled", _card_style(color, 0.07, 0.24, 0))
+
+func _card_style(color: Color, tint: float, border_alpha: float, glow: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#0d162b").lerp(color, tint)
+	style.border_color = Color(color, border_alpha)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.shadow_color = Color(color, 0.22 if glow > 0 else 0.0)
+	style.shadow_size = glow
+	return style
 
 func _get_drag_data(_position: Vector2):
 	if unit_name.is_empty() or disabled:
