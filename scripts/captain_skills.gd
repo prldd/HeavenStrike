@@ -133,8 +133,8 @@ static func effect_summary(unit: Dictionary) -> String:
 			effect.turns,
 			"" if effect.turns == 1 else "s"
 		])
-	if unit.get("taunted_by", -1) >= 0:
-		labels.append("Taunted")
+	if unit.get("taunt_turns", 0) > 0:
+		labels.append("Taunted (%d turns)" % unit.taunt_turns)
 	return ", ".join(labels)
 
 static func _add_attack_effect(unit: Dictionary, effect_name: String, amount: int, turns: int) -> void:
@@ -151,4 +151,3 @@ static func _most_damaged(units: Array):
 		return (a.hp / float(a.max_hp)) < (b.hp / float(b.max_hp))
 	)
 	return damaged[0]
-

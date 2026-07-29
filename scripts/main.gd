@@ -332,7 +332,7 @@ func _update_tutorial() -> void:
 		"1 / 5\nSELECT A CARD\nCards show Mana cost, class, attack, health, and their special ability.",
 		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units rest until your next turn.",
 		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in an adjacent row. Each unit may shift once per turn.",
-		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Warden cannot change rows while that Warden remains on the battlefield.",
+		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Defender cannot change rows for its next two turns.",
 		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
 	]
 	tutorial_page_label.text = pages[tutorial_page]
@@ -492,7 +492,8 @@ func _rebuild_squad_grid() -> void:
 		button.button_pressed = selected
 		button.disabled = not unlocked
 		button.text = "%s  ·  %d◆\n%s  |  %d ATK  %d HP" % [
-			unit.name.to_upper(), unit.cost, unit.kind, unit.atk, unit.hp
+			unit.name.to_upper(), unit.cost, UnitCatalogScript.display_class(unit.kind),
+			unit.atk, unit.hp
 		]
 		if copies > 0:
 			button.text += "\n%d / 2 COPIES" % copies
@@ -813,7 +814,10 @@ func _show_unit_details(unit: Dictionary) -> void:
 	if current_hp != maximum_hp:
 		hp_text = "%d / %d HP" % [current_hp, maximum_hp]
 
-	hover_name_label.text = "%s  ·  %s" % [definition.name.to_upper(), definition.kind]
+	hover_name_label.text = "%s  ·  %s" % [
+		definition.name.to_upper(),
+		UnitCatalogScript.display_class(definition.kind)
+	]
 	hover_stats_label.text = "%d MANA\n%d ATK    %s    %d MOV    %d RANGE" % [
 		definition.cost,
 		unit.get("atk", definition.atk),
@@ -941,7 +945,8 @@ func _rebuild_hand() -> void:
 		button.button_pressed = i == selected_hand_index
 		button.disabled = not input_enabled or card.cost > player_energy or battle_over
 		button.text = "%s  ·  %d◆\n%s\n%d ATK   %d HP\n%s" % [
-			card.name.to_upper(), card.cost, card.kind, card.atk, card.hp, card.text
+			card.name.to_upper(), card.cost, UnitCatalogScript.display_class(card.kind),
+			card.atk, card.hp, card.text
 		]
 		button.add_theme_font_size_override("font_size", 12)
 		button.pressed.connect(_select_card.bind(i))
@@ -991,7 +996,7 @@ func _reposition_status(unit: Dictionary) -> String:
 	if unit.get("repositioned", false):
 		return "%s has already changed lanes this turn." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
-		return "%s is taunted by a Warden and cannot leave this lane." % unit.name
+		return "%s is taunted by a Defender and cannot leave this lane." % unit.name
 	return "Choose an open highlighted tile in an adjacent lane to reposition %s." % unit.name
 
 func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
@@ -1028,6 +1033,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		"row": row,
 		"col": col,
 		"name": card.name,
+		"icon": card.get("icon", 0),
 		"kind": card.kind,
 		"cost": card.cost,
 		"atk": card.atk,
@@ -1039,7 +1045,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		# when that side resolves immediately afterward.
 		"ready": true,
 		"repositioned": false,
-		"taunted_by": -1,
+		"taunt_turns": 0,
 		"effects": []
 	})
 	next_unit_id += 1
@@ -1181,6 +1187,15 @@ func _resolve_side(side: int) -> void:
 		await get_tree().create_timer(0.32).timeout
 
 func _activate_unit(actor: Dictionary) -> void:
+	if actor.kind == "Lifebinder":
+		var healing_target = _lowest_health_ally(actor)
+		if healing_target != null:
+			healing_target.hp += 2
+			status_message = "%s heals %s for 2 HP." % [actor.name, healing_target.name]
+			board.play_unit_effect(healing_target.id, "+2 HP", Color("#70e0a1"))
+			_refresh()
+			await get_tree().create_timer(0.22).timeout
+
 	var path: Array = BattleRulesScript.traversal_cells(actor, units)
 	if not path.is_empty():
 		actor.col = path[-1].x
@@ -1192,14 +1207,6 @@ func _activate_unit(actor: Dictionary) -> void:
 		await get_tree().create_timer(0.22).timeout
 	else:
 		status_message = "%s cannot advance." % actor.name
-
-	if actor.kind == "Lifebinder":
-		var wounded = _find_wounded_ally(actor)
-		if wounded != null:
-			wounded.hp = mini(wounded.max_hp, wounded.hp + 2)
-			status_message = "%s restores 2 HP to %s." % [actor.name, wounded.name]
-			board.play_unit_effect(wounded.id, "+2 HP", Color("#70e0a1"))
-			return
 
 	var target = _find_target(actor)
 	if target != null:
@@ -1214,8 +1221,8 @@ func _activate_unit(actor: Dictionary) -> void:
 			board.play_unit_effect(target.id, "-%d" % actor.atk, Color("#ff668f"))
 			_apply_special_damage(actor, target)
 			if actor.kind == "Warden" and target.hp > 0:
-				target.taunted_by = actor.id
-				status_message += " Taunting Strike locks %s into this row." % target.name
+				BattleRulesScript.apply_taunt(target)
+				status_message += " Taunting Strike locks %s for 2 turns." % target.name
 			_remove_defeated()
 			_refresh()
 			if hit + 1 < strikes:
@@ -1235,27 +1242,31 @@ func _activate_unit(actor: Dictionary) -> void:
 		else:
 			dealt = _damage_captain(PLAYER, damage)
 			status_message = "%s strikes your Commander for %d!" % [actor.name, dealt]
+		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
+			actor.atk += 1
+			status_message += " Fury grants +1 ATK."
 		return
 
 func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
 	if actor.kind == "Channeler":
+		var splash_damage := maxi(1, int(actor.atk / 2))
+		var blast_cells: Array = BattleRulesScript.blast_cells(target)
 		for other in units:
-			if other.side == target.side and other.col == target.col and absi(other.row - target.row) == 1:
-				other.hp -= 1
-		status_message += " Arc lightning splashes adjacent lanes."
+			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
+				other.hp -= splash_damage
+		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
 	elif actor.kind == "Artillerist":
 		var direction := 1 if actor.side == PLAYER else -1
-		var behind = null
-		var best_distance := 99
+		var pierced: Array = []
 		for other in units:
-			if other.side == target.side and other.row == target.row:
-				var delta: int = (other.col - target.col) * direction
-				if delta > 0 and delta < best_distance:
-					behind = other
-					best_distance = delta
-		if behind != null:
-			behind.hp -= maxi(1, int(actor.atk / 2))
-			status_message += " The shot pierces into %s." % behind.name
+			if other.id == target.id or other.side == actor.side or other.row != actor.row:
+				continue
+			var distance: int = (other.col - actor.col) * direction
+			if distance > 0 and distance <= actor.range:
+				other.hp -= actor.atk
+				pierced.append(other.name)
+		if not pierced.is_empty():
+			status_message += " Piercing Shot also hits %s." % ", ".join(pierced)
 
 func _find_target(actor: Dictionary):
 	var direction := 1 if actor.side == PLAYER else -1
@@ -1271,15 +1282,18 @@ func _find_target(actor: Dictionary):
 	candidates.sort_custom(func(a, b): return absi(a.col - actor.col) < absi(b.col - actor.col))
 	return candidates[0]
 
-func _find_wounded_ally(actor: Dictionary):
+func _lowest_health_ally(actor: Dictionary):
 	var candidates := []
 	for other in units:
-		if other.side == actor.side and other.id != actor.id and other.hp < other.max_hp:
-			if absi(other.col - actor.col) <= actor.range and absi(other.row - actor.row) <= 1:
-				candidates.append(other)
+		if other.side == actor.side and other.id != actor.id:
+			candidates.append(other)
 	if candidates.is_empty():
 		return null
-	candidates.sort_custom(func(a, b): return (a.hp / float(a.max_hp)) < (b.hp / float(b.max_hp)))
+	candidates.sort_custom(func(a, b):
+		if a.hp == b.hp:
+			return a.id < b.id
+		return a.hp < b.hp
+	)
 	return candidates[0]
 
 func _commander_in_range(actor: Dictionary) -> bool:
@@ -1331,6 +1345,7 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 
 func _expire_side_effects(side: int) -> void:
 	CaptainSkillsScript.expire_effects(units, side)
+	BattleRulesScript.expire_taunts(units, side)
 	if side == PLAYER and player_shield_turns > 0:
 		player_shield_turns -= 1
 		if player_shield_turns == 0:

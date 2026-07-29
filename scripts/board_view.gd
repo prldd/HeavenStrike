@@ -2,6 +2,8 @@ class_name BoardView
 extends Control
 
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
+const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
+const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -226,13 +228,10 @@ func _draw_unit(unit: Dictionary) -> void:
 
 	draw_circle(center + Vector2(0, 3), minf(rect.size.x, rect.size.y) * 0.34, Color(0, 0, 0, 0.3))
 	draw_circle(center, minf(rect.size.x, rect.size.y) * 0.32, Color(color, 0.2))
+	_draw_unit_icon(unit, center, minf(rect.size.x, rect.size.y) * 0.68)
 	draw_arc(center, minf(rect.size.x, rect.size.y) * 0.32, 0, TAU, 32, side_color, 3)
 
-	var initial: String = unit.kind.left(1)
 	var font := get_theme_default_font()
-	var initial_size := font.get_string_size(initial, HORIZONTAL_ALIGNMENT_LEFT, -1, 24)
-	draw_string(font, center - initial_size / 2 + Vector2(0, initial_size.y * 0.72), initial, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, color)
-
 	var hp_text := "%d" % unit.hp
 	var atk_text := "%d" % unit.atk
 	draw_circle(rect.position + Vector2(15, 15), 13, Color("#e95778"))
@@ -243,6 +242,22 @@ func _draw_unit(unit: Dictionary) -> void:
 	if not unit.ready:
 		draw_circle(center, minf(rect.size.x, rect.size.y) * 0.32, Color(0.05, 0.08, 0.15, 0.48))
 		draw_string(font, Vector2(rect.position.x, rect.end.y - 7), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, Color("#b8c2d9"))
+
+func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
+	var icon_id: int = unit.get("icon", 0)
+	if icon_id < 1 or icon_id > 12:
+		return
+	var texture: Texture2D = UNIT_SPRITES_1 if icon_id <= 6 else UNIT_SPRITES_2
+	var slot := (icon_id - 1) % 6
+	var source := Rect2(slot * 100, 0, 100, 100)
+	var scale_x := -1.0 if unit.side == 0 else 1.0
+	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
+	draw_texture_rect_region(
+		texture,
+		Rect2(Vector2(-size * 0.5, -size * 0.5), Vector2(size, size)),
+		source
+	)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_effect(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-5.0)

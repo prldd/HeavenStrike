@@ -6,11 +6,15 @@ const ROWS := 3
 const COLS := 7
 
 static func is_taunted(unit: Dictionary, units: Array) -> bool:
-	var source_id: int = unit.get("taunted_by", -1)
-	if source_id < 0:
-		return false
-	var source = _unit_by_id(units, source_id)
-	return source != null and source.side != unit.side and source.kind == "Warden"
+	return unit.get("taunt_turns", 0) > 0
+
+static func apply_taunt(unit: Dictionary, turns: int = 2) -> void:
+	unit.taunt_turns = maxi(unit.get("taunt_turns", 0), turns)
+
+static func expire_taunts(units: Array, side: int) -> void:
+	for unit in units:
+		if unit.side == side and unit.get("taunt_turns", 0) > 0:
+			unit.taunt_turns -= 1
 
 static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> bool:
 	if target_row < 0 or target_row >= ROWS:
@@ -94,6 +98,14 @@ static func commander_in_range(unit: Dictionary) -> bool:
 	if unit.side == PLAYER:
 		return (COLS - 1) - unit.col <= unit.range
 	return unit.col <= unit.range
+
+static func blast_cells(target: Dictionary) -> Array:
+	return [
+		Vector2i(target.col - 1, target.row),
+		Vector2i(target.col + 1, target.row),
+		Vector2i(target.col, target.row - 1),
+		Vector2i(target.col, target.row + 1)
+	].filter(func(cell): return cell.x >= 0 and cell.x < COLS and cell.y >= 0 and cell.y < ROWS)
 
 static func locked_mana(units: Array, side: int) -> int:
 	var locked := 0

@@ -102,7 +102,7 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - The first and seventh columns are deployment and Commander zones. Units may deploy there, but opposing units stop in the adjacent column and attack into the zone instead of entering it.
 - Newly deployed units move and attack during the resolution phase of the turn in which they are placed.
 - Each deployed unit may reposition once per Command phase without losing its normal activation.
-- A unit hit by a Warden's Taunting Strike cannot change lanes while that Warden remains active.
+- A unit hit by a Defender's Taunting Strike cannot change lanes for its next two turns.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
 
 These rules are deterministic: the same board state and commands always produce the same result.
@@ -111,25 +111,25 @@ These rules are deterministic: the same board state and commands always produce 
 
 | Class | Movement | Range | Battlefield role |
 | --- | ---: | ---: | --- |
-| Strider | 3 | 1 | Fast attacker that strikes twice for lower damage |
-| Duelist | 2 | 1 | Melee fighter that gains attack after surviving combat |
-| Warden | 2 | 1 | Durable protector whose strikes lock targets into their current lane |
-| Artillerist | 1 | 3 | Ranged attacker whose shots can pierce targets in a lane |
-| Channeler | 1 | 3 | Spellcaster that damages the target and adjacent tiles |
-| Lifebinder | 1 | 2 | Support unit that heals or strengthens allies |
+| Scout | 3 | 1 | **Double Strike:** attacks twice each attack action |
+| Fighter | 2 | 1 | **Fury:** permanently gains +1 ATK after attacking a unit or Captain |
+| Defender | 2 | 1 | **Taunting Strike:** prevents its target from changing lanes for two turns |
+| Gunner | 1 | 3 | **Piercing Shot:** damages every enemy in range along its lane |
+| Mage | 1 | 3 | **Blast:** adjacent enemies take half the Mage's ATK as splash damage |
+| Priest | 1 | 2 | **Heal:** gives 2 HP to the lowest-health other ally before moving |
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
 ## Example Turn
 
-The player begins a turn with 4 available Mana. An enemy Warden blocks the center lane, while the top lane is open.
+The player begins a turn with 4 available Mana. An enemy Defender blocks the center lane, while the top lane is open.
 
-1. The player deploys a 2-Mana Strider in the top lane.
-2. The player deploys a 2-Mana Lifebinder behind a damaged Duelist in the center lane.
-3. During resolution, the Duelist attacks the Warden.
-4. The Lifebinder heals the Duelist.
+1. The player deploys a 2-Mana Scout in the top lane.
+2. The player deploys a 2-Mana Priest behind a damaged Fighter in the center lane.
+3. During resolution, the Fighter attacks the Defender.
+4. The Priest heals the Fighter.
 5. The new units do not act because they were deployed this turn.
-6. On the next player turn, the Strider can advance quickly through the open lane while the center group keeps the Warden occupied.
+6. On the next player turn, the Scout can advance quickly through the open lane while the center group keeps the Defender occupied.
 
 The player has traded immediate power for pressure in one lane and durability in another.
 

@@ -11,7 +11,15 @@ func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
 	assert(roster.size() == 12, "The playable roster must contain 12 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
+	assert(UnitCatalogScript.display_class("Strider") == "Scout")
+	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
+	assert(roster.map(func(unit): return unit.icon).all(
+		func(icon_id): return icon_id >= 1 and icon_id <= 12
+	))
+	var icon_ids: Array = roster.map(func(unit): return unit.icon)
+	icon_ids.sort()
+	assert(icon_ids == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 	for kind in ["Strider", "Duelist", "Warden", "Artillerist", "Channeler", "Lifebinder"]:
 		assert(roster.filter(func(unit): return unit.kind == kind).size() == 2)
 
@@ -47,16 +55,19 @@ func _init() -> void:
 			unique_enemy_cards.append(card_name)
 	assert(unique_enemy_cards.size() == 12)
 
-	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunted_by": -1}
+	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunt_turns": 0}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
 	assert(not BattleRulesScript.is_taunted(mover, [mover, distant_warden]))
 	assert(BattleRulesScript.can_reposition(mover, 0, [mover, distant_warden]))
 	var nearby_warden := {"id": 3, "side": 1, "kind": "Warden", "row": 1, "col": 4, "repositioned": false}
-	mover.taunted_by = 3
+	BattleRulesScript.apply_taunt(mover)
 	assert(BattleRulesScript.is_taunted(mover, [mover, nearby_warden]))
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, nearby_warden]))
+	BattleRulesScript.expire_taunts([mover], 0)
+	assert(mover.taunt_turns == 1)
+	assert(BattleRulesScript.is_taunted(mover, [mover]))
+	BattleRulesScript.expire_taunts([mover], 0)
 	assert(not BattleRulesScript.is_taunted(mover, [mover]))
-	mover.taunted_by = -1
 	var blocker := {"id": 4, "side": 0, "kind": "Strider", "row": 0, "col": 2, "repositioned": false}
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
 	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))
@@ -123,6 +134,13 @@ func _init() -> void:
 	assert(BattleRulesScript.commander_in_range({
 		"side": 1, "col": 1, "range": 1
 	}))
+	var center_target := {"row": 1, "col": 3}
+	assert(BattleRulesScript.blast_cells(center_target) == [
+		Vector2i(2, 1), Vector2i(4, 1), Vector2i(3, 0), Vector2i(3, 2)
+	])
+	assert(BattleRulesScript.blast_cells({"row": 0, "col": 0}) == [
+		Vector2i(1, 0), Vector2i(0, 1)
+	])
 
 	var front_ally := {
 		"id": 9, "side": 0, "kind": "Duelist", "row": 1, "col": 3,
