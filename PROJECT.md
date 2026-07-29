@@ -77,7 +77,7 @@ Each turn has four phases.
 2. **Command**
    - Deploy one or more units the player can afford.
    - Units are placed in an open tile on the player's deployment edge.
-   - Reposition deployed units to an open tile in an adjacent lane at the same column.
+   - Reposition deployed units to a reachable tile in any other lane at the same column.
    - Use the Commander power if it is available.
    - End the phase when ready.
 
@@ -107,6 +107,7 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - The first and seventh columns are deployment and Commander zones. Units may deploy there, but opposing units stop in the adjacent column and attack into the zone instead of entering it.
 - Newly deployed units move and attack during the resolution phase of the turn in which they are placed.
 - Each deployed unit may reposition once per Command phase without losing its normal activation.
+- A lane change may cross multiple rows, but every crossed tile must be unoccupied.
 - A unit hit by a Defender's Taunting Strike cannot change lanes for its next two turns.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
 

@@ -143,6 +143,17 @@ func _init() -> void:
 	var blocker := {"id": 4, "side": 0, "kind": "Strider", "row": 0, "col": 2, "repositioned": false}
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
 	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))
+	var top_lane_mover := {
+		"id": 50, "side": 0, "kind": "Duelist", "row": 0, "col": 2,
+		"repositioned": false, "taunt_turns": 0
+	}
+	assert(BattleRulesScript.can_reposition(top_lane_mover, 2, [top_lane_mover]))
+	var middle_lane_blocker := {
+		"id": 51, "side": 1, "kind": "Warden", "row": 1, "col": 2
+	}
+	assert(not BattleRulesScript.can_reposition(
+		top_lane_mover, 2, [top_lane_mover, middle_lane_blocker]
+	))
 
 	var mana_units := [
 		{"side": 0, "cost": 2},

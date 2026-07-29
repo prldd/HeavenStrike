@@ -187,7 +187,7 @@ func _draw() -> void:
 
 	var selected_unit: Variant = _unit_by_id(selected_unit_id)
 	if selected_unit != null and enabled and not BattleRulesScript.is_taunted(selected_unit, units) and not selected_unit.get("repositioned", false):
-		for target_row in [selected_unit.row - 1, selected_unit.row + 1]:
+		for target_row in ROWS:
 			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
 				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
 				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)

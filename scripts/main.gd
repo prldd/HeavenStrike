@@ -379,7 +379,7 @@ func _update_tutorial() -> void:
 	var pages := [
 		"1 / 5\nSELECT A CARD\nCards show Mana cost, class, attack, health, and their special ability.",
 		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units move and attack when the turn resolves.",
-		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in an adjacent row. Each unit may shift once per turn.",
+		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in another row. Units cannot shift through an occupied tile, and may shift once per turn.",
 		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Defender cannot change rows for its next two turns.",
 		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
 	]
@@ -1248,16 +1248,16 @@ func _reposition_status(unit: Dictionary) -> String:
 		return "%s has already changed lanes this turn." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted by a Defender and cannot leave this lane." % unit.name
-	return "Choose an open highlighted tile in an adjacent lane to reposition %s." % unit.name
+	return "Choose a reachable highlighted tile in another lane to reposition %s." % unit.name
 
 func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
 	if unit.get("repositioned", false):
 		return "%s has already repositioned this turn." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted and must remain in its lane." % unit.name
-	if col != unit.col or absi(row - unit.row) != 1:
-		return "Units can only shift to an adjacent lane in the same column."
-	return "That destination is occupied."
+	if col != unit.col or row == unit.row:
+		return "Units can only shift between lanes in the same column."
+	return "Another unit blocks that lane shift."
 
 func _on_deployment_clicked(row: int) -> void:
 	if not input_enabled or selected_hand_index < 0 or selected_hand_index >= player_hand.size():
@@ -1415,7 +1415,9 @@ func _enemy_reposition_units() -> void:
 		var current_threat := _player_lane_threat(unit.row, unit.col)
 		var best_row: int = unit.row
 		var best_threat := current_threat
-		for candidate_row in [unit.row - 1, unit.row + 1]:
+		for candidate_row in ROWS:
+			if candidate_row == unit.row:
+				continue
 			if not BattleRulesScript.can_reposition(unit, candidate_row, units):
 				continue
 			var candidate_threat := _player_lane_threat(candidate_row, unit.col)

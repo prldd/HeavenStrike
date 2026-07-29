@@ -19,13 +19,15 @@ static func expire_taunts(units: Array, side: int) -> void:
 static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> bool:
 	if target_row < 0 or target_row >= ROWS:
 		return false
-	if absi(target_row - unit.row) != 1:
+	if target_row == unit.row:
 		return false
 	if unit.get("repositioned", false) or is_taunted(unit, units):
 		return false
-	for other in units:
-		if other.row == target_row and other.col == unit.col:
-			return false
+	var direction := 1 if target_row > unit.row else -1
+	for row in range(unit.row + direction, target_row + direction, direction):
+		for other in units:
+			if other.get("id", -1) != unit.id and other.row == row and other.col == unit.col:
+				return false
 	return true
 
 static func attack_cells(unit: Dictionary) -> Array:

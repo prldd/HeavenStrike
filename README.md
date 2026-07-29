@@ -15,7 +15,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Start from the main menu in **Campaign** or **Practice Battle**.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
-- Select a deployed unit, then an open tile in an adjacent row to reposition it.
+- Select a deployed unit, then a reachable tile in any other row to reposition it; units cannot pass through occupied tiles.
 - A unit can reposition once per turn unless a Defender's Taunting Strike has locked it for two turns.
 - Hover or select a deployed unit to preview its cyan traversal path and coral attack reach.
 - Attack reach is projected from the unit's destination after earlier allied movement is simulated.
