@@ -1,7 +1,7 @@
 class_name SquadStore
 extends RefCounted
 
-const SQUAD_SIZE := 15
+const SQUAD_SIZE := 8
 const SAVE_PATH := "user://player.cfg"
 const DEFAULT_CAPTAIN_SKILL := "Rally"
 

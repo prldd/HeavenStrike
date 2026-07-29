@@ -37,10 +37,10 @@ Units enter from their owner's edge and advance toward the opposing Commander. U
 
 ### Squad
 
-Before battle, each side prepares a squad of up to 15 units:
+Before battle, each side prepares a squad of up to 8 units:
 
 - One Vanguard is always available at the start of the match.
-- Up to 14 other units form the draw pile.
+- Up to 7 other units form the draw pile.
 - The player begins with the Vanguard and three drawn units.
 - Reserve cards are shuffled at the start of every battle; the Vanguard remains the guaranteed first card.
 - A bench can hold up to six units.

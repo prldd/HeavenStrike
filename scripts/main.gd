@@ -204,7 +204,7 @@ func _build_interface() -> void:
 
 	var squad_button := Button.new()
 	squad_button.text = "SQUAD"
-	squad_button.tooltip_text = "Choose the 15 units in your battle squad."
+	squad_button.tooltip_text = "Choose the 8 units in your battle squad."
 	squad_button.custom_minimum_size.x = 78
 	squad_button.pressed.connect(_open_squad_builder)
 	control_bar.add_child(squad_button)

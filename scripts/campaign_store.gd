@@ -2,6 +2,7 @@ class_name CampaignStore
 extends RefCounted
 
 const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
+const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const SAVE_PATH := "user://campaign.cfg"
 const REWARD_UNITS := [
 	"Chain Initiate", "LDF Medic",
@@ -146,7 +147,7 @@ static func enemy_squad_names(mission_id: int, roster: Array) -> Array:
 	if roster.is_empty():
 		return names
 	var offset: int = maxi(0, mission_id) * 3
-	for index in 15:
+	for index in SquadStoreScript.SQUAD_SIZE:
 		var roster_index: int = (index + offset) % roster.size()
 		var unit_name: String = roster[roster_index].name
 		if names.count(unit_name) < 2:

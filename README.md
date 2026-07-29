@@ -24,7 +24,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Deploy units while enough unlocked Mana remains.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.
-- Select **Squad** to choose up to 15 units, with at most two copies of each.
+- Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
 - Defeat the enemy Commander before it reduces your 24 HP to zero.
 
@@ -32,7 +32,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 
 - Three-lane, seven-column battlefield
 - 23 units across six distinct classes
-- Persistent 1–15 unit squad construction with a two-copy limit
+- Persistent 1–8 unit squad construction with a two-copy limit
 - 62 sequential story missions across two acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
@@ -45,7 +45,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Six-unit bench and persistent locked-Mana economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing
 - Enemy deployment AI
-- Finite 15-card enemy squads with hand, draw, and deck exhaustion rules
+- Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
 - Commander health, Rally powers, victory, defeat, and replay
 - Persistent selection of eight Captain skills

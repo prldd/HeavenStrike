@@ -44,7 +44,7 @@ func _init() -> void:
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
-	assert(default_squad.size() == 15)
+	assert(default_squad.size() == 8)
 	var repaired_squad: Array = SquadStoreScript.sanitize(["Trinity Rusher", "Trinity Rusher", "Trinity Rusher", "Missing"], roster)
 	assert(repaired_squad.size() == 2)
 	assert(repaired_squad.count("Trinity Rusher") == 2)
@@ -63,7 +63,7 @@ func _init() -> void:
 	ordered_names.sort()
 	shuffled_names.sort()
 	assert(shuffled_names == ordered_names)
-	assert(SquadStoreScript.sanitize([], roster).size() == 15)
+	assert(SquadStoreScript.sanitize([], roster).size() == 8)
 	var inventory := CampaignStoreScript.inventory_counts(
 		roster, ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"]
 	)
@@ -120,12 +120,12 @@ func _init() -> void:
 	assert(CampaignStoreScript.choose_weighted_reward(rarity_candidates, 0.93) == "One Star")
 	assert(CampaignStoreScript.choose_weighted_reward(rarity_candidates, 0.99) == "Five Star")
 	var enemy_squad: Array = CampaignStoreScript.enemy_squad_names(2, roster)
-	assert(enemy_squad.size() == 15)
+	assert(enemy_squad.size() == 8)
 	var unique_enemy_cards: Array = []
 	for card_name in enemy_squad:
 		if card_name not in unique_enemy_cards:
 			unique_enemy_cards.append(card_name)
-	assert(unique_enemy_cards.size() == 15)
+	assert(unique_enemy_cards.size() == 8)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunt_turns": 0}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
