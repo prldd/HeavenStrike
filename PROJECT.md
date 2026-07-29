@@ -42,7 +42,7 @@ Before battle, each side prepares a squad of up to 15 units:
 - One Vanguard is always available at the start of the match.
 - Up to 14 other units form the draw pile.
 - The player begins with the Vanguard and three drawn units.
-- A hand can hold up to five units.
+- A bench can hold up to six units.
 - A squad may contain no more than two copies of the same unit.
 - PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
 

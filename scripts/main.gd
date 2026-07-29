@@ -8,11 +8,14 @@ const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
+const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
+const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 
 const PLAYER := 0
 const ENEMY := 1
 const ROWS := 3
 const COLS := 7
+const BENCH_LIMIT := 6
 const STARTING_HP := 24
 
 var board: BoardView
@@ -70,6 +73,7 @@ var pending_mission_id := -1
 var units: Array = []
 var player_hand: Array = []
 var enemy_hand: Array = []
+var unit_icon_cache := {}
 var draw_index := 0
 var enemy_draw_index := 0
 var selected_hand_index := -1
@@ -785,20 +789,24 @@ func _build_hover_card() -> void:
 	add_child(hover_card)
 
 	var content := VBoxContainer.new()
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_theme_constant_override("separation", 8)
 	hover_card.add_child(content)
 
 	hover_name_label = Label.new()
+	hover_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_name_label.add_theme_font_size_override("font_size", 20)
 	hover_name_label.add_theme_color_override("font_color", Color("#71e6f5"))
 	content.add_child(hover_name_label)
 
 	hover_stats_label = Label.new()
+	hover_stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_stats_label.add_theme_font_size_override("font_size", 14)
 	hover_stats_label.add_theme_color_override("font_color", Color("#e7edf8"))
 	content.add_child(hover_stats_label)
 
 	hover_ability_label = Label.new()
+	hover_ability_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_ability_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hover_ability_label.add_theme_font_size_override("font_size", 14)
 	hover_ability_label.add_theme_color_override("font_color", Color("#aebdda"))
@@ -896,13 +904,13 @@ func _start_new_match() -> void:
 	_refresh()
 
 func _draw_player_card() -> void:
-	if player_hand.size() >= 5 or draw_index >= battle_deck.size():
+	if player_hand.size() >= BENCH_LIMIT or draw_index >= battle_deck.size():
 		return
 	player_hand.append(battle_deck[draw_index].duplicate())
 	draw_index += 1
 
 func _draw_enemy_card() -> void:
-	if enemy_hand.size() >= 5 or enemy_draw_index >= enemy_deck.size():
+	if enemy_hand.size() >= BENCH_LIMIT or enemy_draw_index >= enemy_deck.size():
 		return
 	enemy_hand.append(enemy_deck[enemy_draw_index].duplicate())
 	enemy_draw_index += 1
@@ -944,6 +952,8 @@ func _rebuild_hand() -> void:
 		button.toggle_mode = true
 		button.button_pressed = i == selected_hand_index
 		button.disabled = not input_enabled or card.cost > player_energy or battle_over
+		button.icon = _unit_icon(card.get("icon", 0))
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.text = "%s  ·  %d◆\n%s\n%d ATK   %d HP\n%s" % [
 			card.name.to_upper(), card.cost, UnitCatalogScript.display_class(card.kind),
 			card.atk, card.hp, card.text
@@ -953,6 +963,21 @@ func _rebuild_hand() -> void:
 		button.mouse_entered.connect(_show_unit_details.bind(card))
 		button.mouse_exited.connect(_hide_unit_details)
 		hand_row.add_child(button)
+
+func _unit_icon(icon_id: int) -> Texture2D:
+	if icon_id < 1 or icon_id > 12:
+		return null
+	if unit_icon_cache.has(icon_id):
+		return unit_icon_cache[icon_id]
+	var atlas: Texture2D = UNIT_SPRITES_1 if icon_id <= 6 else UNIT_SPRITES_2
+	var source_image: Image = atlas.get_image()
+	var icon_image := source_image.get_region(
+		Rect2i(((icon_id - 1) % 6) * 100, 0, 100, 100)
+	)
+	icon_image.resize(64, 64, Image.INTERPOLATE_LANCZOS)
+	var icon := ImageTexture.create_from_image(icon_image)
+	unit_icon_cache[icon_id] = icon
+	return icon
 
 func _select_card(index: int) -> void:
 	if not input_enabled:
