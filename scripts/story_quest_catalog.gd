@@ -1,19 +1,6 @@
 class_name StoryQuestCatalog
 extends RefCounted
 
-const CURRENT_ROSTER := [
-	"Socialite Fencer", "Pub Bouncer", "Trinity Rusher", "Trinity Potshot",
-	"Claw Caster", "Chain Initiate", "LDF Peacekeeper", "Trinity Basher",
-	"Claw Slicer", "Factory Markswoman", "Rage Spellslinger", "LDF Medic",
-	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
-	"LDF Gunner", "Order Pupil", "Order Cleric",
-	"Order Apostle", "Trinity Messenger", "Minerva the Brave",
-	"Naruku the Lookout", "Whirling Ragnr",
-	"Master Builder", "Rage Bruiser", "Claw Ambusher", "LDF Sureshot",
-	"Order Scholar", "Order Chaplain", "Order Missionary", "Trinity Herald",
-	"Minerva the Lionheart", "Farsight Naruku", "Macewielder Ragnr"
-]
-
 const ADDITIONAL_DROPS := {
 	"Apprentice Builder": [11, 12, 14, 17, 23, 32, 37, 46, 48],
 	"Rage Brute": [3, 8, 9, 15, 20, 23, 28, 30, 42, 62],
@@ -31,7 +18,13 @@ const ADDITIONAL_DROPS := {
 	"Order Chaplain": [21, 22, 24, 53],
 	"Order Missionary": [28, 29, 41, 54, 57],
 	"Trinity Herald": [18, 25, 49, 51],
-	"Minerva the Lionheart": [25, 39, 40, 60, 62]
+	"Minerva the Lionheart": [25, 39, 40, 60, 62],
+	"Talon Scratcher": [4, 7, 43, 51],
+	"Talon Slasher": [43, 51],
+	"Street Urchin": [23, 27, 38, 44, 60],
+	"Street Hoodlum": [13, 14, 27, 38, 44, 60],
+	"LDF Crowd Mage": [7, 28, 33, 57, 59, 61],
+	"LDF Riot Mage": [28, 33, 57, 59, 61]
 }
 
 const QUESTS := [
@@ -112,8 +105,7 @@ static func build_missions() -> Array:
 		for unit_name in ADDITIONAL_DROPS:
 			if index + 1 in ADDITIONAL_DROPS[unit_name]:
 				reference_pool.append(unit_name)
-		var uses_fallback := reference_pool.is_empty()
-		var reward_pool: Array = CURRENT_ROSTER.duplicate() if uses_fallback else reference_pool
+		var reward_pool: Array = reference_pool
 		var enemy_hp := mini(20, 8 + int(index / 4))
 		var battle_count := 1 if index < 10 else (2 if index < 30 else 3)
 		var encounters: Array = []
@@ -132,7 +124,6 @@ static func build_missions() -> Array:
 			"briefing": "Complete this story mission and earn one card from its drop pool.",
 			"enemy_hp": enemy_hp,
 			"encounters": encounters,
-			"reward_pool": reward_pool,
-			"uses_fallback": uses_fallback
+			"reward_pool": reward_pool
 		})
 	return missions

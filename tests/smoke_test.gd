@@ -10,27 +10,27 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 34, "The playable roster must contain 34 units.")
+	assert(roster.size() == 45, "The playable roster must contain 45 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 36
+		func(icon_id): return icon_id >= 1 and icon_id <= 48
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 2).size() == 8)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 9)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 3)
-	assert(roster.filter(func(unit): return unit.stars == 5).size() == 2)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 10)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 13)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 6)
+	assert(roster.filter(func(unit): return unit.stars == 5).size() == 4)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	icon_ids.sort()
-	assert(icon_ids == range(1, 30) + range(31, 36))
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 6)
+	assert(icon_ids == range(1, 30) + range(31, 36) + range(37, 42) + range(43, 49))
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 11)
 	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 6)
 	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 4)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 4)
-	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 8)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 6)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 12)
 	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 6)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
@@ -47,7 +47,18 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Order Missionary").skill.name == "Heaven's Wrath")
 	assert(UnitCatalogScript.by_name("Farsight Naruku").skill.name == "Empower")
 	assert(UnitCatalogScript.by_name("Macewielder Ragnr").stars == 5)
-	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 11)
+	assert(UnitCatalogScript.by_name("Talon Scratcher").skill.name == "Pinning Slice")
+	assert(UnitCatalogScript.by_name("Talon Slasher").promotion_of == "Talon Scratcher")
+	assert(UnitCatalogScript.by_name("Innocent Gretel").kind == "Artillerist")
+	assert(UnitCatalogScript.by_name("Witchkiller Gretel").hp == 7)
+	assert(UnitCatalogScript.by_name("Talon Slicer").promotion_of == "Talon Slasher")
+	assert(UnitCatalogScript.by_name("Street Urchin").skill.name == "Misfortune")
+	assert(UnitCatalogScript.by_name("Street Hoodlum").promotion_of == "Street Urchin")
+	assert(UnitCatalogScript.by_name("LDF Crowd Mage").stars == 2)
+	assert(UnitCatalogScript.by_name("LDF Riot Mage").promotion_of == "LDF Crowd Mage")
+	assert(UnitCatalogScript.by_name("Fortune Teller").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Fortune Diviner").hp == 7)
+	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 17)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -108,18 +119,26 @@ func _init() -> void:
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
 	assert(CampaignStoreScript.reward_summary(2) == "Random: Rage Brute")
-	assert(CampaignStoreScript.reward_summary(3).begins_with("Prototype pool:"))
+	assert(CampaignStoreScript.reward_summary(3) == "Random: Talon Scratcher")
 	assert(CampaignStoreScript.reward_summary(7) == "Random: Claw Caster, Claw Slicer, Rage Brute, Claw Skirmisher, Claw Ambusher")
 	var training_rewards: Array = CampaignStoreScript.reward_options(0, roster)
 	assert(training_rewards.size() == 2)
 	assert(is_equal_approx(training_rewards[0].chance, 0.5))
 	assert(is_equal_approx(training_rewards[1].chance, 0.5))
-	var fallback_rewards: Array = CampaignStoreScript.reward_options(3, roster)
-	assert(fallback_rewards.size() == 34)
-	var fallback_total := 0.0
-	for option in fallback_rewards:
-		fallback_total += option.chance
-	assert(is_equal_approx(fallback_total, 1.0))
+	assert(CampaignStoreScript.reward_options(3, roster).size() == 1)
+	assert(is_equal_approx(CampaignStoreScript.reward_options(3, roster)[0].chance, 1.0))
+	assert(CampaignStoreScript.reward_summary(6) == "Random: Talon Scratcher, LDF Crowd Mage")
+	assert("Master Builder" in CampaignStoreScript.MISSIONS[10].reward_pool)
+	assert("Claw Ambusher" in CampaignStoreScript.MISSIONS[7].reward_pool)
+	assert("Order Missionary" in CampaignStoreScript.MISSIONS[27].reward_pool)
+	for mission in CampaignStoreScript.MISSIONS:
+		assert("Farsight Naruku" not in mission.reward_pool)
+		assert("Macewielder Ragnr" not in mission.reward_pool)
+		assert("Innocent Gretel" not in mission.reward_pool)
+		assert("Witchkiller Gretel" not in mission.reward_pool)
+		assert("Talon Slicer" not in mission.reward_pool)
+		assert("Fortune Teller" not in mission.reward_pool)
+		assert("Fortune Diviner" not in mission.reward_pool)
 	var rarity_candidates := [
 		{"name": "One Star", "stars": 1},
 		{"name": "Five Star", "stars": 5}
@@ -232,6 +251,35 @@ func _init() -> void:
 	}
 	assert(not UnitSkillsScript.resolve_warcry(gunner, [gunner, warcry_enemy]).message.is_empty())
 	assert(warcry_enemy.hp == 5)
+	var misfortune_actor := {
+		"id": 37, "side": 0, "name": "Street Urchin", "atk": 2,
+		"hp": 2, "max_hp": 2, "effects": [],
+		"skill": {"name": "Misfortune", "type": "Warcry"}
+	}
+	var enemy_scout := {
+		"id": 38, "side": 1, "name": "Enemy Scout", "kind": "Strider",
+		"atk": 5, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var enemy_gunner := {
+		"id": 39, "side": 1, "name": "Enemy Gunner", "kind": "Artillerist",
+		"atk": 4, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var enemy_fighter := {
+		"id": 40, "side": 1, "name": "Enemy Fighter", "kind": "Duelist",
+		"atk": 8, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var misfortune_units := [
+		misfortune_actor, enemy_scout, enemy_gunner, enemy_fighter
+	]
+	assert(not UnitSkillsScript.resolve_warcry(
+		misfortune_actor, misfortune_units
+	).message.is_empty())
+	assert(enemy_scout.atk == 4)
+	assert(enemy_gunner.atk == 4 and enemy_fighter.atk == 8)
+	CaptainSkillsScript.expire_effects(misfortune_units, 1)
+	assert(enemy_scout.atk == 4)
+	CaptainSkillsScript.expire_effects(misfortune_units, 1)
+	assert(enemy_scout.atk == 5)
 	var pupil := {
 		"id": 36, "side": 0, "name": "Order Pupil", "atk": 3,
 		"hp": 2, "max_hp": 2, "effects": [],
@@ -248,6 +296,10 @@ func _init() -> void:
 	assert(warcry_enemy.immobilized_turns == 1)
 	UnitSkillsScript.expire_statuses([warcry_enemy], 1)
 	assert(warcry_enemy.immobilized_turns == 0)
+	skirmisher.skill = {"name": "Pinning Slice", "type": "Strike"}
+	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.59).message.is_empty())
+	warcry_enemy.immobilized_turns = 0
+	assert(UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.60).message.is_empty())
 
 	var preview_unit := {"id": 6, "side": 0, "kind": "Strider", "row": 1, "col": 1, "move": 3, "range": 1}
 	assert(BattleRulesScript.attack_cells(preview_unit) == [Vector2i(2, 1)])

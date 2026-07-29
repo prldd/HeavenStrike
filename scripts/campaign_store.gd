@@ -12,7 +12,11 @@ const REWARD_UNITS := [
 	"Naruku the Lookout", "Whirling Ragnr",
 	"Master Builder", "Rage Bruiser", "Claw Ambusher", "LDF Sureshot",
 	"Order Scholar", "Order Chaplain", "Order Missionary", "Trinity Herald",
-	"Minerva the Lionheart", "Farsight Naruku", "Macewielder Ragnr"
+	"Minerva the Lionheart", "Farsight Naruku", "Macewielder Ragnr",
+	"Talon Scratcher", "Talon Slasher", "Innocent Gretel",
+	"Witchkiller Gretel", "Talon Slicer",
+	"Street Urchin", "Street Hoodlum", "LDF Crowd Mage",
+	"LDF Riot Mage", "Fortune Teller", "Fortune Diviner"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()
@@ -96,8 +100,9 @@ static func reward_summary(mission_id: int) -> String:
 	if mission_id < 0 or mission_id >= MISSIONS.size():
 		return "No card reward"
 	var mission: Dictionary = MISSIONS[mission_id]
-	var prefix := "Prototype pool: " if mission.get("uses_fallback", false) else "Random: "
-	return prefix + ", ".join(mission.reward_pool)
+	if mission.reward_pool.is_empty():
+		return "No implemented story card reward"
+	return "Random: " + ", ".join(mission.reward_pool)
 
 static func roll_reward(mission_id: int, roster: Array, roll: float = -1.0) -> String:
 	if mission_id < 0 or mission_id >= MISSIONS.size():

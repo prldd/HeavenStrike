@@ -17,6 +17,8 @@ const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png"
 const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
 const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
 const UNIT_SPRITES_6 := preload("res://assets/units/reference-units-031-036.png")
+const UNIT_SPRITES_7 := preload("res://assets/units/reference-units-037-042.png")
+const UNIT_SPRITES_8 := preload("res://assets/units/reference-units-043-048.png")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-sky-citadel.png")
 const SQUAD_WORKSHOP_BACKGROUND := preload("res://assets/squad-workshop-armory.png")
 
@@ -884,14 +886,18 @@ func _rebuild_mission_list() -> void:
 		entry.add_child(rewards)
 
 		var reward_label := Label.new()
-		reward_label.text = "PROTOTYPE DROPS" if mission.get("uses_fallback", false) else "CARD DROPS"
+		var reward_options: Array = CampaignStoreScript.reward_options(mission.id, roster)
+		reward_label.text = (
+			"CARD DROPS" if not reward_options.is_empty()
+			else "NO IMPLEMENTED CARD DROP"
+		)
 		reward_label.custom_minimum_size.x = 118
 		reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		reward_label.add_theme_font_size_override("font_size", 11)
 		reward_label.add_theme_color_override("font_color", Color("#8fa5ca"))
 		rewards.add_child(reward_label)
 
-		for option in CampaignStoreScript.reward_options(mission.id, roster):
+		for option in reward_options:
 			var reward_unit: Dictionary = option.unit
 			var tile := VBoxContainer.new()
 			tile.custom_minimum_size = Vector2(34, 40)
@@ -1207,14 +1213,14 @@ func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)
 
 func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
-	if icon_id < 1 or icon_id > 36:
+	if icon_id < 1 or icon_id > 48:
 		return null
 	var cache_key := "%d:%d" % [icon_id, size]
 	if unit_icon_cache.has(cache_key):
 		return unit_icon_cache[cache_key]
 	var sheets: Array[Texture2D] = [
 		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4,
-		UNIT_SPRITES_5, UNIT_SPRITES_6
+		UNIT_SPRITES_5, UNIT_SPRITES_6, UNIT_SPRITES_7, UNIT_SPRITES_8
 	]
 	var atlas: Texture2D = sheets[int((icon_id - 1) / 6)]
 	var source_image: Image = atlas.get_image()

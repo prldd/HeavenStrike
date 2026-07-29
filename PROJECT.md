@@ -51,7 +51,9 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
-The current prototype roster contains 23 unpromoted units and 11 standalone promoted forms. Promotion and leveling logic is deferred; promoted forms currently enter the reward pool as independent cards when their secondary skill is implemented.
+The current prototype roster contains 28 unpromoted units and 17 standalone promoted forms. Promotion and leveling logic is deferred; promoted forms currently enter the reward pool as independent cards when their secondary skill is implemented.
+
+Campaign missions only award implemented cards listed for that exact story quest in the reference data. Cards listed solely for events, raids, arenas, or gacha are not inserted into campaign pools.
 
 ### Mana
 
@@ -136,7 +138,7 @@ Board order and targeting are deterministic except where an ability explicitly s
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
-The implemented roster contains 34 cards: 23 unpromoted units and 11 standalone promoted forms. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks.
+The implemented roster contains 45 cards: 28 unpromoted units and 17 standalone promoted forms. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks.
 
 ## Example Turn
 
@@ -165,7 +167,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 - Full 62-mission, two-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 34 reference units across all six classes
+- 45 reference units across all six classes
 - Three Commanders
 
 ### Later Possibilities

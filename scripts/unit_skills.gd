@@ -35,6 +35,15 @@ static func resolve_warcry(actor: Dictionary, units: Array) -> Dictionary:
 				target.hp -= 1
 				result.message = "Heaven's Wrath deals 1 damage to %s." % target.name
 				result.affected.append(target.id)
+		"Misfortune":
+			var target = _highest_attack_enemy_classes(
+				actor, units, ["Strider", "Artillerist"]
+			)
+			if target != null:
+				target.atk = maxi(0, target.atk - 1)
+				_add_effect(target, "Misfortune", 2, -1, 0)
+				result.message = "Misfortune gives %s -1 ATK for 2 turns." % target.name
+				result.affected.append(target.id)
 	return result
 
 static func resolve_chants(_side: int, _units: Array) -> Array:
@@ -48,11 +57,17 @@ static func resolve_strike(
 	var skill: Dictionary = actor.get("skill", {})
 	if skill.get("type", "").to_lower() != "strike":
 		return result
-	if skill.get("name", "") == "Pinning Strike":
+	var skill_name: String = skill.get("name", "")
+	var pin_chance := 0.0
+	if skill_name == "Pinning Strike":
+		pin_chance = 0.30
+	elif skill_name == "Pinning Slice":
+		pin_chance = 0.60
+	if pin_chance > 0.0:
 		var chance_roll := randf() if roll < 0.0 else roll
-		if chance_roll < 0.30 and target.hp > 0:
+		if chance_roll < pin_chance and target.hp > 0:
 			target.immobilized_turns = maxi(target.get("immobilized_turns", 0), 1)
-			result.message = "Pinning Strike immobilises %s for 1 turn." % target.name
+			result.message = "%s immobilises %s for 1 turn." % [skill_name, target.name]
 			result.affected.append(target.id)
 	return result
 
@@ -127,5 +142,18 @@ static func _highest_health_enemy(actor: Dictionary, units: Array):
 		if a.hp == b.hp:
 			return a.id < b.id
 		return a.hp > b.hp
+	)
+	return null if candidates.is_empty() else candidates[0]
+
+static func _highest_attack_enemy_classes(
+	actor: Dictionary, units: Array, kinds: Array
+):
+	var candidates := _enemies(actor, units).filter(
+		func(unit): return unit.kind in kinds
+	)
+	candidates.sort_custom(func(a, b):
+		if a.atk == b.atk:
+			return a.id < b.id
+		return a.atk > b.atk
 	)
 	return null if candidates.is_empty() else candidates[0]
