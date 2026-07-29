@@ -17,6 +17,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Select a deployed unit, then an open tile in an adjacent row to reposition it.
 - A unit can reposition once per turn unless an enemy Warden taunts it from within two spaces.
+- Hover or select a deployed unit to preview its cyan traversal path and coral attack reach.
 - Deploy as many units as available Energy allows.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.

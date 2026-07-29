@@ -153,6 +153,11 @@ func _draw() -> void:
 		Color("#b9caea")
 	)
 
+	var preview_id: int = selected_unit_id if selected_unit_id >= 0 else hover_unit_id
+	var preview_unit: Variant = _unit_by_id(preview_id)
+	if preview_unit != null:
+		_draw_action_preview(preview_unit)
+
 	_draw_commander(Vector2(68, grid.get_center().y), false)
 	_draw_commander(Vector2(size.x - 68, grid.get_center().y), true)
 
@@ -181,6 +186,18 @@ func _draw() -> void:
 			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
 				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
 				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)
+
+	if preview_unit != null:
+		var legend := "CYAN  TRAVERSE    CORAL  ATTACK REACH"
+		draw_string(
+			get_theme_default_font(),
+			Vector2(grid.end.x - 330, 24),
+			legend,
+			HORIZONTAL_ALIGNMENT_RIGHT,
+			330,
+			11,
+			Color("#91a7ce")
+		)
 
 func _draw_commander(center: Vector2, enemy: bool) -> void:
 	var color := Color("#ed5b86") if enemy else Color("#50d4e8")
@@ -246,6 +263,36 @@ func _draw_effect(unit: Dictionary) -> void:
 func _draw_selection(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-5)
 	draw_style_box(_box(Color(0.25, 0.8, 0.9, 0.08), Color("#71e6f5"), 12, 3), rect)
+
+func _draw_action_preview(unit: Dictionary) -> void:
+	var direction := 1 if unit.side == 0 else -1
+	for cell in BattleRulesScript.attack_cells(unit):
+		var attack_rect := _cell_rect(cell.y, cell.x).grow(-8)
+		var occupied_target := _enemy_at(unit, cell.y, cell.x)
+		var fill := Color(0.94, 0.31, 0.43, 0.24 if occupied_target else 0.09)
+		var width := 3 if occupied_target else 2
+		draw_style_box(_box(fill, Color("#ff667e"), 9, width), attack_rect)
+
+	for cell in BattleRulesScript.traversal_cells(unit, units):
+		var move_rect := _cell_rect(cell.y, cell.x).grow(-12)
+		draw_style_box(_box(Color(0.2, 0.75, 0.9, 0.14), Color("#4ec9e8"), 8, 2), move_rect)
+		var center := move_rect.get_center()
+		var arrow := "›" if direction > 0 else "‹"
+		draw_string(
+			get_theme_default_font(),
+			center + Vector2(-12, 8),
+			arrow,
+			HORIZONTAL_ALIGNMENT_CENTER,
+			24,
+			20,
+			Color("#71e6f5")
+		)
+
+func _enemy_at(unit: Dictionary, row: int, col: int) -> bool:
+	for other in units:
+		if other.side != unit.side and other.row == row and other.col == col:
+			return true
+	return false
 
 func _occupied(row: int, col: int) -> bool:
 	for unit in units:

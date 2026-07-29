@@ -43,6 +43,16 @@ func _init() -> void:
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
 	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))
 
+	var preview_unit := {"id": 6, "side": 0, "kind": "Strider", "row": 1, "col": 1, "move": 3, "range": 1}
+	assert(BattleRulesScript.attack_cells(preview_unit) == [Vector2i(2, 1)])
+	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit]) == [
+		Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1)
+	])
+	var path_blocker := {"id": 7, "side": 0, "kind": "Warden", "row": 1, "col": 3}
+	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit, path_blocker]) == [Vector2i(2, 1)])
+	var attack_target := {"id": 8, "side": 1, "kind": "Duelist", "row": 1, "col": 2}
+	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit, attack_target]).is_empty())
+
 	var units := [
 		{"side": 0, "row": 1, "col": 5, "atk": 3, "hp": 4, "max_hp": 4}
 	]
