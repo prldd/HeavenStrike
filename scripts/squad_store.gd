@@ -56,6 +56,7 @@ static func save_squad(names: Array, roster: Array) -> bool:
 	if clean.is_empty() or clean.size() > SQUAD_SIZE:
 		return false
 	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
 	config.set_value("squad", "units", clean)
 	return config.save(SAVE_PATH) == OK
 

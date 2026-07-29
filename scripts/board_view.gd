@@ -48,6 +48,7 @@ var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
 var projectile_kind := ""
 var shake_tween: Tween
+var reduced_motion := false
 
 func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -140,7 +141,8 @@ func animate_attack(
 	var origin := _cell_rect(actor.row, actor.col).get_center()
 	var destination := _cell_rect(target.row, target.col).get_center()
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
-		var lunge := (destination - origin).normalized() * minf(28.0, origin.distance_to(destination) * 0.22)
+		var lunge_scale := 0.35 if reduced_motion else 1.0
+		var lunge := (destination - origin).normalized() * minf(28.0, origin.distance_to(destination) * 0.22) * lunge_scale
 		var tween := create_tween()
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
@@ -159,7 +161,7 @@ func animate_commander_attack(
 	var origin := _cell_rect(actor.row, actor.col).get_center()
 	var destination := Vector2(size.x - 82 if commander_side == 1 else 82, _grid_rect().get_center().y)
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
-		var lunge := (destination - origin).normalized() * 30.0
+		var lunge := (destination - origin).normalized() * (10.0 if reduced_motion else 30.0)
 		var tween := create_tween()
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
@@ -212,6 +214,8 @@ func animate_defeat(unit_id: int, duration: float = 0.28) -> void:
 	queue_redraw()
 
 func shake(strength: float = 8.0) -> void:
+	if reduced_motion:
+		return
 	if shake_tween != null and shake_tween.is_valid():
 		shake_tween.kill()
 	var origin := position

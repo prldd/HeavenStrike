@@ -1,11 +1,18 @@
 extends SceneTree
 
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
+const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 
 func _init() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	BattleSettingsScript.save_settings({
+		"speed": 1.0,
+		"volume": 2,
+		"reduced_motion": false,
+		"skip_animations": false
+	})
 	var scene: PackedScene = load("res://main.tscn")
 	var game = scene.instantiate()
 	root.add_child(game)
@@ -16,6 +23,16 @@ func _run() -> void:
 	assert(game.squad_overlay.get_child(0).texture != null)
 	assert(game.speed_button.text == "SPEED 1×")
 	assert(game.audio_button.text == "SOUND 100%")
+	assert(game.animation_button.text == "ANIM ON")
+	assert(game.motion_button.text == "MOTION FULL")
+	game._toggle_animation_skip()
+	assert(game.skip_animations)
+	game._toggle_animation_skip()
+	assert(not game.skip_animations)
+	game._toggle_reduced_motion()
+	assert(game.reduced_motion and game.board.reduced_motion)
+	game._toggle_reduced_motion()
+	assert(not game.reduced_motion and not game.board.reduced_motion)
 	assert(game.battle_audio.sounds.size() == 13)
 	assert(game.battle_audio.sounds.has("victory"))
 	game._cycle_audio()

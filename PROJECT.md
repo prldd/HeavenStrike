@@ -209,13 +209,15 @@ Combat information must remain readable even when several abilities resolve in s
 
 The project will use Godot 4 and target desktop first at a touch-friendly 16:9 resolution. Unit and ability data will be stored as Godot Resources so content can be balanced without changing combat code.
 
-The battle simulation will be separated from animation and interface code. It will produce an ordered list of events—movement, attacks, healing, status changes, and defeats—which the presentation layer then animates. This supports reliable AI testing, replays, faster debugging, and possible future network play.
+Battle activation planning is separated from animation and interface code in `BattleSimulator`. It owns seeded randomness, activation order, projected movement, target selection, skill timing metadata, structured event records, and deterministic replay serialization. The presentation layer consumes those decisions for animation and audio, while a headless balance harness audits every configured campaign encounter.
 
 The current presentation layer previews each side's upcoming activation order before resolution, identifies unit class and secondary-skill timing in the combat log, animates combat results, and displays persistent counters for Taunt, Immobilise, Fury, buffs, and debuffs.
 
 Combat presentation uses eased movement and class-specific actions: melee lunges, ranged projectiles, healing pulses, hit recoil, sequential Double Strikes, multi-target Blast and Piercing feedback, and a defeat dissolve before defeated units leave the board.
 
 Battle audio is synthesized locally and synchronized with deployment, movement, class attacks, healing, status application, shields, impacts, and defeat. Players can select full volume, half volume, or mute; Commander impacts also apply a brief screen shake.
+
+Presentation settings persist across sessions. Players can pause resolution, skip animation delays, or enable reduced motion, which shortens movement and suppresses screen shake.
 
 ## First Milestone
 

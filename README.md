@@ -26,6 +26,8 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Select **Resolve Turn** to let units move and fight.
 - Select **SPEED** to cycle resolution between 1×, 2×, and 4×.
 - Select **SOUND** to cycle battle audio between 100%, 50%, and muted.
+- Select **PAUSE** to suspend or resume an active resolution.
+- Select **ANIM** to skip presentation delays, and **MOTION** for reduced movement and screen shake.
 - Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
 - Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
@@ -77,7 +79,12 @@ Run the automated gameplay-data and AI smoke tests:
 ```bash
 ./tools/godot-headless.sh --script res://tests/smoke_test.gd
 ./tools/godot-headless.sh --script res://tests/ui_smoke_test.gd
+./tools/godot-headless.sh --script res://tests/balance_simulation.gd
 ```
 
 The launcher uses the repository-local native Linux Godot 4.7.1 installation
 and avoids WSL Windows-binary interoperability issues.
+
+Battle speed, audio, animation-skip, and reduced-motion preferences persist in
+the player configuration. Completed battles write a deterministic structured
+replay to `user://last_replay.json`.

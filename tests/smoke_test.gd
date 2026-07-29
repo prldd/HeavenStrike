@@ -1,6 +1,7 @@
 extends SceneTree
 
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
@@ -17,6 +18,12 @@ func _init() -> void:
 	assert(UnitCatalogScript.class_color("Strider") != UnitCatalogScript.class_color("Duelist"))
 	assert(UnitCatalogScript.class_color("Warden") != UnitCatalogScript.class_color("Lifebinder"))
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
+	var simulator := BattleSimulatorScript.new()
+	simulator.reset(4242)
+	assert(simulator.seed_value == 4242)
+	assert(simulator.record("test", {"value": 7}).sequence == 1)
+	assert(simulator.replay_data().events.size() == 1)
+	assert(simulator.replay_data().seed == 4242)
 	assert(roster.map(func(unit): return unit.icon).all(
 		func(icon_id): return icon_id >= 1 and icon_id <= 48
 	))

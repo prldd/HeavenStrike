@@ -12,6 +12,8 @@ const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const SquadCardScript = preload("res://scripts/squad_card.gd")
 const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const BattleAudioScript = preload("res://scripts/battle_audio.gd")
+const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
+const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
@@ -61,7 +63,11 @@ var hover_stats_label: Label
 var hover_ability_label: Label
 var speed_button: Button
 var audio_button: Button
+var pause_button: Button
+var animation_button: Button
+var motion_button: Button
 var battle_audio: BattleAudio
+var battle_simulator: BattleSimulator
 var combat_log_panel: PanelContainer
 var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
@@ -120,11 +126,16 @@ var has_shown_tutorial := false
 var resolution_speed := 1.0
 var combat_log_lines: Array = []
 var last_logged_message := ""
+var battle_seed := 1
+var reduced_motion := false
+var skip_animations := false
 
 func _ready() -> void:
 	_build_interface()
 	battle_audio = BattleAudioScript.new()
 	add_child(battle_audio)
+	battle_simulator = BattleSimulatorScript.new()
+	_load_battle_settings()
 	completed_missions = CampaignStoreScript.load_completed()
 	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
 	squad_names = SquadStoreScript.load_squad(roster)
@@ -224,6 +235,28 @@ func _build_interface() -> void:
 	audio_button.pressed.connect(_cycle_audio)
 	action_row.add_child(audio_button)
 
+	pause_button = Button.new()
+	pause_button.text = "PAUSE"
+	pause_button.tooltip_text = "Pause or resume battle resolution."
+	pause_button.custom_minimum_size.x = 68
+	pause_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	pause_button.pressed.connect(_toggle_pause)
+	action_row.add_child(pause_button)
+
+	animation_button = Button.new()
+	animation_button.text = "ANIM ON"
+	animation_button.tooltip_text = "Skip or restore battle animations."
+	animation_button.custom_minimum_size.x = 76
+	animation_button.pressed.connect(_toggle_animation_skip)
+	action_row.add_child(animation_button)
+
+	motion_button = Button.new()
+	motion_button.text = "MOTION FULL"
+	motion_button.tooltip_text = "Reduce lunges, shake, and animation duration."
+	motion_button.custom_minimum_size.x = 102
+	motion_button.pressed.connect(_toggle_reduced_motion)
+	action_row.add_child(motion_button)
+
 	var log_button := Button.new()
 	log_button.text = "LOG"
 	log_button.tooltip_text = "Show or hide the combat action log."
@@ -314,10 +347,53 @@ func _cycle_resolution_speed() -> void:
 	else:
 		resolution_speed = 1.0
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
+	_save_battle_settings()
 
 func _cycle_audio() -> void:
 	battle_audio.cycle_volume()
 	audio_button.text = battle_audio.label()
+	_save_battle_settings()
+
+func _toggle_pause() -> void:
+	get_tree().paused = not get_tree().paused
+	pause_button.text = "RESUME" if get_tree().paused else "PAUSE"
+
+func _toggle_animation_skip() -> void:
+	skip_animations = not skip_animations
+	animation_button.text = "ANIM OFF" if skip_animations else "ANIM ON"
+	_save_battle_settings()
+
+func _toggle_reduced_motion() -> void:
+	reduced_motion = not reduced_motion
+	board.reduced_motion = reduced_motion
+	motion_button.text = "MOTION LOW" if reduced_motion else "MOTION FULL"
+	_save_battle_settings()
+
+func _load_battle_settings() -> void:
+	var settings: Dictionary = BattleSettingsScript.load_settings()
+	resolution_speed = settings.speed
+	reduced_motion = settings.reduced_motion
+	skip_animations = settings.skip_animations
+	battle_audio.set_volume_step(settings.volume)
+	speed_button.text = "SPEED %d×" % int(resolution_speed)
+	audio_button.text = battle_audio.label()
+	board.reduced_motion = reduced_motion
+	animation_button.text = "ANIM OFF" if skip_animations else "ANIM ON"
+	motion_button.text = "MOTION LOW" if reduced_motion else "MOTION FULL"
+
+func _save_battle_settings() -> void:
+	BattleSettingsScript.save_settings({
+		"speed": resolution_speed,
+		"volume": battle_audio.volume_step,
+		"reduced_motion": reduced_motion,
+		"skip_animations": skip_animations
+	})
+
+func _animation_duration(seconds: float) -> float:
+	if skip_animations:
+		return 0.001
+	var motion_scale := 0.45 if reduced_motion else 1.0
+	return seconds * motion_scale / resolution_speed
 
 func _play_attack_sound(kind: String) -> void:
 	match kind:
@@ -331,12 +407,14 @@ func _play_attack_sound(kind: String) -> void:
 			battle_audio.play("priest")
 
 func _wait(seconds: float) -> void:
-	await get_tree().create_timer(seconds / resolution_speed).timeout
+	await get_tree().create_timer(_animation_duration(seconds), false).timeout
 
 func _log_action(message: String) -> void:
 	if message.is_empty() or message == last_logged_message:
 		return
 	last_logged_message = message
+	if battle_simulator != null:
+		battle_simulator.record("combat_log", {"message": message})
 	combat_log_lines.append(message)
 	if combat_log_lines.size() > 60:
 		combat_log_lines.pop_front()
@@ -1253,15 +1331,21 @@ func _start_new_match() -> void:
 		combat_log_label.text = ""
 	player_hand.clear()
 	enemy_hand.clear()
+	battle_seed = int(Time.get_unix_time_from_system() * 1000.0) ^ int(Time.get_ticks_usec())
+	battle_simulator.reset(battle_seed)
+	battle_simulator.record("battle_started", {
+		"mission_id": current_mission_id,
+		"encounter_index": current_encounter_index
+	})
 	battle_deck = SquadStoreScript.shuffle_for_battle(
-		SquadStoreScript.build_deck(squad_names, roster)
+		SquadStoreScript.build_deck(squad_names, roster), battle_simulator.rng
 	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
 	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(
 		current_mission_id, current_encounter_index, roster
 	)
 	enemy_deck = SquadStoreScript.shuffle_for_battle(
-		SquadStoreScript.build_deck(enemy_squad_names, roster)
+		SquadStoreScript.build_deck(enemy_squad_names, roster), battle_simulator.rng
 	)
 	draw_index = 0
 	enemy_draw_index = 0
@@ -1466,12 +1550,15 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			var old_row: int = selected.row
 			var old_col: int = selected.col
 			selected.row = row
+			battle_simulator.record("reposition", {
+				"unit_id": selected.id, "from_row": old_row, "to_row": row
+			})
 			selected_board_unit_id = selected.id
 			status_message = "%s shifts from lane %d to lane %d. Choose another lane or continue." % [selected.name, old_row + 1, row + 1]
 			input_enabled = false
 			_refresh()
 			battle_audio.play("move")
-			await board.animate_unit_move(selected.id, old_row, old_col, 0.24)
+			await board.animate_unit_move(selected.id, old_row, old_col, _animation_duration(0.24))
 			input_enabled = true
 			board.play_unit_effect(selected.id, "SHIFT", Color("#71e6f5"))
 		else:
@@ -1512,11 +1599,14 @@ func _on_deployment_clicked(row: int) -> void:
 		return
 	player_energy -= card.cost
 	var spawned: Dictionary = _spawn_unit(card, PLAYER, row, 0)
+	battle_simulator.record("deploy", {
+		"side": PLAYER, "unit_id": spawned.id, "card": card.name, "row": row
+	})
 	status_message = "%s deployed to lane %d." % [card.name, row + 1]
 	input_enabled = false
 	_refresh()
 	battle_audio.play("deploy")
-	await board.animate_unit_move(spawned.id, row, -1, 0.32)
+	await board.animate_unit_move(spawned.id, row, -1, _animation_duration(0.32))
 	input_enabled = true
 	var warcry_message := await _resolve_warcry(spawned)
 	if not warcry_message.is_empty():
@@ -1567,7 +1657,9 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 	):
 		pending_empower_actor_id = actor.id
 		return "Choose another allied unit as Empower's target."
-	var result: Dictionary = UnitSkillsScript.resolve_warcry(actor, units, target_id)
+	var result: Dictionary = UnitSkillsScript.resolve_warcry(
+		actor, units, target_id, battle_simulator.rng
+	)
 	for unit_id in result.affected:
 		var target = _unit_by_id(unit_id)
 		if target != null:
@@ -1576,10 +1668,10 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 			)
 			if skill.get("name", "") in ["Bolt", "Heaven's Wrath"]:
 				battle_audio.play("mage")
-				await board.animate_hit(target.id, 0.16 / resolution_speed)
+				await board.animate_hit(target.id, _animation_duration(0.16))
 			elif skill.get("name", "") in ["Fortify", "Empower"]:
 				battle_audio.play("status")
-				await board.animate_heal(actor.id, target.id, 0.24 / resolution_speed)
+				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
 			actor.name, skill.get("name", "Unknown"), result.message
@@ -1645,6 +1737,9 @@ func _enemy_turn() -> void:
 		var card: Dictionary = choice.card
 		var row: int = choice.row
 		var spawned: Dictionary = _spawn_unit(card, ENEMY, row, COLS - 1)
+		battle_simulator.record("deploy", {
+			"side": ENEMY, "unit_id": spawned.id, "card": card.name, "row": row
+		})
 		enemy_energy -= card.cost
 		var hand_index: int = enemy_hand.find(card)
 		if hand_index >= 0:
@@ -1652,7 +1747,7 @@ func _enemy_turn() -> void:
 			status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
 			_refresh()
 			battle_audio.play("deploy")
-			await board.animate_unit_move(spawned.id, row, COLS, 0.32 / resolution_speed)
+			await board.animate_unit_move(spawned.id, row, COLS, _animation_duration(0.32))
 			var warcry_message := await _resolve_warcry(spawned)
 			if not warcry_message.is_empty():
 				status_message += " " + warcry_message
@@ -1707,10 +1802,13 @@ func _enemy_reposition_units() -> void:
 			var old_row: int = unit.row
 			var old_col: int = unit.col
 			unit.row = best_row
+			battle_simulator.record("reposition", {
+				"unit_id": unit.id, "from_row": old_row, "to_row": best_row
+			})
 			status_message = "%s shifts from lane %d to lane %d." % [unit.name, old_row + 1, best_row + 1]
 			_refresh()
 			battle_audio.play("move")
-			await board.animate_unit_move(unit.id, old_row, old_col, 0.24 / resolution_speed)
+			await board.animate_unit_move(unit.id, old_row, old_col, _animation_duration(0.24))
 			board.play_unit_effect(unit.id, "SHIFT", Color("#ff8b9f"))
 			_refresh()
 			await _wait(0.28)
@@ -1723,20 +1821,17 @@ func _player_lane_threat(row: int, enemy_col: int) -> int:
 	return threat
 
 func _resolve_side(side: int) -> void:
-	var acting_ids: Array = []
-	var side_units := units.filter(func(u): return u.side == side and u.ready)
-	side_units.sort_custom(func(a, b):
-		if a.col == b.col:
-			return a.row < b.row
-		return a.col > b.col if side == PLAYER else a.col < b.col
-	)
-	for unit in side_units:
-		acting_ids.append(unit.id)
+	var acting_ids: Array = battle_simulator.activation_order(side, units)
 
 	for id in acting_ids:
 		var actor = _unit_by_id(id)
 		if actor == null or actor.side != side:
 			continue
+		battle_simulator.record("activation_started", {
+			"side": side,
+			"unit_id": actor.id,
+			"plan": battle_simulator.plan_activation(actor.id, units)
+		})
 		await _activate_unit(actor)
 		_remove_defeated()
 		_refresh()
@@ -1745,23 +1840,18 @@ func _resolve_side(side: int) -> void:
 		await _wait(0.32)
 
 func _resolution_preview(side: int) -> String:
-	var ordered := units.filter(func(unit): return unit.side == side and unit.ready)
-	ordered.sort_custom(func(a, b):
-		if a.col == b.col:
-			return a.row < b.row
-		return a.col > b.col if side == PLAYER else a.col < b.col
-	)
-	if ordered.is_empty():
+	var preview: Dictionary = battle_simulator.preview_side(side, units)
+	if preview.order.is_empty():
 		return "UPCOMING · No ready units."
 	var entries: Array[String] = []
-	for index in mini(3, ordered.size()):
-		var unit: Dictionary = ordered[index]
-		var preview: Dictionary = BattleRulesScript.projected_action(unit.id, units)
-		var move_count: int = preview.get("traversal", []).size()
-		var attack_count: int = preview.get("attack", []).size()
+	for index in preview.visible.size():
+		var plan: Dictionary = preview.visible[index]
+		var unit = _unit_by_id(plan.actor_id)
+		var move_count: int = plan.movement.size()
+		var attack_count: int = plan.strikes if plan.target_id >= 0 or plan.commander_side >= 0 else 0
 		entries.append("%d %s M%d→A%d" % [index + 1, unit.name, move_count, attack_count])
-	if ordered.size() > 3:
-		entries.append("+%d more (see LOG)" % (ordered.size() - 3))
+	if preview.remaining > 0:
+		entries.append("+%d more (see LOG)" % preview.remaining)
 	return "UPCOMING · " + "  |  ".join(entries)
 
 func _actor_tag(actor: Dictionary) -> String:
@@ -1778,7 +1868,7 @@ func _activate_unit(actor: Dictionary) -> void:
 		var healing_target = _lowest_health_ally(actor)
 		if healing_target != null:
 			battle_audio.play("heal")
-			await board.animate_heal(actor.id, healing_target.id, 0.30 / resolution_speed)
+			await board.animate_heal(actor.id, healing_target.id, _animation_duration(0.30))
 			healing_target.hp += 2
 			status_message = "%s heals %s for 2 HP." % [_actor_tag(actor), healing_target.name]
 			board.play_unit_effect(healing_target.id, "+2 HP", Color("#70e0a1"))
@@ -1790,12 +1880,18 @@ func _activate_unit(actor: Dictionary) -> void:
 		var old_row: int = actor.row
 		var old_col: int = actor.col
 		actor.col = path[-1].x
+		battle_simulator.record("move", {
+			"unit_id": actor.id,
+			"from_col": old_col,
+			"to_col": actor.col,
+			"row": actor.row
+		})
 		status_message = "%s advances %d space%s." % [
 			_actor_tag(actor), path.size(), "" if path.size() == 1 else "s"
 		]
 		_refresh()
 		battle_audio.play("move")
-		await board.animate_unit_move(actor.id, old_row, old_col, 0.30 / resolution_speed)
+		await board.animate_unit_move(actor.id, old_row, old_col, _animation_duration(0.30))
 		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
 	else:
 		status_message = "%s cannot advance." % _actor_tag(actor)
@@ -1809,8 +1905,14 @@ func _activate_unit(actor: Dictionary) -> void:
 			if target == null:
 				break
 			_play_attack_sound(actor.kind)
-			await board.animate_attack(actor.id, target.id, actor.kind, 0.24 / resolution_speed)
+			await board.animate_attack(actor.id, target.id, actor.kind, _animation_duration(0.24))
 			target.hp -= actor.atk
+			battle_simulator.record("attack", {
+				"actor_id": actor.id,
+				"target_id": target.id,
+				"damage": actor.atk,
+				"target_hp": target.hp
+			})
 			status_message = "%s hits %s for %d." % [_actor_tag(actor), target.name, actor.atk]
 			var impact_label := "-%d" % actor.atk
 			var impact_color := Color("#ff668f")
@@ -1823,10 +1925,10 @@ func _activate_unit(actor: Dictionary) -> void:
 			board.play_unit_effect(target.id, impact_label, impact_color)
 			var secondary_hits: Array = _apply_special_damage(actor, target)
 			battle_audio.play("hit")
-			await board.animate_hit(target.id, 0.18 / resolution_speed)
+			await board.animate_hit(target.id, _animation_duration(0.18))
 			for secondary_id in secondary_hits:
 				battle_audio.play("hit")
-				await board.animate_hit(secondary_id, 0.14 / resolution_speed)
+				await board.animate_hit(secondary_id, _animation_duration(0.14))
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
@@ -1859,9 +1961,15 @@ func _activate_unit(actor: Dictionary) -> void:
 		for hit in strikes:
 			_play_attack_sound(actor.kind)
 			await board.animate_commander_attack(
-				actor.id, commander_side, actor.kind, 0.25 / resolution_speed
+				actor.id, commander_side, actor.kind, _animation_duration(0.25)
 			)
 			var dealt := _damage_captain(commander_side, actor.atk)
+			battle_simulator.record("commander_attack", {
+				"actor_id": actor.id,
+				"side": commander_side,
+				"damage": dealt,
+				"captain_hp": enemy_hp if commander_side == ENEMY else player_hp
+			})
 			total_dealt += dealt
 			status_message = "%s hits %s Commander for %d." % [
 				_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", dealt
@@ -1913,22 +2021,12 @@ func _animate_defeated_units() -> void:
 		func(unit): return unit.hp <= 0
 	).map(func(unit): return unit.id)
 	for unit_id in defeated_ids:
+		battle_simulator.record("unit_defeated", {"unit_id": unit_id})
 		battle_audio.play("defeat")
-		await board.animate_defeat(unit_id, 0.26 / resolution_speed)
+		await board.animate_defeat(unit_id, _animation_duration(0.26))
 
 func _find_target(actor: Dictionary):
-	var direction := 1 if actor.side == PLAYER else -1
-	var candidates := []
-	for other in units:
-		if other.side == actor.side or other.row != actor.row:
-			continue
-		var distance: int = (other.col - actor.col) * direction
-		if distance > 0 and distance <= actor.range:
-			candidates.append(other)
-	if candidates.is_empty():
-		return null
-	candidates.sort_custom(func(a, b): return absi(a.col - actor.col) < absi(b.col - actor.col))
-	return candidates[0]
+	return BattleSimulatorScript.find_target(actor, units)
 
 func _lowest_health_ally(actor: Dictionary):
 	var candidates := []
@@ -1945,9 +2043,7 @@ func _lowest_health_ally(actor: Dictionary):
 	return candidates[0]
 
 func _commander_in_range(actor: Dictionary) -> bool:
-	if actor.side == PLAYER:
-		return (COLS - 1) - actor.col <= actor.range and _find_target(actor) == null
-	return actor.col <= actor.range and _find_target(actor) == null
+	return BattleRulesScript.commander_in_range(actor) and _find_target(actor) == null
 
 func _unit_at(row: int, col: int):
 	for unit in units:
@@ -1999,7 +2095,7 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 			board.play_unit_effect(target.id, "SKILL", Color("#ffd166") if side == PLAYER else Color("#ff8b9f"))
 			if skill_name in ["Lightning Burst", "Firestorm"]:
 				battle_audio.play("hit")
-				await board.animate_hit(target.id, 0.16 / resolution_speed)
+				await board.animate_hit(target.id, _animation_duration(0.16))
 			else:
 				battle_audio.play("status")
 	await _animate_defeated_units()
@@ -2066,6 +2162,15 @@ func _check_game_over() -> bool:
 		return false
 	battle_over = true
 	input_enabled = false
+	battle_simulator.record("battle_finished", {
+		"winner": PLAYER if enemy_hp <= 0 else ENEMY,
+		"player_hp": player_hp,
+		"enemy_hp": enemy_hp
+	})
+	battle_simulator.save_replay("user://last_replay.json", {
+		"mission_id": current_mission_id,
+		"encounter_index": current_encounter_index
+	})
 	overlay.visible = true
 	reward_reveal.visible = false
 	if enemy_hp <= 0:

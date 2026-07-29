@@ -2,7 +2,10 @@ class_name UnitSkills
 extends RefCounted
 
 static func resolve_warcry(
-	actor: Dictionary, units: Array, target_id: int = -1
+	actor: Dictionary,
+	units: Array,
+	target_id: int = -1,
+	rng: RandomNumberGenerator = null
 ) -> Dictionary:
 	var result := {"message": "", "affected": []}
 	var skill: Dictionary = actor.get("skill", {})
@@ -34,7 +37,12 @@ static func resolve_warcry(
 				result.affected.append(target.id)
 		"Heaven's Wrath":
 			var candidates := _enemies(actor, units)
-			var target = null if candidates.is_empty() else candidates.pick_random()
+			var target = null
+			if not candidates.is_empty():
+				target = (
+					candidates[rng.randi_range(0, candidates.size() - 1)]
+					if rng != null else candidates.pick_random()
+				)
 			if target != null:
 				target.hp -= 1
 				result.message = "Heaven's Wrath deals 1 damage to %s." % target.name

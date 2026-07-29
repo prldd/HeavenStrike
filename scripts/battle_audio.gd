@@ -32,6 +32,10 @@ func cycle_volume() -> void:
 	volume_step = (volume_step + 2) % 3
 	_apply_volume()
 
+func set_volume_step(value: int) -> void:
+	volume_step = clampi(value, 0, 2)
+	_apply_volume()
+
 func label() -> String:
 	match volume_step:
 		2:
