@@ -5,6 +5,7 @@ const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
+const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -54,6 +55,7 @@ var units: Array = []
 var player_hand: Array = []
 var draw_index := 0
 var selected_hand_index := -1
+var selected_board_unit_id := -1
 var next_unit_id := 1
 var round_number := 1
 var player_hp := STARTING_HP
@@ -123,6 +125,7 @@ func _build_interface() -> void:
 	board.custom_minimum_size = Vector2(0, 385)
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	board.deployment_clicked.connect(_on_deployment_clicked)
+	board.board_cell_clicked.connect(_on_board_cell_clicked)
 	board.unit_hovered.connect(_show_unit_details)
 	board.unit_hover_ended.connect(_hide_unit_details)
 	root.add_child(board)
@@ -296,17 +299,18 @@ func _close_tutorial() -> void:
 
 func _next_tutorial_page() -> void:
 	tutorial_page += 1
-	if tutorial_page >= 4:
+	if tutorial_page >= 5:
 		_close_tutorial()
 		return
 	_update_tutorial()
 
 func _update_tutorial() -> void:
 	var pages := [
-		"1 / 4\nSELECT A CARD\nCards show Energy cost, class, attack, health, and their special ability.",
-		"2 / 4\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units rest until your next turn.",
-		"3 / 4\nRESOLVE THE BOARD\nReady units attack if a target is in range. Otherwise, they advance automatically.",
-		"4 / 4\nBREAK THE COMMANDER\nCross an open lane and deal 24 damage to the enemy Commander before it reaches yours."
+		"1 / 5\nSELECT A CARD\nCards show Energy cost, class, attack, health, and their special ability.",
+		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units rest until your next turn.",
+		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in an adjacent row. Each unit may shift once per turn.",
+		"4 / 5\nTAUNT\nAn opposing Warden within two spaces locks units into its row until the Warden moves or is defeated.",
+		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
 	]
 	tutorial_page_label.text = pages[tutorial_page]
 
@@ -718,6 +722,7 @@ func _start_new_match() -> void:
 	battle_deck = SquadStoreScript.build_deck(squad_names, roster)
 	draw_index = 0
 	selected_hand_index = -1
+	selected_board_unit_id = -1
 	next_unit_id = 1
 	round_number = 1
 	player_hp = STARTING_HP
@@ -756,7 +761,7 @@ func _refresh() -> void:
 	var selected := {}
 	if selected_hand_index >= 0 and selected_hand_index < player_hand.size():
 		selected = player_hand[selected_hand_index]
-	board.set_state(units, selected, input_enabled and not battle_over, status_message)
+	board.set_state(units, selected, selected_board_unit_id, input_enabled and not battle_over, status_message)
 	_rebuild_hand()
 
 func _rebuild_hand() -> void:
@@ -784,11 +789,55 @@ func _select_card(index: int) -> void:
 	if not input_enabled:
 		return
 	selected_hand_index = -1 if selected_hand_index == index else index
+	selected_board_unit_id = -1
 	if selected_hand_index >= 0:
 		status_message = "Choose a highlighted tile on your deployment edge."
 	else:
 		status_message = "Select a unit card, then choose a deployment lane."
 	_refresh()
+
+func _on_board_cell_clicked(row: int, col: int) -> void:
+	if not input_enabled or battle_over:
+		return
+	var clicked = _unit_at(row, col)
+	if selected_board_unit_id >= 0:
+		var selected = _unit_by_id(selected_board_unit_id)
+		if selected == null:
+			selected_board_unit_id = -1
+		elif clicked != null and clicked.side == PLAYER:
+			selected_board_unit_id = clicked.id
+			status_message = _reposition_status(clicked)
+		elif BattleRulesScript.can_reposition(selected, row, units) and col == selected.col:
+			var old_row: int = selected.row
+			selected.row = row
+			selected.repositioned = true
+			selected_board_unit_id = -1
+			status_message = "%s shifts from lane %d to lane %d." % [selected.name, old_row + 1, row + 1]
+			board.play_unit_effect(selected.id, "SHIFT", Color("#71e6f5"))
+		else:
+			status_message = _reposition_block_reason(selected, row, col)
+			selected_board_unit_id = -1
+	elif clicked != null and clicked.side == PLAYER:
+		selected_hand_index = -1
+		selected_board_unit_id = clicked.id
+		status_message = _reposition_status(clicked)
+	_refresh()
+
+func _reposition_status(unit: Dictionary) -> String:
+	if unit.get("repositioned", false):
+		return "%s has already changed lanes this turn." % unit.name
+	if BattleRulesScript.is_taunted(unit, units):
+		return "%s is taunted by a Warden and cannot leave this lane." % unit.name
+	return "Choose an open highlighted tile in an adjacent lane to reposition %s." % unit.name
+
+func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
+	if unit.get("repositioned", false):
+		return "%s has already repositioned this turn." % unit.name
+	if BattleRulesScript.is_taunted(unit, units):
+		return "%s is taunted and must remain in its lane." % unit.name
+	if col != unit.col or absi(row - unit.row) != 1:
+		return "Units can only shift to an adjacent lane in the same column."
+	return "That destination is occupied."
 
 func _on_deployment_clicked(row: int) -> void:
 	if not input_enabled or selected_hand_index < 0 or selected_hand_index >= player_hand.size():
@@ -822,7 +871,8 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		"max_hp": card.hp,
 		"move": card.move,
 		"range": card.range,
-		"ready": false
+		"ready": false,
+		"repositioned": false
 	})
 	next_unit_id += 1
 
@@ -842,6 +892,7 @@ func _end_player_turn() -> void:
 		return
 	input_enabled = false
 	selected_hand_index = -1
+	selected_board_unit_id = -1
 	status_message = "Your units advance."
 	_refresh()
 	await _resolve_side(PLAYER)
@@ -854,11 +905,13 @@ func _enemy_turn() -> void:
 	for unit in units:
 		if unit.side == ENEMY:
 			unit.ready = true
+			unit.repositioned = false
 	enemy_max_energy = mini(10, enemy_max_energy + (1 if round_number > 1 else 0))
 	enemy_energy = enemy_max_energy
 	status_message = "Enemy is deploying..."
 	_refresh()
 	await get_tree().create_timer(0.55).timeout
+	await _enemy_reposition_units()
 
 	var attempts := 0
 	while attempts < 3:
@@ -897,9 +950,42 @@ func _enemy_turn() -> void:
 	for unit in units:
 		if unit.side == PLAYER:
 			unit.ready = true
+			unit.repositioned = false
 	input_enabled = true
 	status_message = "Select a card or resolve the board as it stands."
 	_refresh()
+
+func _enemy_reposition_units() -> void:
+	var enemy_ids: Array = units.filter(func(unit): return unit.side == ENEMY).map(func(unit): return unit.id)
+	for unit_id in enemy_ids:
+		var unit = _unit_by_id(unit_id)
+		if unit == null or BattleRulesScript.is_taunted(unit, units):
+			continue
+		var current_threat := _player_lane_threat(unit.row, unit.col)
+		var best_row: int = unit.row
+		var best_threat := current_threat
+		for candidate_row in [unit.row - 1, unit.row + 1]:
+			if not BattleRulesScript.can_reposition(unit, candidate_row, units):
+				continue
+			var candidate_threat := _player_lane_threat(candidate_row, unit.col)
+			if candidate_threat < best_threat:
+				best_threat = candidate_threat
+				best_row = candidate_row
+		if best_row != unit.row:
+			var old_row: int = unit.row
+			unit.row = best_row
+			unit.repositioned = true
+			status_message = "%s shifts from lane %d to lane %d." % [unit.name, old_row + 1, best_row + 1]
+			board.play_unit_effect(unit.id, "SHIFT", Color("#ff8b9f"))
+			_refresh()
+			await get_tree().create_timer(0.28).timeout
+
+func _player_lane_threat(row: int, enemy_col: int) -> int:
+	var threat := 0
+	for unit in units:
+		if unit.side == PLAYER and unit.row == row and unit.col < enemy_col:
+			threat += unit.atk + (2 if unit.kind == "Warden" else 0)
+	return threat
 
 func _resolve_side(side: int) -> void:
 	var acting_ids: Array = []

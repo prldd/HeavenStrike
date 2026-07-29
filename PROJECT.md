@@ -70,6 +70,7 @@ Each turn has four phases.
 2. **Command**
    - Deploy one or more units the player can afford.
    - Units are placed in an open tile on the player's deployment edge.
+   - Reposition deployed units to an open tile in an adjacent lane at the same column.
    - Use the Commander power if it is available.
    - End the phase when ready.
 
@@ -95,6 +96,8 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - A unit is removed when its health reaches zero.
 - If no unit blocks an attack at the end of a lane, the enemy Commander takes the damage.
 - Newly deployed units cannot act until their owner's next turn unless they have the **Quick** keyword.
+- Each deployed unit may reposition once per Command phase without losing its normal activation.
+- A Warden taunts opposing units up to two spaces ahead, preventing them from changing lanes.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
 
 These rules are deterministic: the same board state and commands always produce the same result.

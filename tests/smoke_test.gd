@@ -4,6 +4,7 @@ const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
+const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -30,6 +31,17 @@ func _init() -> void:
 	assert("Dawnmender" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [0, 1, 2])
 	assert(earned_unlocks.size() == 18)
+
+	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false}
+	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
+	assert(not BattleRulesScript.is_taunted(mover, [mover, distant_warden]))
+	assert(BattleRulesScript.can_reposition(mover, 0, [mover, distant_warden]))
+	var nearby_warden := {"id": 3, "side": 1, "kind": "Warden", "row": 1, "col": 4, "repositioned": false}
+	assert(BattleRulesScript.is_taunted(mover, [mover, nearby_warden]))
+	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, nearby_warden]))
+	var blocker := {"id": 4, "side": 0, "kind": "Strider", "row": 0, "col": 2, "repositioned": false}
+	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
+	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))
 
 	var units := [
 		{"side": 0, "row": 1, "col": 5, "atk": 3, "hp": 4, "max_hp": 4}

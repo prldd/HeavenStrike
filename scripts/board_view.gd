@@ -1,7 +1,10 @@
 class_name BoardView
 extends Control
 
+const BattleRulesScript = preload("res://scripts/battle_rules.gd")
+
 signal deployment_clicked(row: int)
+signal board_cell_clicked(row: int, col: int)
 signal unit_hovered(unit: Dictionary)
 signal unit_hover_ended
 
@@ -19,6 +22,7 @@ const COLORS := {
 
 var units: Array = []
 var selected_card: Dictionary = {}
+var selected_unit_id := -1
 var enabled := true
 var hover_row := -1
 var hover_unit_id := -1
@@ -39,9 +43,10 @@ func _clear_hover() -> void:
 		unit_hover_ended.emit()
 	queue_redraw()
 
-func set_state(next_units: Array, card: Dictionary, can_deploy: bool, message: String) -> void:
+func set_state(next_units: Array, card: Dictionary, selected_id: int, can_deploy: bool, message: String) -> void:
 	units = next_units
 	selected_card = card
+	selected_unit_id = selected_id
 	enabled = can_deploy
 	event_text = message
 	queue_redraw()
@@ -71,14 +76,24 @@ func _gui_input(event: InputEvent) -> void:
 		queue_redraw()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		var row := _row_at(event.position)
-		if row >= 0 and enabled and not selected_card.is_empty():
-			deployment_clicked.emit(row)
+		var col := _col_at(event.position)
+		if row >= 0 and col >= 0 and enabled:
+			if not selected_card.is_empty() and col == 0:
+				deployment_clicked.emit(row)
+			elif selected_card.is_empty():
+				board_cell_clicked.emit(row, col)
 
 func _row_at(point: Vector2) -> int:
 	var rect := _grid_rect()
 	if not rect.has_point(point):
 		return -1
 	return clampi(int((point.y - rect.position.y) / (rect.size.y / ROWS)), 0, ROWS - 1)
+
+func _col_at(point: Vector2) -> int:
+	var rect := _grid_rect()
+	if not rect.has_point(point):
+		return -1
+	return clampi(int((point.x - rect.position.x) / (rect.size.x / COLS)), 0, COLS - 1)
 
 func _update_unit_hover(point: Vector2) -> void:
 	var grid := _grid_rect()
@@ -143,6 +158,8 @@ func _draw() -> void:
 
 	for unit in units:
 		_draw_unit(unit)
+		if unit.id == selected_unit_id:
+			_draw_selection(unit)
 		if unit.id == effect_unit_id:
 			_draw_effect(unit)
 
@@ -157,6 +174,13 @@ func _draw() -> void:
 					2,
 					6
 				)
+
+	var selected_unit: Variant = _unit_by_id(selected_unit_id)
+	if selected_unit != null and enabled and not BattleRulesScript.is_taunted(selected_unit, units) and not selected_unit.get("repositioned", false):
+		for target_row in [selected_unit.row - 1, selected_unit.row + 1]:
+			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
+				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
+				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)
 
 func _draw_commander(center: Vector2, enemy: bool) -> void:
 	var color := Color("#ed5b86") if enemy else Color("#50d4e8")
@@ -219,11 +243,21 @@ func _draw_effect(unit: Dictionary) -> void:
 		Color(effect_color, effect_strength)
 	)
 
+func _draw_selection(unit: Dictionary) -> void:
+	var rect := _cell_rect(unit.row, unit.col).grow(-5)
+	draw_style_box(_box(Color(0.25, 0.8, 0.9, 0.08), Color("#71e6f5"), 12, 3), rect)
+
 func _occupied(row: int, col: int) -> bool:
 	for unit in units:
 		if unit.row == row and unit.col == col:
 			return true
 	return false
+
+func _unit_by_id(unit_id: int):
+	for unit in units:
+		if unit.id == unit_id:
+			return unit
+	return null
 
 func _box(fill: Color, border: Color, radius: int, width: int) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
