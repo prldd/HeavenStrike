@@ -2,6 +2,8 @@ class_name BoardView
 extends Control
 
 signal deployment_clicked(row: int)
+signal unit_hovered(unit: Dictionary)
+signal unit_hover_ended
 
 const ROWS := 3
 const COLS := 7
@@ -19,6 +21,7 @@ var units: Array = []
 var selected_card: Dictionary = {}
 var enabled := true
 var hover_row := -1
+var hover_unit_id := -1
 var event_text := "Choose a unit, then choose a lane."
 var effect_unit_id := -1
 var effect_label := ""
@@ -31,6 +34,9 @@ func _ready() -> void:
 
 func _clear_hover() -> void:
 	hover_row = -1
+	if hover_unit_id >= 0:
+		hover_unit_id = -1
+		unit_hover_ended.emit()
 	queue_redraw()
 
 func set_state(next_units: Array, card: Dictionary, can_deploy: bool, message: String) -> void:
@@ -61,6 +67,7 @@ func _clear_effect() -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		hover_row = _row_at(event.position)
+		_update_unit_hover(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		var row := _row_at(event.position)
@@ -72,6 +79,26 @@ func _row_at(point: Vector2) -> int:
 	if not rect.has_point(point):
 		return -1
 	return clampi(int((point.y - rect.position.y) / (rect.size.y / ROWS)), 0, ROWS - 1)
+
+func _update_unit_hover(point: Vector2) -> void:
+	var grid := _grid_rect()
+	var next_unit: Dictionary = {}
+	if grid.has_point(point):
+		var row := clampi(int((point.y - grid.position.y) / (grid.size.y / ROWS)), 0, ROWS - 1)
+		var col := clampi(int((point.x - grid.position.x) / (grid.size.x / COLS)), 0, COLS - 1)
+		for unit in units:
+			if unit.row == row and unit.col == col:
+				next_unit = unit
+				break
+
+	var next_id: int = -1 if next_unit.is_empty() else next_unit.id
+	if next_id == hover_unit_id:
+		return
+	hover_unit_id = next_id
+	if next_unit.is_empty():
+		unit_hover_ended.emit()
+	else:
+		unit_hovered.emit(next_unit)
 
 func _grid_rect() -> Rect2:
 	return Rect2(

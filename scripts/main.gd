@@ -3,6 +3,7 @@ extends Control
 const BoardViewScript = preload("res://scripts/board_view.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
+const SquadStoreScript = preload("res://scripts/squad_store.gd")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -25,8 +26,19 @@ var overlay_detail: Label
 var tutorial_overlay: ColorRect
 var tutorial_page_label: Label
 var tutorial_page := 0
+var squad_overlay: ColorRect
+var squad_grid: GridContainer
+var squad_count_label: Label
+var squad_save_button: Button
+var hover_card: PanelContainer
+var hover_name_label: Label
+var hover_stats_label: Label
+var hover_ability_label: Label
 
 var roster: Array = UnitCatalogScript.all_units()
+var squad_names: Array = []
+var editing_squad_names: Array = []
+var battle_deck: Array = []
 
 var units: Array = []
 var player_hand: Array = []
@@ -49,6 +61,7 @@ var has_shown_tutorial := false
 
 func _ready() -> void:
 	_build_interface()
+	squad_names = SquadStoreScript.load_squad(roster)
 	_start_new_match()
 
 func _build_interface() -> void:
@@ -97,6 +110,8 @@ func _build_interface() -> void:
 	board.custom_minimum_size = Vector2(0, 385)
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	board.deployment_clicked.connect(_on_deployment_clicked)
+	board.unit_hovered.connect(_show_unit_details)
+	board.unit_hover_ended.connect(_hide_unit_details)
 	root.add_child(board)
 
 	var control_bar := HBoxContainer.new()
@@ -131,6 +146,13 @@ func _build_interface() -> void:
 	help_button.pressed.connect(_open_tutorial)
 	control_bar.add_child(help_button)
 
+	var squad_button := Button.new()
+	squad_button.text = "SQUAD"
+	squad_button.tooltip_text = "Choose the 15 units in your battle squad."
+	squad_button.custom_minimum_size.x = 90
+	squad_button.pressed.connect(_open_squad_builder)
+	control_bar.add_child(squad_button)
+
 	end_button = Button.new()
 	end_button.text = "RESOLVE TURN"
 	end_button.custom_minimum_size.x = 170
@@ -145,6 +167,8 @@ func _build_interface() -> void:
 
 	_build_overlay()
 	_build_tutorial()
+	_build_squad_builder()
+	_build_hover_card()
 
 func _build_overlay() -> void:
 	overlay = ColorRect.new()
@@ -256,9 +280,222 @@ func _update_tutorial() -> void:
 	]
 	tutorial_page_label.text = pages[tutorial_page]
 
+func _build_squad_builder() -> void:
+	squad_overlay = ColorRect.new()
+	squad_overlay.color = Color(0.02, 0.035, 0.07, 0.97)
+	squad_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	squad_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	squad_overlay.visible = false
+	add_child(squad_overlay)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 70)
+	margin.add_theme_constant_override("margin_right", 70)
+	margin.add_theme_constant_override("margin_top", 42)
+	margin.add_theme_constant_override("margin_bottom", 42)
+	squad_overlay.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	margin.add_child(layout)
+
+	var title_row := HBoxContainer.new()
+	layout.add_child(title_row)
+
+	var title := Label.new()
+	title.text = "SQUAD WORKSHOP"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title_row.add_child(title)
+
+	squad_count_label = Label.new()
+	squad_count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	squad_count_label.add_theme_font_size_override("font_size", 18)
+	title_row.add_child(squad_count_label)
+
+	var instruction := Label.new()
+	instruction.text = "Choose exactly 15 units. Selected units form your draw pile; the first selected unit is your Vanguard."
+	instruction.add_theme_color_override("font_color", Color("#aebdda"))
+	layout.add_child(instruction)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(scroll)
+
+	squad_grid = GridContainer.new()
+	squad_grid.columns = 3
+	squad_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	squad_grid.add_theme_constant_override("h_separation", 10)
+	squad_grid.add_theme_constant_override("v_separation", 10)
+	scroll.add_child(squad_grid)
+
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation", 10)
+	layout.add_child(actions)
+
+	var reset := Button.new()
+	reset.text = "RESET"
+	reset.custom_minimum_size = Vector2(110, 44)
+	reset.pressed.connect(_reset_squad)
+	actions.add_child(reset)
+
+	var cancel := Button.new()
+	cancel.text = "CANCEL"
+	cancel.custom_minimum_size = Vector2(110, 44)
+	cancel.pressed.connect(_close_squad_builder)
+	actions.add_child(cancel)
+
+	squad_save_button = Button.new()
+	squad_save_button.text = "SAVE SQUAD"
+	squad_save_button.custom_minimum_size = Vector2(170, 44)
+	squad_save_button.pressed.connect(_save_squad)
+	actions.add_child(squad_save_button)
+
+func _open_squad_builder() -> void:
+	if not input_enabled or battle_over:
+		return
+	editing_squad_names = squad_names.duplicate()
+	squad_overlay.visible = true
+	_rebuild_squad_grid()
+
+func _close_squad_builder() -> void:
+	squad_overlay.visible = false
+
+func _reset_squad() -> void:
+	editing_squad_names = SquadStoreScript.default_squad(roster)
+	_rebuild_squad_grid()
+
+func _toggle_squad_unit(unit_name: String) -> void:
+	if unit_name in editing_squad_names:
+		editing_squad_names.erase(unit_name)
+	elif editing_squad_names.size() < SquadStoreScript.SQUAD_SIZE:
+		editing_squad_names.append(unit_name)
+	_rebuild_squad_grid()
+
+func _rebuild_squad_grid() -> void:
+	for child in squad_grid.get_children():
+		squad_grid.remove_child(child)
+		child.queue_free()
+
+	for unit in roster:
+		var selected: bool = unit.name in editing_squad_names
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(0, 76)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.toggle_mode = true
+		button.button_pressed = selected
+		button.text = "%s  ·  %d◆\n%s  |  %d ATK  %d HP" % [
+			unit.name.to_upper(), unit.cost, unit.kind, unit.atk, unit.hp
+		]
+		button.pressed.connect(_toggle_squad_unit.bind(unit.name))
+		button.mouse_entered.connect(_show_unit_details.bind(unit))
+		button.mouse_exited.connect(_hide_unit_details)
+		squad_grid.add_child(button)
+
+	squad_count_label.text = "%d / %d SELECTED" % [editing_squad_names.size(), SquadStoreScript.SQUAD_SIZE]
+	squad_count_label.add_theme_color_override(
+		"font_color",
+		Color("#70e0a1") if editing_squad_names.size() == SquadStoreScript.SQUAD_SIZE else Color("#ff8f8f")
+	)
+	squad_save_button.disabled = editing_squad_names.size() != SquadStoreScript.SQUAD_SIZE
+
+func _save_squad() -> void:
+	if editing_squad_names.size() != SquadStoreScript.SQUAD_SIZE:
+		return
+	squad_names = editing_squad_names.duplicate()
+	if SquadStoreScript.save_squad(squad_names, roster):
+		status_message = "Squad saved. It will be used in the next battle."
+	else:
+		status_message = "Squad selected for this session, but the save file could not be written."
+	_close_squad_builder()
+	_refresh()
+
+func _build_hover_card() -> void:
+	hover_card = PanelContainer.new()
+	hover_card.custom_minimum_size = Vector2(340, 168)
+	hover_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hover_card.z_index = 100
+	hover_card.visible = false
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#111d36")
+	style.border_color = Color("#66d9ff")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 14
+	style.content_margin_bottom = 14
+	hover_card.add_theme_stylebox_override("panel", style)
+	add_child(hover_card)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	hover_card.add_child(content)
+
+	hover_name_label = Label.new()
+	hover_name_label.add_theme_font_size_override("font_size", 20)
+	hover_name_label.add_theme_color_override("font_color", Color("#71e6f5"))
+	content.add_child(hover_name_label)
+
+	hover_stats_label = Label.new()
+	hover_stats_label.add_theme_font_size_override("font_size", 14)
+	hover_stats_label.add_theme_color_override("font_color", Color("#e7edf8"))
+	content.add_child(hover_stats_label)
+
+	hover_ability_label = Label.new()
+	hover_ability_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hover_ability_label.add_theme_font_size_override("font_size", 14)
+	hover_ability_label.add_theme_color_override("font_color", Color("#aebdda"))
+	content.add_child(hover_ability_label)
+
+func _show_unit_details(unit: Dictionary) -> void:
+	var definition: Dictionary = UnitCatalogScript.by_name(unit.name)
+	if definition.is_empty():
+		definition = unit
+	var current_hp: int = unit.get("hp", definition.hp)
+	var maximum_hp: int = unit.get("max_hp", definition.hp)
+	var hp_text := "%d HP" % current_hp
+	if current_hp != maximum_hp:
+		hp_text = "%d / %d HP" % [current_hp, maximum_hp]
+
+	hover_name_label.text = "%s  ·  %s" % [definition.name.to_upper(), definition.kind]
+	hover_stats_label.text = "%d ENERGY\n%d ATK    %s    %d MOV    %d RANGE" % [
+		definition.cost,
+		unit.get("atk", definition.atk),
+		hp_text,
+		definition.move,
+		definition.range
+	]
+	hover_ability_label.text = definition.text
+	hover_card.visible = true
+	_position_hover_card()
+
+func _hide_unit_details() -> void:
+	hover_card.visible = false
+
+func _process(_delta: float) -> void:
+	if hover_card != null and hover_card.visible:
+		_position_hover_card()
+
+func _position_hover_card() -> void:
+	var pointer := get_viewport().get_mouse_position()
+	var card_size := Vector2(340, 168)
+	var viewport_size := get_viewport_rect().size
+	var target := pointer + Vector2(18, 18)
+	if target.x + card_size.x > viewport_size.x - 10:
+		target.x = pointer.x - card_size.x - 18
+	if target.y + card_size.y > viewport_size.y - 10:
+		target.y = viewport_size.y - card_size.y - 10
+	hover_card.position = Vector2(maxf(10, target.x), maxf(10, target.y))
+
 func _start_new_match() -> void:
 	units.clear()
 	player_hand.clear()
+	battle_deck = SquadStoreScript.build_deck(squad_names, roster)
 	draw_index = 0
 	selected_hand_index = -1
 	next_unit_id = 1
@@ -283,9 +520,9 @@ func _start_new_match() -> void:
 		_open_tutorial()
 
 func _draw_player_card() -> void:
-	if player_hand.size() >= 5:
+	if player_hand.size() >= 5 or draw_index >= battle_deck.size():
 		return
-	player_hand.append(roster[draw_index % roster.size()].duplicate())
+	player_hand.append(battle_deck[draw_index].duplicate())
 	draw_index += 1
 
 func _refresh() -> void:
@@ -321,6 +558,8 @@ func _rebuild_hand() -> void:
 		]
 		button.add_theme_font_size_override("font_size", 12)
 		button.pressed.connect(_select_card.bind(i))
+		button.mouse_entered.connect(_show_unit_details.bind(card))
+		button.mouse_exited.connect(_hide_unit_details)
 		hand_row.add_child(button)
 
 func _select_card(index: int) -> void:

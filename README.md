@@ -17,12 +17,14 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Deploy as many units as available Energy allows.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.
+- Select **Squad** to choose and save the 15 units used by your draw pile.
 - Defeat the enemy Commander before it reduces your 24 HP to zero.
 
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- Six distinct unit classes
+- 18 units across six distinct classes
+- Persistent 15-unit squad construction
 - Card hand and escalating Energy economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing
 - Enemy deployment AI
