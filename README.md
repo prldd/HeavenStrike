@@ -36,6 +36,8 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Card hand and escalating Energy economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing
 - Enemy deployment AI
+- Finite 15-card enemy squads with hand, draw, and deck exhaustion rules
+- Visible hand and remaining-deck counters for both sides
 - Commander health, Rally powers, victory, defeat, and replay
 - Deterministic rules with a presentation layer separated into `BoardView`
 - Four-step in-game field briefing

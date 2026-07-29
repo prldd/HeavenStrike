@@ -44,6 +44,7 @@ Before battle, each side prepares a squad of 15 units:
 - The player begins with the Vanguard and three drawn units.
 - A hand can hold up to five units.
 - A squad may contain no more than three copies of the same unit.
+- PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 

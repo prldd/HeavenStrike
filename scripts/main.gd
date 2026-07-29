@@ -45,6 +45,7 @@ var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
 var editing_squad_names: Array = []
 var battle_deck: Array = []
+var enemy_deck: Array = []
 var completed_missions: Array = []
 var current_mission_id := -1
 var campaign_battle := false
@@ -53,7 +54,9 @@ var tutorial_opened_from_menu := false
 
 var units: Array = []
 var player_hand: Array = []
+var enemy_hand: Array = []
 var draw_index := 0
+var enemy_draw_index := 0
 var selected_hand_index := -1
 var selected_board_unit_id := -1
 var next_unit_id := 1
@@ -719,8 +722,13 @@ func _position_hover_card() -> void:
 func _start_new_match() -> void:
 	units.clear()
 	player_hand.clear()
+	enemy_hand.clear()
 	battle_deck = SquadStoreScript.build_deck(squad_names, roster)
+	var enemy_squad_id := current_mission_id if campaign_battle else 0
+	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(enemy_squad_id, roster)
+	enemy_deck = SquadStoreScript.build_deck(enemy_squad_names, roster)
 	draw_index = 0
+	enemy_draw_index = 0
 	selected_hand_index = -1
 	selected_board_unit_id = -1
 	next_unit_id = 1
@@ -739,6 +747,7 @@ func _start_new_match() -> void:
 	status_message = "Select a unit card, then choose a deployment lane."
 	for i in 4:
 		_draw_player_card()
+		_draw_enemy_card()
 	_refresh()
 
 func _draw_player_card() -> void:
@@ -747,9 +756,19 @@ func _draw_player_card() -> void:
 	player_hand.append(battle_deck[draw_index].duplicate())
 	draw_index += 1
 
+func _draw_enemy_card() -> void:
+	if enemy_hand.size() >= 5 or enemy_draw_index >= enemy_deck.size():
+		return
+	enemy_hand.append(enemy_deck[enemy_draw_index].duplicate())
+	enemy_draw_index += 1
+
 func _refresh() -> void:
-	player_hp_label.text = "◆  %02d HP" % player_hp
-	enemy_hp_label.text = "%02d HP  ◆" % enemy_hp
+	player_hp_label.text = "◆  %02d HP\n%d HAND · %d DECK" % [
+		player_hp, player_hand.size(), battle_deck.size() - draw_index
+	]
+	enemy_hp_label.text = "%02d HP  ◆\n%d HAND · %d DECK" % [
+		enemy_hp, enemy_hand.size(), enemy_deck.size() - enemy_draw_index
+	]
 	energy_label.text = "ENERGY  %d / %d" % [player_energy, player_max_energy]
 	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
 	hint_label.text = status_message
@@ -908,6 +927,8 @@ func _enemy_turn() -> void:
 			unit.repositioned = false
 	enemy_max_energy = mini(10, enemy_max_energy + (1 if round_number > 1 else 0))
 	enemy_energy = enemy_max_energy
+	if round_number > 1:
+		_draw_enemy_card()
 	status_message = "Enemy is deploying..."
 	_refresh()
 	await get_tree().create_timer(0.55).timeout
@@ -915,13 +936,16 @@ func _enemy_turn() -> void:
 
 	var attempts := 0
 	while attempts < 3:
-		var choice: Dictionary = BattleAIScript.choose_deployment(roster, enemy_energy, units)
+		var choice: Dictionary = BattleAIScript.choose_deployment(enemy_hand, enemy_energy, units)
 		if choice.is_empty():
 			break
 		var card: Dictionary = choice.card
 		var row: int = choice.row
 		_spawn_unit(card, ENEMY, row, COLS - 1)
 		enemy_energy -= card.cost
+		var hand_index: int = enemy_hand.find(card)
+		if hand_index >= 0:
+			enemy_hand.remove_at(hand_index)
 		status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
 		_refresh()
 		await get_tree().create_timer(0.35).timeout

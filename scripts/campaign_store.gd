@@ -89,3 +89,14 @@ static func unlocked_unit_names(roster: Array, completed: Array) -> Array:
 			unlocked.append(reward)
 	return unlocked
 
+static func enemy_squad_names(mission_id: int, roster: Array) -> Array:
+	var names: Array = []
+	if roster.is_empty():
+		return names
+	var offset: int = maxi(0, mission_id) * 3
+	for index in roster.size():
+		var roster_index: int = (index + offset) % roster.size()
+		names.append(roster[roster_index].name)
+		if names.size() >= 15:
+			break
+	return names

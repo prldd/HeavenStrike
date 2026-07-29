@@ -31,6 +31,13 @@ func _init() -> void:
 	assert("Dawnmender" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [0, 1, 2])
 	assert(earned_unlocks.size() == 18)
+	var enemy_squad: Array = CampaignStoreScript.enemy_squad_names(2, roster)
+	assert(enemy_squad.size() == 15)
+	var unique_enemy_cards: Array = []
+	for card_name in enemy_squad:
+		if card_name not in unique_enemy_cards:
+			unique_enemy_cards.append(card_name)
+	assert(unique_enemy_cards.size() == 15)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
@@ -82,6 +89,13 @@ func _init() -> void:
 	assert(not choice.is_empty(), "AI should find an affordable deployment.")
 	assert(choice.card.cost <= 2)
 	assert(choice.row == 1, "AI should answer the most dangerous lane.")
+	var finite_hand: Array = roster.slice(0, 4)
+	var hand_choice: Dictionary = BattleAIScript.choose_deployment(finite_hand, 2, units)
+	assert(not hand_choice.is_empty())
+	var chosen_index: int = finite_hand.find(hand_choice.card)
+	assert(chosen_index >= 0)
+	finite_hand.remove_at(chosen_index)
+	assert(finite_hand.size() == 3)
 
 	var blocked_units := [
 		{"side": 1, "row": 0, "col": 6, "atk": 1, "hp": 1, "max_hp": 1},
