@@ -6,6 +6,7 @@ const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png"
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
 const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
+const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -247,10 +248,11 @@ func _draw_unit(unit: Dictionary) -> void:
 
 func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
 	var icon_id: int = unit.get("icon", 0)
-	if icon_id < 1 or icon_id > 24:
+	if icon_id < 1 or icon_id > 30:
 		return
 	var sheets: Array[Texture2D] = [
-		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4
+		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4,
+		UNIT_SPRITES_5
 	]
 	var texture: Texture2D = sheets[int((icon_id - 1) / 6)]
 	var slot := (icon_id - 1) % 6

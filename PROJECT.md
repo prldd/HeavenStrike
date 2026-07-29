@@ -51,6 +51,8 @@ Before battle, each side prepares a squad of up to 15 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
+The current prototype roster contains 23 unpromoted units. Higher-rarity units reuse the same timing framework when they share an implemented secondary skill.
+
 ### Mana
 
 Deploying a unit locks its Mana cost while it remains on the battlefield.
@@ -133,7 +135,7 @@ Board order and targeting are deterministic except where an ability explicitly s
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
-The implemented roster currently contains 18 unpromoted units: the original twelve 1★ cards and the first six-unit 2★ cohort. Two-star units are earned through their reference story-mission drop pools and are not included in the starting Barracks.
+The implemented roster currently contains 23 unpromoted units: twelve 1★ cards, eight 2★ cards, one 3★ card, and two 4★ cards. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks.
 
 ## Example Turn
 
@@ -143,8 +145,8 @@ The player begins a turn with 4 available Mana. An enemy Defender blocks the cen
 2. The player deploys a 2-Mana Priest behind a damaged Fighter in the center lane.
 3. During resolution, the Fighter attacks the Defender.
 4. The Priest heals the Fighter.
-5. The new units do not act because they were deployed this turn.
-6. On the next player turn, the Scout can advance quickly through the open lane while the center group keeps the Defender occupied.
+5. The newly deployed Scout advances immediately and attacks if it reaches a target.
+6. The newly deployed Priest heals, advances, and attacks if a target is in range.
 
 The player has traded immediate power for pressure in one lane and durability in another.
 
@@ -162,7 +164,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 - Full 62-mission, two-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 18 original units, with three units per class
+- 23 unpromoted reference units across all six classes
 - Three Commanders
 
 ### Later Possibilities

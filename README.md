@@ -31,14 +31,14 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 18 units across six distinct classes
+- 23 units across six distinct classes
 - Persistent 1–15 unit squad construction with a two-copy limit
 - 62 sequential story missions across two acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
 - Quest-specific, Star-Rarity-weighted card rewards with persistent unlocks
-- 18 unpromoted units: twelve 1★ starters/rewards and six reward-only 2★ units
+- 23 unpromoted units: twelve 1★ starters and eleven reward-only units from 2★ to 4★
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles

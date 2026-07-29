@@ -10,26 +10,37 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 18, "The playable roster must contain 18 units.")
+	assert(roster.size() == 23, "The playable roster must contain 23 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 24
+		func(icon_id): return icon_id >= 1 and icon_id <= 30
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 2).size() == 6)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 8)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 1)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 2)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	icon_ids.sort()
-	assert(icon_ids == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 17, 19, 21, 23])
-	for kind in ["Strider", "Duelist", "Warden", "Artillerist", "Channeler", "Lifebinder"]:
-		assert(roster.filter(func(unit): return unit.kind == kind).size() == 3)
+	assert(icon_ids == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 17, 19, 21, 23, 25, 26, 27, 28, 29])
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 4)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 4)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 3)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 3)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 5)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 4)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
 	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").skill.name == "Fortify")
 	assert(UnitCatalogScript.by_name("Claw Skirmisher").skill.type == "Strike")
+	assert(UnitCatalogScript.by_name("Order Apostle").skill.name == "Heaven's Wrath")
+	assert(UnitCatalogScript.by_name("Trinity Messenger").skill.name == "Bolt")
+	assert(UnitCatalogScript.by_name("Minerva the Brave").skill.name == "Fortify")
+	assert(UnitCatalogScript.by_name("Naruku the Lookout").skill.name == "Empower")
+	assert(UnitCatalogScript.by_name("Whirling Ragnr").skill.name == "Bolt")
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -97,7 +108,7 @@ func _init() -> void:
 	assert(is_equal_approx(training_rewards[0].chance, 0.5))
 	assert(is_equal_approx(training_rewards[1].chance, 0.5))
 	var fallback_rewards: Array = CampaignStoreScript.reward_options(3, roster)
-	assert(fallback_rewards.size() == 18)
+	assert(fallback_rewards.size() == 23)
 	var fallback_total := 0.0
 	for option in fallback_rewards:
 		fallback_total += option.chance

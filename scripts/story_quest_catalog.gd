@@ -6,16 +6,21 @@ const CURRENT_ROSTER := [
 	"Claw Caster", "Chain Initiate", "LDF Peacekeeper", "Trinity Basher",
 	"Claw Slicer", "Factory Markswoman", "Rage Spellslinger", "LDF Medic",
 	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
-	"LDF Gunner", "Order Pupil", "Order Cleric"
+	"LDF Gunner", "Order Pupil", "Order Cleric",
+	"Order Apostle", "Trinity Messenger", "Minerva the Brave",
+	"Naruku the Lookout", "Whirling Ragnr"
 ]
 
-const TWO_STAR_DROPS := {
+const ADDITIONAL_DROPS := {
 	"Apprentice Builder": [11, 12, 14, 17, 23, 32, 37, 46, 48],
 	"Rage Brute": [3, 8, 9, 15, 20, 23, 28, 30, 42, 62],
 	"Claw Skirmisher": [8, 9, 42, 43, 46, 47, 52],
 	"LDF Gunner": [20, 35, 62],
 	"Order Pupil": [21, 22, 24, 41, 53],
-	"Order Cleric": [21, 22, 24, 53]
+	"Order Cleric": [21, 22, 24, 53],
+	"Order Apostle": [28, 29, 41, 54, 57],
+	"Trinity Messenger": [2, 18, 25, 49, 51],
+	"Minerva the Brave": [25, 39, 40, 60, 62]
 }
 
 const QUESTS := [
@@ -93,8 +98,8 @@ static func build_missions() -> Array:
 	for index in QUESTS.size():
 		var quest: Array = QUESTS[index]
 		var reference_pool: Array = quest[1].duplicate()
-		for unit_name in TWO_STAR_DROPS:
-			if index + 1 in TWO_STAR_DROPS[unit_name]:
+		for unit_name in ADDITIONAL_DROPS:
+			if index + 1 in ADDITIONAL_DROPS[unit_name]:
 				reference_pool.append(unit_name)
 		var uses_fallback := reference_pool.is_empty()
 		var reward_pool: Array = CURRENT_ROSTER.duplicate() if uses_fallback else reference_pool

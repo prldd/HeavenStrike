@@ -6,7 +6,9 @@ const SAVE_PATH := "user://campaign.cfg"
 const REWARD_UNITS := [
 	"Chain Initiate", "LDF Medic",
 	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
-	"LDF Gunner", "Order Pupil", "Order Cleric"
+	"LDF Gunner", "Order Pupil", "Order Cleric",
+	"Order Apostle", "Trinity Messenger", "Minerva the Brave",
+	"Naruku the Lookout", "Whirling Ragnr"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()
