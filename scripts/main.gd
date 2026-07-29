@@ -150,6 +150,7 @@ var replay_history_index := 0
 
 const REPLAY_PATH := "user://last_replay.json"
 const REPLAY_HISTORY_PATH := "user://replay_history.json"
+const NORMAL_SPEED_DURATION_SCALE := 2.0
 
 func _ready() -> void:
 	_build_interface()
@@ -264,10 +265,17 @@ func _build_interface() -> void:
 	action_row.add_child(menu_button)
 
 	end_button = Button.new()
-	end_button.text = "RESOLVE TURN"
-	end_button.custom_minimum_size.x = 145
+	end_button.text = "→"
+	end_button.tooltip_text = "Resolve turn (Enter)"
+	end_button.add_theme_font_size_override("font_size", 28)
+	end_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	end_button.offset_left = -70
+	end_button.offset_top = -62
+	end_button.offset_right = -14
+	end_button.offset_bottom = -12
+	end_button.z_index = 20
 	end_button.pressed.connect(_end_player_turn)
-	action_row.add_child(end_button)
+	board.add_child(end_button)
 
 	hand_row = HBoxContainer.new()
 	hand_row.custom_minimum_size.y = 104
@@ -285,6 +293,24 @@ func _build_interface() -> void:
 	_build_hover_card()
 	_build_replay_controls()
 	_build_replay_squad_overlay()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode in [KEY_ENTER, KEY_KP_ENTER]
+		and end_button.visible
+		and not end_button.disabled
+		and not replay_mode
+		and not main_menu_overlay.visible
+		and not mission_overlay.visible
+		and not squad_overlay.visible
+		and not tutorial_overlay.visible
+		and not overlay.visible
+	):
+		get_viewport().set_input_as_handled()
+		_end_player_turn()
 
 func _build_settings_menu() -> void:
 	settings_panel = PanelContainer.new()
@@ -317,7 +343,7 @@ func _build_settings_menu() -> void:
 	animation_button.pressed.connect(_toggle_animation_skip)
 	layout.add_child(animation_button)
 	motion_button = _settings_action(
-		"MOTION FULL", "Reduce lunges, shake, and animation duration."
+		"MOTION FULL", "Reduce lunges and disable shake without changing combat speed."
 	)
 	motion_button.pressed.connect(_toggle_reduced_motion)
 	layout.add_child(motion_button)
@@ -388,6 +414,7 @@ func _cycle_resolution_speed() -> void:
 		resolution_speed = 4.0
 	else:
 		resolution_speed = 1.0
+	Engine.time_scale = resolution_speed
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
 	_save_battle_settings()
 
@@ -410,6 +437,7 @@ func _toggle_reduced_motion() -> void:
 func _load_battle_settings() -> void:
 	var settings: Dictionary = BattleSettingsScript.load_settings()
 	resolution_speed = settings.speed
+	Engine.time_scale = resolution_speed
 	reduced_motion = settings.reduced_motion
 	skip_animations = settings.skip_animations
 	battle_audio.set_volume_step(settings.volume)
@@ -430,8 +458,9 @@ func _save_battle_settings() -> void:
 func _animation_duration(seconds: float) -> float:
 	if skip_animations:
 		return 0.001
-	var motion_scale := 0.45 if reduced_motion else 1.0
-	return seconds * motion_scale / resolution_speed
+	# Engine.time_scale controls the wall-clock playback rate so changing speed
+	# also affects a tween or timer that is already in progress.
+	return seconds * NORMAL_SPEED_DURATION_SCALE
 
 func _play_attack_sound(kind: String) -> void:
 	match kind:
@@ -444,8 +473,8 @@ func _play_attack_sound(kind: String) -> void:
 		"Lifebinder":
 			battle_audio.play("priest")
 
-func _wait(seconds: float) -> void:
-	await get_tree().create_timer(_animation_duration(seconds), false).timeout
+func _wait(seconds: float) -> Signal:
+	return get_tree().create_timer(_animation_duration(seconds), false).timeout
 
 func _log_action(message: String) -> void:
 	if message.is_empty() or message == last_logged_message:

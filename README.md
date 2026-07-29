@@ -24,7 +24,8 @@ assets required by the prototype.
 - Units deployed this turn move and attack when that turn resolves.
 - Deploy units while enough unlocked Mana remains.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
-- Select **Resolve Turn** to let units move and fight.
+- Select the **→** button at the lower-right of the playfield—or press
+  **Enter**—to resolve the turn and let units move and fight.
 - Open the upper-right **Settings** gear to change 1×/2×/4× resolution
   speed, sound volume, animation skipping, reduced motion, or to open the
   combat log and field briefing. These settings apply to battles and replays.

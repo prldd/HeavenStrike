@@ -43,6 +43,7 @@ var commander_effect_side := -1
 var unit_visual_offsets: Dictionary = {}
 var unit_flash_strength: Dictionary = {}
 var unit_defeat_strength: Dictionary = {}
+var full_unit_texture_cache: Dictionary = {}
 var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
@@ -111,10 +112,10 @@ func play_commander_effect(side: int, label: String, color: Color) -> void:
 
 func animate_unit_move(
 	unit_id: int, from_row: int, from_col: int, duration: float = 0.28
-) -> void:
+) -> Signal:
 	var unit = _unit_by_id(unit_id)
 	if unit == null:
-		return
+		return get_tree().process_frame
 	var from_center := _cell_rect(from_row, from_col).get_center()
 	var destination_center := _cell_rect(unit.row, unit.col).get_center()
 	var starting_offset := from_center - destination_center
@@ -127,17 +128,16 @@ func animate_unit_move(
 		Vector2.ZERO,
 		duration
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	await tween.finished
-	unit_visual_offsets.erase(unit_id)
-	queue_redraw()
+	tween.tween_callback(_clear_unit_visual.bind(unit_id))
+	return tween.finished
 
 func animate_attack(
 	actor_id: int, target_id: int, unit_kind: String, duration: float = 0.24
-) -> void:
+) -> Signal:
 	var actor = _unit_by_id(actor_id)
 	var target = _unit_by_id(target_id)
 	if actor == null or target == null:
-		return
+		return get_tree().process_frame
 	var origin := _cell_rect(actor.row, actor.col).get_center()
 	var destination := _cell_rect(target.row, target.col).get_center()
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
@@ -147,17 +147,16 @@ func animate_attack(
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
 		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		await tween.finished
-		unit_visual_offsets.erase(actor_id)
-	else:
-		await _animate_projectile(origin, destination, unit_kind, duration)
+		tween.tween_callback(_clear_unit_visual.bind(actor_id))
+		return tween.finished
+	return _animate_projectile(origin, destination, unit_kind, duration)
 
 func animate_commander_attack(
 	actor_id: int, commander_side: int, unit_kind: String, duration: float = 0.26
-) -> void:
+) -> Signal:
 	var actor = _unit_by_id(actor_id)
 	if actor == null:
-		return
+		return get_tree().process_frame
 	var origin := _cell_rect(actor.row, actor.col).get_center()
 	var destination := Vector2(size.x - 82 if commander_side == 1 else 82, _grid_rect().get_center().y)
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
@@ -165,27 +164,26 @@ func animate_commander_attack(
 		var tween := create_tween()
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
 		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
-		await tween.finished
-		unit_visual_offsets.erase(actor_id)
-	else:
-		await _animate_projectile(origin, destination, unit_kind, duration)
+		tween.tween_callback(_clear_unit_visual.bind(actor_id))
+		return tween.finished
+	return _animate_projectile(origin, destination, unit_kind, duration)
 
-func animate_heal(actor_id: int, target_id: int, duration: float = 0.32) -> void:
+func animate_heal(actor_id: int, target_id: int, duration: float = 0.32) -> Signal:
 	var actor = _unit_by_id(actor_id)
 	var target = _unit_by_id(target_id)
 	if actor == null or target == null:
-		return
-	await _animate_projectile(
+		return get_tree().process_frame
+	return _animate_projectile(
 		_cell_rect(actor.row, actor.col).get_center(),
 		_cell_rect(target.row, target.col).get_center(),
 		"Heal",
 		duration
 	)
 
-func animate_hit(unit_id: int, duration: float = 0.18) -> void:
+func animate_hit(unit_id: int, duration: float = 0.18) -> Signal:
 	var unit = _unit_by_id(unit_id)
 	if unit == null:
-		return
+		return get_tree().process_frame
 	var direction := -1.0 if unit.side == 1 else 1.0
 	unit_flash_strength[unit_id] = 1.0
 	var tween := create_tween()
@@ -197,21 +195,18 @@ func animate_hit(unit_id: int, duration: float = 0.18) -> void:
 		Vector2.ZERO,
 		duration
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	await tween.finished
-	unit_flash_strength.erase(unit_id)
-	unit_visual_offsets.erase(unit_id)
-	queue_redraw()
+	tween.tween_callback(_clear_unit_hit.bind(unit_id))
+	return tween.finished
 
-func animate_defeat(unit_id: int, duration: float = 0.28) -> void:
+func animate_defeat(unit_id: int, duration: float = 0.28) -> Signal:
 	var unit = _unit_by_id(unit_id)
 	if unit == null:
-		return
+		return get_tree().process_frame
 	unit_defeat_strength[unit_id] = 0.0
 	var tween := create_tween()
 	tween.tween_method(_set_unit_defeat.bind(unit_id), 0.0, 1.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	await tween.finished
-	unit_defeat_strength.erase(unit_id)
-	queue_redraw()
+	tween.tween_callback(_clear_unit_defeat.bind(unit_id))
+	return tween.finished
 
 func shake(strength: float = 8.0) -> void:
 	if reduced_motion:
@@ -227,15 +222,30 @@ func shake(strength: float = 8.0) -> void:
 
 func _animate_projectile(
 	origin: Vector2, destination: Vector2, kind: String, duration: float
-) -> void:
+) -> Signal:
 	projectile_from = origin
 	projectile_to = destination
 	projectile_kind = kind
 	projectile_progress = 0.0
 	var tween := create_tween()
 	tween.tween_method(_set_projectile_progress, 0.0, 1.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
+	tween.tween_callback(_clear_projectile)
+	return tween.finished
+
+func _clear_projectile() -> void:
 	projectile_kind = ""
+	queue_redraw()
+
+func _clear_unit_visual(unit_id: int) -> void:
+	unit_visual_offsets.erase(unit_id)
+	queue_redraw()
+
+func _clear_unit_hit(unit_id: int) -> void:
+	unit_flash_strength.erase(unit_id)
+	_clear_unit_visual(unit_id)
+
+func _clear_unit_defeat(unit_id: int) -> void:
+	unit_defeat_strength.erase(unit_id)
 	queue_redraw()
 
 func _set_projectile_progress(value: float) -> void:
@@ -500,7 +510,7 @@ func _draw_unit(unit: Dictionary) -> void:
 		_box(Color(color, 0.10), Color(color, 0.32), 13, 1),
 		rect.grow(5)
 	)
-	_draw_unit_icon(unit, center, minf(rect.size.x, rect.size.y) * 0.68)
+	_draw_unit_art(unit, rect.grow(-2.0))
 	var flash: float = unit_flash_strength.get(unit.id, 0.0)
 	if flash > 0.0:
 		draw_style_box(
@@ -607,6 +617,35 @@ func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
 		source
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
+	var icon_id: int = unit.get("icon", 0)
+	if icon_id < 1 or icon_id > 48:
+		return
+	var texture: Texture2D = _full_unit_texture(icon_id)
+	if texture == null:
+		_draw_unit_icon(unit, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.68)
+		return
+	var texture_size := texture.get_size()
+	var art_scale := minf(rect.size.x / texture_size.x, rect.size.y / texture_size.y)
+	var draw_size := texture_size * art_scale
+	var center := Vector2(rect.get_center().x, rect.end.y - draw_size.y * 0.5)
+	var scale_x := -1.0 if unit.side == 0 else 1.0
+	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
+	draw_texture_rect(
+		texture,
+		Rect2(-draw_size * 0.5, draw_size),
+		false
+	)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _full_unit_texture(icon_id: int) -> Texture2D:
+	if full_unit_texture_cache.has(icon_id):
+		return full_unit_texture_cache[icon_id]
+	var path := "res://assets/units/full/%03d.png" % icon_id
+	var texture := load(path) as Texture2D
+	full_unit_texture_cache[icon_id] = texture
+	return texture
 
 func _draw_effect(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-5.0)
