@@ -8,6 +8,8 @@ const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
+const SquadCardScript = preload("res://scripts/squad_card.gd")
+const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 
@@ -32,11 +34,16 @@ var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
 var result_primary_button: Button
+var reward_reveal: VBoxContainer
+var reward_portrait: TextureRect
+var reward_stars_label: Label
+var reward_new_label: Label
 var tutorial_overlay: ColorRect
 var tutorial_page_label: Label
 var tutorial_page := 0
 var squad_overlay: ColorRect
 var squad_grid: GridContainer
+var squad_selection_grid: GridContainer
 var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
@@ -236,9 +243,9 @@ func _build_overlay() -> void:
 	overlay.add_child(center)
 
 	var panel := VBoxContainer.new()
-	panel.custom_minimum_size = Vector2(480, 260)
+	panel.custom_minimum_size = Vector2(480, 390)
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_theme_constant_override("separation", 18)
+	panel.add_theme_constant_override("separation", 14)
 	center.add_child(panel)
 
 	overlay_title = Label.new()
@@ -252,17 +259,48 @@ func _build_overlay() -> void:
 	overlay_detail.add_theme_color_override("font_color", Color("#afbeda"))
 	panel.add_child(overlay_detail)
 
+	reward_reveal = VBoxContainer.new()
+	reward_reveal.alignment = BoxContainer.ALIGNMENT_CENTER
+	reward_reveal.add_theme_constant_override("separation", 4)
+	reward_reveal.visible = false
+	panel.add_child(reward_reveal)
+
+	var reward_heading := Label.new()
+	reward_heading.text = "CARD REWARD"
+	reward_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_heading.add_theme_font_size_override("font_size", 16)
+	reward_heading.add_theme_color_override("font_color", Color("#9fb2d6"))
+	reward_reveal.add_child(reward_heading)
+
+	var portrait_center := CenterContainer.new()
+	portrait_center.custom_minimum_size = Vector2(0, 116)
+	reward_reveal.add_child(portrait_center)
+
+	reward_portrait = TextureRect.new()
+	reward_portrait.custom_minimum_size = Vector2(108, 108)
+	reward_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	reward_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	reward_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_center.add_child(reward_portrait)
+
+	reward_stars_label = Label.new()
+	reward_stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_stars_label.add_theme_font_size_override("font_size", 18)
+	reward_stars_label.add_theme_color_override("font_color", Color("#ffd166"))
+	reward_reveal.add_child(reward_stars_label)
+
+	reward_new_label = Label.new()
+	reward_new_label.text = "NEW"
+	reward_new_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_new_label.add_theme_font_size_override("font_size", 15)
+	reward_new_label.add_theme_color_override("font_color", Color("#70e0a1"))
+	reward_reveal.add_child(reward_new_label)
+
 	result_primary_button = Button.new()
 	result_primary_button.text = "PLAY AGAIN"
 	result_primary_button.custom_minimum_size = Vector2(180, 48)
 	result_primary_button.pressed.connect(_on_result_primary)
 	panel.add_child(result_primary_button)
-
-	var return_menu := Button.new()
-	return_menu.text = "RETURN TO MENU"
-	return_menu.custom_minimum_size = Vector2(180, 44)
-	return_menu.pressed.connect(_show_main_menu)
-	panel.add_child(return_menu)
 
 func _build_tutorial() -> void:
 	tutorial_overlay = ColorRect.new()
@@ -336,7 +374,7 @@ func _next_tutorial_page() -> void:
 func _update_tutorial() -> void:
 	var pages := [
 		"1 / 5\nSELECT A CARD\nCards show Mana cost, class, attack, health, and their special ability.",
-		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units rest until your next turn.",
+		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units move and attack when the turn resolves.",
 		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in an adjacent row. Each unit may shift once per turn.",
 		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Defender cannot change rows for its next two turns.",
 		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
@@ -379,7 +417,7 @@ func _build_squad_builder() -> void:
 	title_row.add_child(squad_count_label)
 
 	var instruction := Label.new()
-	instruction.text = "Choose 1–15 units, with no more than 2 copies each. The first selected unit is your Vanguard."
+	instruction.text = "Drag cards between Barracks and Squad, or click to add/remove. Maximum 2 copies per unit; first card is Vanguard."
 	instruction.add_theme_color_override("font_color", Color("#aebdda"))
 	layout.add_child(instruction)
 
@@ -401,16 +439,62 @@ func _build_squad_builder() -> void:
 	captain_skill_option.item_selected.connect(_select_captain_skill)
 	skill_row.add_child(captain_skill_option)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(scroll)
+	var workshop_columns := HBoxContainer.new()
+	workshop_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	workshop_columns.add_theme_constant_override("separation", 14)
+	layout.add_child(workshop_columns)
 
+	var barracks_zone: PanelContainer = SquadDropZoneScript.new()
+	barracks_zone.zone_name = "barracks"
+	barracks_zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	barracks_zone.size_flags_stretch_ratio = 1.0
+	barracks_zone.unit_dropped.connect(_on_squad_drop.bind("barracks"))
+	workshop_columns.add_child(barracks_zone)
+
+	var barracks_layout := VBoxContainer.new()
+	barracks_layout.add_theme_constant_override("separation", 8)
+	barracks_zone.add_child(barracks_layout)
+	var barracks_title := Label.new()
+	barracks_title.text = "BARRACKS · OWNED CARDS"
+	barracks_title.add_theme_font_size_override("font_size", 16)
+	barracks_title.add_theme_color_override("font_color", Color("#71e6f5"))
+	barracks_layout.add_child(barracks_title)
+	var barracks_scroll := ScrollContainer.new()
+	barracks_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	barracks_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	barracks_layout.add_child(barracks_scroll)
 	squad_grid = GridContainer.new()
-	squad_grid.columns = 3
+	squad_grid.columns = 2
 	squad_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	squad_grid.add_theme_constant_override("h_separation", 10)
-	squad_grid.add_theme_constant_override("v_separation", 10)
-	scroll.add_child(squad_grid)
+	squad_grid.add_theme_constant_override("h_separation", 8)
+	squad_grid.add_theme_constant_override("v_separation", 8)
+	barracks_scroll.add_child(squad_grid)
+
+	var selection_zone: PanelContainer = SquadDropZoneScript.new()
+	selection_zone.zone_name = "squad"
+	selection_zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selection_zone.size_flags_stretch_ratio = 1.0
+	selection_zone.unit_dropped.connect(_on_squad_drop.bind("squad"))
+	workshop_columns.add_child(selection_zone)
+
+	var selection_layout := VBoxContainer.new()
+	selection_layout.add_theme_constant_override("separation", 8)
+	selection_zone.add_child(selection_layout)
+	var selection_title := Label.new()
+	selection_title.text = "SQUAD · CLICK A CARD TO REMOVE"
+	selection_title.add_theme_font_size_override("font_size", 16)
+	selection_title.add_theme_color_override("font_color", Color("#ffd166"))
+	selection_layout.add_child(selection_title)
+	var selection_scroll := ScrollContainer.new()
+	selection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	selection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	selection_layout.add_child(selection_scroll)
+	squad_selection_grid = GridContainer.new()
+	squad_selection_grid.columns = 2
+	squad_selection_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	squad_selection_grid.add_theme_constant_override("h_separation", 8)
+	squad_selection_grid.add_theme_constant_override("v_separation", 8)
+	selection_scroll.add_child(squad_selection_grid)
 
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_END
@@ -466,49 +550,97 @@ func _close_squad_builder() -> void:
 		_show_main_menu()
 
 func _reset_squad() -> void:
-	editing_squad_names = SquadStoreScript.default_squad(roster)
+	editing_squad_names = SquadStoreScript.sanitize_owned(
+		[], roster, CampaignStoreScript.inventory_counts(roster, earned_reward_units)
+	)
 	_rebuild_squad_grid()
 
 func _select_captain_skill(index: int) -> void:
 	if index >= 0 and index < CaptainSkillsScript.SKILLS.size():
 		editing_captain_skill = CaptainSkillsScript.SKILLS[index]
 
-func _toggle_squad_unit(unit_name: String) -> void:
+func _add_squad_unit(unit_name: String) -> void:
+	var inventory := CampaignStoreScript.inventory_counts(roster, earned_reward_units)
 	var copies: int = editing_squad_names.count(unit_name)
-	if copies < 2 and editing_squad_names.size() < SquadStoreScript.SQUAD_SIZE:
+	if (
+		copies < mini(2, inventory.get(unit_name, 0))
+		and editing_squad_names.size() < SquadStoreScript.SQUAD_SIZE
+	):
 		editing_squad_names.append(unit_name)
-	elif copies >= 2:
-		while unit_name in editing_squad_names:
-			editing_squad_names.erase(unit_name)
 	_rebuild_squad_grid()
+
+func _remove_squad_unit_at(index: int) -> void:
+	if index >= 0 and index < editing_squad_names.size():
+		editing_squad_names.remove_at(index)
+	_rebuild_squad_grid()
+
+func _remove_one_squad_unit(unit_name: String) -> void:
+	var index := editing_squad_names.find(unit_name)
+	if index >= 0:
+		editing_squad_names.remove_at(index)
+	_rebuild_squad_grid()
+
+func _on_squad_drop(unit_name: String, source: String, destination: String) -> void:
+	if destination == "squad" and source == "barracks":
+		_add_squad_unit(unit_name)
+	elif destination == "barracks" and source == "squad":
+		_remove_one_squad_unit(unit_name)
 
 func _rebuild_squad_grid() -> void:
 	for child in squad_grid.get_children():
 		squad_grid.remove_child(child)
 		child.queue_free()
+	for child in squad_selection_grid.get_children():
+		squad_selection_grid.remove_child(child)
+		child.queue_free()
 
+	var inventory := CampaignStoreScript.inventory_counts(roster, earned_reward_units)
 	for unit in roster:
 		var copies: int = editing_squad_names.count(unit.name)
-		var selected: bool = copies > 0
-		var unlocked: bool = unit.name in CampaignStoreScript.unlocked_unit_names(roster, earned_reward_units)
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(0, 76)
+		var owned: int = inventory.get(unit.name, 0)
+		if owned <= 0:
+			continue
+		var button: Button = SquadCardScript.new()
+		button.configure(unit.name, "barracks", _unit_icon(unit.icon))
+		button.custom_minimum_size = Vector2(0, 78)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.toggle_mode = true
-		button.button_pressed = selected
-		button.disabled = not unlocked
-		button.text = "%s  ·  %d◆\n%s  |  %d ATK  %d HP" % [
-			unit.name.to_upper(), unit.cost, UnitCatalogScript.display_class(unit.kind),
-			unit.atk, unit.hp
+		button.icon = _unit_icon(unit.icon)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.disabled = (
+			copies >= mini(2, owned)
+			or editing_squad_names.size() >= SquadStoreScript.SQUAD_SIZE
+		)
+		button.text = "%s\nOWNED %d · IN SQUAD %d" % [
+			unit.name.to_upper(), owned, copies
 		]
-		if copies > 0:
-			button.text += "\n%d / 2 COPIES" % copies
-		if not unlocked:
-			button.text += "\nLOCKED · CAMPAIGN REWARD"
-		button.pressed.connect(_toggle_squad_unit.bind(unit.name))
+		button.add_theme_font_size_override("font_size", 11)
+		button.pressed.connect(_add_squad_unit.bind(unit.name))
+		button.connect("unit_dropped", _on_squad_drop.bind("barracks"))
 		button.mouse_entered.connect(_show_unit_details.bind(unit))
 		button.mouse_exited.connect(_hide_unit_details)
 		squad_grid.add_child(button)
+
+	for index in editing_squad_names.size():
+		var unit: Dictionary = UnitCatalogScript.by_name(editing_squad_names[index])
+		if unit.is_empty():
+			continue
+		var card: Button = SquadCardScript.new()
+		card.configure(unit.name, "squad", _unit_icon(unit.icon))
+		card.custom_minimum_size = Vector2(0, 72)
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.icon = _unit_icon(unit.icon)
+		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		card.text = "%02d · %s%s" % [
+			index + 1,
+			unit.name.to_upper(),
+			"\nVANGUARD" if index == 0 else ""
+		]
+		card.add_theme_font_size_override("font_size", 11)
+		card.pressed.connect(_remove_squad_unit_at.bind(index))
+		card.connect("unit_dropped", _on_squad_drop.bind("squad"))
+		card.mouse_entered.connect(_show_unit_details.bind(unit))
+		card.mouse_exited.connect(_hide_unit_details)
+		squad_selection_grid.add_child(card)
 
 	squad_count_label.text = "%d / %d SELECTED" % [editing_squad_names.size(), SquadStoreScript.SQUAD_SIZE]
 	squad_count_label.add_theme_color_override("font_color", Color("#70e0a1") if not editing_squad_names.is_empty() else Color("#ff8f8f"))
@@ -543,14 +675,11 @@ func _save_and_start_mission() -> void:
 	_begin_mission(mission_id)
 
 func _sanitize_squad_unlocks() -> void:
-	var unlocked: Array = CampaignStoreScript.unlocked_unit_names(roster, earned_reward_units)
-	var allowed: Array = []
-	for unit_name in squad_names:
-		if unit_name in unlocked and allowed.count(unit_name) < 2:
-			allowed.append(unit_name)
-	if allowed.is_empty():
-		allowed = SquadStoreScript.default_squad(roster)
-	squad_names = allowed
+	squad_names = SquadStoreScript.sanitize_owned(
+		squad_names,
+		roster,
+		CampaignStoreScript.inventory_counts(roster, earned_reward_units)
+	)
 
 func _build_main_menu() -> void:
 	main_menu_overlay = ColorRect.new()
@@ -1029,19 +1158,32 @@ func _rebuild_hand() -> void:
 		hand_row.add_child(button)
 
 func _unit_icon(icon_id: int) -> Texture2D:
+	return _unit_icon_at_size(icon_id, 48)
+
+func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
 	if icon_id < 1 or icon_id > 12:
 		return null
-	if unit_icon_cache.has(icon_id):
-		return unit_icon_cache[icon_id]
+	var cache_key := "%d:%d" % [icon_id, size]
+	if unit_icon_cache.has(cache_key):
+		return unit_icon_cache[cache_key]
 	var atlas: Texture2D = UNIT_SPRITES_1 if icon_id <= 6 else UNIT_SPRITES_2
 	var source_image: Image = atlas.get_image()
 	var icon_image := source_image.get_region(
 		Rect2i(((icon_id - 1) % 6) * 100, 0, 100, 100)
 	)
-	icon_image.resize(48, 48, Image.INTERPOLATE_LANCZOS)
+	icon_image.resize(size, size, Image.INTERPOLATE_LANCZOS)
 	var icon := ImageTexture.create_from_image(icon_image)
-	unit_icon_cache[icon_id] = icon
+	unit_icon_cache[cache_key] = icon
 	return icon
+
+func _show_card_reward(unit_name: String, is_new: bool) -> void:
+	var unit: Dictionary = UnitCatalogScript.by_name(unit_name)
+	reward_reveal.visible = not unit.is_empty()
+	if unit.is_empty():
+		return
+	reward_portrait.texture = _unit_icon_at_size(unit.icon, 100)
+	reward_stars_label.text = "★".repeat(unit.get("stars", 1))
+	reward_new_label.visible = is_new
 
 func _select_card(index: int) -> void:
 	if not input_enabled:
@@ -1476,8 +1618,8 @@ func _check_game_over() -> bool:
 	battle_over = true
 	input_enabled = false
 	overlay.visible = true
+	reward_reveal.visible = false
 	if enemy_hp <= 0:
-		var reward_text := ""
 		if campaign_battle:
 			var encounter_count := CampaignStoreScript.encounter_count(current_mission_id)
 			if current_encounter_index + 1 < encounter_count:
@@ -1497,13 +1639,16 @@ func _check_game_over() -> bool:
 			MissionRunStoreScript.clear_run()
 			mission_finished = true
 			var reward := CampaignStoreScript.roll_reward(current_mission_id, roster)
+			var was_unlocked := reward in CampaignStoreScript.unlocked_unit_names(
+				roster, earned_reward_units
+			)
 			earned_reward_units = CampaignStoreScript.award_reward(
 				reward, roster, earned_reward_units
 			)
-			reward_text = "\nCard reward: %s" % reward
+			_show_card_reward(reward, not was_unlocked)
 		overlay_title.text = "MISSION COMPLETE" if campaign_battle else "VICTORY"
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
-		overlay_detail.text = "The enemy weather engine is yours.\nVictory achieved in %d rounds.%s" % [round_number, reward_text]
+		overlay_detail.text = "Victory achieved in %d rounds." % round_number
 		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
 	else:
 		if campaign_battle:

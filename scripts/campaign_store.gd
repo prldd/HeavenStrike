@@ -48,14 +48,14 @@ static func load_reward_units(roster: Array) -> Array:
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = []
 	for unit_name in saved:
-		if unit_name in valid_names and unit_name not in result:
+		if unit_name in valid_names:
 			result.append(unit_name)
 	return result
 
 static func award_reward(unit_name: String, roster: Array, earned: Array) -> Array:
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = earned.duplicate()
-	if unit_name in valid_names and unit_name not in result:
+	if unit_name in valid_names:
 		result.append(unit_name)
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
@@ -72,6 +72,15 @@ static func unlocked_unit_names(roster: Array, earned_rewards: Array) -> Array:
 		if reward in REWARD_UNITS and reward not in unlocked:
 			unlocked.append(reward)
 	return unlocked
+
+static func inventory_counts(roster: Array, earned_rewards: Array) -> Dictionary:
+	var counts := {}
+	for unit in roster:
+		counts[unit.name] = 0 if unit.name in REWARD_UNITS else 1
+	for reward in earned_rewards:
+		if counts.has(reward):
+			counts[reward] += 1
+	return counts
 
 static func reward_summary(mission_id: int) -> String:
 	if mission_id < 0 or mission_id >= MISSIONS.size():

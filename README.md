@@ -25,6 +25,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.
 - Select **Squad** to choose up to 15 units, with at most two copies of each.
+- Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
 - Defeat the enemy Commander before it reduces your 24 HP to zero.
 
 ## Implemented
@@ -37,6 +38,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
 - Quest-specific, Star-Rarity-weighted card rewards with persistent unlocks
+- End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles
 - Six-unit bench and persistent locked-Mana economy

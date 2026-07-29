@@ -44,6 +44,8 @@ Before battle, each side prepares a squad of up to 15 units:
 - The player begins with the Vanguard and three drawn units.
 - A bench can hold up to six units.
 - A squad may contain no more than two copies of the same unit.
+- The Barracks begins with one copy of every base-set card and permanently keeps every card reward, including duplicates.
+- Players can drag cards between Barracks and Squad; clicking a selected squad card removes one copy.
 - PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.

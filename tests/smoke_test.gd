@@ -31,6 +31,18 @@ func _init() -> void:
 	assert(repaired_squad.count("Trinity Rusher") == 2)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
 	assert(SquadStoreScript.sanitize([], roster).size() == 12)
+	var inventory := CampaignStoreScript.inventory_counts(
+		roster, ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"]
+	)
+	assert(inventory["Trinity Rusher"] == 3)
+	assert(inventory["Chain Initiate"] == 1)
+	assert(inventory["LDF Medic"] == 0)
+	var owned_squad: Array = SquadStoreScript.sanitize_owned(
+		["Trinity Rusher", "Trinity Rusher", "Trinity Rusher", "Chain Initiate", "LDF Medic"],
+		roster,
+		inventory
+	)
+	assert(owned_squad == ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"])
 	assert(CaptainSkillsScript.SKILLS.size() == 8)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 62)

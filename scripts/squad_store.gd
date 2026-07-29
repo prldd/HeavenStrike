@@ -23,6 +23,25 @@ static func sanitize(candidate_names: Array, roster: Array) -> Array:
 			return result
 	return result if not result.is_empty() else default_squad(roster)
 
+static func sanitize_owned(candidate_names: Array, roster: Array, inventory: Dictionary) -> Array:
+	var valid_names: Array = roster.map(func(unit): return unit.name)
+	var result: Array = []
+	for unit_name in candidate_names:
+		var owned: int = inventory.get(unit_name, 0)
+		if unit_name in valid_names and result.count(unit_name) < mini(2, owned):
+			result.append(unit_name)
+		if result.size() >= SQUAD_SIZE:
+			return result
+	if not result.is_empty():
+		return result
+	for unit in roster:
+		var available: int = mini(2, inventory.get(unit.name, 0))
+		for copy in available:
+			result.append(unit.name)
+			if result.size() >= SQUAD_SIZE:
+				return result
+	return result
+
 static func load_squad(roster: Array) -> Array:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
