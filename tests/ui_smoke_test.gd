@@ -53,6 +53,7 @@ func _run() -> void:
 	assert(game.end_button.get_parent() == game.board)
 	assert(game.end_button.text == "→")
 	assert(game.end_button.tooltip_text.contains("Enter"))
+	assert(not game.end_button.visible)
 	assert(game.hand_row.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	game._cycle_resolution_speed()
 	assert(game.resolution_speed == 2.0)
@@ -83,6 +84,12 @@ func _run() -> void:
 	assert(game.board.enemy_mana_text == "4 / 4\n0 LOCKED")
 	assert(game.board.player_hp_text == "18 HP\n2 SHIELD")
 	assert(game.board.player_deck_text == "DECK 3")
+	var board_cell: Rect2 = game.board._cell_rect(0, 0)
+	assert(board_cell.size.y > board_cell.size.x)
+	assert(is_equal_approx(
+		board_cell.size.x / board_cell.size.y,
+		game.board.CELL_ASPECT_RATIO
+	))
 	assert(game.board.has_method("animate_unit_move"))
 	assert(game.board.has_method("animate_attack"))
 	assert(game.board.has_method("animate_commander_attack"))
@@ -204,7 +211,7 @@ func _run() -> void:
 	assert(game.replay_timeline_label.text.contains("SEED 777"))
 	game._close_replay()
 	assert(game.menu_button.visible)
-	assert(game.end_button.visible)
+	assert(not game.end_button.visible)
 	assert(game.power_button.visible)
 	await create_timer(0.05).timeout
 	game.queue_free()

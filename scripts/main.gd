@@ -625,6 +625,7 @@ func _build_tutorial() -> void:
 
 func _open_tutorial() -> void:
 	tutorial_page = 0
+	end_button.visible = false
 	tutorial_overlay.visible = true
 	_update_tutorial()
 
@@ -633,6 +634,8 @@ func _close_tutorial() -> void:
 	if tutorial_opened_from_menu:
 		tutorial_opened_from_menu = false
 		_show_main_menu()
+	else:
+		end_button.visible = not replay_mode and not battle_over
 
 func _next_tutorial_page() -> void:
 	tutorial_page += 1
@@ -813,6 +816,7 @@ func _open_squad_builder() -> void:
 	editing_squad_names = squad_names.duplicate()
 	editing_captain_skill = player_captain_skill
 	captain_skill_option.select(CaptainSkillsScript.SKILLS.find(editing_captain_skill))
+	end_button.visible = false
 	squad_overlay.visible = true
 	_rebuild_squad_grid()
 
@@ -875,6 +879,8 @@ func _close_squad_builder() -> void:
 	if squad_opened_from_menu:
 		squad_opened_from_menu = false
 		_show_main_menu()
+		return
+	end_button.visible = not replay_mode and not battle_over
 
 func _reset_squad() -> void:
 	editing_squad_names = SquadStoreScript.sanitize_owned(
@@ -1321,7 +1327,7 @@ func _show_main_menu() -> void:
 	if replay_squad_overlay != null:
 		replay_squad_overlay.visible = false
 	menu_button.visible = true
-	end_button.visible = true
+	end_button.visible = false
 	power_button.visible = true
 	input_enabled = false
 	squad_opened_from_menu = false
@@ -1422,7 +1428,7 @@ func _close_replay() -> void:
 	replay_squad_overlay.visible = false
 	battle_audio.stop_all()
 	menu_button.visible = true
-	end_button.visible = true
+	end_button.visible = false
 	power_button.visible = true
 	_show_main_menu()
 
@@ -1803,6 +1809,7 @@ func _start_new_match() -> void:
 	replay_mode = false
 	replay_playing = false
 	power_button.visible = true
+	end_button.visible = true
 	if replay_panel != null:
 		replay_panel.visible = false
 	units.clear()
@@ -2652,6 +2659,7 @@ func _check_game_over() -> bool:
 		return false
 	battle_over = true
 	input_enabled = false
+	end_button.visible = false
 	battle_simulator.record("battle_finished", {
 		"winner": PLAYER if enemy_hp <= 0 else ENEMY,
 		"player_hp": player_hp,

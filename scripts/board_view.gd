@@ -21,6 +21,8 @@ signal unit_hover_ended
 const ROWS := 3
 const COLS := 7
 const BOARD_MARGIN := 16.0
+const CELL_ASPECT_RATIO := 0.88
+const UNIT_ART_EXPANSION := 6.0
 var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
@@ -44,6 +46,7 @@ var unit_visual_offsets: Dictionary = {}
 var unit_flash_strength: Dictionary = {}
 var unit_defeat_strength: Dictionary = {}
 var full_unit_texture_cache: Dictionary = {}
+var full_unit_content_rect_cache: Dictionary = {}
 var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
@@ -321,9 +324,13 @@ func _update_unit_hover(point: Vector2) -> void:
 		unit_hovered.emit(next_unit)
 
 func _grid_rect() -> Rect2:
+	var grid_height := size.y - BOARD_MARGIN * 2.0 - 52.0
+	var maximum_width := size.x - 284.0
+	var portrait_width := (grid_height / ROWS) * CELL_ASPECT_RATIO * COLS
+	var grid_width := minf(maximum_width, portrait_width)
 	return Rect2(
-		Vector2(142.0, BOARD_MARGIN + 26.0),
-		Vector2(size.x - 284.0, size.y - BOARD_MARGIN * 2.0 - 52.0)
+		Vector2((size.x - grid_width) * 0.5, BOARD_MARGIN + 26.0),
+		Vector2(grid_width, grid_height)
 	)
 
 func _cell_rect(row: int, col: int) -> Rect2:
@@ -356,11 +363,11 @@ func _draw() -> void:
 
 	draw_style_box(
 		_box(Color(0.025, 0.05, 0.11, 0.78), Color(0.43, 0.60, 0.78, 0.55), 8, 1),
-		Rect2(Vector2(142, 6), Vector2(minf(grid.size.x * 0.62, 590), 28))
+		Rect2(Vector2(grid.position.x, 6), Vector2(minf(grid.size.x * 0.62, 590), 28))
 	)
 	draw_string(
 		get_theme_default_font(),
-		Vector2(153, 25),
+		Vector2(grid.position.x + 11, 25),
 		event_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		minf(grid.size.x * 0.60, 570),
@@ -510,7 +517,9 @@ func _draw_unit(unit: Dictionary) -> void:
 		_box(Color(color, 0.10), Color(color, 0.32), 13, 1),
 		rect.grow(5)
 	)
-	_draw_unit_art(unit, rect.grow(-2.0))
+	# Let portrait art use nearly the full cell. Stats and statuses are drawn
+	# afterward, so they remain readable over the larger silhouette.
+	_draw_unit_art(unit, rect.grow(UNIT_ART_EXPANSION))
 	var flash: float = unit_flash_strength.get(unit.id, 0.0)
 	if flash > 0.0:
 		draw_style_box(
@@ -626,16 +635,17 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	if texture == null:
 		_draw_unit_icon(unit, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.68)
 		return
-	var texture_size := texture.get_size()
-	var art_scale := minf(rect.size.x / texture_size.x, rect.size.y / texture_size.y)
-	var draw_size := texture_size * art_scale
-	var center := Vector2(rect.get_center().x, rect.end.y - draw_size.y * 0.5)
+	var content_rect := _full_unit_content_rect(icon_id, texture)
+	var content_size := content_rect.size
+	var art_scale := minf(rect.size.x / content_size.x, rect.size.y / content_size.y)
+	var draw_size := content_size * art_scale
+	var center := rect.get_center()
 	var scale_x := -1.0 if unit.side == 0 else 1.0
 	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
-	draw_texture_rect(
+	draw_texture_rect_region(
 		texture,
 		Rect2(-draw_size * 0.5, draw_size),
-		false
+		content_rect
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
@@ -646,6 +656,33 @@ func _full_unit_texture(icon_id: int) -> Texture2D:
 	var texture := load(path) as Texture2D
 	full_unit_texture_cache[icon_id] = texture
 	return texture
+
+func _full_unit_content_rect(icon_id: int, texture: Texture2D) -> Rect2:
+	if full_unit_content_rect_cache.has(icon_id):
+		return full_unit_content_rect_cache[icon_id]
+	var image := texture.get_image()
+	var image_size := image.get_size()
+	var minimum := image_size
+	var maximum := Vector2i(-1, -1)
+	for y in image_size.y:
+		for x in image_size.x:
+			if image.get_pixel(x, y).a > 0.04:
+				minimum.x = mini(minimum.x, x)
+				minimum.y = mini(minimum.y, y)
+				maximum.x = maxi(maximum.x, x)
+				maximum.y = maxi(maximum.y, y)
+	var content := Rect2(Vector2.ZERO, Vector2(image_size))
+	if maximum.x >= minimum.x and maximum.y >= minimum.y:
+		var padding := maxi(2, int(maximum.y - minimum.y + 1) / 40)
+		minimum -= Vector2i(padding, padding)
+		maximum += Vector2i(padding, padding)
+		minimum.x = maxi(0, minimum.x)
+		minimum.y = maxi(0, minimum.y)
+		maximum.x = mini(image_size.x - 1, maximum.x)
+		maximum.y = mini(image_size.y - 1, maximum.y)
+		content = Rect2(minimum, maximum - minimum + Vector2i.ONE)
+	full_unit_content_rect_cache[icon_id] = content
+	return content
 
 func _draw_effect(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-5.0)
