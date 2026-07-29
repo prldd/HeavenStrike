@@ -79,6 +79,8 @@ var resume_button: Button
 var replay_button: Button
 var replay_panel: PanelContainer
 var replay_play_button: Button
+var replay_speed_button: Button
+var replay_event_label: Label
 var replay_timeline_label: Label
 var replay_previous_button: Button
 var replay_next_button: Button
@@ -392,6 +394,8 @@ func _cycle_resolution_speed() -> void:
 	else:
 		resolution_speed = 1.0
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
+	if replay_speed_button != null:
+		replay_speed_button.text = "SPEED %d×" % int(resolution_speed)
 	_save_battle_settings()
 
 func _cycle_audio() -> void:
@@ -417,6 +421,8 @@ func _load_battle_settings() -> void:
 	skip_animations = settings.skip_animations
 	battle_audio.set_volume_step(settings.volume)
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
+	if replay_speed_button != null:
+		replay_speed_button.text = "SPEED %d×" % int(resolution_speed)
 	audio_button.text = battle_audio.label()
 	board.reduced_motion = reduced_motion
 	animation_button.text = "ANIM OFF" if skip_animations else "ANIM ON"
@@ -1086,42 +1092,75 @@ func _build_main_menu() -> void:
 func _build_replay_controls() -> void:
 	replay_panel = PanelContainer.new()
 	replay_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	replay_panel.position = Vector2(-360, -74)
-	replay_panel.custom_minimum_size = Vector2(720, 58)
+	replay_panel.position = Vector2(-390, -112)
+	replay_panel.custom_minimum_size = Vector2(780, 96)
 	replay_panel.z_index = 95
 	replay_panel.visible = false
 	add_child(replay_panel)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", 12)
 	replay_panel.add_child(row)
+
+	var menu_center := CenterContainer.new()
+	menu_center.custom_minimum_size.x = 76
+	row.add_child(menu_center)
 	var back := Button.new()
 	back.text = "MENU"
+	back.custom_minimum_size = Vector2(68, 46)
 	back.pressed.connect(_close_replay)
-	row.add_child(back)
+	menu_center.add_child(back)
+
+	row.add_child(VSeparator.new())
+	var transport := VBoxContainer.new()
+	transport.add_theme_constant_override("separation", 5)
+	row.add_child(transport)
+	var transport_actions := HBoxContainer.new()
+	transport_actions.add_theme_constant_override("separation", 6)
+	transport.add_child(transport_actions)
 	replay_play_button = Button.new()
 	replay_play_button.text = "PLAY"
+	replay_play_button.custom_minimum_size.x = 68
 	replay_play_button.pressed.connect(_toggle_replay_playback)
-	row.add_child(replay_play_button)
+	transport_actions.add_child(replay_play_button)
 	var step := Button.new()
 	step.text = "STEP"
+	step.custom_minimum_size.x = 68
 	step.pressed.connect(_step_replay)
-	row.add_child(step)
-	var speed := Button.new()
-	speed.text = "SPEED"
-	speed.pressed.connect(_cycle_resolution_speed)
-	row.add_child(speed)
+	transport_actions.add_child(step)
+	replay_speed_button = Button.new()
+	replay_speed_button.text = "SPEED %d×" % int(resolution_speed)
+	replay_speed_button.custom_minimum_size.x = 88
+	replay_speed_button.pressed.connect(_cycle_resolution_speed)
+	transport_actions.add_child(replay_speed_button)
+	replay_event_label = Label.new()
+	replay_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	replay_event_label.add_theme_color_override("font_color", Color("#9fb2d6"))
+	transport.add_child(replay_event_label)
+
+	row.add_child(VSeparator.new())
+	var history := VBoxContainer.new()
+	history.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	history.add_theme_constant_override("separation", 5)
+	row.add_child(history)
 	replay_timeline_label = Label.new()
 	replay_timeline_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	replay_timeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	row.add_child(replay_timeline_label)
+	replay_timeline_label.add_theme_color_override("font_color", Color("#71e6f5"))
+	history.add_child(replay_timeline_label)
+	var history_actions := HBoxContainer.new()
+	history_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	history_actions.add_theme_constant_override("separation", 8)
+	history.add_child(history_actions)
 	replay_previous_button = Button.new()
 	replay_previous_button.text = "◀ OLDER"
+	replay_previous_button.custom_minimum_size.x = 104
 	replay_previous_button.pressed.connect(_open_older_replay)
-	row.add_child(replay_previous_button)
+	history_actions.add_child(replay_previous_button)
 	replay_next_button = Button.new()
 	replay_next_button.text = "NEWER ▶"
+	replay_next_button.custom_minimum_size.x = 104
 	replay_next_button.pressed.connect(_open_newer_replay)
-	row.add_child(replay_next_button)
+	history_actions.add_child(replay_next_button)
 
 func _build_replay_squad_overlay() -> void:
 	replay_squad_overlay = ColorRect.new()
@@ -1268,6 +1307,8 @@ func _show_main_menu() -> void:
 		replay_squad_overlay.visible = false
 	menu_button.visible = true
 	end_button.visible = true
+	power_button.visible = true
+	speed_button.visible = true
 	input_enabled = false
 	squad_opened_from_menu = false
 	squad_opened_for_mission = false
@@ -1325,6 +1366,8 @@ func _load_replay_at_index() -> void:
 	replay_panel.visible = true
 	menu_button.visible = false
 	end_button.visible = false
+	power_button.visible = false
+	speed_button.visible = false
 	input_enabled = false
 	battle_over = false
 	units.clear()
@@ -1367,6 +1410,8 @@ func _close_replay() -> void:
 	battle_audio.stop_all()
 	menu_button.visible = true
 	end_button.visible = true
+	power_button.visible = true
+	speed_button.visible = true
 	_show_main_menu()
 
 func _toggle_replay_playback() -> void:
@@ -1486,9 +1531,10 @@ func _verify_replay_result(event: Dictionary) -> void:
 
 func _update_replay_timeline() -> void:
 	var count: int = replay_data.get("events", []).size()
-	replay_timeline_label.text = "REPLAY %d / %d  ·  EVENT %d / %d  ·  SEED %s" % [
+	replay_event_label.text = "EVENT %d / %d" % [replay_event_index, count]
+	replay_timeline_label.text = "REPLAY %d / %d  ·  SEED %s" % [
 		replay_history_index + 1, replay_history.size(),
-		replay_event_index, count, str(replay_data.get("seed", 0))
+		str(replay_data.get("seed", 0))
 	]
 	replay_previous_button.disabled = replay_history_index + 1 >= replay_history.size()
 	replay_next_button.disabled = replay_history_index <= 0
@@ -1744,6 +1790,8 @@ func _position_hover_card() -> void:
 func _start_new_match() -> void:
 	replay_mode = false
 	replay_playing = false
+	power_button.visible = true
+	speed_button.visible = true
 	if replay_panel != null:
 		replay_panel.visible = false
 	units.clear()
