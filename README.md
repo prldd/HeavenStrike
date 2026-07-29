@@ -58,6 +58,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Active-effect names and remaining duration in unit hover cards
 - Persistent battlefield badges show Taunt, Immobilise, Fury stacks, and timed stat changes.
 - Floating combat feedback calls out damage, healing, status application, and Commander hits.
+- Class-specific combat animation includes melee lunges, Gunner trails, Mage projectiles, Priest healing pulses, hit recoil, distinct Double Strike impacts, and defeat dissolves.
 - Each resolution begins with a compact ordered movement/attack preview; the combat log names unit classes and secondary-skill timing.
 - Deterministic rules with a presentation layer separated into `BoardView`
 - Five-step in-game field briefing

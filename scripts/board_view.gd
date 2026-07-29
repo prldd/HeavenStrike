@@ -41,6 +41,12 @@ var effect_color := Color.WHITE
 var effect_strength := 0.0
 var commander_effect_side := -1
 var unit_visual_offsets: Dictionary = {}
+var unit_flash_strength: Dictionary = {}
+var unit_defeat_strength: Dictionary = {}
+var projectile_from := Vector2.ZERO
+var projectile_to := Vector2.ZERO
+var projectile_progress := 0.0
+var projectile_kind := ""
 
 func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -121,6 +127,112 @@ func animate_unit_move(
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	await tween.finished
 	unit_visual_offsets.erase(unit_id)
+	queue_redraw()
+
+func animate_attack(
+	actor_id: int, target_id: int, unit_kind: String, duration: float = 0.24
+) -> void:
+	var actor = _unit_by_id(actor_id)
+	var target = _unit_by_id(target_id)
+	if actor == null or target == null:
+		return
+	var origin := _cell_rect(actor.row, actor.col).get_center()
+	var destination := _cell_rect(target.row, target.col).get_center()
+	if unit_kind in ["Strider", "Duelist", "Warden"]:
+		var lunge := (destination - origin).normalized() * minf(28.0, origin.distance_to(destination) * 0.22)
+		var tween := create_tween()
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
+		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		await tween.finished
+		unit_visual_offsets.erase(actor_id)
+	else:
+		await _animate_projectile(origin, destination, unit_kind, duration)
+
+func animate_commander_attack(
+	actor_id: int, commander_side: int, unit_kind: String, duration: float = 0.26
+) -> void:
+	var actor = _unit_by_id(actor_id)
+	if actor == null:
+		return
+	var origin := _cell_rect(actor.row, actor.col).get_center()
+	var destination := Vector2(size.x - 82 if commander_side == 1 else 82, _grid_rect().get_center().y)
+	if unit_kind in ["Strider", "Duelist", "Warden"]:
+		var lunge := (destination - origin).normalized() * 30.0
+		var tween := create_tween()
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
+		await tween.finished
+		unit_visual_offsets.erase(actor_id)
+	else:
+		await _animate_projectile(origin, destination, unit_kind, duration)
+
+func animate_heal(actor_id: int, target_id: int, duration: float = 0.32) -> void:
+	var actor = _unit_by_id(actor_id)
+	var target = _unit_by_id(target_id)
+	if actor == null or target == null:
+		return
+	await _animate_projectile(
+		_cell_rect(actor.row, actor.col).get_center(),
+		_cell_rect(target.row, target.col).get_center(),
+		"Heal",
+		duration
+	)
+
+func animate_hit(unit_id: int, duration: float = 0.18) -> void:
+	var unit = _unit_by_id(unit_id)
+	if unit == null:
+		return
+	var direction := -1.0 if unit.side == 1 else 1.0
+	unit_flash_strength[unit_id] = 1.0
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_method(_set_unit_flash.bind(unit_id), 1.0, 0.0, duration)
+	tween.tween_method(
+		_set_unit_visual_offset.bind(unit_id),
+		Vector2(direction * 9.0, 0),
+		Vector2.ZERO,
+		duration
+	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	unit_flash_strength.erase(unit_id)
+	unit_visual_offsets.erase(unit_id)
+	queue_redraw()
+
+func animate_defeat(unit_id: int, duration: float = 0.28) -> void:
+	var unit = _unit_by_id(unit_id)
+	if unit == null:
+		return
+	unit_defeat_strength[unit_id] = 0.0
+	var tween := create_tween()
+	tween.tween_method(_set_unit_defeat.bind(unit_id), 0.0, 1.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await tween.finished
+	unit_defeat_strength.erase(unit_id)
+	queue_redraw()
+
+func _animate_projectile(
+	origin: Vector2, destination: Vector2, kind: String, duration: float
+) -> void:
+	projectile_from = origin
+	projectile_to = destination
+	projectile_kind = kind
+	projectile_progress = 0.0
+	var tween := create_tween()
+	tween.tween_method(_set_projectile_progress, 0.0, 1.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+	projectile_kind = ""
+	queue_redraw()
+
+func _set_projectile_progress(value: float) -> void:
+	projectile_progress = value
+	queue_redraw()
+
+func _set_unit_flash(value: float, unit_id: int) -> void:
+	unit_flash_strength[unit_id] = value
+	queue_redraw()
+
+func _set_unit_defeat(value: float, unit_id: int) -> void:
+	unit_defeat_strength[unit_id] = value
 	queue_redraw()
 
 func _set_unit_visual_offset(value: Vector2, unit_id: int) -> void:
@@ -261,6 +373,7 @@ func _draw() -> void:
 			_draw_targetable(unit)
 		if unit.id == effect_unit_id:
 			_draw_effect(unit)
+	_draw_projectile()
 
 	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
 		for row in ROWS:
@@ -373,7 +486,12 @@ func _draw_unit(unit: Dictionary) -> void:
 		rect.grow(5)
 	)
 	_draw_unit_icon(unit, center, minf(rect.size.x, rect.size.y) * 0.68)
-
+	var flash: float = unit_flash_strength.get(unit.id, 0.0)
+	if flash > 0.0:
+		draw_style_box(
+			_box(Color(1, 1, 1, flash * 0.34), Color(1, 1, 1, flash * 0.72), 10, 2),
+			rect.grow(-2)
+		)
 	var font := get_theme_default_font()
 	var hp_text := "%d" % unit.hp
 	var atk_text := "%d" % unit.atk
@@ -389,6 +507,42 @@ func _draw_unit(unit: Dictionary) -> void:
 			rect.grow(-3)
 		)
 		draw_string(font, Vector2(rect.position.x, rect.end.y - 7), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, Color("#b8c2d9"))
+	var defeat: float = unit_defeat_strength.get(unit.id, 0.0)
+	if defeat > 0.0:
+		draw_style_box(
+			_box(Color(0.025, 0.04, 0.08, defeat * 0.94), Color(color, 1.0 - defeat), 10, 1),
+			rect.grow(-2)
+		)
+		for slice in 4:
+			var slice_y := rect.position.y + rect.size.y * (float(slice + 1) / 5.0)
+			draw_line(
+				Vector2(rect.position.x + defeat * 12.0, slice_y),
+				Vector2(rect.end.x - defeat * 12.0, slice_y),
+				Color(color, defeat * 0.55),
+				1
+			)
+
+func _draw_projectile() -> void:
+	if projectile_kind.is_empty():
+		return
+	var position := projectile_from.lerp(projectile_to, projectile_progress)
+	var color := Color("#70e0a1")
+	var radius := 7.0
+	if projectile_kind == "Artillerist":
+		color = Color("#ffd166")
+		radius = 5.0
+		draw_line(projectile_from, position, Color(color, 0.42), 3)
+	elif projectile_kind == "Channeler":
+		color = Color("#c99cff")
+		radius = 10.0
+	elif projectile_kind == "Heal":
+		color = Color("#70e0a1")
+		radius = 9.0
+	else:
+		color = Color("#ff8fbd")
+	draw_circle(position, radius + 5, Color(color, 0.14))
+	draw_circle(position, radius, Color(color, 0.88))
+	draw_arc(position, radius + 3, 0, TAU, 18, color, 2)
 
 func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	var badges: Array = []

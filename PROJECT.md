@@ -213,6 +213,8 @@ The battle simulation will be separated from animation and interface code. It wi
 
 The current presentation layer previews each side's upcoming activation order before resolution, identifies unit class and secondary-skill timing in the combat log, animates combat results, and displays persistent counters for Taunt, Immobilise, Fury, buffs, and debuffs.
 
+Combat presentation uses eased movement and class-specific actions: melee lunges, ranged projectiles, healing pulses, hit recoil, sequential Double Strikes, multi-target Blast and Piercing feedback, and a defeat dissolve before defeated units leave the board.
+
 ## First Milestone
 
 The initial milestone is a complete battle sandbox:

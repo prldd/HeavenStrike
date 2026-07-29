@@ -1423,7 +1423,7 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			and clicked.side == PLAYER and clicked.id != actor.id
 		):
 			pending_empower_actor_id = -1
-			status_message = _resolve_warcry(actor, clicked.id)
+			status_message = await _resolve_warcry(actor, clicked.id)
 		else:
 			status_message = "Choose another allied unit as Empower's target."
 		_refresh()
@@ -1489,7 +1489,7 @@ func _on_deployment_clicked(row: int) -> void:
 	_refresh()
 	await board.animate_unit_move(spawned.id, row, -1, 0.32)
 	input_enabled = true
-	var warcry_message := _resolve_warcry(spawned)
+	var warcry_message := await _resolve_warcry(spawned)
 	if not warcry_message.is_empty():
 		status_message += " " + warcry_message
 	player_hand.remove_at(selected_hand_index)
@@ -1545,10 +1545,15 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 			board.play_unit_effect(
 				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
 			)
+			if skill.get("name", "") in ["Bolt", "Heaven's Wrath"]:
+				await board.animate_hit(target.id, 0.16 / resolution_speed)
+			elif skill.get("name", "") in ["Fortify", "Empower"]:
+				await board.animate_heal(actor.id, target.id, 0.24 / resolution_speed)
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
 			actor.name, skill.get("name", "Unknown"), result.message
 		])
+	await _animate_defeated_units()
 	_remove_defeated()
 	UnitSkillsScript.refresh_auras(units)
 	return result.message
@@ -1556,7 +1561,8 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
 		return
-	if not _apply_captain_skill(PLAYER, player_captain_skill):
+	var applied: bool = await _apply_captain_skill(PLAYER, player_captain_skill)
+	if not applied:
 		_refresh()
 		return
 	player_power_used = true
@@ -1615,7 +1621,7 @@ func _enemy_turn() -> void:
 			status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
 			_refresh()
 			await board.animate_unit_move(spawned.id, row, COLS, 0.32 / resolution_speed)
-			var warcry_message := _resolve_warcry(spawned)
+			var warcry_message := await _resolve_warcry(spawned)
 			if not warcry_message.is_empty():
 				status_message += " " + warcry_message
 		_refresh()
@@ -1628,7 +1634,8 @@ func _enemy_turn() -> void:
 			enemy_captain_skill, round_number, enemy_hp, units
 		)
 	):
-		if _apply_captain_skill(ENEMY, enemy_captain_skill):
+		var skill_applied: bool = await _apply_captain_skill(ENEMY, enemy_captain_skill)
+		if skill_applied:
 			enemy_power_used = true
 			status_message = "Enemy Captain: " + status_message
 			_refresh()
@@ -1737,6 +1744,7 @@ func _activate_unit(actor: Dictionary) -> void:
 	if actor.kind == "Lifebinder":
 		var healing_target = _lowest_health_ally(actor)
 		if healing_target != null:
+			await board.animate_heal(actor.id, healing_target.id, 0.30 / resolution_speed)
 			healing_target.hp += 2
 			status_message = "%s heals %s for 2 HP." % [_actor_tag(actor), healing_target.name]
 			board.play_unit_effect(healing_target.id, "+2 HP", Color("#70e0a1"))
@@ -1765,10 +1773,22 @@ func _activate_unit(actor: Dictionary) -> void:
 				target = _find_target(actor)
 			if target == null:
 				break
+			await board.animate_attack(actor.id, target.id, actor.kind, 0.24 / resolution_speed)
 			target.hp -= actor.atk
 			status_message = "%s hits %s for %d." % [_actor_tag(actor), target.name, actor.atk]
-			board.play_unit_effect(target.id, "-%d" % actor.atk, Color("#ff668f"))
-			_apply_special_damage(actor, target)
+			var impact_label := "-%d" % actor.atk
+			var impact_color := Color("#ff668f")
+			if actor.kind == "Channeler":
+				impact_label += " BLAST"
+				impact_color = Color("#c99cff")
+			elif actor.kind == "Artillerist":
+				impact_label += " PIERCE"
+				impact_color = Color("#ffd166")
+			board.play_unit_effect(target.id, impact_label, impact_color)
+			var secondary_hits: Array = _apply_special_damage(actor, target)
+			await board.animate_hit(target.id, 0.18 / resolution_speed)
+			for secondary_id in secondary_hits:
+				await board.animate_hit(secondary_id, 0.14 / resolution_speed)
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
@@ -1780,6 +1800,7 @@ func _activate_unit(actor: Dictionary) -> void:
 			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(target, actor, units)
 			if not reaction_result.message.is_empty():
 				status_message += " " + reaction_result.message
+			await _animate_defeated_units()
 			_remove_defeated()
 			_refresh()
 			if hit + 1 < strikes:
@@ -1793,29 +1814,39 @@ func _activate_unit(actor: Dictionary) -> void:
 
 	if _commander_in_range(actor):
 		var strikes := 2 if actor.kind == "Strider" else 1
-		var damage: int = actor.atk * strikes
-		var dealt: int
-		if actor.side == PLAYER:
-			dealt = _damage_captain(ENEMY, damage)
-			status_message = "%s strikes the enemy Commander for %d!" % [_actor_tag(actor), dealt]
-			board.play_commander_effect(ENEMY, "-%d HP" % dealt, Color("#ff668f"))
-		else:
-			dealt = _damage_captain(PLAYER, damage)
-			status_message = "%s strikes your Commander for %d!" % [_actor_tag(actor), dealt]
-			board.play_commander_effect(PLAYER, "-%d HP" % dealt, Color("#ff668f"))
+		var commander_side := ENEMY if actor.side == PLAYER else PLAYER
+		var total_dealt := 0
+		for hit in strikes:
+			await board.animate_commander_attack(
+				actor.id, commander_side, actor.kind, 0.25 / resolution_speed
+			)
+			var dealt := _damage_captain(commander_side, actor.atk)
+			total_dealt += dealt
+			status_message = "%s hits %s Commander for %d." % [
+				_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", dealt
+			]
+			_refresh()
+			board.play_commander_effect(commander_side, "-%d HP" % dealt, Color("#ff668f"))
+			if hit + 1 < strikes:
+				await _wait(0.12)
+		status_message = "%s strikes %s Commander for %d!" % [
+			_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", total_dealt
+		]
 		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
 			actor.atk += 1
 			actor.fury_stacks = actor.get("fury_stacks", 0) + 1
 			status_message += " Fury grants +1 ATK."
 		return
 
-func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
+func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
+	var affected_ids: Array = []
 	if actor.kind == "Channeler":
 		var splash_damage := maxi(1, int(actor.atk / 2))
 		var blast_cells: Array = BattleRulesScript.blast_cells(target)
 		for other in units:
 			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
 				other.hp -= splash_damage
+				affected_ids.append(other.id)
 				board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
 		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
 	elif actor.kind == "Artillerist":
@@ -1828,9 +1859,18 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
 			if distance > 0 and distance <= actor.range:
 				other.hp -= actor.atk
 				pierced.append(other.name)
+				affected_ids.append(other.id)
 				board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
 		if not pierced.is_empty():
 			status_message += " Piercing Shot also hits %s." % ", ".join(pierced)
+	return affected_ids
+
+func _animate_defeated_units() -> void:
+	var defeated_ids: Array = units.filter(
+		func(unit): return unit.hp <= 0
+	).map(func(unit): return unit.id)
+	for unit_id in defeated_ids:
+		await board.animate_defeat(unit_id, 0.26 / resolution_speed)
 
 func _find_target(actor: Dictionary):
 	var direction := 1 if actor.side == PLAYER else -1
@@ -1901,12 +1941,18 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 			enemy_shield_turns = result.shield_turns
 
 	if result.captain_damage > 0:
-		_damage_captain(ENEMY if side == PLAYER else PLAYER, result.captain_damage)
+		var target_side := ENEMY if side == PLAYER else PLAYER
+		var dealt := _damage_captain(target_side, result.captain_damage)
+		_refresh()
+		board.play_commander_effect(target_side, "-%d HP" % dealt, Color("#ff668f"))
 
 	for unit_id in result.affected:
 		var target = _unit_by_id(unit_id)
 		if target != null:
 			board.play_unit_effect(target.id, "SKILL", Color("#ffd166") if side == PLAYER else Color("#ff8b9f"))
+			if skill_name in ["Lightning Burst", "Firestorm"]:
+				await board.animate_hit(target.id, 0.16 / resolution_speed)
+	await _animate_defeated_units()
 	_remove_defeated()
 	return true
 

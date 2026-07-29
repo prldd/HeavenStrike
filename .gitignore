@@ -1,6 +1,9 @@
 # Godot 4 generated files
 .godot/
 
+# Local development tools
+.tools/
+
 # Exported builds
 /build/
 /dist/
@@ -30,4 +33,3 @@ Desktop.ini
 # Logs and crash dumps
 *.log
 crash_*.txt
-
