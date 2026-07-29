@@ -1,0 +1,33 @@
+# Godot 4 generated files
+.godot/
+
+# Exported builds
+/build/
+/dist/
+/exports/
+
+# Godot export credentials
+export_credentials.cfg
+
+# Mono / C# generated files
+.mono/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Logs and crash dumps
+*.log
+crash_*.txt
+

@@ -1,0 +1,539 @@
+extends Control
+
+const BoardViewScript = preload("res://scripts/board_view.gd")
+
+const PLAYER := 0
+const ENEMY := 1
+const ROWS := 3
+const COLS := 7
+const STARTING_HP := 24
+
+const ROSTER := [
+	{"name": "Cloudstep", "kind": "Strider", "cost": 2, "atk": 1, "hp": 3, "move": 3, "range": 1, "text": "Strikes twice."},
+	{"name": "Emberblade", "kind": "Duelist", "cost": 3, "atk": 2, "hp": 5, "move": 2, "range": 1, "text": "Gains +1 ATK after attacking."},
+	{"name": "Ironroot", "kind": "Warden", "cost": 2, "atk": 1, "hp": 7, "move": 2, "range": 1, "text": "A durable lane blocker."},
+	{"name": "Sunlance", "kind": "Artillerist", "cost": 4, "atk": 3, "hp": 3, "move": 1, "range": 3, "text": "Pierces the unit behind its target."},
+	{"name": "Stormsinger", "kind": "Channeler", "cost": 4, "atk": 2, "hp": 4, "move": 1, "range": 3, "text": "Deals 1 splash damage in adjacent lanes."},
+	{"name": "Dawnmender", "kind": "Lifebinder", "cost": 3, "atk": 1, "hp": 5, "move": 1, "range": 2, "text": "Heals a nearby ally for 2."}
+]
+
+var board: BoardView
+var player_hp_label: Label
+var enemy_hp_label: Label
+var energy_label: Label
+var turn_label: Label
+var hint_label: Label
+var hand_row: HBoxContainer
+var end_button: Button
+var power_button: Button
+var overlay: ColorRect
+var overlay_title: Label
+var overlay_detail: Label
+
+var units: Array = []
+var player_hand: Array = []
+var draw_index := 0
+var enemy_draw_index := 2
+var selected_hand_index := -1
+var next_unit_id := 1
+var round_number := 1
+var player_hp := STARTING_HP
+var enemy_hp := STARTING_HP
+var player_max_energy := 2
+var player_energy := 2
+var enemy_max_energy := 2
+var enemy_energy := 2
+var player_power_used := false
+var enemy_power_used := false
+var input_enabled := true
+var battle_over := false
+var status_message := ""
+
+func _ready() -> void:
+	_build_interface()
+	_start_new_match()
+
+func _build_interface() -> void:
+	var background := ColorRect.new()
+	background.color = Color("#070c18")
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(background)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 22)
+	add_child(margin)
+
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	margin.add_child(root)
+
+	var header := HBoxContainer.new()
+	header.custom_minimum_size.y = 58
+	root.add_child(header)
+
+	var brand := Label.new()
+	brand.text = "SKYCHAIN\nTACTICS"
+	brand.add_theme_font_size_override("font_size", 19)
+	brand.add_theme_color_override("font_color", Color("#71e6f5"))
+	brand.custom_minimum_size.x = 210
+	header.add_child(brand)
+
+	player_hp_label = _stat_label(Color("#62e7ff"))
+	header.add_child(player_hp_label)
+
+	turn_label = Label.new()
+	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	turn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	turn_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	turn_label.add_theme_font_size_override("font_size", 20)
+	header.add_child(turn_label)
+
+	enemy_hp_label = _stat_label(Color("#ff668f"))
+	header.add_child(enemy_hp_label)
+
+	board = BoardViewScript.new()
+	board.custom_minimum_size = Vector2(0, 385)
+	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	board.deployment_clicked.connect(_on_deployment_clicked)
+	root.add_child(board)
+
+	var control_bar := HBoxContainer.new()
+	control_bar.custom_minimum_size.y = 36
+	control_bar.add_theme_constant_override("separation", 12)
+	root.add_child(control_bar)
+
+	energy_label = Label.new()
+	energy_label.custom_minimum_size.x = 180
+	energy_label.add_theme_font_size_override("font_size", 18)
+	energy_label.add_theme_color_override("font_color", Color("#ffd166"))
+	control_bar.add_child(energy_label)
+
+	hint_label = Label.new()
+	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hint_label.add_theme_color_override("font_color", Color("#9fb2d6"))
+	control_bar.add_child(hint_label)
+
+	power_button = Button.new()
+	power_button.text = "RALLY"
+	power_button.tooltip_text = "Once per battle: all allies gain +1 ATK."
+	power_button.custom_minimum_size.x = 120
+	power_button.pressed.connect(_use_player_power)
+	control_bar.add_child(power_button)
+
+	end_button = Button.new()
+	end_button.text = "RESOLVE TURN"
+	end_button.custom_minimum_size.x = 170
+	end_button.pressed.connect(_end_player_turn)
+	control_bar.add_child(end_button)
+
+	hand_row = HBoxContainer.new()
+	hand_row.custom_minimum_size.y = 128
+	hand_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	hand_row.add_theme_constant_override("separation", 10)
+	root.add_child(hand_row)
+
+	_build_overlay()
+
+func _build_overlay() -> void:
+	overlay = ColorRect.new()
+	overlay.color = Color(0.02, 0.035, 0.07, 0.93)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.visible = false
+	add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := VBoxContainer.new()
+	panel.custom_minimum_size = Vector2(480, 260)
+	panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_theme_constant_override("separation", 18)
+	center.add_child(panel)
+
+	overlay_title = Label.new()
+	overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overlay_title.add_theme_font_size_override("font_size", 42)
+	panel.add_child(overlay_title)
+
+	overlay_detail = Label.new()
+	overlay_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overlay_detail.add_theme_font_size_override("font_size", 17)
+	overlay_detail.add_theme_color_override("font_color", Color("#afbeda"))
+	panel.add_child(overlay_detail)
+
+	var restart := Button.new()
+	restart.text = "PLAY AGAIN"
+	restart.custom_minimum_size = Vector2(180, 48)
+	restart.pressed.connect(_start_new_match)
+	panel.add_child(restart)
+
+func _start_new_match() -> void:
+	units.clear()
+	player_hand.clear()
+	draw_index = 0
+	enemy_draw_index = 2
+	selected_hand_index = -1
+	next_unit_id = 1
+	round_number = 1
+	player_hp = STARTING_HP
+	enemy_hp = STARTING_HP
+	player_max_energy = 2
+	player_energy = 2
+	enemy_max_energy = 2
+	enemy_energy = 2
+	player_power_used = false
+	enemy_power_used = false
+	input_enabled = true
+	battle_over = false
+	overlay.visible = false
+	status_message = "Select a unit card, then choose a deployment lane."
+	for i in 4:
+		_draw_player_card()
+	_refresh()
+
+func _draw_player_card() -> void:
+	if player_hand.size() >= 5:
+		return
+	player_hand.append(ROSTER[draw_index % ROSTER.size()].duplicate())
+	draw_index += 1
+
+func _refresh() -> void:
+	player_hp_label.text = "◆  %02d HP" % player_hp
+	enemy_hp_label.text = "%02d HP  ◆" % enemy_hp
+	energy_label.text = "ENERGY  %d / %d" % [player_energy, player_max_energy]
+	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
+	hint_label.text = status_message
+	end_button.disabled = not input_enabled or battle_over
+	power_button.disabled = not input_enabled or player_power_used or battle_over or units.filter(func(u): return u.side == PLAYER).is_empty()
+	power_button.text = "RALLY USED" if player_power_used else "RALLY"
+
+	var selected := {}
+	if selected_hand_index >= 0 and selected_hand_index < player_hand.size():
+		selected = player_hand[selected_hand_index]
+	board.set_state(units, selected, input_enabled and not battle_over, status_message)
+	_rebuild_hand()
+
+func _rebuild_hand() -> void:
+	for child in hand_row.get_children():
+		hand_row.remove_child(child)
+		child.queue_free()
+
+	for i in player_hand.size():
+		var card: Dictionary = player_hand[i]
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(178, 122)
+		button.toggle_mode = true
+		button.button_pressed = i == selected_hand_index
+		button.disabled = not input_enabled or card.cost > player_energy or battle_over
+		button.text = "%s  ·  %d◆\n%s\n%d ATK   %d HP\n%s" % [
+			card.name.to_upper(), card.cost, card.kind, card.atk, card.hp, card.text
+		]
+		button.add_theme_font_size_override("font_size", 12)
+		button.pressed.connect(_select_card.bind(i))
+		hand_row.add_child(button)
+
+func _select_card(index: int) -> void:
+	if not input_enabled:
+		return
+	selected_hand_index = -1 if selected_hand_index == index else index
+	if selected_hand_index >= 0:
+		status_message = "Choose a highlighted tile on your deployment edge."
+	else:
+		status_message = "Select a unit card, then choose a deployment lane."
+	_refresh()
+
+func _on_deployment_clicked(row: int) -> void:
+	if not input_enabled or selected_hand_index < 0 or selected_hand_index >= player_hand.size():
+		return
+	if _unit_at(row, 0) != null:
+		status_message = "That deployment tile is occupied."
+		_refresh()
+		return
+
+	var card: Dictionary = player_hand[selected_hand_index]
+	if card.cost > player_energy:
+		return
+	player_energy -= card.cost
+	_spawn_unit(card, PLAYER, row, 0)
+	status_message = "%s deployed to lane %d." % [card.name, row + 1]
+	player_hand.remove_at(selected_hand_index)
+	selected_hand_index = -1
+	_refresh()
+
+func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
+	units.append({
+		"id": next_unit_id,
+		"side": side,
+		"row": row,
+		"col": col,
+		"name": card.name,
+		"kind": card.kind,
+		"cost": card.cost,
+		"atk": card.atk,
+		"hp": card.hp,
+		"max_hp": card.hp,
+		"move": card.move,
+		"range": card.range,
+		"ready": false
+	})
+	next_unit_id += 1
+
+func _use_player_power() -> void:
+	if player_power_used or not input_enabled:
+		return
+	player_power_used = true
+	for unit in units:
+		if unit.side == PLAYER:
+			unit.atk += 1
+	status_message = "Rally! Every allied unit gains +1 ATK."
+	_refresh()
+
+func _end_player_turn() -> void:
+	if not input_enabled or battle_over:
+		return
+	input_enabled = false
+	selected_hand_index = -1
+	status_message = "Your units advance."
+	_refresh()
+	await _resolve_side(PLAYER)
+	if _check_game_over():
+		return
+	await get_tree().create_timer(0.35).timeout
+	await _enemy_turn()
+
+func _enemy_turn() -> void:
+	for unit in units:
+		if unit.side == ENEMY:
+			unit.ready = true
+	enemy_max_energy = mini(10, enemy_max_energy + (1 if round_number > 1 else 0))
+	enemy_energy = enemy_max_energy
+	status_message = "Enemy is deploying..."
+	_refresh()
+	await get_tree().create_timer(0.55).timeout
+
+	var attempts := 0
+	while attempts < 3:
+		var card: Dictionary = ROSTER[enemy_draw_index % ROSTER.size()]
+		var lanes := _enemy_lane_priority()
+		var placed := false
+		for row in lanes:
+			if _unit_at(row, COLS - 1) == null and card.cost <= enemy_energy:
+				_spawn_unit(card, ENEMY, row, COLS - 1)
+				enemy_energy -= card.cost
+				enemy_draw_index += 1
+				placed = true
+				status_message = "Enemy deployed %s." % card.name
+				_refresh()
+				await get_tree().create_timer(0.35).timeout
+				break
+		if not placed:
+			break
+		attempts += 1
+
+	if not enemy_power_used and enemy_hp <= 12:
+		enemy_power_used = true
+		for unit in units:
+			if unit.side == ENEMY:
+				unit.atk += 1
+		status_message = "Enemy Rally! Hostile units gain +1 ATK."
+		_refresh()
+		await get_tree().create_timer(0.45).timeout
+
+	status_message = "Enemy units advance."
+	_refresh()
+	await _resolve_side(ENEMY)
+	if _check_game_over():
+		return
+
+	round_number += 1
+	player_max_energy = mini(10, player_max_energy + 1)
+	player_energy = player_max_energy
+	_draw_player_card()
+	for unit in units:
+		if unit.side == PLAYER:
+			unit.ready = true
+	input_enabled = true
+	status_message = "Select a card or resolve the board as it stands."
+	_refresh()
+
+func _resolve_side(side: int) -> void:
+	var acting_ids: Array = []
+	var side_units := units.filter(func(u): return u.side == side and u.ready)
+	side_units.sort_custom(func(a, b):
+		if a.col == b.col:
+			return a.row < b.row
+		return a.col > b.col if side == PLAYER else a.col < b.col
+	)
+	for unit in side_units:
+		acting_ids.append(unit.id)
+
+	for id in acting_ids:
+		var actor = _unit_by_id(id)
+		if actor == null or actor.side != side:
+			continue
+		await _activate_unit(actor)
+		_remove_defeated()
+		_refresh()
+		if player_hp <= 0 or enemy_hp <= 0:
+			return
+		await get_tree().create_timer(0.32).timeout
+
+func _activate_unit(actor: Dictionary) -> void:
+	if actor.kind == "Lifebinder":
+		var wounded = _find_wounded_ally(actor)
+		if wounded != null:
+			wounded.hp = mini(wounded.max_hp, wounded.hp + 2)
+			status_message = "%s restores 2 HP to %s." % [actor.name, wounded.name]
+			return
+
+	var target = _find_target(actor)
+	if target != null:
+		var strikes := 2 if actor.kind == "Strider" else 1
+		for hit in strikes:
+			if target == null or target.hp <= 0:
+				target = _find_target(actor)
+			if target == null:
+				break
+			target.hp -= actor.atk
+			status_message = "%s hits %s for %d." % [actor.name, target.name, actor.atk]
+			_apply_special_damage(actor, target)
+			_remove_defeated()
+			_refresh()
+			if hit + 1 < strikes:
+				await get_tree().create_timer(0.18).timeout
+		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
+			actor.atk += 1
+			status_message += " Its ATK rises."
+		return
+
+	if _commander_in_range(actor):
+		if actor.side == PLAYER:
+			enemy_hp = maxi(0, enemy_hp - actor.atk)
+			status_message = "%s strikes the enemy Commander for %d!" % [actor.name, actor.atk]
+		else:
+			player_hp = maxi(0, player_hp - actor.atk)
+			status_message = "%s strikes your Commander for %d!" % [actor.name, actor.atk]
+		return
+
+	var direction := 1 if actor.side == PLAYER else -1
+	var steps := 0
+	for step in actor.move:
+		var next_col: int = actor.col + direction
+		if next_col < 0 or next_col >= COLS or _unit_at(actor.row, next_col) != null:
+			break
+		actor.col = next_col
+		steps += 1
+	if steps > 0:
+		status_message = "%s advances %d space%s." % [actor.name, steps, "" if steps == 1 else "s"]
+	else:
+		status_message = "%s holds position." % actor.name
+
+func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
+	if actor.kind == "Channeler":
+		for other in units:
+			if other.side == target.side and other.col == target.col and absi(other.row - target.row) == 1:
+				other.hp -= 1
+		status_message += " Arc lightning splashes adjacent lanes."
+	elif actor.kind == "Artillerist":
+		var direction := 1 if actor.side == PLAYER else -1
+		var behind = null
+		var best_distance := 99
+		for other in units:
+			if other.side == target.side and other.row == target.row:
+				var delta: int = (other.col - target.col) * direction
+				if delta > 0 and delta < best_distance:
+					behind = other
+					best_distance = delta
+		if behind != null:
+			behind.hp -= maxi(1, int(actor.atk / 2))
+			status_message += " The shot pierces into %s." % behind.name
+
+func _find_target(actor: Dictionary):
+	var direction := 1 if actor.side == PLAYER else -1
+	var candidates := []
+	for other in units:
+		if other.side == actor.side or other.row != actor.row:
+			continue
+		var distance: int = (other.col - actor.col) * direction
+		if distance > 0 and distance <= actor.range:
+			candidates.append(other)
+	if candidates.is_empty():
+		return null
+	candidates.sort_custom(func(a, b): return absi(a.col - actor.col) < absi(b.col - actor.col))
+	return candidates[0]
+
+func _find_wounded_ally(actor: Dictionary):
+	var candidates := []
+	for other in units:
+		if other.side == actor.side and other.id != actor.id and other.hp < other.max_hp:
+			if absi(other.col - actor.col) <= actor.range and absi(other.row - actor.row) <= 1:
+				candidates.append(other)
+	if candidates.is_empty():
+		return null
+	candidates.sort_custom(func(a, b): return (a.hp / float(a.max_hp)) < (b.hp / float(b.max_hp)))
+	return candidates[0]
+
+func _commander_in_range(actor: Dictionary) -> bool:
+	if actor.side == PLAYER:
+		return COLS - actor.col <= actor.range and _find_target(actor) == null
+	return actor.col + 1 <= actor.range and _find_target(actor) == null
+
+func _enemy_lane_priority() -> Array:
+	var scores := []
+	for row in ROWS:
+		var score := 0
+		for unit in units:
+			if unit.row == row:
+				score += unit.atk * (1 if unit.side == PLAYER else -1)
+		scores.append({"row": row, "score": score})
+	scores.sort_custom(func(a, b): return a.score > b.score)
+	return scores.map(func(item): return item.row)
+
+func _unit_at(row: int, col: int):
+	for unit in units:
+		if unit.row == row and unit.col == col:
+			return unit
+	return null
+
+func _unit_by_id(id: int):
+	for unit in units:
+		if unit.id == id:
+			return unit
+	return null
+
+func _remove_defeated() -> void:
+	units = units.filter(func(unit): return unit.hp > 0)
+
+func _check_game_over() -> bool:
+	if player_hp > 0 and enemy_hp > 0:
+		return false
+	battle_over = true
+	input_enabled = false
+	overlay.visible = true
+	if enemy_hp <= 0:
+		overlay_title.text = "VICTORY"
+		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
+		overlay_detail.text = "The enemy weather engine is yours.\nVictory achieved in %d rounds." % round_number
+	else:
+		overlay_title.text = "DEFEAT"
+		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
+		overlay_detail.text = "Your skyway has fallen.\nRebuild your formation and try again."
+	_refresh()
+	return true
+
+func _stat_label(color: Color) -> Label:
+	var label := Label.new()
+	label.custom_minimum_size.x = 170
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_color_override("font_color", color)
+	return label
