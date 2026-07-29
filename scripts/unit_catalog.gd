@@ -2,24 +2,18 @@ class_name UnitCatalog
 extends RefCounted
 
 const UNITS := [
-	{"name": "Cloudstep", "kind": "Strider", "cost": 2, "atk": 1, "hp": 3, "move": 3, "range": 1, "text": "Strikes twice."},
-	{"name": "Galefox", "kind": "Strider", "cost": 3, "atk": 2, "hp": 3, "move": 3, "range": 1, "text": "Strikes twice."},
-	{"name": "Starling", "kind": "Strider", "cost": 4, "atk": 2, "hp": 5, "move": 3, "range": 1, "text": "Strikes twice."},
-	{"name": "Emberblade", "kind": "Duelist", "cost": 3, "atk": 2, "hp": 5, "move": 2, "range": 1, "text": "Gains +1 ATK after attacking."},
-	{"name": "Ashknife", "kind": "Duelist", "cost": 2, "atk": 1, "hp": 4, "move": 2, "range": 1, "text": "Gains +1 ATK after attacking."},
-	{"name": "Oathbrand", "kind": "Duelist", "cost": 5, "atk": 3, "hp": 7, "move": 2, "range": 1, "text": "Gains +1 ATK after attacking."},
-	{"name": "Ironroot", "kind": "Warden", "cost": 2, "atk": 1, "hp": 7, "move": 2, "range": 1, "text": "Taunting Strike locks its target into the current row."},
-	{"name": "Stoneveil", "kind": "Warden", "cost": 4, "atk": 2, "hp": 9, "move": 2, "range": 1, "text": "Taunting Strike locks its target into the current row."},
-	{"name": "Cloudwall", "kind": "Warden", "cost": 5, "atk": 2, "hp": 12, "move": 2, "range": 1, "text": "Taunting Strike locks its target into the current row."},
-	{"name": "Sunlance", "kind": "Artillerist", "cost": 4, "atk": 3, "hp": 3, "move": 1, "range": 3, "text": "Pierces the unit behind its target."},
-	{"name": "Sparkbow", "kind": "Artillerist", "cost": 2, "atk": 1, "hp": 3, "move": 1, "range": 3, "text": "Pierces the unit behind its target."},
-	{"name": "Horizon Gun", "kind": "Artillerist", "cost": 6, "atk": 4, "hp": 5, "move": 1, "range": 3, "text": "Pierces the unit behind its target."},
-	{"name": "Stormsinger", "kind": "Channeler", "cost": 4, "atk": 2, "hp": 4, "move": 1, "range": 3, "text": "Deals 1 splash damage in adjacent lanes."},
-	{"name": "Mistweaver", "kind": "Channeler", "cost": 3, "atk": 1, "hp": 5, "move": 1, "range": 3, "text": "Deals 1 splash damage in adjacent lanes."},
-	{"name": "Tempest Eye", "kind": "Channeler", "cost": 6, "atk": 4, "hp": 4, "move": 1, "range": 3, "text": "Deals 1 splash damage in adjacent lanes."},
-	{"name": "Dawnmender", "kind": "Lifebinder", "cost": 3, "atk": 1, "hp": 5, "move": 1, "range": 2, "text": "Heals a nearby ally for 2."},
-	{"name": "Mosscaller", "kind": "Lifebinder", "cost": 2, "atk": 1, "hp": 4, "move": 1, "range": 2, "text": "Heals a nearby ally for 2."},
-	{"name": "Aurora Sage", "kind": "Lifebinder", "cost": 5, "atk": 2, "hp": 8, "move": 1, "range": 2, "text": "Heals a nearby ally for 2."}
+	{"name": "Trinity Rusher", "kind": "Strider", "cost": 2, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike: attacks twice."},
+	{"name": "Claw Slicer", "kind": "Strider", "cost": 3, "atk": 3, "hp": 5, "move": 3, "range": 1, "text": "Double Strike: attacks twice."},
+	{"name": "Pub Bouncer", "kind": "Duelist", "cost": 2, "atk": 3, "hp": 7, "move": 2, "range": 1, "text": "Fury: gains +1 ATK after attacking."},
+	{"name": "Trinity Basher", "kind": "Duelist", "cost": 2, "atk": 3, "hp": 5, "move": 2, "range": 1, "text": "Fury: gains +1 ATK after attacking."},
+	{"name": "Socialite Fencer", "kind": "Warden", "cost": 3, "atk": 3, "hp": 10, "move": 2, "range": 1, "text": "Taunting Strike: locks its target into the current row."},
+	{"name": "LDF Peacekeeper", "kind": "Warden", "cost": 2, "atk": 2, "hp": 8, "move": 2, "range": 1, "text": "Taunting Strike: locks its target into the current row."},
+	{"name": "Trinity Potshot", "kind": "Artillerist", "cost": 2, "atk": 3, "hp": 4, "move": 1, "range": 3, "text": "Piercing Shot: hits the unit behind its target."},
+	{"name": "Factory Markswoman", "kind": "Artillerist", "cost": 3, "atk": 4, "hp": 5, "move": 1, "range": 3, "text": "Piercing Shot: hits the unit behind its target."},
+	{"name": "Claw Caster", "kind": "Channeler", "cost": 3, "atk": 5, "hp": 4, "move": 1, "range": 3, "text": "Blast: deals 1 splash damage in adjacent lanes."},
+	{"name": "Rage Spellslinger", "kind": "Channeler", "cost": 2, "atk": 4, "hp": 3, "move": 1, "range": 3, "text": "Blast: deals 1 splash damage in adjacent lanes."},
+	{"name": "Chain Initiate", "kind": "Lifebinder", "cost": 2, "atk": 2, "hp": 5, "move": 1, "range": 2, "text": "Heal: restores 2 HP to a nearby ally."},
+	{"name": "LDF Medic", "kind": "Lifebinder", "cost": 3, "atk": 3, "hp": 5, "move": 1, "range": 2, "text": "Heal: restores 2 HP to a nearby ally."}
 ]
 
 static func all_units() -> Array:

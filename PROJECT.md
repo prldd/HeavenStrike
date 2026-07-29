@@ -99,7 +99,8 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - Damage reduces health immediately.
 - A unit is removed when its health reaches zero.
 - If no unit blocks an attack at the end of a lane, the enemy Commander takes the damage.
-- Newly deployed units cannot act until their owner's next turn unless they have the **Quick** keyword.
+- The first and seventh columns are deployment and Commander zones. Units may deploy there, but opposing units stop in the adjacent column and attack into the zone instead of entering it.
+- Newly deployed units move and attack during the resolution phase of the turn in which they are placed.
 - Each deployed unit may reposition once per Command phase without losing its normal activation.
 - A unit hit by a Warden's Taunting Strike cannot change lanes while that Warden remains active.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.

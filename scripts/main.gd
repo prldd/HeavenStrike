@@ -1035,7 +1035,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		"max_hp": card.hp,
 		"move": card.move,
 		"range": card.range,
-		"ready": false,
+		# Deployment is part of the turn: newly placed units move and attack
+		# when that side resolves immediately afterward.
+		"ready": true,
 		"repositioned": false,
 		"taunted_by": -1,
 		"effects": []
@@ -1282,8 +1284,8 @@ func _find_wounded_ally(actor: Dictionary):
 
 func _commander_in_range(actor: Dictionary) -> bool:
 	if actor.side == PLAYER:
-		return COLS - actor.col <= actor.range and _find_target(actor) == null
-	return actor.col + 1 <= actor.range and _find_target(actor) == null
+		return (COLS - 1) - actor.col <= actor.range and _find_target(actor) == null
+	return actor.col <= actor.range and _find_target(actor) == null
 
 func _unit_at(row: int, col: int):
 	for unit in units:

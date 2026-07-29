@@ -19,6 +19,8 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - A unit can reposition once per turn unless it has been hit by an active enemy Warden's Taunting Strike.
 - Hover or select a deployed unit to preview its cyan traversal path and coral attack reach.
 - Attack reach is projected from the unit's destination after earlier allied movement is simulated.
+- Units stop before the opposing deployment column and attack into it; they never enter the opposing edge.
+- Units deployed this turn move and attack when that turn resolves.
 - Deploy units while enough unlocked Mana remains.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.

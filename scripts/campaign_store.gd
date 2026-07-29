@@ -2,7 +2,7 @@ class_name CampaignStore
 extends RefCounted
 
 const SAVE_PATH := "user://campaign.cfg"
-const REWARD_UNITS := ["Dawnmender", "Mosscaller", "Aurora Sage"]
+const REWARD_UNITS := ["Chain Initiate", "LDF Medic"]
 
 const MISSIONS := [
 	{
@@ -13,7 +13,7 @@ const MISSIONS := [
 		"encounters": [
 			{"title": "Causeway Scouts", "enemy_hp": 8, "squad_offset": 0, "skill": "Aid"}
 		],
-		"reward": "Dawnmender"
+		"reward": "Chain Initiate"
 	},
 	{
 		"id": 1,
@@ -24,7 +24,7 @@ const MISSIONS := [
 			{"title": "Outer Guard", "enemy_hp": 9, "squad_offset": 2, "skill": "Shield"},
 			{"title": "Iron Captain", "enemy_hp": 11, "squad_offset": 4, "skill": "Bloodlust"}
 		],
-		"reward": "Mosscaller"
+		"reward": "LDF Medic"
 	},
 	{
 		"id": 2,
@@ -35,7 +35,7 @@ const MISSIONS := [
 			{"title": "Stormglass Battery", "enemy_hp": 11, "squad_offset": 5, "skill": "Lightning Burst"},
 			{"title": "Reach Commander", "enemy_hp": 14, "squad_offset": 7, "skill": "Healing Wave"}
 		],
-		"reward": "Aurora Sage"
+		"reward": "Stormglass Supply Cache"
 	},
 	{
 		"id": 3,
@@ -110,11 +110,11 @@ static func enemy_squad_names(mission_id: int, roster: Array) -> Array:
 	if roster.is_empty():
 		return names
 	var offset: int = maxi(0, mission_id) * 3
-	for index in roster.size():
+	for index in 15:
 		var roster_index: int = (index + offset) % roster.size()
-		names.append(roster[roster_index].name)
-		if names.size() >= 15:
-			break
+		var unit_name: String = roster[roster_index].name
+		if names.count(unit_name) < 2:
+			names.append(unit_name)
 	return names
 
 static func encounter(mission_id: int, encounter_index: int) -> Dictionary:

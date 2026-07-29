@@ -40,9 +40,12 @@ static func attack_cells_from(unit: Dictionary, origin_col: int) -> Array:
 static func traversal_cells(unit: Dictionary, units: Array) -> Array:
 	var cells: Array = []
 	var direction := 1 if unit.side == PLAYER else -1
+	var final_col := COLS - 2 if unit.side == PLAYER else 1
 	for step in range(1, unit.move + 1):
 		var col: int = unit.col + direction * step
-		if col < 0 or col >= COLS or _occupied(units, unit.row, col):
+		if (direction > 0 and col > final_col) or (direction < 0 and col < final_col):
+			break
+		if _occupied(units, unit.row, col):
 			break
 		cells.append(Vector2i(col, unit.row))
 	return cells
@@ -89,8 +92,8 @@ static func has_target_in_range(unit: Dictionary, units: Array) -> bool:
 
 static func commander_in_range(unit: Dictionary) -> bool:
 	if unit.side == PLAYER:
-		return COLS - unit.col <= unit.range
-	return unit.col + 1 <= unit.range
+		return (COLS - 1) - unit.col <= unit.range
+	return unit.col <= unit.range
 
 static func locked_mana(units: Array, side: int) -> int:
 	var locked := 0

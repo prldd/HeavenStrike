@@ -9,19 +9,19 @@ const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 18, "The playable roster must contain 18 units.")
-	assert(UnitCatalogScript.by_name("Cloudstep").kind == "Strider")
+	assert(roster.size() == 12, "The playable roster must contain 12 units.")
+	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
 	for kind in ["Strider", "Duelist", "Warden", "Artillerist", "Channeler", "Lifebinder"]:
-		assert(roster.filter(func(unit): return unit.kind == kind).size() == 3)
+		assert(roster.filter(func(unit): return unit.kind == kind).size() == 2)
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
-	assert(default_squad.size() == SquadStoreScript.SQUAD_SIZE)
-	var repaired_squad: Array = SquadStoreScript.sanitize(["Cloudstep", "Cloudstep", "Cloudstep", "Missing"], roster)
+	assert(default_squad.size() == 12)
+	var repaired_squad: Array = SquadStoreScript.sanitize(["Trinity Rusher", "Trinity Rusher", "Trinity Rusher", "Missing"], roster)
 	assert(repaired_squad.size() == 2)
-	assert(repaired_squad.count("Cloudstep") == 2)
+	assert(repaired_squad.count("Trinity Rusher") == 2)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
-	assert(SquadStoreScript.sanitize([], roster).size() == SquadStoreScript.SQUAD_SIZE)
+	assert(SquadStoreScript.sanitize([], roster).size() == 12)
 	assert(CaptainSkillsScript.SKILLS.size() == 8)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 5)
@@ -35,17 +35,17 @@ func _init() -> void:
 	assert(CampaignStoreScript.is_available(1, [0]))
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 99, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
-	assert(starting_unlocks.size() == 15)
-	assert("Dawnmender" not in starting_unlocks)
+	assert(starting_unlocks.size() == 10)
+	assert("Chain Initiate" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [0, 1, 2])
-	assert(earned_unlocks.size() == 18)
+	assert(earned_unlocks.size() == 12)
 	var enemy_squad: Array = CampaignStoreScript.enemy_squad_names(2, roster)
 	assert(enemy_squad.size() == 15)
 	var unique_enemy_cards: Array = []
 	for card_name in enemy_squad:
 		if card_name not in unique_enemy_cards:
 			unique_enemy_cards.append(card_name)
-	assert(unique_enemy_cards.size() == 15)
+	assert(unique_enemy_cards.size() == 12)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunted_by": -1}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
@@ -105,6 +105,24 @@ func _init() -> void:
 	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit, path_blocker]) == [Vector2i(2, 1)])
 	var attack_target := {"id": 8, "side": 1, "kind": "Duelist", "row": 1, "col": 2}
 	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit, attack_target]).is_empty())
+	var player_at_enemy_gate := {
+		"id": 81, "side": 0, "kind": "Strider", "row": 2, "col": 4,
+		"move": 3, "range": 1, "ready": true
+	}
+	assert(BattleRulesScript.traversal_cells(player_at_enemy_gate, [player_at_enemy_gate]) == [Vector2i(5, 2)])
+	assert(BattleRulesScript.attack_cells_from(player_at_enemy_gate, 5) == [Vector2i(6, 2)])
+	assert(BattleRulesScript.commander_in_range({
+		"side": 0, "col": 5, "range": 1
+	}))
+	var enemy_at_player_gate := {
+		"id": 82, "side": 1, "kind": "Strider", "row": 2, "col": 2,
+		"move": 3, "range": 1, "ready": true
+	}
+	assert(BattleRulesScript.traversal_cells(enemy_at_player_gate, [enemy_at_player_gate]) == [Vector2i(1, 2)])
+	assert(BattleRulesScript.attack_cells_from(enemy_at_player_gate, 1) == [Vector2i(0, 2)])
+	assert(BattleRulesScript.commander_in_range({
+		"side": 1, "col": 1, "range": 1
+	}))
 
 	var front_ally := {
 		"id": 9, "side": 0, "kind": "Duelist", "row": 1, "col": 3,
