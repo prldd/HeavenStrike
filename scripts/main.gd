@@ -66,6 +66,8 @@ var speed_button: Button
 var audio_button: Button
 var animation_button: Button
 var motion_button: Button
+var settings_button: Button
+var settings_panel: PanelContainer
 var battle_audio: BattleAudio
 var battle_simulator: BattleSimulator
 var combat_log_panel: PanelContainer
@@ -198,9 +200,17 @@ func _build_interface() -> void:
 	turn_label.add_theme_font_size_override("font_size", 18)
 	header.add_child(turn_label)
 
-	var header_balance := Control.new()
+	var header_balance := HBoxContainer.new()
 	header_balance.custom_minimum_size.x = 170
+	header_balance.alignment = BoxContainer.ALIGNMENT_END
 	header.add_child(header_balance)
+	settings_button = Button.new()
+	settings_button.text = "⚙"
+	settings_button.tooltip_text = "Settings"
+	settings_button.custom_minimum_size = Vector2(46, 42)
+	settings_button.add_theme_font_size_override("font_size", 22)
+	settings_button.pressed.connect(_toggle_settings)
+	header_balance.add_child(settings_button)
 
 	board = BoardViewScript.new()
 	board.custom_minimum_size = Vector2(0, 370)
@@ -246,41 +256,6 @@ func _build_interface() -> void:
 	speed_button.pressed.connect(_cycle_resolution_speed)
 	action_row.add_child(speed_button)
 
-	audio_button = Button.new()
-	audio_button.text = "SOUND 100%"
-	audio_button.tooltip_text = "Cycle battle audio volume or mute it."
-	audio_button.custom_minimum_size.x = 96
-	audio_button.pressed.connect(_cycle_audio)
-	action_row.add_child(audio_button)
-
-	animation_button = Button.new()
-	animation_button.text = "ANIM ON"
-	animation_button.tooltip_text = "Skip or restore battle animations."
-	animation_button.custom_minimum_size.x = 76
-	animation_button.pressed.connect(_toggle_animation_skip)
-	action_row.add_child(animation_button)
-
-	motion_button = Button.new()
-	motion_button.text = "MOTION FULL"
-	motion_button.tooltip_text = "Reduce lunges, shake, and animation duration."
-	motion_button.custom_minimum_size.x = 102
-	motion_button.pressed.connect(_toggle_reduced_motion)
-	action_row.add_child(motion_button)
-
-	var log_button := Button.new()
-	log_button.text = "LOG"
-	log_button.tooltip_text = "Show or hide the combat action log."
-	log_button.custom_minimum_size.x = 54
-	log_button.pressed.connect(_toggle_combat_log)
-	action_row.add_child(log_button)
-
-	var help_button := Button.new()
-	help_button.text = "?"
-	help_button.tooltip_text = "How to play"
-	help_button.custom_minimum_size.x = 42
-	help_button.pressed.connect(_open_tutorial)
-	action_row.add_child(help_button)
-
 	var squad_button := Button.new()
 	squad_button.text = "SQUAD"
 	squad_button.tooltip_text = "Choose the 8 units in your battle squad."
@@ -307,6 +282,7 @@ func _build_interface() -> void:
 	root.add_child(hand_row)
 
 	_build_combat_log()
+	_build_settings_menu()
 	_build_overlay()
 	_build_tutorial()
 	_build_squad_builder()
@@ -315,6 +291,63 @@ func _build_interface() -> void:
 	_build_hover_card()
 	_build_replay_controls()
 	_build_replay_squad_overlay()
+
+func _build_settings_menu() -> void:
+	settings_panel = PanelContainer.new()
+	settings_panel.set_anchor(SIDE_LEFT, 1.0)
+	settings_panel.set_anchor(SIDE_RIGHT, 1.0)
+	settings_panel.offset_left = -238
+	settings_panel.offset_right = -18
+	settings_panel.offset_top = 64
+	settings_panel.offset_bottom = 326
+	settings_panel.z_index = 90
+	settings_panel.visible = false
+	add_child(settings_panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	settings_panel.add_child(layout)
+	var title := Label.new()
+	title.text = "SETTINGS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	layout.add_child(title)
+
+	audio_button = _settings_action("SOUND 100%", "Cycle battle audio volume or mute it.")
+	audio_button.pressed.connect(_cycle_audio)
+	layout.add_child(audio_button)
+	animation_button = _settings_action("ANIM ON", "Skip or restore battle animations.")
+	animation_button.pressed.connect(_toggle_animation_skip)
+	layout.add_child(animation_button)
+	motion_button = _settings_action(
+		"MOTION FULL", "Reduce lunges, shake, and animation duration."
+	)
+	motion_button.pressed.connect(_toggle_reduced_motion)
+	layout.add_child(motion_button)
+	var log_button := _settings_action("COMBAT LOG", "Show or hide the combat action log.")
+	log_button.pressed.connect(_open_combat_log_from_settings)
+	layout.add_child(log_button)
+	var help_button := _settings_action("HOW TO PLAY", "Open the field briefing.")
+	help_button.pressed.connect(_open_tutorial_from_settings)
+	layout.add_child(help_button)
+
+func _settings_action(label: String, tooltip: String) -> Button:
+	var button := Button.new()
+	button.text = label
+	button.tooltip_text = tooltip
+	button.custom_minimum_size.y = 38
+	return button
+
+func _toggle_settings() -> void:
+	settings_panel.visible = not settings_panel.visible
+
+func _open_combat_log_from_settings() -> void:
+	settings_panel.visible = false
+	_toggle_combat_log()
+
+func _open_tutorial_from_settings() -> void:
+	settings_panel.visible = false
+	_open_tutorial()
 
 func _build_combat_log() -> void:
 	combat_log_panel = PanelContainer.new()
@@ -1225,6 +1258,8 @@ func _add_overlay_background(
 func _show_main_menu() -> void:
 	if get_tree().paused:
 		get_tree().paused = false
+	if settings_panel != null:
+		settings_panel.visible = false
 	replay_mode = false
 	replay_playing = false
 	if replay_panel != null:
@@ -1263,6 +1298,7 @@ func _open_mission_select() -> void:
 	_rebuild_mission_list()
 
 func _open_last_replay() -> void:
+	settings_panel.visible = false
 	replay_history = BattleSimulatorScript.load_replay_history(REPLAY_HISTORY_PATH)
 	if replay_history.is_empty():
 		var legacy_replay: Dictionary = BattleSimulatorScript.load_replay(REPLAY_PATH)
