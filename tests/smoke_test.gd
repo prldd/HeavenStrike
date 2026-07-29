@@ -33,16 +33,19 @@ func _init() -> void:
 	assert(SquadStoreScript.sanitize([], roster).size() == 12)
 	assert(CaptainSkillsScript.SKILLS.size() == 8)
 
-	assert(CampaignStoreScript.MISSIONS.size() == 5)
-	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.enemy_hp) == [8, 11, 14, 17, 20])
-	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.encounters.size()) == [1, 2, 2, 3, 3])
-	assert(CampaignStoreScript.encounter_count(3) == 3)
-	assert(CampaignStoreScript.encounter(3, 2).title == "Class Dismissed")
-	assert(CampaignStoreScript.encounter(99, 0).is_empty())
+	assert(CampaignStoreScript.MISSIONS.size() == 62)
+	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - Training Day")
+	assert(CampaignStoreScript.MISSIONS[61].title == "Act 2 Mission 62 - The Showdown")
+	assert(CampaignStoreScript.MISSIONS[0].enemy_hp == 8)
+	assert(CampaignStoreScript.MISSIONS[61].enemy_hp == 20)
+	assert(CampaignStoreScript.encounter_count(3) == 1)
+	assert(CampaignStoreScript.encounter_count(31) == 3)
+	assert(CampaignStoreScript.encounter(31, 2).title == "Peace and Quiet")
+	assert(CampaignStoreScript.encounter(999, 0).is_empty())
 	assert(CampaignStoreScript.is_available(0, []))
 	assert(not CampaignStoreScript.is_available(1, []))
 	assert(CampaignStoreScript.is_available(1, [0]))
-	assert(CampaignStoreScript.sanitize_completed([2, 2, 99, -1, 0]) == [0, 2])
+	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
 	assert(starting_unlocks.size() == 10)
 	assert("Chain Initiate" not in starting_unlocks)
@@ -52,7 +55,18 @@ func _init() -> void:
 	assert(earned_unlocks.size() == 12)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
-	assert(CampaignStoreScript.reward_summary(2) == "Random: Claw Caster, Claw Slicer")
+	assert(CampaignStoreScript.reward_summary(2).begins_with("Prototype pool:"))
+	assert(CampaignStoreScript.reward_summary(7) == "Random: Claw Caster, Claw Slicer")
+	var training_rewards: Array = CampaignStoreScript.reward_options(0, roster)
+	assert(training_rewards.size() == 2)
+	assert(is_equal_approx(training_rewards[0].chance, 0.5))
+	assert(is_equal_approx(training_rewards[1].chance, 0.5))
+	var fallback_rewards: Array = CampaignStoreScript.reward_options(2, roster)
+	assert(fallback_rewards.size() == 12)
+	var fallback_total := 0.0
+	for option in fallback_rewards:
+		fallback_total += option.chance
+	assert(is_equal_approx(fallback_total, 1.0))
 	var rarity_candidates := [
 		{"name": "One Star", "stars": 1},
 		{"name": "Five Star", "stars": 5}

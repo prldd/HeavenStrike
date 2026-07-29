@@ -32,7 +32,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Three-lane, seven-column battlefield
 - 18 units across six distinct classes
 - Persistent 1–15 unit squad construction with a two-copy limit
-- Five sequential campaign missions with escalating difficulty
+- 62 sequential story missions across two acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information

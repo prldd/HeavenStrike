@@ -144,7 +144,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 ### First Playable Version
 
 - Tutorial
-- Short five-mission campaign
+- Full 62-mission, two-act story campaign
 - Practice battle against AI
 - Squad-building screen
 - 18 original units, with three units per class
@@ -161,7 +161,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 
 Online play and live-service systems are outside the first release. The battle simulation must be complete and reliable before multiplayer is considered.
 
-Campaign mission selection flows from the world map into squad selection and then one to three consecutive battles. The battlefield, decks, Mana, and Captain-skill use reset between encounters, while the player's Captain carries remaining HP forward. In-progress runs can be resumed. The initial missions and their eligible card drops follow the Heavenstrike story-quest reference data.
+Campaign mission selection flows from the scrollable world map into squad selection and then one to three consecutive battles. All 62 reference story missions are present across two acts. The battlefield, decks, Mana, and Captain-skill use reset between encounters, while the player's Captain carries remaining HP forward. In-progress runs can be resumed.
 
 ## Progression
 

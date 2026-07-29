@@ -634,10 +634,17 @@ func _build_mission_select() -> void:
 	subtitle.add_theme_color_override("font_color", Color("#9fb2d6"))
 	layout.add_child(subtitle)
 
+	var mission_scroll := ScrollContainer.new()
+	mission_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mission_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	layout.add_child(mission_scroll)
+
 	mission_list = VBoxContainer.new()
+	mission_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mission_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mission_list.add_theme_constant_override("separation", 10)
-	layout.add_child(mission_list)
+	mission_scroll.add_child(mission_list)
 
 	var back := Button.new()
 	back.text = "BACK TO MENU"
@@ -686,21 +693,71 @@ func _rebuild_mission_list() -> void:
 	for mission in CampaignStoreScript.MISSIONS:
 		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
 		var complete: bool = mission.id in completed_missions
+		var entry := VBoxContainer.new()
+		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		entry.add_theme_constant_override("separation", 4)
+		mission_list.add_child(entry)
+
 		var button := Button.new()
-		button.custom_minimum_size.y = 82
+		button.custom_minimum_size.y = 58
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.disabled = not available
-		button.text = "%s  %02d · %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s\nReward: %s" % [
+		button.text = "%s  %02d · %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s" % [
 			"✓" if complete else ("◆" if available else "🔒"),
 			mission.id + 1,
 			mission.title.to_upper(),
 			mission.encounters.size(),
 			"" if mission.encounters.size() == 1 else "S",
 			mission.enemy_hp,
-			mission.briefing,
-			CampaignStoreScript.reward_summary(mission.id)
+			mission.briefing
 		]
 		button.pressed.connect(_prepare_mission.bind(mission.id))
-		mission_list.add_child(button)
+		entry.add_child(button)
+
+		var rewards := HBoxContainer.new()
+		rewards.custom_minimum_size.y = 42
+		rewards.add_theme_constant_override("separation", 8)
+		entry.add_child(rewards)
+
+		var reward_label := Label.new()
+		reward_label.text = "PROTOTYPE DROPS" if mission.get("uses_fallback", false) else "CARD DROPS"
+		reward_label.custom_minimum_size.x = 118
+		reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		reward_label.add_theme_font_size_override("font_size", 11)
+		reward_label.add_theme_color_override("font_color", Color("#8fa5ca"))
+		rewards.add_child(reward_label)
+
+		for option in CampaignStoreScript.reward_options(mission.id, roster):
+			var reward_unit: Dictionary = option.unit
+			var tile := VBoxContainer.new()
+			tile.custom_minimum_size = Vector2(34, 40)
+			tile.add_theme_constant_override("separation", 0)
+			rewards.add_child(tile)
+
+			var portrait := TextureRect.new()
+			portrait.custom_minimum_size = Vector2(32, 30)
+			portrait.texture = _unit_icon(reward_unit.icon)
+			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			portrait.mouse_default_cursor_shape = Control.CURSOR_HELP
+			portrait.mouse_entered.connect(
+				_show_reward_details.bind(reward_unit, float(option.chance))
+			)
+			portrait.mouse_exited.connect(_hide_unit_details)
+			tile.add_child(portrait)
+
+			var stars := Label.new()
+			stars.text = "★".repeat(reward_unit.get("stars", 1))
+			stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			stars.add_theme_font_size_override("font_size", 9)
+			stars.add_theme_color_override("font_color", Color("#ffd166"))
+			tile.add_child(stars)
+
+		var divider := HSeparator.new()
+		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		entry.add_child(divider)
 
 func _prepare_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):
@@ -842,6 +899,10 @@ func _show_unit_details(unit: Dictionary) -> void:
 		hover_ability_label.text += "\nActive: " + active_effects
 	hover_card.visible = true
 	_position_hover_card()
+
+func _show_reward_details(unit: Dictionary, chance: float) -> void:
+	_show_unit_details(unit)
+	hover_ability_label.text += "\nDrop likelihood: %.1f%% on mission victory." % (chance * 100.0)
 
 func _hide_unit_details() -> void:
 	hover_card.visible = false

@@ -1,67 +1,11 @@
 class_name CampaignStore
 extends RefCounted
 
+const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
 const SAVE_PATH := "user://campaign.cfg"
 const REWARD_UNITS := ["Chain Initiate", "LDF Medic"]
 
-const MISSIONS := [
-	{
-		"id": 0,
-		"title": "Act 1 Mission 1 - Training Day",
-		"briefing": "Complete the first field exercise against Trinity forces.",
-		"enemy_hp": 8,
-		"encounters": [
-			{"title": "Training Day", "enemy_hp": 8, "squad_offset": 0, "skill": "Aid"}
-		],
-		"reward_pool": ["Trinity Rusher", "Trinity Potshot"]
-	},
-	{
-		"id": 1,
-		"title": "Act 1 Mission 2 - Training Day (2)",
-		"briefing": "Return to the training field against a mixed support squad.",
-		"enemy_hp": 11,
-		"encounters": [
-			{"title": "Field Exercise", "enemy_hp": 9, "squad_offset": 2, "skill": "Shield"},
-			{"title": "Training Captain", "enemy_hp": 11, "squad_offset": 4, "skill": "Bloodlust"}
-		],
-		"reward_pool": ["Chain Initiate", "Rage Spellslinger"]
-	},
-	{
-		"id": 2,
-		"title": "Act 1 Mission 8 - Scrap Merchants",
-		"briefing": "Drive the Claw raiders away from the disputed salvage field.",
-		"enemy_hp": 14,
-		"encounters": [
-			{"title": "Salvage Crew", "enemy_hp": 11, "squad_offset": 5, "skill": "Lightning Burst"},
-			{"title": "Scrap Merchants", "enemy_hp": 14, "squad_offset": 7, "skill": "Healing Wave"}
-		],
-		"reward_pool": ["Claw Caster", "Claw Slicer"]
-	},
-	{
-		"id": 3,
-		"title": "Act 1 Mission 10 - Class Dismissed",
-		"briefing": "Break through a varied formation of early frontline units.",
-		"enemy_hp": 17,
-		"encounters": [
-			{"title": "School Guard", "enemy_hp": 12, "squad_offset": 8, "skill": "Rally"},
-			{"title": "Dismissal Bell", "enemy_hp": 14, "squad_offset": 10, "skill": "Firestorm"},
-			{"title": "Class Dismissed", "enemy_hp": 17, "squad_offset": 12, "skill": "Last Stand"}
-		],
-		"reward_pool": ["Socialite Fencer", "Pub Bouncer", "Factory Markswoman"]
-	},
-	{
-		"id": 4,
-		"title": "Act 1 Mission 21 - Sanctuary: Outside",
-		"briefing": "Secure the approach to Sanctuary against an LDF formation.",
-		"enemy_hp": 20,
-		"encounters": [
-			{"title": "Sanctuary Approach", "enemy_hp": 14, "squad_offset": 11, "skill": "Shield"},
-			{"title": "LDF Outer Guard", "enemy_hp": 17, "squad_offset": 14, "skill": "Firestorm"},
-			{"title": "Sanctuary: Outside", "enemy_hp": 20, "squad_offset": 17, "skill": "Lightning Burst"}
-		],
-		"reward_pool": ["Chain Initiate", "LDF Peacekeeper", "LDF Medic"]
-	}
-]
+static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()
 
 static func load_completed() -> Array:
 	var config := ConfigFile.new()
@@ -132,7 +76,9 @@ static func unlocked_unit_names(roster: Array, earned_rewards: Array) -> Array:
 static func reward_summary(mission_id: int) -> String:
 	if mission_id < 0 or mission_id >= MISSIONS.size():
 		return "No card reward"
-	return "Random: " + ", ".join(MISSIONS[mission_id].reward_pool)
+	var mission: Dictionary = MISSIONS[mission_id]
+	var prefix := "Prototype pool: " if mission.get("uses_fallback", false) else "Random: "
+	return prefix + ", ".join(mission.reward_pool)
 
 static func roll_reward(mission_id: int, roster: Array, roll: float = -1.0) -> String:
 	if mission_id < 0 or mission_id >= MISSIONS.size():
@@ -140,6 +86,26 @@ static func roll_reward(mission_id: int, roster: Array, roll: float = -1.0) -> S
 	var reward_names: Array = MISSIONS[mission_id].reward_pool
 	var candidates: Array = roster.filter(func(unit): return unit.name in reward_names)
 	return choose_weighted_reward(candidates, roll)
+
+static func reward_options(mission_id: int, roster: Array) -> Array:
+	if mission_id < 0 or mission_id >= MISSIONS.size():
+		return []
+	var reward_names: Array = MISSIONS[mission_id].reward_pool
+	var candidates: Array = roster.filter(func(unit): return unit.name in reward_names)
+	var total_weight := 0
+	var weighted: Array = []
+	for unit in candidates:
+		var stars: int = clampi(unit.get("stars", 1), 1, 6)
+		var weight: int = 1 << (6 - stars)
+		weighted.append({"unit": unit, "weight": weight})
+		total_weight += weight
+	var result: Array = []
+	for option in weighted:
+		result.append({
+			"unit": option.unit,
+			"chance": option.weight / float(total_weight)
+		})
+	return result
 
 static func choose_weighted_reward(candidates: Array, roll: float = -1.0) -> String:
 	if candidates.is_empty():
