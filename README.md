@@ -12,6 +12,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 
 ## Controls
 
+- Start from the main menu in **Campaign** or **Practice Battle**.
 - Select an affordable unit card at the bottom of the screen.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Deploy as many units as available Energy allows.
@@ -25,6 +26,9 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Three-lane, seven-column battlefield
 - 18 units across six distinct classes
 - Persistent 15-unit squad construction
+- Five sequential campaign missions with escalating difficulty
+- Persistent mission completion and unit rewards
+- Main menu, mission selection, practice mode, and campaign briefings
 - Card hand and escalating Energy economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing
 - Enemy deployment AI

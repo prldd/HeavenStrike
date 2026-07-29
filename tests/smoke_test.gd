@@ -3,6 +3,7 @@ extends SceneTree
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
+const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -18,6 +19,17 @@ func _init() -> void:
 	assert(repaired_squad.size() == SquadStoreScript.SQUAD_SIZE)
 	assert(repaired_squad.count("Cloudstep") == 1)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == SquadStoreScript.SQUAD_SIZE)
+
+	assert(CampaignStoreScript.MISSIONS.size() == 5)
+	assert(CampaignStoreScript.is_available(0, []))
+	assert(not CampaignStoreScript.is_available(1, []))
+	assert(CampaignStoreScript.is_available(1, [0]))
+	assert(CampaignStoreScript.sanitize_completed([2, 2, 99, -1, 0]) == [0, 2])
+	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
+	assert(starting_unlocks.size() == 15)
+	assert("Dawnmender" not in starting_unlocks)
+	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [0, 1, 2])
+	assert(earned_unlocks.size() == 18)
 
 	var units := [
 		{"side": 0, "row": 1, "col": 5, "atk": 3, "hp": 4, "max_hp": 4}

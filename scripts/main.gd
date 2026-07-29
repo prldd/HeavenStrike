@@ -4,6 +4,7 @@ const BoardViewScript = preload("res://scripts/board_view.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
+const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -20,6 +21,7 @@ var hint_label: Label
 var hand_row: HBoxContainer
 var end_button: Button
 var power_button: Button
+var menu_button: Button
 var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
@@ -34,11 +36,19 @@ var hover_card: PanelContainer
 var hover_name_label: Label
 var hover_stats_label: Label
 var hover_ability_label: Label
+var main_menu_overlay: ColorRect
+var mission_overlay: ColorRect
+var mission_list: VBoxContainer
 
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
 var editing_squad_names: Array = []
 var battle_deck: Array = []
+var completed_missions: Array = []
+var current_mission_id := -1
+var campaign_battle := false
+var squad_opened_from_menu := false
+var tutorial_opened_from_menu := false
 
 var units: Array = []
 var player_hand: Array = []
@@ -61,8 +71,11 @@ var has_shown_tutorial := false
 
 func _ready() -> void:
 	_build_interface()
+	completed_missions = CampaignStoreScript.load_completed()
 	squad_names = SquadStoreScript.load_squad(roster)
+	_sanitize_squad_unlocks()
 	_start_new_match()
+	_show_main_menu()
 
 func _build_interface() -> void:
 	var background := ColorRect.new()
@@ -153,6 +166,12 @@ func _build_interface() -> void:
 	squad_button.pressed.connect(_open_squad_builder)
 	control_bar.add_child(squad_button)
 
+	menu_button = Button.new()
+	menu_button.text = "MENU"
+	menu_button.custom_minimum_size.x = 72
+	menu_button.pressed.connect(_show_main_menu)
+	control_bar.add_child(menu_button)
+
 	end_button = Button.new()
 	end_button.text = "RESOLVE TURN"
 	end_button.custom_minimum_size.x = 170
@@ -168,6 +187,8 @@ func _build_interface() -> void:
 	_build_overlay()
 	_build_tutorial()
 	_build_squad_builder()
+	_build_main_menu()
+	_build_mission_select()
 	_build_hover_card()
 
 func _build_overlay() -> void:
@@ -204,6 +225,12 @@ func _build_overlay() -> void:
 	restart.custom_minimum_size = Vector2(180, 48)
 	restart.pressed.connect(_start_new_match)
 	panel.add_child(restart)
+
+	var return_menu := Button.new()
+	return_menu.text = "RETURN TO MENU"
+	return_menu.custom_minimum_size = Vector2(180, 44)
+	return_menu.pressed.connect(_show_main_menu)
+	panel.add_child(return_menu)
 
 func _build_tutorial() -> void:
 	tutorial_overlay = ColorRect.new()
@@ -263,6 +290,9 @@ func _open_tutorial() -> void:
 
 func _close_tutorial() -> void:
 	tutorial_overlay.visible = false
+	if tutorial_opened_from_menu:
+		tutorial_opened_from_menu = false
+		_show_main_menu()
 
 func _next_tutorial_page() -> void:
 	tutorial_page += 1
@@ -357,12 +387,16 @@ func _build_squad_builder() -> void:
 func _open_squad_builder() -> void:
 	if not input_enabled or battle_over:
 		return
+	squad_opened_from_menu = false
 	editing_squad_names = squad_names.duplicate()
 	squad_overlay.visible = true
 	_rebuild_squad_grid()
 
 func _close_squad_builder() -> void:
 	squad_overlay.visible = false
+	if squad_opened_from_menu:
+		squad_opened_from_menu = false
+		_show_main_menu()
 
 func _reset_squad() -> void:
 	editing_squad_names = SquadStoreScript.default_squad(roster)
@@ -382,14 +416,18 @@ func _rebuild_squad_grid() -> void:
 
 	for unit in roster:
 		var selected: bool = unit.name in editing_squad_names
+		var unlocked: bool = unit.name in CampaignStoreScript.unlocked_unit_names(roster, completed_missions)
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 76)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.toggle_mode = true
 		button.button_pressed = selected
+		button.disabled = not unlocked
 		button.text = "%s  ·  %d◆\n%s  |  %d ATK  %d HP" % [
 			unit.name.to_upper(), unit.cost, unit.kind, unit.atk, unit.hp
 		]
+		if not unlocked:
+			button.text += "\nLOCKED · CAMPAIGN REWARD"
 		button.pressed.connect(_toggle_squad_unit.bind(unit.name))
 		button.mouse_entered.connect(_show_unit_details.bind(unit))
 		button.mouse_exited.connect(_hide_unit_details)
@@ -412,6 +450,188 @@ func _save_squad() -> void:
 		status_message = "Squad selected for this session, but the save file could not be written."
 	_close_squad_builder()
 	_refresh()
+
+func _sanitize_squad_unlocks() -> void:
+	var unlocked: Array = CampaignStoreScript.unlocked_unit_names(roster, completed_missions)
+	var allowed: Array = []
+	for unit_name in squad_names:
+		if unit_name in unlocked and unit_name not in allowed:
+			allowed.append(unit_name)
+	for unit_name in unlocked:
+		if allowed.size() >= SquadStoreScript.SQUAD_SIZE:
+			break
+		if unit_name not in allowed:
+			allowed.append(unit_name)
+	squad_names = allowed
+
+func _build_main_menu() -> void:
+	main_menu_overlay = ColorRect.new()
+	main_menu_overlay.color = Color("#070d1b")
+	main_menu_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	main_menu_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	main_menu_overlay.visible = false
+	add_child(main_menu_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	main_menu_overlay.add_child(center)
+
+	var layout := VBoxContainer.new()
+	layout.custom_minimum_size = Vector2(460, 500)
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 16)
+	center.add_child(layout)
+
+	var title := Label.new()
+	title.text = "SKYCHAIN\nTACTICS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	layout.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "COMMAND THE DRIFTING SKYWAYS"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_color_override("font_color", Color("#8da2c8"))
+	layout.add_child(subtitle)
+
+	var campaign := _menu_action("CAMPAIGN")
+	campaign.pressed.connect(_open_mission_select)
+	layout.add_child(campaign)
+
+	var practice := _menu_action("PRACTICE BATTLE")
+	practice.pressed.connect(_begin_practice)
+	layout.add_child(practice)
+
+	var squad := _menu_action("SQUAD WORKSHOP")
+	squad.pressed.connect(_open_squad_from_menu)
+	layout.add_child(squad)
+
+	var tutorial := _menu_action("HOW TO PLAY")
+	tutorial.pressed.connect(_open_tutorial_from_menu)
+	layout.add_child(tutorial)
+
+func _build_mission_select() -> void:
+	mission_overlay = ColorRect.new()
+	mission_overlay.color = Color("#091124")
+	mission_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mission_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	mission_overlay.visible = false
+	add_child(mission_overlay)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 180)
+	margin.add_theme_constant_override("margin_right", 180)
+	margin.add_theme_constant_override("margin_top", 60)
+	margin.add_theme_constant_override("margin_bottom", 50)
+	mission_overlay.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = "CAMPAIGN · THE TEMPEST ENGINE"
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	layout.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "Complete missions in order. Victories unlock new support units."
+	subtitle.add_theme_color_override("font_color", Color("#9fb2d6"))
+	layout.add_child(subtitle)
+
+	mission_list = VBoxContainer.new()
+	mission_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mission_list.add_theme_constant_override("separation", 10)
+	layout.add_child(mission_list)
+
+	var back := Button.new()
+	back.text = "BACK TO MENU"
+	back.custom_minimum_size = Vector2(180, 44)
+	back.pressed.connect(_show_main_menu)
+	layout.add_child(back)
+
+func _menu_action(label: String) -> Button:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size = Vector2(360, 52)
+	button.add_theme_font_size_override("font_size", 17)
+	return button
+
+func _show_main_menu() -> void:
+	input_enabled = false
+	squad_opened_from_menu = false
+	tutorial_opened_from_menu = false
+	main_menu_overlay.visible = true
+	mission_overlay.visible = false
+	squad_overlay.visible = false
+	tutorial_overlay.visible = false
+	overlay.visible = false
+	hover_card.visible = false
+	_refresh()
+
+func _open_mission_select() -> void:
+	main_menu_overlay.visible = false
+	mission_overlay.visible = true
+	_rebuild_mission_list()
+
+func _rebuild_mission_list() -> void:
+	for child in mission_list.get_children():
+		mission_list.remove_child(child)
+		child.queue_free()
+	for mission in CampaignStoreScript.MISSIONS:
+		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
+		var complete: bool = mission.id in completed_missions
+		var button := Button.new()
+		button.custom_minimum_size.y = 82
+		button.disabled = not available
+		button.text = "%s  %02d · %s\n%s\nReward: %s" % [
+			"✓" if complete else ("◆" if available else "🔒"),
+			mission.id + 1,
+			mission.title.to_upper(),
+			mission.briefing,
+			mission.reward
+		]
+		button.pressed.connect(_begin_mission.bind(mission.id))
+		mission_list.add_child(button)
+
+func _begin_practice() -> void:
+	campaign_battle = false
+	current_mission_id = -1
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	_start_new_match()
+	_show_tutorial_once()
+
+func _begin_mission(mission_id: int) -> void:
+	if not CampaignStoreScript.is_available(mission_id, completed_missions):
+		return
+	campaign_battle = true
+	current_mission_id = mission_id
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	_start_new_match()
+	status_message = CampaignStoreScript.MISSIONS[mission_id].briefing
+	_refresh()
+	_show_tutorial_once()
+
+func _show_tutorial_once() -> void:
+	if not has_shown_tutorial:
+		has_shown_tutorial = true
+		_open_tutorial()
+
+func _open_tutorial_from_menu() -> void:
+	main_menu_overlay.visible = false
+	tutorial_opened_from_menu = true
+	_open_tutorial()
+
+func _open_squad_from_menu() -> void:
+	main_menu_overlay.visible = false
+	input_enabled = true
+	_open_squad_builder()
+	squad_opened_from_menu = true
 
 func _build_hover_card() -> void:
 	hover_card = PanelContainer.new()
@@ -501,11 +721,11 @@ func _start_new_match() -> void:
 	next_unit_id = 1
 	round_number = 1
 	player_hp = STARTING_HP
-	enemy_hp = STARTING_HP
+	enemy_hp = STARTING_HP if not campaign_battle else CampaignStoreScript.MISSIONS[current_mission_id].enemy_hp
 	player_max_energy = 2
 	player_energy = 2
-	enemy_max_energy = 2
-	enemy_energy = 2
+	enemy_max_energy = 2 if not campaign_battle else CampaignStoreScript.MISSIONS[current_mission_id].enemy_energy
+	enemy_energy = enemy_max_energy
 	player_power_used = false
 	enemy_power_used = false
 	input_enabled = true
@@ -515,9 +735,6 @@ func _start_new_match() -> void:
 	for i in 4:
 		_draw_player_card()
 	_refresh()
-	if not has_shown_tutorial:
-		has_shown_tutorial = true
-		_open_tutorial()
 
 func _draw_player_card() -> void:
 	if player_hand.size() >= 5 or draw_index >= battle_deck.size():
@@ -532,6 +749,7 @@ func _refresh() -> void:
 	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
 	hint_label.text = status_message
 	end_button.disabled = not input_enabled or battle_over
+	menu_button.disabled = not input_enabled or battle_over
 	power_button.disabled = not input_enabled or player_power_used or battle_over or units.filter(func(u): return u.side == PLAYER).is_empty()
 	power_button.text = "RALLY USED" if player_power_used else "RALLY"
 
@@ -830,9 +1048,14 @@ func _check_game_over() -> bool:
 	input_enabled = false
 	overlay.visible = true
 	if enemy_hp <= 0:
+		var reward_text := ""
+		if campaign_battle:
+			completed_missions = CampaignStoreScript.complete_mission(current_mission_id, completed_missions)
+			var reward: String = CampaignStoreScript.MISSIONS[current_mission_id].reward
+			reward_text = "\nReward unlocked: %s" % reward
 		overlay_title.text = "VICTORY"
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
-		overlay_detail.text = "The enemy weather engine is yours.\nVictory achieved in %d rounds." % round_number
+		overlay_detail.text = "The enemy weather engine is yours.\nVictory achieved in %d rounds.%s" % [round_number, reward_text]
 	else:
 		overlay_title.text = "DEFEAT"
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
