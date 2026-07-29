@@ -160,3 +160,47 @@ static func estimate_squad_power(cards: Array) -> float:
 			- card.get("cost", 0) * 0.25
 		)
 	return score
+
+static func apply_unit_damage(unit: Dictionary, amount: int) -> Dictionary:
+	var before: int = unit.get("hp", 0)
+	var dealt := mini(before, maxi(0, amount))
+	unit.hp = before - maxi(0, amount)
+	return {
+		"unit_id": unit.get("id", -1),
+		"before": before,
+		"damage": dealt,
+		"after": unit.hp,
+		"defeated": unit.hp <= 0
+	}
+
+static func apply_unit_healing(
+	unit: Dictionary, amount: int, allow_overheal: bool = false
+) -> Dictionary:
+	var before: int = unit.get("hp", 0)
+	var limit: int = before + amount if allow_overheal else unit.get("max_hp", before)
+	unit.hp = mini(limit, before + maxi(0, amount))
+	return {
+		"unit_id": unit.get("id", -1),
+		"before": before,
+		"healing": unit.hp - before,
+		"after": unit.hp
+	}
+
+static func apply_captain_damage(
+	side: int, amount: int, captain_state: Dictionary
+) -> Dictionary:
+	var hp_key := "player_hp" if side == PLAYER else "enemy_hp"
+	var shield_key := "player_shield" if side == PLAYER else "enemy_shield"
+	var remaining := maxi(0, amount)
+	var absorbed := mini(int(captain_state.get(shield_key, 0)), remaining)
+	captain_state[shield_key] = int(captain_state.get(shield_key, 0)) - absorbed
+	remaining -= absorbed
+	var before: int = captain_state.get(hp_key, 0)
+	captain_state[hp_key] = maxi(0, before - remaining)
+	return {
+		"side": side,
+		"before": before,
+		"shield_absorbed": absorbed,
+		"damage": remaining,
+		"after": captain_state[hp_key]
+	}

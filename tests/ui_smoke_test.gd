@@ -2,6 +2,7 @@ extends SceneTree
 
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
+const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 
 func _init() -> void:
 	call_deferred("_run")
@@ -112,5 +113,46 @@ func _run() -> void:
 		var previous_vanguard: String = game.editing_squad_names[0]
 		game._set_vanguard(1)
 		assert(game.editing_squad_names[1] == previous_vanguard)
+	var replay := BattleSimulatorScript.new()
+	replay.reset(777)
+	replay.record("battle_started", {
+		"player_hp": 20,
+		"enemy_hp": 20,
+		"player_squad": ["Trinity Rusher", "Pub Bouncer"],
+		"enemy_squad": ["Chain Initiate", "Socialite Fencer"]
+	})
+	replay.record("deploy", {
+		"side": 0, "unit_id": 1, "card": "Trinity Rusher", "row": 1
+	})
+	replay.record("battle_finished", {
+		"winner": 0, "player_hp": 20, "enemy_hp": 20
+	})
+	assert(replay.save_replay("user://last_replay.json"))
+	game._show_main_menu()
+	assert(not game.replay_button.disabled)
+	game._open_last_replay()
+	assert(game.replay_panel.visible)
+	assert(not game.menu_button.visible)
+	assert(not game.end_button.visible)
+	assert(game.replay_panel.get_child(0).get_child(0).text == "MENU")
+	game._open_squad_builder()
+	assert(game.replay_squad_overlay.visible)
+	assert(game.replay_player_squad_grid.get_child_count() == 2)
+	assert(game.replay_enemy_squad_grid.get_child_count() == 2)
+	game._close_replay_squads()
+	assert(not game.replay_squad_overlay.visible)
+	await game._apply_next_replay_event()
+	await game._apply_next_replay_event()
+	assert(game.units.size() == 1)
+	assert(game.replay_timeline_label.text.contains("SEED 777"))
+	await game._apply_next_replay_event()
+	assert(game.status_message.contains("verified"))
+	game._close_replay()
+	assert(game.menu_button.visible)
+	assert(game.end_button.visible)
+	await create_timer(0.05).timeout
+	game.queue_free()
+	await process_frame
+	await process_frame
 	print("Skychain UI smoke tests passed.")
 	quit()

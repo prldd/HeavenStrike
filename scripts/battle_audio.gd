@@ -36,6 +36,11 @@ func set_volume_step(value: int) -> void:
 	volume_step = clampi(value, 0, 2)
 	_apply_volume()
 
+func stop_all() -> void:
+	for player in players:
+		player.stop()
+		player.stream = null
+
 func label() -> String:
 	match volume_step:
 		2:

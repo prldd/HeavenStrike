@@ -74,6 +74,13 @@ var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
 var mission_list: VBoxContainer
 var resume_button: Button
+var replay_button: Button
+var replay_panel: PanelContainer
+var replay_play_button: Button
+var replay_timeline_label: Label
+var replay_squad_overlay: ColorRect
+var replay_player_squad_grid: GridContainer
+var replay_enemy_squad_grid: GridContainer
 
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
@@ -129,6 +136,10 @@ var last_logged_message := ""
 var battle_seed := 1
 var reduced_motion := false
 var skip_animations := false
+var replay_mode := false
+var replay_playing := false
+var replay_data: Dictionary = {}
+var replay_event_index := 0
 
 func _ready() -> void:
 	_build_interface()
@@ -303,6 +314,8 @@ func _build_interface() -> void:
 	_build_main_menu()
 	_build_mission_select()
 	_build_hover_card()
+	_build_replay_controls()
+	_build_replay_squad_overlay()
 
 func _build_combat_log() -> void:
 	combat_log_panel = PanelContainer.new()
@@ -413,7 +426,7 @@ func _log_action(message: String) -> void:
 	if message.is_empty() or message == last_logged_message:
 		return
 	last_logged_message = message
-	if battle_simulator != null:
+	if battle_simulator != null and not replay_mode:
 		battle_simulator.record("combat_log", {"message": message})
 	combat_log_lines.append(message)
 	if combat_log_lines.size() > 60:
@@ -723,6 +736,9 @@ func _build_squad_builder() -> void:
 	actions.add_child(squad_start_button)
 
 func _open_squad_builder() -> void:
+	if replay_mode:
+		_open_replay_squads()
+		return
 	if not input_enabled:
 		return
 	squad_opened_from_menu = false
@@ -733,6 +749,55 @@ func _open_squad_builder() -> void:
 	captain_skill_option.select(CaptainSkillsScript.SKILLS.find(editing_captain_skill))
 	squad_overlay.visible = true
 	_rebuild_squad_grid()
+
+func _open_replay_squads() -> void:
+	var player_names: Array = []
+	var enemy_names: Array = []
+	for event in replay_data.get("events", []):
+		if event.get("type", "") == "battle_started":
+			player_names = event.get("player_squad", []).duplicate()
+			enemy_names = event.get("enemy_squad", []).duplicate()
+			break
+	_populate_replay_squad_grid(replay_player_squad_grid, player_names)
+	_populate_replay_squad_grid(replay_enemy_squad_grid, enemy_names)
+	replay_playing = false
+	replay_play_button.text = "PLAY"
+	replay_squad_overlay.visible = true
+
+func _populate_replay_squad_grid(grid: GridContainer, names: Array) -> void:
+	for child in grid.get_children():
+		grid.remove_child(child)
+		child.queue_free()
+	if names.is_empty():
+		var unavailable := Label.new()
+		unavailable.text = "Squad data unavailable\nfor this older replay."
+		unavailable.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		grid.add_child(unavailable)
+		return
+	for index in names.size():
+		var unit: Dictionary = UnitCatalogScript.by_name(names[index])
+		if unit.is_empty():
+			continue
+		var card := Button.new()
+		card.custom_minimum_size = Vector2(0, 82)
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.icon = _unit_icon(unit.icon)
+		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		card.text = "%02d · %s\n%s%s" % [
+			index + 1,
+			unit.name.to_upper(),
+			UnitCatalogScript.display_class(unit.kind),
+			" · VANGUARD" if index == 0 else ""
+		]
+		card.add_theme_font_size_override("font_size", 11)
+		_apply_class_card_style(card, unit.kind)
+		card.mouse_entered.connect(_show_unit_details.bind(unit))
+		card.mouse_exited.connect(_hide_unit_details)
+		grid.add_child(card)
+
+func _close_replay_squads() -> void:
+	replay_squad_overlay.visible = false
+	hover_card.visible = false
 
 func _close_squad_builder() -> void:
 	squad_overlay.visible = false
@@ -966,6 +1031,10 @@ func _build_main_menu() -> void:
 	practice.pressed.connect(_begin_practice)
 	layout.add_child(practice)
 
+	replay_button = _menu_action("WATCH LAST REPLAY")
+	replay_button.pressed.connect(_open_last_replay)
+	layout.add_child(replay_button)
+
 	var squad := _menu_action("SQUAD WORKSHOP")
 	squad.pressed.connect(_open_squad_from_menu)
 	layout.add_child(squad)
@@ -973,6 +1042,97 @@ func _build_main_menu() -> void:
 	var tutorial := _menu_action("HOW TO PLAY")
 	tutorial.pressed.connect(_open_tutorial_from_menu)
 	layout.add_child(tutorial)
+
+func _build_replay_controls() -> void:
+	replay_panel = PanelContainer.new()
+	replay_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	replay_panel.position = Vector2(-360, -74)
+	replay_panel.custom_minimum_size = Vector2(720, 58)
+	replay_panel.z_index = 95
+	replay_panel.visible = false
+	add_child(replay_panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	replay_panel.add_child(row)
+	var back := Button.new()
+	back.text = "MENU"
+	back.pressed.connect(_close_replay)
+	row.add_child(back)
+	replay_play_button = Button.new()
+	replay_play_button.text = "PLAY"
+	replay_play_button.pressed.connect(_toggle_replay_playback)
+	row.add_child(replay_play_button)
+	var step := Button.new()
+	step.text = "STEP"
+	step.pressed.connect(_step_replay)
+	row.add_child(step)
+	var speed := Button.new()
+	speed.text = "SPEED"
+	speed.pressed.connect(_cycle_resolution_speed)
+	row.add_child(speed)
+	replay_timeline_label = Label.new()
+	replay_timeline_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	replay_timeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(replay_timeline_label)
+
+func _build_replay_squad_overlay() -> void:
+	replay_squad_overlay = ColorRect.new()
+	replay_squad_overlay.color = Color(0.015, 0.025, 0.06, 0.96)
+	replay_squad_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	replay_squad_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	replay_squad_overlay.z_index = 110
+	replay_squad_overlay.visible = false
+	add_child(replay_squad_overlay)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 54)
+	margin.add_theme_constant_override("margin_right", 54)
+	margin.add_theme_constant_override("margin_top", 42)
+	margin.add_theme_constant_override("margin_bottom", 42)
+	replay_squad_overlay.add_child(margin)
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 18)
+	margin.add_child(layout)
+	var title := Label.new()
+	title.text = "REPLAY SQUADS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color("#ffd166"))
+	layout.add_child(title)
+	var columns := HBoxContainer.new()
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.add_theme_constant_override("separation", 24)
+	layout.add_child(columns)
+	replay_player_squad_grid = _replay_squad_column(columns, "PLAYER SQUAD", Color("#61e8ff"))
+	replay_enemy_squad_grid = _replay_squad_column(columns, "ENEMY SQUAD", Color("#ff8ba8"))
+	var close := Button.new()
+	close.text = "RETURN TO REPLAY"
+	close.custom_minimum_size = Vector2(220, 44)
+	close.pressed.connect(_close_replay_squads)
+	layout.add_child(close)
+
+func _replay_squad_column(
+	parent: HBoxContainer, heading: String, color: Color
+) -> GridContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 10)
+	panel.add_child(content)
+	var title := Label.new()
+	title.text = heading
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", color)
+	content.add_child(title)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	content.add_child(grid)
+	return grid
 
 func _build_mission_select() -> void:
 	mission_overlay = ColorRect.new()
@@ -1048,6 +1208,16 @@ func _add_overlay_background(
 	parent.add_child(tint)
 
 func _show_main_menu() -> void:
+	if get_tree().paused:
+		get_tree().paused = false
+	replay_mode = false
+	replay_playing = false
+	if replay_panel != null:
+		replay_panel.visible = false
+	if replay_squad_overlay != null:
+		replay_squad_overlay.visible = false
+	menu_button.visible = true
+	end_button.visible = true
 	input_enabled = false
 	squad_opened_from_menu = false
 	squad_opened_for_mission = false
@@ -1062,6 +1232,7 @@ func _show_main_menu() -> void:
 	combat_log_panel.visible = false
 	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
 	resume_button.disabled = saved_run.is_empty()
+	replay_button.disabled = not FileAccess.file_exists("user://last_replay.json")
 	resume_button.text = "RESUME MISSION"
 	if not saved_run.is_empty():
 		resume_button.text = "RESUME · %s · BATTLE %d" % [
@@ -1074,6 +1245,174 @@ func _open_mission_select() -> void:
 	main_menu_overlay.visible = false
 	mission_overlay.visible = true
 	_rebuild_mission_list()
+
+func _open_last_replay() -> void:
+	var loaded: Dictionary = BattleSimulatorScript.load_replay("user://last_replay.json")
+	if loaded.is_empty():
+		replay_button.disabled = true
+		return
+	replay_mode = true
+	replay_playing = false
+	replay_data = loaded
+	replay_event_index = 0
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	overlay.visible = false
+	replay_panel.visible = true
+	menu_button.visible = false
+	end_button.visible = false
+	input_enabled = false
+	battle_over = false
+	units.clear()
+	player_hand.clear()
+	enemy_hand.clear()
+	battle_deck.clear()
+	enemy_deck.clear()
+	selected_hand_index = -1
+	selected_board_unit_id = -1
+	next_unit_id = 1
+	player_hp = STARTING_HP
+	enemy_hp = STARTING_HP
+	player_shield = 0
+	enemy_shield = 0
+	status_message = "Replay ready."
+	var events: Array = replay_data.get("events", [])
+	for event in events:
+		if event.get("type", "") == "battle_started":
+			player_hp = event.get("player_hp", STARTING_HP)
+			enemy_hp = event.get("enemy_hp", STARTING_HP)
+			break
+	_update_replay_timeline()
+	_refresh()
+
+func _close_replay() -> void:
+	replay_playing = false
+	replay_squad_overlay.visible = false
+	battle_audio.stop_all()
+	menu_button.visible = true
+	end_button.visible = true
+	_show_main_menu()
+
+func _toggle_replay_playback() -> void:
+	replay_playing = not replay_playing
+	replay_play_button.text = "PAUSE" if replay_playing else "PLAY"
+	if replay_playing:
+		_play_replay()
+
+func _play_replay() -> void:
+	while replay_playing and replay_event_index < replay_data.get("events", []).size():
+		await _apply_next_replay_event()
+	if replay_event_index >= replay_data.get("events", []).size():
+		replay_playing = false
+		replay_play_button.text = "PLAY"
+
+func _step_replay() -> void:
+	if replay_playing:
+		return
+	await _apply_next_replay_event()
+
+func _apply_next_replay_event() -> void:
+	var events: Array = replay_data.get("events", [])
+	if replay_event_index >= events.size():
+		return
+	var event: Dictionary = events[replay_event_index]
+	replay_event_index += 1
+	var event_type: String = event.get("type", "")
+	match event_type:
+		"combat_log":
+			status_message = event.get("message", "")
+		"deploy":
+			var card: Dictionary = UnitCatalogScript.by_name(event.get("card", ""))
+			if not card.is_empty():
+				var side: int = event.get("side", PLAYER)
+				var row: int = event.get("row", 0)
+				var col := 0 if side == PLAYER else COLS - 1
+				var spawned := _spawn_unit(card, side, row, col)
+				spawned.id = event.get("unit_id", spawned.id)
+				next_unit_id = maxi(next_unit_id, spawned.id + 1)
+				battle_audio.play("deploy")
+				await board.animate_unit_move(
+					spawned.id, row, -1 if side == PLAYER else COLS,
+					_animation_duration(0.24)
+				)
+		"reposition":
+			var shifted = _unit_by_id(event.get("unit_id", -1))
+			if shifted != null:
+				var from_row: int = event.get("from_row", shifted.row)
+				shifted.row = event.get("to_row", shifted.row)
+				await board.animate_unit_move(
+					shifted.id, from_row, shifted.col, _animation_duration(0.20)
+				)
+		"move":
+			var mover = _unit_by_id(event.get("unit_id", -1))
+			if mover != null:
+				var old_col: int = event.get("from_col", mover.col)
+				mover.col = event.get("to_col", mover.col)
+				await board.animate_unit_move(
+					mover.id, mover.row, old_col, _animation_duration(0.22)
+				)
+		"attack":
+			var attacker = _unit_by_id(event.get("actor_id", -1))
+			var target = _unit_by_id(event.get("target_id", -1))
+			if attacker != null and target != null:
+				_play_attack_sound(attacker.kind)
+				await board.animate_attack(
+					attacker.id, target.id, attacker.kind, _animation_duration(0.20)
+				)
+				target.hp = event.get("target_hp", target.hp)
+				await board.animate_hit(target.id, _animation_duration(0.14))
+		"commander_attack":
+			var commander_attacker = _unit_by_id(event.get("actor_id", -1))
+			var side: int = event.get("side", ENEMY)
+			if commander_attacker != null:
+				await board.animate_commander_attack(
+					commander_attacker.id, side, commander_attacker.kind,
+					_animation_duration(0.20)
+				)
+			if side == PLAYER:
+				player_hp = event.get("captain_hp", player_hp)
+			else:
+				enemy_hp = event.get("captain_hp", enemy_hp)
+			board.shake(6.0)
+		"unit_defeated":
+			var defeated = _unit_by_id(event.get("unit_id", -1))
+			if defeated != null:
+				await board.animate_defeat(defeated.id, _animation_duration(0.20))
+				units.erase(defeated)
+		"state_snapshot":
+			_apply_replay_snapshot(event)
+		"battle_finished":
+			_verify_replay_result(event)
+	_refresh()
+	_update_replay_timeline()
+	await _wait(0.08)
+
+func _apply_replay_snapshot(event: Dictionary) -> void:
+	for state in event.get("units", []):
+		var unit = _unit_by_id(state.get("id", -1))
+		if unit != null:
+			for key in state:
+				unit[key] = state[key]
+	player_hp = event.get("player_hp", player_hp)
+	enemy_hp = event.get("enemy_hp", enemy_hp)
+	player_shield = event.get("player_shield", player_shield)
+	enemy_shield = event.get("enemy_shield", enemy_shield)
+
+func _verify_replay_result(event: Dictionary) -> void:
+	var expected_player: int = event.get("player_hp", player_hp)
+	var expected_enemy: int = event.get("enemy_hp", enemy_hp)
+	if player_hp == expected_player and enemy_hp == expected_enemy:
+		status_message = "REPLAY COMPLETE · Final state verified."
+	else:
+		status_message = "REPLAY DESYNC · Expected %d–%d HP, got %d–%d." % [
+			expected_player, expected_enemy, player_hp, enemy_hp
+		]
+
+func _update_replay_timeline() -> void:
+	var count: int = replay_data.get("events", []).size()
+	replay_timeline_label.text = "REPLAY  %d / %d  ·  SEED %s" % [
+		replay_event_index, count, str(replay_data.get("seed", 0))
+	]
 
 func _rebuild_mission_list() -> void:
 	for child in mission_list.get_children():
@@ -1324,6 +1663,10 @@ func _position_hover_card() -> void:
 	hover_card.position = Vector2(maxf(10, target.x), maxf(10, target.y))
 
 func _start_new_match() -> void:
+	replay_mode = false
+	replay_playing = false
+	if replay_panel != null:
+		replay_panel.visible = false
 	units.clear()
 	combat_log_lines.clear()
 	last_logged_message = ""
@@ -1333,10 +1676,6 @@ func _start_new_match() -> void:
 	enemy_hand.clear()
 	battle_seed = int(Time.get_unix_time_from_system() * 1000.0) ^ int(Time.get_ticks_usec())
 	battle_simulator.reset(battle_seed)
-	battle_simulator.record("battle_started", {
-		"mission_id": current_mission_id,
-		"encounter_index": current_encounter_index
-	})
 	battle_deck = SquadStoreScript.shuffle_for_battle(
 		SquadStoreScript.build_deck(squad_names, roster), battle_simulator.rng
 	)
@@ -1367,6 +1706,16 @@ func _start_new_match() -> void:
 	player_shield_turns = 0
 	enemy_shield_turns = 0
 	enemy_captain_skill = encounter.get("skill", "Shield") if campaign_battle else "Shield"
+	battle_simulator.record("battle_started", {
+		"mission_id": current_mission_id,
+		"encounter_index": current_encounter_index,
+		"player_hp": player_hp,
+		"enemy_hp": enemy_hp,
+		"player_squad": squad_names.duplicate(),
+		"enemy_squad": enemy_squad_names.duplicate(),
+		"player_skill": player_captain_skill,
+		"enemy_skill": enemy_captain_skill
+	})
 	input_enabled = true
 	battle_over = false
 	mission_finished = false
@@ -1833,6 +2182,13 @@ func _resolve_side(side: int) -> void:
 			"plan": battle_simulator.plan_activation(actor.id, units)
 		})
 		await _activate_unit(actor)
+		battle_simulator.record("state_snapshot", {
+			"units": units.duplicate(true),
+			"player_hp": player_hp,
+			"enemy_hp": enemy_hp,
+			"player_shield": player_shield,
+			"enemy_shield": enemy_shield
+		})
 		_remove_defeated()
 		_refresh()
 		if player_hp <= 0 or enemy_hp <= 0:
@@ -1869,7 +2225,7 @@ func _activate_unit(actor: Dictionary) -> void:
 		if healing_target != null:
 			battle_audio.play("heal")
 			await board.animate_heal(actor.id, healing_target.id, _animation_duration(0.30))
-			healing_target.hp += 2
+			BattleSimulatorScript.apply_unit_healing(healing_target, 2, true)
 			status_message = "%s heals %s for 2 HP." % [_actor_tag(actor), healing_target.name]
 			board.play_unit_effect(healing_target.id, "+2 HP", Color("#70e0a1"))
 			_refresh()
@@ -1906,7 +2262,7 @@ func _activate_unit(actor: Dictionary) -> void:
 				break
 			_play_attack_sound(actor.kind)
 			await board.animate_attack(actor.id, target.id, actor.kind, _animation_duration(0.24))
-			target.hp -= actor.atk
+			BattleSimulatorScript.apply_unit_damage(target, actor.atk)
 			battle_simulator.record("attack", {
 				"actor_id": actor.id,
 				"target_id": target.id,
@@ -1996,7 +2352,7 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 		var blast_cells: Array = BattleRulesScript.blast_cells(target)
 		for other in units:
 			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
-				other.hp -= splash_damage
+				BattleSimulatorScript.apply_unit_damage(other, splash_damage)
 				affected_ids.append(other.id)
 				board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
 		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
@@ -2008,7 +2364,7 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 				continue
 			var distance: int = (other.col - actor.col) * direction
 			if distance > 0 and distance <= actor.range:
-				other.hp -= actor.atk
+				BattleSimulatorScript.apply_unit_damage(other, actor.atk)
 				pierced.append(other.name)
 				affected_ids.append(other.id)
 				board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
@@ -2128,24 +2484,20 @@ func _resolve_chants(side: int) -> void:
 	UnitSkillsScript.refresh_auras(units)
 
 func _damage_captain(side: int, damage: int) -> int:
-	var remaining := damage
-	if side == PLAYER and player_shield > 0:
-		var absorbed := mini(player_shield, remaining)
-		player_shield -= absorbed
-		remaining -= absorbed
-		if absorbed > 0:
-			battle_audio.play("shield")
-	elif side == ENEMY and enemy_shield > 0:
-		var absorbed := mini(enemy_shield, remaining)
-		enemy_shield -= absorbed
-		remaining -= absorbed
-		if absorbed > 0:
-			battle_audio.play("shield")
-	if side == PLAYER:
-		player_hp = maxi(0, player_hp - remaining)
-	else:
-		enemy_hp = maxi(0, enemy_hp - remaining)
-	return remaining
+	var state := {
+		"player_hp": player_hp,
+		"enemy_hp": enemy_hp,
+		"player_shield": player_shield,
+		"enemy_shield": enemy_shield
+	}
+	var result: Dictionary = BattleSimulatorScript.apply_captain_damage(side, damage, state)
+	player_hp = state.player_hp
+	enemy_hp = state.enemy_hp
+	player_shield = state.player_shield
+	enemy_shield = state.enemy_shield
+	if result.shield_absorbed > 0:
+		battle_audio.play("shield")
+	return result.damage
 
 func _on_result_primary() -> void:
 	if awaiting_next_encounter:

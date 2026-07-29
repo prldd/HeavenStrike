@@ -219,6 +219,8 @@ Battle audio is synthesized locally and synchronized with deployment, movement, 
 
 Presentation settings persist across sessions. Players can pause resolution, skip animation delays, or enable reduced motion, which shortens movement and suppresses screen shake.
 
+The main menu exposes the latest completed battle through an event-driven replay viewer. It reconstructs deployments and board movement, animates attacks and defeats, supports play/pause, single-step, and speed controls, displays the original seed and timeline position, compares the recorded player and enemy squads, and reports final-state desynchronization. Core unit damage, healing, shield absorption, and Captain damage calculations live in `BattleSimulator`.
+
 ## First Milestone
 
 The initial milestone is a complete battle sandbox:

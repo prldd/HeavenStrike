@@ -1,6 +1,8 @@
 class_name UnitSkills
 extends RefCounted
 
+const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
+
 static func resolve_warcry(
 	actor: Dictionary,
 	units: Array,
@@ -32,7 +34,7 @@ static func resolve_warcry(
 		"Bolt":
 			var target = _highest_health_enemy(actor, units)
 			if target != null:
-				target.hp -= 1
+				BattleSimulatorScript.apply_unit_damage(target, 1)
 				result.message = "Bolt deals 1 damage to %s." % target.name
 				result.affected.append(target.id)
 		"Heaven's Wrath":
@@ -44,7 +46,7 @@ static func resolve_warcry(
 					if rng != null else candidates.pick_random()
 				)
 			if target != null:
-				target.hp -= 1
+				BattleSimulatorScript.apply_unit_damage(target, 1)
 				result.message = "Heaven's Wrath deals 1 damage to %s." % target.name
 				result.affected.append(target.id)
 		"Misfortune":

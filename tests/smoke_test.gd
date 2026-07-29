@@ -24,6 +24,18 @@ func _init() -> void:
 	assert(simulator.record("test", {"value": 7}).sequence == 1)
 	assert(simulator.replay_data().events.size() == 1)
 	assert(simulator.replay_data().seed == 4242)
+	var damage_target := {"id": 99, "hp": 5, "max_hp": 5}
+	assert(BattleSimulatorScript.apply_unit_damage(damage_target, 3).after == 2)
+	assert(BattleSimulatorScript.apply_unit_healing(damage_target, 2).after == 4)
+	var captain_state := {
+		"player_hp": 20, "enemy_hp": 20,
+		"player_shield": 2, "enemy_shield": 0
+	}
+	var captain_hit := BattleSimulatorScript.apply_captain_damage(
+		0, 5, captain_state
+	)
+	assert(captain_hit.shield_absorbed == 2)
+	assert(captain_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
 		func(icon_id): return icon_id >= 1 and icon_id <= 48
 	))

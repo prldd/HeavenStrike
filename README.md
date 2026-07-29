@@ -28,6 +28,8 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Select **SOUND** to cycle battle audio between 100%, 50%, and muted.
 - Select **PAUSE** to suspend or resume an active resolution.
 - Select **ANIM** to skip presentation delays, and **MOTION** for reduced movement and screen shake.
+- Select **Watch Last Replay** from the main menu to play, pause, single-step, or accelerate the latest completed battle.
+- Select **Squad** during a replay to compare the recorded player and enemy squads side by side.
 - Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
 - Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
@@ -87,4 +89,5 @@ and avoids WSL Windows-binary interoperability issues.
 
 Battle speed, audio, animation-skip, and reduced-motion preferences persist in
 the player configuration. Completed battles write a deterministic structured
-replay to `user://last_replay.json`.
+replay to `user://last_replay.json`; the replay viewer reconstructs the battle
+timeline and verifies its final Captain HP state.
