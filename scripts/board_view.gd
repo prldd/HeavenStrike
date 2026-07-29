@@ -4,6 +4,8 @@ extends Control
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
+const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
+const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -245,9 +247,12 @@ func _draw_unit(unit: Dictionary) -> void:
 
 func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
 	var icon_id: int = unit.get("icon", 0)
-	if icon_id < 1 or icon_id > 12:
+	if icon_id < 1 or icon_id > 24:
 		return
-	var texture: Texture2D = UNIT_SPRITES_1 if icon_id <= 6 else UNIT_SPRITES_2
+	var sheets: Array[Texture2D] = [
+		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4
+	]
+	var texture: Texture2D = sheets[int((icon_id - 1) / 6)]
 	var slot := (icon_id - 1) % 6
 	var source := Rect2(slot * 100, 0, 100, 100)
 	var scale_x := -1.0 if unit.side == 0 else 1.0

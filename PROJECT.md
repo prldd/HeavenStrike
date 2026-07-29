@@ -122,6 +122,8 @@ These rules are deterministic: the same board state and commands always produce 
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
+The implemented roster currently contains 18 unpromoted units: the original twelve 1★ cards and the first six-unit 2★ cohort. Two-star units are earned through their reference story-mission drop pools and are not included in the starting Barracks.
+
 ## Example Turn
 
 The player begins a turn with 4 available Mana. An enemy Defender blocks the center lane, while the top lane is open.

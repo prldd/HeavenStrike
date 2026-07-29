@@ -3,7 +3,11 @@ extends RefCounted
 
 const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
 const SAVE_PATH := "user://campaign.cfg"
-const REWARD_UNITS := ["Chain Initiate", "LDF Medic"]
+const REWARD_UNITS := [
+	"Chain Initiate", "LDF Medic",
+	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
+	"LDF Gunner", "Order Pupil", "Order Cleric"
+]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()
 

@@ -38,6 +38,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
 - Quest-specific, Star-Rarity-weighted card rewards with persistent unlocks
+- 18 unpromoted units: twelve 1★ starters/rewards and six reward-only 2★ units
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles

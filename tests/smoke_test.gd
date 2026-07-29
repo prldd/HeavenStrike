@@ -9,28 +9,32 @@ const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 12, "The playable roster must contain 12 units.")
+	assert(roster.size() == 18, "The playable roster must contain 18 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 12
+		func(icon_id): return icon_id >= 1 and icon_id <= 24
 	))
-	assert(roster.all(func(unit): return unit.stars == 1))
+	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 6)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	icon_ids.sort()
-	assert(icon_ids == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+	assert(icon_ids == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 17, 19, 21, 23])
 	for kind in ["Strider", "Duelist", "Warden", "Artillerist", "Channeler", "Lifebinder"]:
-		assert(roster.filter(func(unit): return unit.kind == kind).size() == 2)
+		assert(roster.filter(func(unit): return unit.kind == kind).size() == 3)
+	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
+	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
+	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
-	assert(default_squad.size() == 12)
+	assert(default_squad.size() == 15)
 	var repaired_squad: Array = SquadStoreScript.sanitize(["Trinity Rusher", "Trinity Rusher", "Trinity Rusher", "Missing"], roster)
 	assert(repaired_squad.size() == 2)
 	assert(repaired_squad.count("Trinity Rusher") == 2)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
-	assert(SquadStoreScript.sanitize([], roster).size() == 12)
+	assert(SquadStoreScript.sanitize([], roster).size() == 15)
 	var inventory := CampaignStoreScript.inventory_counts(
 		roster, ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"]
 	)
@@ -67,14 +71,15 @@ func _init() -> void:
 	assert(earned_unlocks.size() == 12)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
-	assert(CampaignStoreScript.reward_summary(2).begins_with("Prototype pool:"))
-	assert(CampaignStoreScript.reward_summary(7) == "Random: Claw Caster, Claw Slicer")
+	assert(CampaignStoreScript.reward_summary(2) == "Random: Rage Brute")
+	assert(CampaignStoreScript.reward_summary(3).begins_with("Prototype pool:"))
+	assert(CampaignStoreScript.reward_summary(7) == "Random: Claw Caster, Claw Slicer, Rage Brute, Claw Skirmisher")
 	var training_rewards: Array = CampaignStoreScript.reward_options(0, roster)
 	assert(training_rewards.size() == 2)
 	assert(is_equal_approx(training_rewards[0].chance, 0.5))
 	assert(is_equal_approx(training_rewards[1].chance, 0.5))
-	var fallback_rewards: Array = CampaignStoreScript.reward_options(2, roster)
-	assert(fallback_rewards.size() == 12)
+	var fallback_rewards: Array = CampaignStoreScript.reward_options(3, roster)
+	assert(fallback_rewards.size() == 18)
 	var fallback_total := 0.0
 	for option in fallback_rewards:
 		fallback_total += option.chance
@@ -91,7 +96,7 @@ func _init() -> void:
 	for card_name in enemy_squad:
 		if card_name not in unique_enemy_cards:
 			unique_enemy_cards.append(card_name)
-	assert(unique_enemy_cards.size() == 12)
+	assert(unique_enemy_cards.size() == 15)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunt_turns": 0}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}

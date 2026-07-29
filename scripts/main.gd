@@ -12,6 +12,8 @@ const SquadCardScript = preload("res://scripts/squad_card.gd")
 const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
+const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
+const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -1161,12 +1163,15 @@ func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)
 
 func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
-	if icon_id < 1 or icon_id > 12:
+	if icon_id < 1 or icon_id > 24:
 		return null
 	var cache_key := "%d:%d" % [icon_id, size]
 	if unit_icon_cache.has(cache_key):
 		return unit_icon_cache[cache_key]
-	var atlas: Texture2D = UNIT_SPRITES_1 if icon_id <= 6 else UNIT_SPRITES_2
+	var sheets: Array[Texture2D] = [
+		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4
+	]
+	var atlas: Texture2D = sheets[int((icon_id - 1) / 6)]
 	var source_image: Image = atlas.get_image()
 	var icon_image := source_image.get_region(
 		Rect2i(((icon_id - 1) % 6) * 100, 0, 100, 100)
