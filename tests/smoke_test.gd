@@ -184,6 +184,19 @@ func _init() -> void:
 	assert(unique_enemy_cards.size() == 8)
 	assert(enemy_squad != CampaignStoreScript.enemy_squad_names(3, 0, roster))
 	assert(CampaignStoreScript.encounter(0, 0).enemy_squad.size() == 8)
+	var enemy_squad_signatures: Array[String] = []
+	var roster_names: Array = roster.map(func(unit): return unit.name)
+	for mission in CampaignStoreScript.MISSIONS:
+		var configured_squad: Array = mission.encounters[0].enemy_squad
+		assert(configured_squad.size() == 8)
+		assert(configured_squad.all(func(unit_name): return unit_name in roster_names))
+		assert(configured_squad.all(
+			func(unit_name): return configured_squad.count(unit_name) <= 2
+		))
+		var signature := "|".join(configured_squad)
+		assert(signature not in enemy_squad_signatures)
+		enemy_squad_signatures.append(signature)
+	assert(enemy_squad_signatures.size() == 62)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunt_turns": 0}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
@@ -198,6 +211,13 @@ func _init() -> void:
 	assert(BattleRulesScript.is_taunted(mover, [mover]))
 	BattleRulesScript.expire_taunts([mover], 0)
 	assert(not BattleRulesScript.is_taunted(mover, [mover]))
+	mover.immobilized_turns = 1
+	assert(BattleRulesScript.is_immobilized(mover))
+	assert(not BattleRulesScript.can_reposition(mover, 0, [mover]))
+	assert(BattleAIScript.choose_reposition(mover, [mover]) == mover.row)
+	mover.immobilized_turns = 0
+	assert(not BattleRulesScript.is_immobilized(mover))
+	assert(BattleRulesScript.can_reposition(mover, 0, [mover]))
 	var blocker := {"id": 4, "side": 0, "kind": "Strider", "row": 0, "col": 2, "repositioned": false}
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
 	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))

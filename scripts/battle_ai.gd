@@ -1,6 +1,7 @@
 class_name BattleAI
 extends RefCounted
 
+const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const PLAYER := 0
 const ENEMY := 1
 const COLS := 7
@@ -119,16 +120,7 @@ static func _reposition_score(unit: Dictionary, row: int, units: Array) -> float
 	return score
 
 static func _can_reposition(unit: Dictionary, target_row: int, units: Array) -> bool:
-	if unit.get("taunt_turns", 0) > 0:
-		return false
-	var direction := 1 if target_row > unit.row else -1
-	for row in range(unit.row + direction, target_row + direction, direction):
-		for other in units:
-			if other.id == unit.id or other.row != row or other.col != unit.col:
-				continue
-			if row == target_row or other.side != unit.side:
-				return false
-	return true
+	return BattleRulesScript.can_reposition(unit, target_row, units)
 
 static func _occupied(units: Array, row: int, col: int) -> bool:
 	for unit in units:

@@ -48,6 +48,7 @@ var reward_reveal: VBoxContainer
 var reward_portrait: TextureRect
 var reward_stars_label: Label
 var reward_new_label: Label
+var result_continue_button: Button
 var tutorial_overlay: ColorRect
 var tutorial_page_label: Label
 var tutorial_page := 0
@@ -558,6 +559,13 @@ func _build_overlay() -> void:
 	result_actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	result_actions.add_theme_constant_override("separation", 12)
 	panel.add_child(result_actions)
+
+	result_continue_button = Button.new()
+	result_continue_button.text = "CONTINUE CAMPAIGN"
+	result_continue_button.custom_minimum_size = Vector2(210, 48)
+	result_continue_button.visible = false
+	result_continue_button.pressed.connect(_continue_campaign)
+	result_actions.add_child(result_continue_button)
 
 	result_primary_button = Button.new()
 	result_primary_button.text = "PLAY AGAIN"
@@ -2065,11 +2073,15 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 	_refresh()
 
 func _reposition_status(unit: Dictionary) -> String:
+	if BattleRulesScript.is_immobilized(unit):
+		return "%s is immobilised and cannot leave this lane." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted by a Defender and cannot leave this lane." % unit.name
 	return "Choose a reachable highlighted tile in another lane to reposition %s." % unit.name
 
 func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
+	if BattleRulesScript.is_immobilized(unit):
+		return "%s is immobilised and must remain in its lane." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted and must remain in its lane." % unit.name
 	if col != unit.col or row == unit.row:
@@ -2289,7 +2301,11 @@ func _enemy_reposition_units() -> void:
 	var enemy_ids: Array = units.filter(func(unit): return unit.side == ENEMY).map(func(unit): return unit.id)
 	for unit_id in enemy_ids:
 		var unit = _unit_by_id(unit_id)
-		if unit == null or BattleRulesScript.is_taunted(unit, units):
+		if (
+			unit == null
+			or BattleRulesScript.is_taunted(unit, units)
+			or BattleRulesScript.is_immobilized(unit)
+		):
 			continue
 		var best_row: int = BattleAIScript.choose_reposition(unit, units)
 		if best_row != unit.row:
@@ -2654,6 +2670,20 @@ func _on_result_primary() -> void:
 	else:
 		_start_new_match()
 
+func _continue_campaign() -> void:
+	var next_mission_id := current_mission_id + 1
+	if (
+		not mission_finished
+		or next_mission_id < 0
+		or next_mission_id >= CampaignStoreScript.MISSIONS.size()
+		or not CampaignStoreScript.is_available(next_mission_id, completed_missions)
+	):
+		return
+	overlay.visible = false
+	result_continue_button.visible = false
+	mission_finished = false
+	_prepare_mission(next_mission_id)
+
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:
 		return false
@@ -2673,6 +2703,7 @@ func _check_game_over() -> bool:
 	battle_simulator.archive_replay(REPLAY_HISTORY_PATH, replay_metadata)
 	overlay.visible = true
 	reward_reveal.visible = false
+	result_continue_button.visible = false
 	result_menu_button.visible = false
 	if enemy_hp <= 0:
 		battle_audio.play("victory")
@@ -2706,6 +2737,10 @@ func _check_game_over() -> bool:
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = "Victory achieved in %d rounds." % round_number
 		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
+		result_continue_button.visible = (
+			campaign_battle
+			and current_mission_id + 1 < CampaignStoreScript.MISSIONS.size()
+		)
 		result_menu_button.visible = not campaign_battle
 	else:
 		if campaign_battle:

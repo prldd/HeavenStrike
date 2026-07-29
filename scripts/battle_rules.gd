@@ -8,6 +8,9 @@ const COLS := 7
 static func is_taunted(unit: Dictionary, units: Array) -> bool:
 	return unit.get("taunt_turns", 0) > 0
 
+static func is_immobilized(unit: Dictionary) -> bool:
+	return unit.get("immobilized_turns", 0) > 0
+
 static func apply_taunt(unit: Dictionary, turns: int = 2) -> void:
 	unit.taunt_turns = maxi(unit.get("taunt_turns", 0), turns)
 
@@ -21,7 +24,7 @@ static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> b
 		return false
 	if target_row == unit.row:
 		return false
-	if is_taunted(unit, units):
+	if is_taunted(unit, units) or is_immobilized(unit):
 		return false
 	var direction := 1 if target_row > unit.row else -1
 	for row in range(unit.row + direction, target_row + direction, direction):

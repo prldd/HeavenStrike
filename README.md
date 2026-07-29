@@ -58,7 +58,8 @@ assets required by the prototype.
 - Enemy deployment AI
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
-- Mission-specific eight-card PvE squads and context-aware deployment, movement, and Captain-skill AI
+- Sixty-two authored, mission-specific eight-card PvE squads and
+  context-aware deployment, movement, and Captain-skill AI
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
 - Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
 - Player-selected targets for Empower Warcries

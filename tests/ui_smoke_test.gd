@@ -115,7 +115,8 @@ func _run() -> void:
 	assert(first_entry.size_flags_horizontal == Control.SIZE_EXPAND_FILL)
 	assert(first_entry.get_child(1) is HBoxContainer)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
-	assert(result_buttons.size() == 2)
+	assert(result_buttons.size() == 3)
+	assert(not game.result_continue_button.visible)
 	assert(not game.result_menu_button.visible)
 	game._show_card_reward("Chain Initiate", true)
 	assert(game.reward_reveal.visible)
@@ -153,7 +154,20 @@ func _run() -> void:
 	assert(game._check_game_over())
 	assert(game.result_primary_button.text == "PLAY AGAIN")
 	assert(game.result_menu_button.visible)
+	assert(not game.result_continue_button.visible)
 	game.overlay.visible = false
+	game.current_mission_id = 0
+	game.completed_missions = [0]
+	game.mission_finished = true
+	game.overlay.visible = true
+	game._continue_campaign()
+	assert(not game.overlay.visible)
+	assert(game.squad_overlay.visible)
+	assert(game.squad_opened_for_mission)
+	assert(game.pending_mission_id == 1)
+	game.squad_overlay.visible = false
+	game.squad_opened_for_mission = false
+	game.pending_mission_id = -1
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://replay_history.json"))
 	var older_replay := BattleSimulatorScript.new()
 	older_replay.reset(555)
