@@ -1066,11 +1066,15 @@ func _start_new_match() -> void:
 	units.clear()
 	player_hand.clear()
 	enemy_hand.clear()
-	battle_deck = SquadStoreScript.build_deck(squad_names, roster)
+	battle_deck = SquadStoreScript.shuffle_for_battle(
+		SquadStoreScript.build_deck(squad_names, roster)
+	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
 	var enemy_squad_id: int = encounter.get("squad_offset", 0)
 	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(enemy_squad_id, roster)
-	enemy_deck = SquadStoreScript.build_deck(enemy_squad_names, roster)
+	enemy_deck = SquadStoreScript.shuffle_for_battle(
+		SquadStoreScript.build_deck(enemy_squad_names, roster)
+	)
 	draw_index = 0
 	enemy_draw_index = 0
 	selected_hand_index = -1

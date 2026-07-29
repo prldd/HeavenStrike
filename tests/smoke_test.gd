@@ -38,6 +38,20 @@ func _init() -> void:
 	assert(repaired_squad.size() == 2)
 	assert(repaired_squad.count("Trinity Rusher") == 2)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
+	var ordered_deck: Array = SquadStoreScript.build_deck(
+		["Trinity Rusher", "Pub Bouncer", "Socialite Fencer", "Trinity Potshot"],
+		roster
+	)
+	var deck_rng := RandomNumberGenerator.new()
+	deck_rng.seed = 42
+	var shuffled_deck: Array = SquadStoreScript.shuffle_for_battle(ordered_deck, deck_rng)
+	assert(shuffled_deck[0].name == "Trinity Rusher")
+	assert(shuffled_deck.map(func(card): return card.name).duplicate().size() == ordered_deck.size())
+	var ordered_names: Array = ordered_deck.map(func(card): return card.name)
+	var shuffled_names: Array = shuffled_deck.map(func(card): return card.name)
+	ordered_names.sort()
+	shuffled_names.sort()
+	assert(shuffled_names == ordered_names)
 	assert(SquadStoreScript.sanitize([], roster).size() == 15)
 	var inventory := CampaignStoreScript.inventory_counts(
 		roster, ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"]

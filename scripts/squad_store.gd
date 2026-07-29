@@ -82,3 +82,16 @@ static func build_deck(names: Array, roster: Array) -> Array:
 				deck.append(unit.duplicate(true))
 				break
 	return deck
+
+static func shuffle_for_battle(deck: Array, rng: RandomNumberGenerator = null) -> Array:
+	var shuffled := deck.duplicate(true)
+	# The first squad slot is the Vanguard and must remain the opening card.
+	# Every reserve card after it is randomized once for each battle.
+	for index in range(shuffled.size() - 1, 1, -1):
+		var swap_index: int = (
+			rng.randi_range(1, index) if rng != null else randi_range(1, index)
+		)
+		var card = shuffled[index]
+		shuffled[index] = shuffled[swap_index]
+		shuffled[swap_index] = card
+	return shuffled

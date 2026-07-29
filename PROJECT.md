@@ -42,6 +42,7 @@ Before battle, each side prepares a squad of up to 15 units:
 - One Vanguard is always available at the start of the match.
 - Up to 14 other units form the draw pile.
 - The player begins with the Vanguard and three drawn units.
+- Reserve cards are shuffled at the start of every battle; the Vanguard remains the guaranteed first card.
 - A bench can hold up to six units.
 - A squad may contain no more than two copies of the same unit.
 - The Barracks begins with one copy of every base-set card and permanently keeps every card reward, including duplicates.
