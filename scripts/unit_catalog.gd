@@ -23,12 +23,12 @@ const UNITS := [
 	{"name": "Rage Spellslinger", "icon": 11, "stars": 1, "kind": "Channeler", "cost": 2, "atk": 4, "hp": 3, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage."},
 	{"name": "Chain Initiate", "icon": 6, "stars": 1, "kind": "Lifebinder", "cost": 2, "atk": 2, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally."},
 	{"name": "LDF Medic", "icon": 12, "stars": 1, "kind": "Lifebinder", "cost": 3, "atk": 3, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally."},
-	{"name": "Apprentice Builder", "icon": 13, "stars": 2, "kind": "Warden", "cost": 3, "atk": 2, "hp": 4, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns."},
-	{"name": "Rage Brute", "icon": 15, "stars": 2, "kind": "Duelist", "cost": 2, "atk": 2, "hp": 4, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking."},
-	{"name": "Claw Skirmisher", "icon": 17, "stars": 2, "kind": "Strider", "cost": 3, "atk": 2, "hp": 3, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action."},
-	{"name": "LDF Gunner", "icon": 19, "stars": 2, "kind": "Artillerist", "cost": 2, "atk": 3, "hp": 2, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane."},
-	{"name": "Order Pupil", "icon": 21, "stars": 2, "kind": "Channeler", "cost": 2, "atk": 3, "hp": 2, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage."},
-	{"name": "Order Cleric", "icon": 23, "stars": 2, "kind": "Lifebinder", "cost": 3, "atk": 2, "hp": 4, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally."}
+	{"name": "Apprentice Builder", "icon": 13, "stars": 2, "kind": "Warden", "cost": 3, "atk": 2, "hp": 4, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns.", "skill": {"name": "Fortify", "type": "Warcry", "text": "Other allied unit with the lowest HP gains +3 HP for 2 turns."}},
+	{"name": "Rage Brute", "icon": 15, "stars": 2, "kind": "Duelist", "cost": 2, "atk": 2, "hp": 4, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
+	{"name": "Claw Skirmisher", "icon": 17, "stars": 2, "kind": "Strider", "cost": 3, "atk": 2, "hp": 3, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Pinning Strike", "type": "Strike", "text": "30% chance to Immobilise the attacked enemy for 1 turn."}},
+	{"name": "LDF Gunner", "icon": 19, "stars": 2, "kind": "Artillerist", "cost": 2, "atk": 3, "hp": 2, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
+	{"name": "Order Pupil", "icon": 21, "stars": 2, "kind": "Channeler", "cost": 2, "atk": 3, "hp": 2, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Heaven's Wrath", "type": "Warcry", "text": "Deal 1 damage split between random enemy units."}},
+	{"name": "Order Cleric", "icon": 23, "stars": 2, "kind": "Lifebinder", "cost": 3, "atk": 2, "hp": 4, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}}
 ]
 
 static func all_units() -> Array:

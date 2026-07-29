@@ -121,6 +121,10 @@ static func expire_effects(units: Array, side: int) -> void:
 			effect.turns -= 1
 			if effect.turns <= 0:
 				unit.atk = maxi(0, unit.atk - effect.get("attack", 0))
+				var health_bonus: int = effect.get("health", 0)
+				if health_bonus > 0:
+					unit.max_hp = maxi(1, unit.max_hp - health_bonus)
+					unit.hp = mini(unit.hp, unit.max_hp)
 			else:
 				retained.append(effect)
 		unit.effects = retained
@@ -135,6 +139,8 @@ static func effect_summary(unit: Dictionary) -> String:
 		])
 	if unit.get("taunt_turns", 0) > 0:
 		labels.append("Taunted (%d turns)" % unit.taunt_turns)
+	if unit.get("immobilized_turns", 0) > 0:
+		labels.append("Immobilised (%d turns)" % unit.immobilized_turns)
 	return ", ".join(labels)
 
 static func _add_attack_effect(unit: Dictionary, effect_name: String, amount: int, turns: int) -> void:

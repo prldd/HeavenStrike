@@ -43,6 +43,8 @@ static func attack_cells_from(unit: Dictionary, origin_col: int) -> Array:
 
 static func traversal_cells(unit: Dictionary, units: Array) -> Array:
 	var cells: Array = []
+	if unit.get("immobilized_turns", 0) > 0:
+		return cells
 	var direction := 1 if unit.side == PLAYER else -1
 	var final_col := COLS - 2 if unit.side == PLAYER else 1
 	for step in range(1, unit.move + 1):

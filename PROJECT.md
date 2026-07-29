@@ -107,7 +107,17 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - A unit hit by a Defender's Taunting Strike cannot change lanes for its next two turns.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
 
-These rules are deterministic: the same board state and commands always produce the same result.
+Secondary unit skills use five timing keywords:
+
+- **Warcry:** resolves once immediately when deployed, before movement or attack.
+- **Chant:** resolves at the start of its controller's turn.
+- **Strike:** resolves whenever the unit attacks, after its normal class attack.
+- **Reaction:** resolves after an enemy's Strike when the unit is attacked.
+- **Aura:** remains active continuously while its source is on the battlefield.
+
+The ability sequence is: Deploy → Warcry → start-of-turn Chants → movement → attack → Strike → enemy Reaction. Auras remain active throughout.
+
+Board order and targeting are deterministic except where an ability explicitly specifies a chance or random target.
 
 ## Unit Classes
 

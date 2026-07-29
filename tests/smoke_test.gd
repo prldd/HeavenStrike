@@ -6,6 +6,7 @@ const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
+const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -27,6 +28,9 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
 	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
+	assert(UnitCatalogScript.by_name("Apprentice Builder").skill.name == "Fortify")
+	assert(UnitCatalogScript.by_name("Claw Skirmisher").skill.type == "Strike")
+	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
 	assert(default_squad.size() == 15)
@@ -150,11 +154,66 @@ func _init() -> void:
 	var firestorm: Dictionary = CaptainSkillsScript.apply("Firestorm", 0, skill_units, 20)
 	assert(firestorm.success and skill_enemy.hp == 4)
 
+	var builder := {
+		"id": 30, "side": 0, "name": "Apprentice Builder", "atk": 2,
+		"hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Fortify", "type": "Warcry"}
+	}
+	var fortify_ally := {
+		"id": 31, "side": 0, "name": "Ally", "atk": 2,
+		"hp": 2, "max_hp": 5, "effects": []
+	}
+	var warcry_enemy := {
+		"id": 32, "side": 1, "name": "Enemy", "atk": 2,
+		"hp": 6, "max_hp": 6, "effects": []
+	}
+	var warcry_units := [builder, fortify_ally, warcry_enemy]
+	assert(not UnitSkillsScript.resolve_warcry(builder, warcry_units).message.is_empty())
+	assert(fortify_ally.hp == 5 and fortify_ally.max_hp == 8)
+	CaptainSkillsScript.expire_effects(warcry_units, 0)
+	assert(fortify_ally.max_hp == 8)
+	CaptainSkillsScript.expire_effects(warcry_units, 0)
+	assert(fortify_ally.hp == 5 and fortify_ally.max_hp == 5)
+
+	var brute := {
+		"id": 33, "side": 0, "name": "Rage Brute", "atk": 2,
+		"hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Empower", "type": "Warcry"}
+	}
+	assert(not UnitSkillsScript.resolve_warcry(brute, [brute, fortify_ally]).message.is_empty())
+	assert(fortify_ally.atk == 3)
+	var gunner := {
+		"id": 34, "side": 0, "name": "LDF Gunner", "atk": 3,
+		"hp": 2, "max_hp": 2, "effects": [],
+		"skill": {"name": "Bolt", "type": "Warcry"}
+	}
+	assert(not UnitSkillsScript.resolve_warcry(gunner, [gunner, warcry_enemy]).message.is_empty())
+	assert(warcry_enemy.hp == 5)
+	var pupil := {
+		"id": 36, "side": 0, "name": "Order Pupil", "atk": 3,
+		"hp": 2, "max_hp": 2, "effects": [],
+		"skill": {"name": "Heaven's Wrath", "type": "Warcry"}
+	}
+	assert(not UnitSkillsScript.resolve_warcry(pupil, [pupil, warcry_enemy]).message.is_empty())
+	assert(warcry_enemy.hp == 4)
+	var skirmisher := {
+		"id": 35, "side": 0, "name": "Claw Skirmisher", "atk": 2,
+		"hp": 3, "max_hp": 3, "effects": [],
+		"skill": {"name": "Pinning Strike", "type": "Strike"}
+	}
+	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.29).message.is_empty())
+	assert(warcry_enemy.immobilized_turns == 1)
+	UnitSkillsScript.expire_statuses([warcry_enemy], 1)
+	assert(warcry_enemy.immobilized_turns == 0)
+
 	var preview_unit := {"id": 6, "side": 0, "kind": "Strider", "row": 1, "col": 1, "move": 3, "range": 1}
 	assert(BattleRulesScript.attack_cells(preview_unit) == [Vector2i(2, 1)])
 	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit]) == [
 		Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1)
 	])
+	preview_unit.immobilized_turns = 1
+	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit]).is_empty())
+	preview_unit.immobilized_turns = 0
 	var path_blocker := {"id": 7, "side": 0, "kind": "Warden", "row": 1, "col": 3}
 	assert(BattleRulesScript.traversal_cells(preview_unit, [preview_unit, path_blocker]) == [Vector2i(2, 1)])
 	var attack_target := {"id": 8, "side": 1, "kind": "Duelist", "row": 1, "col": 2}

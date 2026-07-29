@@ -7,6 +7,7 @@ const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
+const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const SquadCardScript = preload("res://scripts/squad_card.gd")
 const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
@@ -961,7 +962,7 @@ func _open_squad_from_menu() -> void:
 
 func _build_hover_card() -> void:
 	hover_card = PanelContainer.new()
-	hover_card.custom_minimum_size = Vector2(310, 176)
+	hover_card.custom_minimum_size = Vector2(340, 236)
 	hover_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_card.z_index = 100
 	hover_card.visible = false
@@ -1026,6 +1027,14 @@ func _show_unit_details(unit: Dictionary) -> void:
 	]
 	var active_effects: String = CaptainSkillsScript.effect_summary(unit)
 	hover_ability_label.text = definition.text
+	var skill: Dictionary = definition.get("skill", {})
+	if not skill.is_empty():
+		hover_ability_label.text += "\n\n%s · %s\n%s\n%s" % [
+			skill.name.to_upper(),
+			skill.type.to_upper(),
+			skill.text,
+			UnitSkillsScript.timing_tooltip(skill.type)
+		]
 	if not active_effects.is_empty():
 		hover_ability_label.text += "\nActive: " + active_effects
 	hover_card.visible = true
@@ -1044,7 +1053,7 @@ func _process(_delta: float) -> void:
 
 func _position_hover_card() -> void:
 	var pointer := get_viewport().get_mouse_position()
-	var card_size := Vector2(310, 176)
+	var card_size := Vector2(340, 236)
 	var viewport_size := get_viewport_rect().size
 	var target := pointer + Vector2(18, 18)
 	if target.x + card_size.x > viewport_size.x - 10:
@@ -1256,14 +1265,17 @@ func _on_deployment_clicked(row: int) -> void:
 	if card.cost > player_energy:
 		return
 	player_energy -= card.cost
-	_spawn_unit(card, PLAYER, row, 0)
+	var spawned: Dictionary = _spawn_unit(card, PLAYER, row, 0)
 	status_message = "%s deployed to lane %d." % [card.name, row + 1]
+	var warcry_message := _resolve_warcry(spawned)
+	if not warcry_message.is_empty():
+		status_message += " " + warcry_message
 	player_hand.remove_at(selected_hand_index)
 	selected_hand_index = -1
 	_refresh()
 
-func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
-	units.append({
+func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
+	var spawned := {
 		"id": next_unit_id,
 		"side": side,
 		"row": row,
@@ -1277,14 +1289,29 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		"max_hp": card.hp,
 		"move": card.move,
 		"range": card.range,
+		"skill": card.get("skill", {}).duplicate(true),
 		# Deployment is part of the turn: newly placed units move and attack
 		# when that side resolves immediately afterward.
 		"ready": true,
 		"repositioned": false,
 		"taunt_turns": 0,
+		"immobilized_turns": 0,
 		"effects": []
-	})
+	}
+	units.append(spawned)
 	next_unit_id += 1
+	UnitSkillsScript.refresh_auras(units)
+	return spawned
+
+func _resolve_warcry(actor: Dictionary) -> String:
+	var result: Dictionary = UnitSkillsScript.resolve_warcry(actor, units)
+	for unit_id in result.affected:
+		var target = _unit_by_id(unit_id)
+		if target != null:
+			board.play_unit_effect(target.id, "WARCRY", Color("#ffd166"))
+	_remove_defeated()
+	UnitSkillsScript.refresh_auras(units)
+	return result.message
 
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
@@ -1315,6 +1342,7 @@ func _enemy_turn() -> void:
 		if unit.side == ENEMY:
 			unit.ready = true
 			unit.repositioned = false
+	_resolve_chants(ENEMY)
 	if round_number > 1:
 		enemy_max_energy = mini(10, enemy_max_energy + 2)
 	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
@@ -1332,12 +1360,15 @@ func _enemy_turn() -> void:
 			break
 		var card: Dictionary = choice.card
 		var row: int = choice.row
-		_spawn_unit(card, ENEMY, row, COLS - 1)
+		var spawned: Dictionary = _spawn_unit(card, ENEMY, row, COLS - 1)
 		enemy_energy -= card.cost
 		var hand_index: int = enemy_hand.find(card)
 		if hand_index >= 0:
 			enemy_hand.remove_at(hand_index)
-		status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
+			status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
+			var warcry_message := _resolve_warcry(spawned)
+			if not warcry_message.is_empty():
+				status_message += " " + warcry_message
 		_refresh()
 		await get_tree().create_timer(0.35).timeout
 		attempts += 1
@@ -1364,6 +1395,7 @@ func _enemy_turn() -> void:
 		if unit.side == PLAYER:
 			unit.ready = true
 			unit.repositioned = false
+	_resolve_chants(PLAYER)
 	input_enabled = true
 	status_message = "Select a card or resolve the board as it stands."
 	_refresh()
@@ -1459,6 +1491,13 @@ func _activate_unit(actor: Dictionary) -> void:
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
+			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(actor, target, units)
+			if not strike_result.message.is_empty():
+				status_message += " " + strike_result.message
+				board.play_unit_effect(target.id, "IMMOBILISED", Color("#ffd166"))
+			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(target, actor, units)
+			if not reaction_result.message.is_empty():
+				status_message += " " + reaction_result.message
 			_remove_defeated()
 			_refresh()
 			if hit + 1 < strikes:
@@ -1582,6 +1621,7 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 func _expire_side_effects(side: int) -> void:
 	CaptainSkillsScript.expire_effects(units, side)
 	BattleRulesScript.expire_taunts(units, side)
+	UnitSkillsScript.expire_statuses(units, side)
 	if side == PLAYER and player_shield_turns > 0:
 		player_shield_turns -= 1
 		if player_shield_turns == 0:
@@ -1590,6 +1630,17 @@ func _expire_side_effects(side: int) -> void:
 		enemy_shield_turns -= 1
 		if enemy_shield_turns == 0:
 			enemy_shield = 0
+
+func _resolve_chants(side: int) -> void:
+	for result in UnitSkillsScript.resolve_chants(side, units):
+		if not result.get("message", "").is_empty():
+			status_message = result.message
+		for unit_id in result.get("affected", []):
+			var target = _unit_by_id(unit_id)
+			if target != null:
+				board.play_unit_effect(target.id, "CHANT", Color("#ffd166"))
+	_remove_defeated()
+	UnitSkillsScript.refresh_auras(units)
 
 func _damage_captain(side: int, damage: int) -> int:
 	var remaining := damage
