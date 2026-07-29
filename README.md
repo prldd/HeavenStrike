@@ -8,7 +8,8 @@ A playable Godot 4 prototype of the original lane-based strategy RPG described i
 2. Import this folder using `project.godot`.
 3. Press **F6** or **Run Project**.
 
-The project uses only code-drawn visuals and has no external asset dependencies.
+The repository includes the current battlefield, menu, workshop, and unit-image
+assets required by the prototype.
 
 ## Controls
 
@@ -24,11 +25,13 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Deploy units while enough unlocked Mana remains.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.
-- Select **SPEED** to cycle resolution between 1×, 2×, and 4×.
-- Select **SOUND** to cycle battle audio between 100%, 50%, and muted.
-- Select **PAUSE** to suspend or resume an active resolution.
-- Select **ANIM** to skip presentation delays, and **MOTION** for reduced movement and screen shake.
-- Select **Watch Last Replay** from the main menu to play, pause, single-step, or accelerate the latest completed battle.
+- Open the upper-right **Settings** gear to change 1×/2×/4× resolution
+  speed, sound volume, animation skipping, reduced motion, or to open the
+  combat log and field briefing. These settings apply to battles and replays.
+- Select **Watch Last Replay** from the main menu to play, pause, or
+  single-step a completed battle.
+- Use **Older** and **Newer** beneath the replay seed to page through the ten
+  most recently completed battles.
 - Select **Squad** during a replay to compare the recorded player and enemy squads side by side.
 - Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
 - Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
@@ -88,6 +91,27 @@ The launcher uses the repository-local native Linux Godot 4.7.1 installation
 and avoids WSL Windows-binary interoperability issues.
 
 Battle speed, audio, animation-skip, and reduced-motion preferences persist in
-the player configuration. Completed battles write a deterministic structured
-replay to `user://last_replay.json`; the replay viewer reconstructs the battle
+the player configuration. Completed battles are added newest-first to
+`user://replay_history.json`, which retains the latest ten and discards the
+oldest as new battles finish. `user://last_replay.json` remains as a
+backward-compatible latest-replay save. The viewer reconstructs each battle
 timeline and verifies its final Captain HP state.
+
+## Current Checkpoint
+
+The current interface cleanup is complete:
+
+- Live battles expose only frequently used battle actions in the action bar.
+- Replay mode hides unusable live controls such as the Captain ability and
+  Resolve Turn.
+- Replay playback and history navigation are visually separated.
+- Speed has one persistent control in Settings; it is not duplicated in the
+  battle or replay bars.
+- Practice victories offer both **Play Again** and **Menu**.
+
+For the next session, begin by running the validation commands above. A useful
+next pass is hands-on playtesting at the target window size, concentrating on
+the replay bar, Settings popover, combat-log overlap, and the transition
+between replay, squad comparison, and the main menu. After UI verification,
+return to gameplay balance or progression work rather than adding more replay
+controls.

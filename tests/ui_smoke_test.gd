@@ -27,6 +27,7 @@ func _run() -> void:
 	assert(game.animation_button.text == "ANIM ON")
 	assert(game.motion_button.text == "MOTION FULL")
 	assert(game.audio_button.get_parent().get_parent() == game.settings_panel)
+	assert(game.speed_button.get_parent().get_parent() == game.settings_panel)
 	assert(not game.settings_panel.visible)
 	game._toggle_settings()
 	assert(game.settings_panel.visible)
@@ -158,8 +159,7 @@ func _run() -> void:
 	assert(not game.menu_button.visible)
 	assert(not game.end_button.visible)
 	assert(not game.power_button.visible)
-	assert(not game.speed_button.visible)
-	assert(game.replay_speed_button.visible)
+	assert(game.speed_button.visible)
 	assert(game.replay_panel.get_child(0).get_child(0).get_child(0).text == "MENU")
 	game._open_squad_builder()
 	assert(game.replay_squad_overlay.visible)
@@ -173,7 +173,6 @@ func _run() -> void:
 	assert(game.replay_timeline_label.text.contains("SEED 777"))
 	assert(game.replay_timeline_label.text.contains("REPLAY 1 / 2"))
 	assert(game.replay_event_label.text == "EVENT 2 / 3")
-	assert(game.replay_speed_button.get_parent() == game.replay_play_button.get_parent())
 	assert(not game.replay_previous_button.disabled)
 	assert(game.replay_next_button.disabled)
 	await game._apply_next_replay_event()
@@ -188,7 +187,6 @@ func _run() -> void:
 	assert(game.menu_button.visible)
 	assert(game.end_button.visible)
 	assert(game.power_button.visible)
-	assert(game.speed_button.visible)
 	await create_timer(0.05).timeout
 	game.queue_free()
 	await process_frame

@@ -79,7 +79,6 @@ var resume_button: Button
 var replay_button: Button
 var replay_panel: PanelContainer
 var replay_play_button: Button
-var replay_speed_button: Button
 var replay_event_label: Label
 var replay_timeline_label: Label
 var replay_previous_button: Button
@@ -251,13 +250,6 @@ func _build_interface() -> void:
 	power_button.pressed.connect(_use_player_power)
 	action_row.add_child(power_button)
 
-	speed_button = Button.new()
-	speed_button.text = "SPEED 1×"
-	speed_button.tooltip_text = "Cycle combat resolution speed."
-	speed_button.custom_minimum_size.x = 92
-	speed_button.pressed.connect(_cycle_resolution_speed)
-	action_row.add_child(speed_button)
-
 	var squad_button := Button.new()
 	squad_button.text = "SQUAD"
 	squad_button.tooltip_text = "Choose the 8 units in your battle squad."
@@ -315,6 +307,9 @@ func _build_settings_menu() -> void:
 	title.add_theme_color_override("font_color", Color("#71e6f5"))
 	layout.add_child(title)
 
+	speed_button = _settings_action("SPEED 1×", "Cycle combat resolution speed.")
+	speed_button.pressed.connect(_cycle_resolution_speed)
+	layout.add_child(speed_button)
 	audio_button = _settings_action("SOUND 100%", "Cycle battle audio volume or mute it.")
 	audio_button.pressed.connect(_cycle_audio)
 	layout.add_child(audio_button)
@@ -394,8 +389,6 @@ func _cycle_resolution_speed() -> void:
 	else:
 		resolution_speed = 1.0
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
-	if replay_speed_button != null:
-		replay_speed_button.text = "SPEED %d×" % int(resolution_speed)
 	_save_battle_settings()
 
 func _cycle_audio() -> void:
@@ -421,8 +414,6 @@ func _load_battle_settings() -> void:
 	skip_animations = settings.skip_animations
 	battle_audio.set_volume_step(settings.volume)
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
-	if replay_speed_button != null:
-		replay_speed_button.text = "SPEED %d×" % int(resolution_speed)
 	audio_button.text = battle_audio.label()
 	board.reduced_motion = reduced_motion
 	animation_button.text = "ANIM OFF" if skip_animations else "ANIM ON"
@@ -1127,11 +1118,6 @@ func _build_replay_controls() -> void:
 	step.custom_minimum_size.x = 68
 	step.pressed.connect(_step_replay)
 	transport_actions.add_child(step)
-	replay_speed_button = Button.new()
-	replay_speed_button.text = "SPEED %d×" % int(resolution_speed)
-	replay_speed_button.custom_minimum_size.x = 88
-	replay_speed_button.pressed.connect(_cycle_resolution_speed)
-	transport_actions.add_child(replay_speed_button)
 	replay_event_label = Label.new()
 	replay_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	replay_event_label.add_theme_color_override("font_color", Color("#9fb2d6"))
@@ -1308,7 +1294,6 @@ func _show_main_menu() -> void:
 	menu_button.visible = true
 	end_button.visible = true
 	power_button.visible = true
-	speed_button.visible = true
 	input_enabled = false
 	squad_opened_from_menu = false
 	squad_opened_for_mission = false
@@ -1367,7 +1352,6 @@ func _load_replay_at_index() -> void:
 	menu_button.visible = false
 	end_button.visible = false
 	power_button.visible = false
-	speed_button.visible = false
 	input_enabled = false
 	battle_over = false
 	units.clear()
@@ -1411,7 +1395,6 @@ func _close_replay() -> void:
 	menu_button.visible = true
 	end_button.visible = true
 	power_button.visible = true
-	speed_button.visible = true
 	_show_main_menu()
 
 func _toggle_replay_playback() -> void:
@@ -1791,7 +1774,6 @@ func _start_new_match() -> void:
 	replay_mode = false
 	replay_playing = false
 	power_button.visible = true
-	speed_button.visible = true
 	if replay_panel != null:
 		replay_panel.visible = false
 	units.clear()
