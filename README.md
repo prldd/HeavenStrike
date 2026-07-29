@@ -15,7 +15,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Start from the main menu in **Campaign** or **Practice Battle**.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
-- Select a deployed unit, then a reachable tile in any other row to reposition it; units cannot pass through occupied tiles.
+- Select a deployed unit, then a reachable tile in any other row to reposition it; friendly units may be crossed, but enemies block the path.
 - A unit can reposition any number of times during its Command phase unless a Defender's Taunting Strike has locked it for two turns. Friendly units may be crossed, but enemies block the path.
 - Hover or select a deployed unit to preview its cyan traversal path and coral attack reach.
 - Attack reach is projected from the unit's destination after earlier allied movement is simulated.
@@ -24,10 +24,12 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Deploy units while enough unlocked Mana remains.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.
+- Select **SPEED** to cycle resolution between 1×, 2×, and 4×.
+- Select **SOUND** to cycle battle audio between 100%, 50%, and muted.
 - Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
 - Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
-- Defeat the enemy Commander before it reduces your 24 HP to zero.
+- Defeat the enemy Commander before it reduces your 20 HP to zero.
 
 ## Implemented
 
@@ -59,6 +61,8 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Persistent battlefield badges show Taunt, Immobilise, Fury stacks, and timed stat changes.
 - Floating combat feedback calls out damage, healing, status application, and Commander hits.
 - Class-specific combat animation includes melee lunges, Gunner trails, Mage projectiles, Priest healing pulses, hit recoil, distinct Double Strike impacts, and defeat dissolves.
+- Synthesized battle audio distinguishes deployment, movement, class attacks, healing, statuses, shields, Commander hits, and defeats; Commander damage also triggers subtle screen shake.
+- Victory triggers a dedicated ascending multi-note fanfare before the battle result is presented.
 - Each resolution begins with a compact ordered movement/attack preview; the combat log names unit classes and secondary-skill timing.
 - Deterministic rules with a presentation layer separated into `BoardView`
 - Five-step in-game field briefing
@@ -71,5 +75,9 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 Run the automated gameplay-data and AI smoke tests:
 
 ```bash
-godot --headless --path . --script res://tests/smoke_test.gd
+./tools/godot-headless.sh --script res://tests/smoke_test.gd
+./tools/godot-headless.sh --script res://tests/ui_smoke_test.gd
 ```
+
+The launcher uses the repository-local native Linux Godot 4.7.1 installation
+and avoids WSL Windows-binary interoperability issues.

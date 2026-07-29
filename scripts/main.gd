@@ -11,6 +11,7 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const SquadCardScript = preload("res://scripts/squad_card.gd")
 const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
+const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
@@ -59,6 +60,8 @@ var hover_name_label: Label
 var hover_stats_label: Label
 var hover_ability_label: Label
 var speed_button: Button
+var audio_button: Button
+var battle_audio: BattleAudio
 var combat_log_panel: PanelContainer
 var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
@@ -120,6 +123,8 @@ var last_logged_message := ""
 
 func _ready() -> void:
 	_build_interface()
+	battle_audio = BattleAudioScript.new()
+	add_child(battle_audio)
 	completed_missions = CampaignStoreScript.load_completed()
 	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
 	squad_names = SquadStoreScript.load_squad(roster)
@@ -212,6 +217,13 @@ func _build_interface() -> void:
 	speed_button.pressed.connect(_cycle_resolution_speed)
 	action_row.add_child(speed_button)
 
+	audio_button = Button.new()
+	audio_button.text = "SOUND 100%"
+	audio_button.tooltip_text = "Cycle battle audio volume or mute it."
+	audio_button.custom_minimum_size.x = 96
+	audio_button.pressed.connect(_cycle_audio)
+	action_row.add_child(audio_button)
+
 	var log_button := Button.new()
 	log_button.text = "LOG"
 	log_button.tooltip_text = "Show or hide the combat action log."
@@ -302,6 +314,21 @@ func _cycle_resolution_speed() -> void:
 	else:
 		resolution_speed = 1.0
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
+
+func _cycle_audio() -> void:
+	battle_audio.cycle_volume()
+	audio_button.text = battle_audio.label()
+
+func _play_attack_sound(kind: String) -> void:
+	match kind:
+		"Strider", "Duelist", "Warden":
+			battle_audio.play("melee")
+		"Artillerist":
+			battle_audio.play("gunner")
+		"Channeler":
+			battle_audio.play("mage")
+		"Lifebinder":
+			battle_audio.play("priest")
 
 func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds / resolution_speed).timeout
@@ -1443,6 +1470,7 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			status_message = "%s shifts from lane %d to lane %d. Choose another lane or continue." % [selected.name, old_row + 1, row + 1]
 			input_enabled = false
 			_refresh()
+			battle_audio.play("move")
 			await board.animate_unit_move(selected.id, old_row, old_col, 0.24)
 			input_enabled = true
 			board.play_unit_effect(selected.id, "SHIFT", Color("#71e6f5"))
@@ -1487,6 +1515,7 @@ func _on_deployment_clicked(row: int) -> void:
 	status_message = "%s deployed to lane %d." % [card.name, row + 1]
 	input_enabled = false
 	_refresh()
+	battle_audio.play("deploy")
 	await board.animate_unit_move(spawned.id, row, -1, 0.32)
 	input_enabled = true
 	var warcry_message := await _resolve_warcry(spawned)
@@ -1546,8 +1575,10 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
 			)
 			if skill.get("name", "") in ["Bolt", "Heaven's Wrath"]:
+				battle_audio.play("mage")
 				await board.animate_hit(target.id, 0.16 / resolution_speed)
 			elif skill.get("name", "") in ["Fortify", "Empower"]:
+				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, 0.24 / resolution_speed)
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
@@ -1620,6 +1651,7 @@ func _enemy_turn() -> void:
 			enemy_hand.remove_at(hand_index)
 			status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
 			_refresh()
+			battle_audio.play("deploy")
 			await board.animate_unit_move(spawned.id, row, COLS, 0.32 / resolution_speed)
 			var warcry_message := await _resolve_warcry(spawned)
 			if not warcry_message.is_empty():
@@ -1677,6 +1709,7 @@ func _enemy_reposition_units() -> void:
 			unit.row = best_row
 			status_message = "%s shifts from lane %d to lane %d." % [unit.name, old_row + 1, best_row + 1]
 			_refresh()
+			battle_audio.play("move")
 			await board.animate_unit_move(unit.id, old_row, old_col, 0.24 / resolution_speed)
 			board.play_unit_effect(unit.id, "SHIFT", Color("#ff8b9f"))
 			_refresh()
@@ -1744,6 +1777,7 @@ func _activate_unit(actor: Dictionary) -> void:
 	if actor.kind == "Lifebinder":
 		var healing_target = _lowest_health_ally(actor)
 		if healing_target != null:
+			battle_audio.play("heal")
 			await board.animate_heal(actor.id, healing_target.id, 0.30 / resolution_speed)
 			healing_target.hp += 2
 			status_message = "%s heals %s for 2 HP." % [_actor_tag(actor), healing_target.name]
@@ -1760,6 +1794,7 @@ func _activate_unit(actor: Dictionary) -> void:
 			_actor_tag(actor), path.size(), "" if path.size() == 1 else "s"
 		]
 		_refresh()
+		battle_audio.play("move")
 		await board.animate_unit_move(actor.id, old_row, old_col, 0.30 / resolution_speed)
 		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
 	else:
@@ -1773,6 +1808,7 @@ func _activate_unit(actor: Dictionary) -> void:
 				target = _find_target(actor)
 			if target == null:
 				break
+			_play_attack_sound(actor.kind)
 			await board.animate_attack(actor.id, target.id, actor.kind, 0.24 / resolution_speed)
 			target.hp -= actor.atk
 			status_message = "%s hits %s for %d." % [_actor_tag(actor), target.name, actor.atk]
@@ -1786,16 +1822,20 @@ func _activate_unit(actor: Dictionary) -> void:
 				impact_color = Color("#ffd166")
 			board.play_unit_effect(target.id, impact_label, impact_color)
 			var secondary_hits: Array = _apply_special_damage(actor, target)
+			battle_audio.play("hit")
 			await board.animate_hit(target.id, 0.18 / resolution_speed)
 			for secondary_id in secondary_hits:
+				battle_audio.play("hit")
 				await board.animate_hit(secondary_id, 0.14 / resolution_speed)
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
+				battle_audio.play("status")
 				board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
 			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(actor, target, units)
 			if not strike_result.message.is_empty():
 				status_message += " " + strike_result.message
+				battle_audio.play("status")
 				board.play_unit_effect(target.id, "IMMOBILISED", Color("#ffd166"))
 			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(target, actor, units)
 			if not reaction_result.message.is_empty():
@@ -1817,6 +1857,7 @@ func _activate_unit(actor: Dictionary) -> void:
 		var commander_side := ENEMY if actor.side == PLAYER else PLAYER
 		var total_dealt := 0
 		for hit in strikes:
+			_play_attack_sound(actor.kind)
 			await board.animate_commander_attack(
 				actor.id, commander_side, actor.kind, 0.25 / resolution_speed
 			)
@@ -1826,6 +1867,8 @@ func _activate_unit(actor: Dictionary) -> void:
 				_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", dealt
 			]
 			_refresh()
+			battle_audio.play("commander")
+			board.shake(8.0)
 			board.play_commander_effect(commander_side, "-%d HP" % dealt, Color("#ff668f"))
 			if hit + 1 < strikes:
 				await _wait(0.12)
@@ -1870,6 +1913,7 @@ func _animate_defeated_units() -> void:
 		func(unit): return unit.hp <= 0
 	).map(func(unit): return unit.id)
 	for unit_id in defeated_ids:
+		battle_audio.play("defeat")
 		await board.animate_defeat(unit_id, 0.26 / resolution_speed)
 
 func _find_target(actor: Dictionary):
@@ -1933,6 +1977,7 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 	])
 
 	if result.shield > 0:
+		battle_audio.play("shield")
 		if side == PLAYER:
 			player_shield = result.shield
 			player_shield_turns = result.shield_turns
@@ -1944,6 +1989,8 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 		var target_side := ENEMY if side == PLAYER else PLAYER
 		var dealt := _damage_captain(target_side, result.captain_damage)
 		_refresh()
+		battle_audio.play("commander")
+		board.shake(8.0)
 		board.play_commander_effect(target_side, "-%d HP" % dealt, Color("#ff668f"))
 
 	for unit_id in result.affected:
@@ -1951,7 +1998,10 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 		if target != null:
 			board.play_unit_effect(target.id, "SKILL", Color("#ffd166") if side == PLAYER else Color("#ff8b9f"))
 			if skill_name in ["Lightning Burst", "Firestorm"]:
+				battle_audio.play("hit")
 				await board.animate_hit(target.id, 0.16 / resolution_speed)
+			else:
+				battle_audio.play("status")
 	await _animate_defeated_units()
 	_remove_defeated()
 	return true
@@ -1987,10 +2037,14 @@ func _damage_captain(side: int, damage: int) -> int:
 		var absorbed := mini(player_shield, remaining)
 		player_shield -= absorbed
 		remaining -= absorbed
+		if absorbed > 0:
+			battle_audio.play("shield")
 	elif side == ENEMY and enemy_shield > 0:
 		var absorbed := mini(enemy_shield, remaining)
 		enemy_shield -= absorbed
 		remaining -= absorbed
+		if absorbed > 0:
+			battle_audio.play("shield")
 	if side == PLAYER:
 		player_hp = maxi(0, player_hp - remaining)
 	else:
@@ -2015,6 +2069,7 @@ func _check_game_over() -> bool:
 	overlay.visible = true
 	reward_reveal.visible = false
 	if enemy_hp <= 0:
+		battle_audio.play("victory")
 		if campaign_battle:
 			var encounter_count := CampaignStoreScript.encounter_count(current_mission_id)
 			if current_encounter_index + 1 < encounter_count:

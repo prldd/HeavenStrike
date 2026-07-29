@@ -215,6 +215,8 @@ The current presentation layer previews each side's upcoming activation order be
 
 Combat presentation uses eased movement and class-specific actions: melee lunges, ranged projectiles, healing pulses, hit recoil, sequential Double Strikes, multi-target Blast and Piercing feedback, and a defeat dissolve before defeated units leave the board.
 
+Battle audio is synthesized locally and synchronized with deployment, movement, class attacks, healing, status application, shields, impacts, and defeat. Players can select full volume, half volume, or mute; Commander impacts also apply a brief screen shake.
+
 ## First Milestone
 
 The initial milestone is a complete battle sandbox:

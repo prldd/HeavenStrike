@@ -47,6 +47,7 @@ var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
 var projectile_kind := ""
+var shake_tween: Tween
 
 func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -209,6 +210,16 @@ func animate_defeat(unit_id: int, duration: float = 0.28) -> void:
 	await tween.finished
 	unit_defeat_strength.erase(unit_id)
 	queue_redraw()
+
+func shake(strength: float = 8.0) -> void:
+	if shake_tween != null and shake_tween.is_valid():
+		shake_tween.kill()
+	var origin := position
+	shake_tween = create_tween()
+	shake_tween.tween_property(self, "position", origin + Vector2(strength, -strength * 0.35), 0.035)
+	shake_tween.tween_property(self, "position", origin + Vector2(-strength * 0.7, strength * 0.3), 0.045)
+	shake_tween.tween_property(self, "position", origin + Vector2(strength * 0.35, 0), 0.045)
+	shake_tween.tween_property(self, "position", origin, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func _animate_projectile(
 	origin: Vector2, destination: Vector2, kind: String, duration: float
