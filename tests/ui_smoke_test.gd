@@ -82,7 +82,8 @@ func _run() -> void:
 	assert(first_entry.size_flags_horizontal == Control.SIZE_EXPAND_FILL)
 	assert(first_entry.get_child(1) is HBoxContainer)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
-	assert(result_buttons.size() == 1)
+	assert(result_buttons.size() == 2)
+	assert(not game.result_menu_button.visible)
 	game._show_card_reward("Chain Initiate", true)
 	assert(game.reward_reveal.visible)
 	assert(game.reward_portrait.texture != null)
@@ -113,6 +114,13 @@ func _run() -> void:
 		var previous_vanguard: String = game.editing_squad_names[0]
 		game._set_vanguard(1)
 		assert(game.editing_squad_names[1] == previous_vanguard)
+	game.campaign_battle = false
+	game.player_hp = 20
+	game.enemy_hp = 0
+	assert(game._check_game_over())
+	assert(game.result_primary_button.text == "PLAY AGAIN")
+	assert(game.result_menu_button.visible)
+	game.overlay.visible = false
 	var replay := BattleSimulatorScript.new()
 	replay.reset(777)
 	replay.record("battle_started", {

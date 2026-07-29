@@ -43,6 +43,7 @@ var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
 var result_primary_button: Button
+var result_menu_button: Button
 var reward_reveal: VBoxContainer
 var reward_portrait: TextureRect
 var reward_stars_label: Label
@@ -500,11 +501,23 @@ func _build_overlay() -> void:
 	reward_new_label.add_theme_color_override("font_color", Color("#70e0a1"))
 	reward_reveal.add_child(reward_new_label)
 
+	var result_actions := HBoxContainer.new()
+	result_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	result_actions.add_theme_constant_override("separation", 12)
+	panel.add_child(result_actions)
+
 	result_primary_button = Button.new()
 	result_primary_button.text = "PLAY AGAIN"
 	result_primary_button.custom_minimum_size = Vector2(180, 48)
 	result_primary_button.pressed.connect(_on_result_primary)
-	panel.add_child(result_primary_button)
+	result_actions.add_child(result_primary_button)
+
+	result_menu_button = Button.new()
+	result_menu_button.text = "MENU"
+	result_menu_button.custom_minimum_size = Vector2(140, 48)
+	result_menu_button.visible = false
+	result_menu_button.pressed.connect(_show_main_menu)
+	result_actions.add_child(result_menu_button)
 
 func _build_tutorial() -> void:
 	tutorial_overlay = ColorRect.new()
@@ -2525,6 +2538,7 @@ func _check_game_over() -> bool:
 	})
 	overlay.visible = true
 	reward_reveal.visible = false
+	result_menu_button.visible = false
 	if enemy_hp <= 0:
 		battle_audio.play("victory")
 		if campaign_battle:
@@ -2557,6 +2571,7 @@ func _check_game_over() -> bool:
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = "Victory achieved in %d rounds." % round_number
 		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
+		result_menu_button.visible = not campaign_battle
 	else:
 		if campaign_battle:
 			MissionRunStoreScript.clear_run()
