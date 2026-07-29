@@ -16,6 +16,8 @@ const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png"
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
 const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
 const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
+const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-sky-citadel.png")
+const SQUAD_WORKSHOP_BACKGROUND := preload("res://assets/squad-workshop-armory.png")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -387,11 +389,16 @@ func _update_tutorial() -> void:
 
 func _build_squad_builder() -> void:
 	squad_overlay = ColorRect.new()
-	squad_overlay.color = Color(0.02, 0.035, 0.07, 0.97)
+	squad_overlay.color = Color.TRANSPARENT
 	squad_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	squad_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	squad_overlay.visible = false
 	add_child(squad_overlay)
+	_add_overlay_background(
+		squad_overlay,
+		SQUAD_WORKSHOP_BACKGROUND,
+		Color(0.015, 0.025, 0.055, 0.42)
+	)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -687,11 +694,16 @@ func _sanitize_squad_unlocks() -> void:
 
 func _build_main_menu() -> void:
 	main_menu_overlay = ColorRect.new()
-	main_menu_overlay.color = Color("#070d1b")
+	main_menu_overlay.color = Color.TRANSPARENT
 	main_menu_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	main_menu_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	main_menu_overlay.visible = false
 	add_child(main_menu_overlay)
+	_add_overlay_background(
+		main_menu_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.015, 0.025, 0.06, 0.48)
+	)
 
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -791,6 +803,23 @@ func _menu_action(label: String) -> Button:
 	button.custom_minimum_size = Vector2(360, 52)
 	button.add_theme_font_size_override("font_size", 17)
 	return button
+
+func _add_overlay_background(
+	parent: Control, texture: Texture2D, tint_color: Color
+) -> void:
+	var backdrop := TextureRect.new()
+	backdrop.texture = texture
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	parent.add_child(backdrop)
+
+	var tint := ColorRect.new()
+	tint.color = tint_color
+	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	parent.add_child(tint)
 
 func _show_main_menu() -> void:
 	input_enabled = false

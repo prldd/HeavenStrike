@@ -10,6 +10,10 @@ func _run() -> void:
 	var game = scene.instantiate()
 	root.add_child(game)
 	await process_frame
+	assert(game.main_menu_overlay.get_child(0) is TextureRect)
+	assert(game.main_menu_overlay.get_child(0).texture != null)
+	assert(game.squad_overlay.get_child(0) is TextureRect)
+	assert(game.squad_overlay.get_child(0).texture != null)
 	game._open_mission_select()
 	await process_frame
 	assert(game.mission_list.get_child_count() == 62)
