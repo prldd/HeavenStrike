@@ -161,11 +161,11 @@ Commander selection changes a squad's strategy without adding another unit to th
 
 Online play and live-service systems are outside the first release. The battle simulation must be complete and reliable before multiplayer is considered.
 
-Campaign mission selection flows from the world map into squad selection and then one to three consecutive battles. The battlefield, decks, Mana, and Captain-skill use reset between encounters, while the player's Captain carries remaining HP forward. In-progress runs can be resumed. Reward itemization will be implemented after the battle sequence is stable.
+Campaign mission selection flows from the world map into squad selection and then one to three consecutive battles. The battlefield, decks, Mana, and Captain-skill use reset between encounters, while the player's Captain carries remaining HP forward. In-progress runs can be resumed. The initial missions and their eligible card drops follow the Heavenstrike story-quest reference data.
 
 ## Progression
 
-Campaign victories unlock new units and Commanders. Unlocks expand strategic options rather than directly increasing unit statistics. A unit always uses the same combat values, so success depends on squad construction and play rather than grinding.
+Campaign victories award one random card from that quest's eligible drop list. Drop weight halves with each additional Star Rarity, making lower-star cards progressively more likely. Earned card unlocks persist and expand strategic options rather than directly increasing unit statistics.
 
 The first release will not include loot boxes, paid energy, duplicate-unit upgrades, or randomized stat growth.
 

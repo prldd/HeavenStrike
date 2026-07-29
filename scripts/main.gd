@@ -59,6 +59,7 @@ var player_captain_skill := "Rally"
 var editing_captain_skill := "Rally"
 var enemy_captain_skill := "Rally"
 var completed_missions: Array = []
+var earned_reward_units: Array = []
 var current_mission_id := -1
 var current_encounter_index := 0
 var mission_run_captain_hp := STARTING_HP
@@ -100,6 +101,7 @@ var has_shown_tutorial := false
 func _ready() -> void:
 	_build_interface()
 	completed_missions = CampaignStoreScript.load_completed()
+	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
 	squad_names = SquadStoreScript.load_squad(roster)
 	player_captain_skill = SquadStoreScript.load_captain_skill(CaptainSkillsScript.SKILLS)
 	_sanitize_squad_unlocks()
@@ -114,25 +116,25 @@ func _build_interface() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 28)
-	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_bottom", 22)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
 	add_child(margin)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
+	root.add_theme_constant_override("separation", 8)
 	margin.add_child(root)
 
 	var header := HBoxContainer.new()
-	header.custom_minimum_size.y = 58
+	header.custom_minimum_size.y = 50
 	root.add_child(header)
 
 	var brand := Label.new()
 	brand.text = "SKYCHAIN\nTACTICS"
-	brand.add_theme_font_size_override("font_size", 19)
+	brand.add_theme_font_size_override("font_size", 17)
 	brand.add_theme_color_override("font_color", Color("#71e6f5"))
-	brand.custom_minimum_size.x = 210
+	brand.custom_minimum_size.x = 170
 	header.add_child(brand)
 
 	player_hp_label = _stat_label(Color("#62e7ff"))
@@ -142,14 +144,14 @@ func _build_interface() -> void:
 	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	turn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	turn_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	turn_label.add_theme_font_size_override("font_size", 20)
+	turn_label.add_theme_font_size_override("font_size", 18)
 	header.add_child(turn_label)
 
 	enemy_hp_label = _stat_label(Color("#ff668f"))
 	header.add_child(enemy_hp_label)
 
 	board = BoardViewScript.new()
-	board.custom_minimum_size = Vector2(0, 385)
+	board.custom_minimum_size = Vector2(0, 370)
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	board.deployment_clicked.connect(_on_deployment_clicked)
 	board.board_cell_clicked.connect(_on_board_cell_clicked)
@@ -158,13 +160,13 @@ func _build_interface() -> void:
 	root.add_child(board)
 
 	var control_bar := HBoxContainer.new()
-	control_bar.custom_minimum_size.y = 36
-	control_bar.add_theme_constant_override("separation", 12)
+	control_bar.custom_minimum_size.y = 34
+	control_bar.add_theme_constant_override("separation", 8)
 	root.add_child(control_bar)
 
 	energy_label = Label.new()
-	energy_label.custom_minimum_size.x = 180
-	energy_label.add_theme_font_size_override("font_size", 18)
+	energy_label.custom_minimum_size.x = 160
+	energy_label.add_theme_font_size_override("font_size", 16)
 	energy_label.add_theme_color_override("font_color", Color("#ffd166"))
 	control_bar.add_child(energy_label)
 
@@ -178,7 +180,7 @@ func _build_interface() -> void:
 	power_button = Button.new()
 	power_button.text = "RALLY"
 	power_button.tooltip_text = "Once per battle: all allies gain +1 ATK."
-	power_button.custom_minimum_size.x = 160
+	power_button.custom_minimum_size.x = 135
 	power_button.pressed.connect(_use_player_power)
 	control_bar.add_child(power_button)
 
@@ -192,26 +194,26 @@ func _build_interface() -> void:
 	var squad_button := Button.new()
 	squad_button.text = "SQUAD"
 	squad_button.tooltip_text = "Choose the 15 units in your battle squad."
-	squad_button.custom_minimum_size.x = 90
+	squad_button.custom_minimum_size.x = 78
 	squad_button.pressed.connect(_open_squad_builder)
 	control_bar.add_child(squad_button)
 
 	menu_button = Button.new()
 	menu_button.text = "MENU"
-	menu_button.custom_minimum_size.x = 72
+	menu_button.custom_minimum_size.x = 64
 	menu_button.pressed.connect(_show_main_menu)
 	control_bar.add_child(menu_button)
 
 	end_button = Button.new()
 	end_button.text = "RESOLVE TURN"
-	end_button.custom_minimum_size.x = 170
+	end_button.custom_minimum_size.x = 145
 	end_button.pressed.connect(_end_player_turn)
 	control_bar.add_child(end_button)
 
 	hand_row = HBoxContainer.new()
-	hand_row.custom_minimum_size.y = 128
+	hand_row.custom_minimum_size.y = 104
 	hand_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	hand_row.add_theme_constant_override("separation", 10)
+	hand_row.add_theme_constant_override("separation", 6)
 	root.add_child(hand_row)
 
 	_build_overlay()
@@ -488,7 +490,7 @@ func _rebuild_squad_grid() -> void:
 	for unit in roster:
 		var copies: int = editing_squad_names.count(unit.name)
 		var selected: bool = copies > 0
-		var unlocked: bool = unit.name in CampaignStoreScript.unlocked_unit_names(roster, completed_missions)
+		var unlocked: bool = unit.name in CampaignStoreScript.unlocked_unit_names(roster, earned_reward_units)
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 76)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -541,7 +543,7 @@ func _save_and_start_mission() -> void:
 	_begin_mission(mission_id)
 
 func _sanitize_squad_unlocks() -> void:
-	var unlocked: Array = CampaignStoreScript.unlocked_unit_names(roster, completed_missions)
+	var unlocked: Array = CampaignStoreScript.unlocked_unit_names(roster, earned_reward_units)
 	var allowed: Array = []
 	for unit_name in squad_names:
 		if unit_name in unlocked and allowed.count(unit_name) < 2:
@@ -695,7 +697,7 @@ func _rebuild_mission_list() -> void:
 			"" if mission.encounters.size() == 1 else "S",
 			mission.enemy_hp,
 			mission.briefing,
-			mission.reward
+			CampaignStoreScript.reward_summary(mission.id)
 		]
 		button.pressed.connect(_prepare_mission.bind(mission.id))
 		mission_list.add_child(button)
@@ -771,7 +773,7 @@ func _open_squad_from_menu() -> void:
 
 func _build_hover_card() -> void:
 	hover_card = PanelContainer.new()
-	hover_card.custom_minimum_size = Vector2(340, 190)
+	hover_card.custom_minimum_size = Vector2(310, 176)
 	hover_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_card.z_index = 100
 	hover_card.visible = false
@@ -781,34 +783,34 @@ func _build_hover_card() -> void:
 	style.border_color = Color("#66d9ff")
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(12)
-	style.content_margin_left = 18
-	style.content_margin_right = 18
-	style.content_margin_top = 14
-	style.content_margin_bottom = 14
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
 	hover_card.add_theme_stylebox_override("panel", style)
 	add_child(hover_card)
 
 	var content := VBoxContainer.new()
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_theme_constant_override("separation", 8)
+	content.add_theme_constant_override("separation", 6)
 	hover_card.add_child(content)
 
 	hover_name_label = Label.new()
 	hover_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hover_name_label.add_theme_font_size_override("font_size", 20)
+	hover_name_label.add_theme_font_size_override("font_size", 18)
 	hover_name_label.add_theme_color_override("font_color", Color("#71e6f5"))
 	content.add_child(hover_name_label)
 
 	hover_stats_label = Label.new()
 	hover_stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hover_stats_label.add_theme_font_size_override("font_size", 14)
+	hover_stats_label.add_theme_font_size_override("font_size", 13)
 	hover_stats_label.add_theme_color_override("font_color", Color("#e7edf8"))
 	content.add_child(hover_stats_label)
 
 	hover_ability_label = Label.new()
 	hover_ability_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_ability_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hover_ability_label.add_theme_font_size_override("font_size", 14)
+	hover_ability_label.add_theme_font_size_override("font_size", 13)
 	hover_ability_label.add_theme_color_override("font_color", Color("#aebdda"))
 	content.add_child(hover_ability_label)
 
@@ -826,8 +828,9 @@ func _show_unit_details(unit: Dictionary) -> void:
 		definition.name.to_upper(),
 		UnitCatalogScript.display_class(definition.kind)
 	]
-	hover_stats_label.text = "%d MANA\n%d ATK    %s    %d MOV    %d RANGE" % [
+	hover_stats_label.text = "%d MANA · %s\n%d ATK    %s    %d MOV    %d RANGE" % [
 		definition.cost,
+		"★".repeat(definition.get("stars", 1)),
 		unit.get("atk", definition.atk),
 		hp_text,
 		definition.move,
@@ -849,7 +852,7 @@ func _process(_delta: float) -> void:
 
 func _position_hover_card() -> void:
 	var pointer := get_viewport().get_mouse_position()
-	var card_size := Vector2(340, 190)
+	var card_size := Vector2(310, 176)
 	var viewport_size := get_viewport_rect().size
 	var target := pointer + Vector2(18, 18)
 	if target.x + card_size.x > viewport_size.x - 10:
@@ -948,17 +951,17 @@ func _rebuild_hand() -> void:
 	for i in player_hand.size():
 		var card: Dictionary = player_hand[i]
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(178, 122)
+		button.custom_minimum_size = Vector2(170, 98)
 		button.toggle_mode = true
 		button.button_pressed = i == selected_hand_index
 		button.disabled = not input_enabled or card.cost > player_energy or battle_over
 		button.icon = _unit_icon(card.get("icon", 0))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.text = "%s  ·  %d◆\n%s\n%d ATK   %d HP\n%s" % [
+		button.text = "%s\n%d◆ · %s\n%d ATK · %d HP" % [
 			card.name.to_upper(), card.cost, UnitCatalogScript.display_class(card.kind),
-			card.atk, card.hp, card.text
+			card.atk, card.hp
 		]
-		button.add_theme_font_size_override("font_size", 12)
+		button.add_theme_font_size_override("font_size", 10)
 		button.pressed.connect(_select_card.bind(i))
 		button.mouse_entered.connect(_show_unit_details.bind(card))
 		button.mouse_exited.connect(_hide_unit_details)
@@ -974,7 +977,7 @@ func _unit_icon(icon_id: int) -> Texture2D:
 	var icon_image := source_image.get_region(
 		Rect2i(((icon_id - 1) % 6) * 100, 0, 100, 100)
 	)
-	icon_image.resize(64, 64, Image.INTERPOLATE_LANCZOS)
+	icon_image.resize(48, 48, Image.INTERPOLATE_LANCZOS)
 	var icon := ImageTexture.create_from_image(icon_image)
 	unit_icon_cache[icon_id] = icon
 	return icon
@@ -1432,8 +1435,11 @@ func _check_game_over() -> bool:
 			completed_missions = CampaignStoreScript.complete_mission(current_mission_id, completed_missions)
 			MissionRunStoreScript.clear_run()
 			mission_finished = true
-			var reward: String = CampaignStoreScript.MISSIONS[current_mission_id].reward
-			reward_text = "\nReward unlocked: %s" % reward
+			var reward := CampaignStoreScript.roll_reward(current_mission_id, roster)
+			earned_reward_units = CampaignStoreScript.award_reward(
+				reward, roster, earned_reward_units
+			)
+			reward_text = "\nCard reward: %s" % reward
 		overlay_title.text = "MISSION COMPLETE" if campaign_battle else "VICTORY"
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = "The enemy weather engine is yours.\nVictory achieved in %d rounds.%s" % [round_number, reward_text]

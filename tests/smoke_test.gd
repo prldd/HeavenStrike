@@ -17,6 +17,7 @@ func _init() -> void:
 	assert(roster.map(func(unit): return unit.icon).all(
 		func(icon_id): return icon_id >= 1 and icon_id <= 12
 	))
+	assert(roster.all(func(unit): return unit.stars == 1))
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	icon_ids.sort()
 	assert(icon_ids == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
@@ -36,7 +37,7 @@ func _init() -> void:
 	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.enemy_hp) == [8, 11, 14, 17, 20])
 	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.encounters.size()) == [1, 2, 2, 3, 3])
 	assert(CampaignStoreScript.encounter_count(3) == 3)
-	assert(CampaignStoreScript.encounter(3, 2).title == "Aster Admiral")
+	assert(CampaignStoreScript.encounter(3, 2).title == "Class Dismissed")
 	assert(CampaignStoreScript.encounter(99, 0).is_empty())
 	assert(CampaignStoreScript.is_available(0, []))
 	assert(not CampaignStoreScript.is_available(1, []))
@@ -45,8 +46,19 @@ func _init() -> void:
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
 	assert(starting_unlocks.size() == 10)
 	assert("Chain Initiate" not in starting_unlocks)
-	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [0, 1, 2])
+	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
+		roster, ["Chain Initiate", "LDF Medic"]
+	)
 	assert(earned_unlocks.size() == 12)
+	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
+	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
+	assert(CampaignStoreScript.reward_summary(2) == "Random: Claw Caster, Claw Slicer")
+	var rarity_candidates := [
+		{"name": "One Star", "stars": 1},
+		{"name": "Five Star", "stars": 5}
+	]
+	assert(CampaignStoreScript.choose_weighted_reward(rarity_candidates, 0.93) == "One Star")
+	assert(CampaignStoreScript.choose_weighted_reward(rarity_candidates, 0.99) == "Five Star")
 	var enemy_squad: Array = CampaignStoreScript.enemy_squad_names(2, roster)
 	assert(enemy_squad.size() == 15)
 	var unique_enemy_cards: Array = []

@@ -36,7 +36,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
-- Persistent mission completion and unit rewards
+- Quest-specific, Star-Rarity-weighted card rewards with persistent unlocks
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles
 - Six-unit bench and persistent locked-Mana economy
