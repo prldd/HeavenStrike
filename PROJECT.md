@@ -51,7 +51,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
-The current prototype roster contains 23 unpromoted units. Higher-rarity units reuse the same timing framework when they share an implemented secondary skill.
+The current prototype roster contains 23 unpromoted units and 11 standalone promoted forms. Promotion and leveling logic is deferred; promoted forms currently enter the reward pool as independent cards when their secondary skill is implemented.
 
 ### Mana
 
@@ -136,7 +136,7 @@ Board order and targeting are deterministic except where an ability explicitly s
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
-The implemented roster currently contains 23 unpromoted units: twelve 1★ cards, eight 2★ cards, one 3★ card, and two 4★ cards. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks.
+The implemented roster contains 34 cards: 23 unpromoted units and 11 standalone promoted forms. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks.
 
 ## Example Turn
 
@@ -165,7 +165,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 - Full 62-mission, two-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 23 unpromoted reference units across all six classes
+- 34 reference units across all six classes
 - Three Commanders
 
 ### Later Possibilities

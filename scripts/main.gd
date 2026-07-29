@@ -16,6 +16,7 @@ const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png"
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
 const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
 const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
+const UNIT_SPRITES_6 := preload("res://assets/units/reference-units-031-036.png")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-sky-citadel.png")
 const SQUAD_WORKSHOP_BACKGROUND := preload("res://assets/squad-workshop-armory.png")
 
@@ -1206,14 +1207,14 @@ func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)
 
 func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
-	if icon_id < 1 or icon_id > 30:
+	if icon_id < 1 or icon_id > 36:
 		return null
 	var cache_key := "%d:%d" % [icon_id, size]
 	if unit_icon_cache.has(cache_key):
 		return unit_icon_cache[cache_key]
 	var sheets: Array[Texture2D] = [
 		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4,
-		UNIT_SPRITES_5
+		UNIT_SPRITES_5, UNIT_SPRITES_6
 	]
 	var atlas: Texture2D = sheets[int((icon_id - 1) / 6)]
 	var source_image: Image = atlas.get_image()

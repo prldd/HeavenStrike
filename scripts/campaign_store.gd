@@ -9,7 +9,10 @@ const REWARD_UNITS := [
 	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
 	"LDF Gunner", "Order Pupil", "Order Cleric",
 	"Order Apostle", "Trinity Messenger", "Minerva the Brave",
-	"Naruku the Lookout", "Whirling Ragnr"
+	"Naruku the Lookout", "Whirling Ragnr",
+	"Master Builder", "Rage Bruiser", "Claw Ambusher", "LDF Sureshot",
+	"Order Scholar", "Order Chaplain", "Order Missionary", "Trinity Herald",
+	"Minerva the Lionheart", "Farsight Naruku", "Macewielder Ragnr"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

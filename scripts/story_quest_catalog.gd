@@ -8,7 +8,10 @@ const CURRENT_ROSTER := [
 	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
 	"LDF Gunner", "Order Pupil", "Order Cleric",
 	"Order Apostle", "Trinity Messenger", "Minerva the Brave",
-	"Naruku the Lookout", "Whirling Ragnr"
+	"Naruku the Lookout", "Whirling Ragnr",
+	"Master Builder", "Rage Bruiser", "Claw Ambusher", "LDF Sureshot",
+	"Order Scholar", "Order Chaplain", "Order Missionary", "Trinity Herald",
+	"Minerva the Lionheart", "Farsight Naruku", "Macewielder Ragnr"
 ]
 
 const ADDITIONAL_DROPS := {
@@ -20,7 +23,15 @@ const ADDITIONAL_DROPS := {
 	"Order Cleric": [21, 22, 24, 53],
 	"Order Apostle": [28, 29, 41, 54, 57],
 	"Trinity Messenger": [2, 18, 25, 49, 51],
-	"Minerva the Brave": [25, 39, 40, 60, 62]
+	"Minerva the Brave": [25, 39, 40, 60, 62],
+	"Master Builder": [11, 12, 32, 37, 46],
+	"Claw Ambusher": [8, 16, 19, 42, 43, 46, 47, 48, 52],
+	"LDF Sureshot": [15, 17, 20, 35, 62],
+	"Order Scholar": [21, 22, 24, 41, 53],
+	"Order Chaplain": [21, 22, 24, 53],
+	"Order Missionary": [28, 29, 41, 54, 57],
+	"Trinity Herald": [18, 25, 49, 51],
+	"Minerva the Lionheart": [25, 39, 40, 60, 62]
 }
 
 const QUESTS := [
