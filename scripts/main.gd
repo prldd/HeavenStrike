@@ -1,21 +1,14 @@
 extends Control
 
 const BoardViewScript = preload("res://scripts/board_view.gd")
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const BattleAIScript = preload("res://scripts/battle_ai.gd")
 
 const PLAYER := 0
 const ENEMY := 1
 const ROWS := 3
 const COLS := 7
 const STARTING_HP := 24
-
-const ROSTER := [
-	{"name": "Cloudstep", "kind": "Strider", "cost": 2, "atk": 1, "hp": 3, "move": 3, "range": 1, "text": "Strikes twice."},
-	{"name": "Emberblade", "kind": "Duelist", "cost": 3, "atk": 2, "hp": 5, "move": 2, "range": 1, "text": "Gains +1 ATK after attacking."},
-	{"name": "Ironroot", "kind": "Warden", "cost": 2, "atk": 1, "hp": 7, "move": 2, "range": 1, "text": "A durable lane blocker."},
-	{"name": "Sunlance", "kind": "Artillerist", "cost": 4, "atk": 3, "hp": 3, "move": 1, "range": 3, "text": "Pierces the unit behind its target."},
-	{"name": "Stormsinger", "kind": "Channeler", "cost": 4, "atk": 2, "hp": 4, "move": 1, "range": 3, "text": "Deals 1 splash damage in adjacent lanes."},
-	{"name": "Dawnmender", "kind": "Lifebinder", "cost": 3, "atk": 1, "hp": 5, "move": 1, "range": 2, "text": "Heals a nearby ally for 2."}
-]
 
 var board: BoardView
 var player_hp_label: Label
@@ -29,11 +22,15 @@ var power_button: Button
 var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
+var tutorial_overlay: ColorRect
+var tutorial_page_label: Label
+var tutorial_page := 0
+
+var roster: Array = UnitCatalogScript.all_units()
 
 var units: Array = []
 var player_hand: Array = []
 var draw_index := 0
-var enemy_draw_index := 2
 var selected_hand_index := -1
 var next_unit_id := 1
 var round_number := 1
@@ -48,6 +45,7 @@ var enemy_power_used := false
 var input_enabled := true
 var battle_over := false
 var status_message := ""
+var has_shown_tutorial := false
 
 func _ready() -> void:
 	_build_interface()
@@ -126,6 +124,13 @@ func _build_interface() -> void:
 	power_button.pressed.connect(_use_player_power)
 	control_bar.add_child(power_button)
 
+	var help_button := Button.new()
+	help_button.text = "?"
+	help_button.tooltip_text = "How to play"
+	help_button.custom_minimum_size.x = 42
+	help_button.pressed.connect(_open_tutorial)
+	control_bar.add_child(help_button)
+
 	end_button = Button.new()
 	end_button.text = "RESOLVE TURN"
 	end_button.custom_minimum_size.x = 170
@@ -139,6 +144,7 @@ func _build_interface() -> void:
 	root.add_child(hand_row)
 
 	_build_overlay()
+	_build_tutorial()
 
 func _build_overlay() -> void:
 	overlay = ColorRect.new()
@@ -175,11 +181,85 @@ func _build_overlay() -> void:
 	restart.pressed.connect(_start_new_match)
 	panel.add_child(restart)
 
+func _build_tutorial() -> void:
+	tutorial_overlay = ColorRect.new()
+	tutorial_overlay.color = Color(0.02, 0.035, 0.07, 0.94)
+	tutorial_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tutorial_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	tutorial_overlay.visible = false
+	add_child(tutorial_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tutorial_overlay.add_child(center)
+
+	var panel := VBoxContainer.new()
+	panel.custom_minimum_size = Vector2(560, 330)
+	panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_theme_constant_override("separation", 22)
+	center.add_child(panel)
+
+	var title := Label.new()
+	title.text = "FIELD BRIEFING"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	panel.add_child(title)
+
+	tutorial_page_label = Label.new()
+	tutorial_page_label.custom_minimum_size = Vector2(520, 150)
+	tutorial_page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tutorial_page_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tutorial_page_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tutorial_page_label.add_theme_font_size_override("font_size", 18)
+	tutorial_page_label.add_theme_color_override("font_color", Color("#c1cee5"))
+	panel.add_child(tutorial_page_label)
+
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 12)
+	panel.add_child(actions)
+
+	var close := Button.new()
+	close.text = "SKIP"
+	close.custom_minimum_size = Vector2(120, 44)
+	close.pressed.connect(_close_tutorial)
+	actions.add_child(close)
+
+	var next := Button.new()
+	next.text = "NEXT"
+	next.custom_minimum_size = Vector2(160, 44)
+	next.pressed.connect(_next_tutorial_page)
+	actions.add_child(next)
+
+func _open_tutorial() -> void:
+	tutorial_page = 0
+	tutorial_overlay.visible = true
+	_update_tutorial()
+
+func _close_tutorial() -> void:
+	tutorial_overlay.visible = false
+
+func _next_tutorial_page() -> void:
+	tutorial_page += 1
+	if tutorial_page >= 4:
+		_close_tutorial()
+		return
+	_update_tutorial()
+
+func _update_tutorial() -> void:
+	var pages := [
+		"1 / 4\nSELECT A CARD\nCards show Energy cost, class, attack, health, and their special ability.",
+		"2 / 4\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units rest until your next turn.",
+		"3 / 4\nRESOLVE THE BOARD\nReady units attack if a target is in range. Otherwise, they advance automatically.",
+		"4 / 4\nBREAK THE COMMANDER\nCross an open lane and deal 24 damage to the enemy Commander before it reaches yours."
+	]
+	tutorial_page_label.text = pages[tutorial_page]
+
 func _start_new_match() -> void:
 	units.clear()
 	player_hand.clear()
 	draw_index = 0
-	enemy_draw_index = 2
 	selected_hand_index = -1
 	next_unit_id = 1
 	round_number = 1
@@ -198,11 +278,14 @@ func _start_new_match() -> void:
 	for i in 4:
 		_draw_player_card()
 	_refresh()
+	if not has_shown_tutorial:
+		has_shown_tutorial = true
+		_open_tutorial()
 
 func _draw_player_card() -> void:
 	if player_hand.size() >= 5:
 		return
-	player_hand.append(ROSTER[draw_index % ROSTER.size()].duplicate())
+	player_hand.append(roster[draw_index % roster.size()].duplicate())
 	draw_index += 1
 
 func _refresh() -> void:
@@ -293,6 +376,7 @@ func _use_player_power() -> void:
 	for unit in units:
 		if unit.side == PLAYER:
 			unit.atk += 1
+			board.play_unit_effect(unit.id, "+1 ATK", Color("#ffd166"))
 	status_message = "Rally! Every allied unit gains +1 ATK."
 	_refresh()
 
@@ -321,21 +405,16 @@ func _enemy_turn() -> void:
 
 	var attempts := 0
 	while attempts < 3:
-		var card: Dictionary = ROSTER[enemy_draw_index % ROSTER.size()]
-		var lanes := _enemy_lane_priority()
-		var placed := false
-		for row in lanes:
-			if _unit_at(row, COLS - 1) == null and card.cost <= enemy_energy:
-				_spawn_unit(card, ENEMY, row, COLS - 1)
-				enemy_energy -= card.cost
-				enemy_draw_index += 1
-				placed = true
-				status_message = "Enemy deployed %s." % card.name
-				_refresh()
-				await get_tree().create_timer(0.35).timeout
-				break
-		if not placed:
+		var choice: Dictionary = BattleAIScript.choose_deployment(roster, enemy_energy, units)
+		if choice.is_empty():
 			break
+		var card: Dictionary = choice.card
+		var row: int = choice.row
+		_spawn_unit(card, ENEMY, row, COLS - 1)
+		enemy_energy -= card.cost
+		status_message = "Enemy deployed %s to lane %d." % [card.name, row + 1]
+		_refresh()
+		await get_tree().create_timer(0.35).timeout
 		attempts += 1
 
 	if not enemy_power_used and enemy_hp <= 12:
@@ -343,6 +422,7 @@ func _enemy_turn() -> void:
 		for unit in units:
 			if unit.side == ENEMY:
 				unit.atk += 1
+				board.play_unit_effect(unit.id, "+1 ATK", Color("#ff8b70"))
 		status_message = "Enemy Rally! Hostile units gain +1 ATK."
 		_refresh()
 		await get_tree().create_timer(0.45).timeout
@@ -392,6 +472,7 @@ func _activate_unit(actor: Dictionary) -> void:
 		if wounded != null:
 			wounded.hp = mini(wounded.max_hp, wounded.hp + 2)
 			status_message = "%s restores 2 HP to %s." % [actor.name, wounded.name]
+			board.play_unit_effect(wounded.id, "+2 HP", Color("#70e0a1"))
 			return
 
 	var target = _find_target(actor)
@@ -404,6 +485,7 @@ func _activate_unit(actor: Dictionary) -> void:
 				break
 			target.hp -= actor.atk
 			status_message = "%s hits %s for %d." % [actor.name, target.name, actor.atk]
+			board.play_unit_effect(target.id, "-%d" % actor.atk, Color("#ff668f"))
 			_apply_special_damage(actor, target)
 			_remove_defeated()
 			_refresh()
@@ -433,6 +515,7 @@ func _activate_unit(actor: Dictionary) -> void:
 		steps += 1
 	if steps > 0:
 		status_message = "%s advances %d space%s." % [actor.name, steps, "" if steps == 1 else "s"]
+		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
 	else:
 		status_message = "%s holds position." % actor.name
 
@@ -485,17 +568,6 @@ func _commander_in_range(actor: Dictionary) -> bool:
 	if actor.side == PLAYER:
 		return COLS - actor.col <= actor.range and _find_target(actor) == null
 	return actor.col + 1 <= actor.range and _find_target(actor) == null
-
-func _enemy_lane_priority() -> Array:
-	var scores := []
-	for row in ROWS:
-		var score := 0
-		for unit in units:
-			if unit.row == row:
-				score += unit.atk * (1 if unit.side == PLAYER else -1)
-		scores.append({"row": row, "score": score})
-	scores.sort_custom(func(a, b): return a.score > b.score)
-	return scores.map(func(item): return item.row)
 
 func _unit_at(row: int, col: int):
 	for unit in units:

@@ -20,6 +20,10 @@ var selected_card: Dictionary = {}
 var enabled := true
 var hover_row := -1
 var event_text := "Choose a unit, then choose a lane."
+var effect_unit_id := -1
+var effect_label := ""
+var effect_color := Color.WHITE
+var effect_strength := 0.0
 
 func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -34,6 +38,24 @@ func set_state(next_units: Array, card: Dictionary, can_deploy: bool, message: S
 	selected_card = card
 	enabled = can_deploy
 	event_text = message
+	queue_redraw()
+
+func play_unit_effect(unit_id: int, label: String, color: Color) -> void:
+	effect_unit_id = unit_id
+	effect_label = label
+	effect_color = color
+	effect_strength = 1.0
+	var tween := create_tween()
+	tween.tween_method(_set_effect_strength, 1.0, 0.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_clear_effect)
+
+func _set_effect_strength(value: float) -> void:
+	effect_strength = value
+	queue_redraw()
+
+func _clear_effect() -> void:
+	effect_unit_id = -1
+	effect_label = ""
 	queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
@@ -94,6 +116,8 @@ func _draw() -> void:
 
 	for unit in units:
 		_draw_unit(unit)
+		if unit.id == effect_unit_id:
+			_draw_effect(unit)
 
 	if not selected_card.is_empty() and enabled:
 		for row in ROWS:
@@ -151,6 +175,22 @@ func _draw_unit(unit: Dictionary) -> void:
 	if not unit.ready:
 		draw_circle(center, minf(rect.size.x, rect.size.y) * 0.32, Color(0.05, 0.08, 0.15, 0.48))
 		draw_string(font, Vector2(rect.position.x, rect.end.y - 7), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, Color("#b8c2d9"))
+
+func _draw_effect(unit: Dictionary) -> void:
+	var rect := _cell_rect(unit.row, unit.col).grow(-5.0)
+	var center := rect.get_center()
+	var radius := minf(rect.size.x, rect.size.y) * (0.35 + (1.0 - effect_strength) * 0.18)
+	draw_circle(center, radius, Color(effect_color, effect_strength * 0.22), false, 4)
+	draw_arc(center, radius, 0, TAU, 32, Color(effect_color, effect_strength), 4)
+	draw_string(
+		get_theme_default_font(),
+		Vector2(rect.position.x, rect.position.y - 4 - (1.0 - effect_strength) * 18),
+		effect_label,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		rect.size.x,
+		14,
+		Color(effect_color, effect_strength)
+	)
 
 func _occupied(row: int, col: int) -> bool:
 	for unit in units:
