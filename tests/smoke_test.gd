@@ -16,12 +16,14 @@ func _init() -> void:
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
 	assert(default_squad.size() == SquadStoreScript.SQUAD_SIZE)
-	var repaired_squad: Array = SquadStoreScript.sanitize(["Cloudstep", "Cloudstep", "Missing"], roster)
-	assert(repaired_squad.size() == SquadStoreScript.SQUAD_SIZE)
-	assert(repaired_squad.count("Cloudstep") == 1)
-	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == SquadStoreScript.SQUAD_SIZE)
+	var repaired_squad: Array = SquadStoreScript.sanitize(["Cloudstep", "Cloudstep", "Cloudstep", "Missing"], roster)
+	assert(repaired_squad.size() == 2)
+	assert(repaired_squad.count("Cloudstep") == 2)
+	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
+	assert(SquadStoreScript.sanitize([], roster).size() == SquadStoreScript.SQUAD_SIZE)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 5)
+	assert(CampaignStoreScript.MISSIONS.map(func(mission): return mission.enemy_hp) == [8, 11, 14, 17, 20])
 	assert(CampaignStoreScript.is_available(0, []))
 	assert(not CampaignStoreScript.is_available(1, []))
 	assert(CampaignStoreScript.is_available(1, [0]))
@@ -39,16 +41,28 @@ func _init() -> void:
 			unique_enemy_cards.append(card_name)
 	assert(unique_enemy_cards.size() == 15)
 
-	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false}
+	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunted_by": -1}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
 	assert(not BattleRulesScript.is_taunted(mover, [mover, distant_warden]))
 	assert(BattleRulesScript.can_reposition(mover, 0, [mover, distant_warden]))
 	var nearby_warden := {"id": 3, "side": 1, "kind": "Warden", "row": 1, "col": 4, "repositioned": false}
+	mover.taunted_by = 3
 	assert(BattleRulesScript.is_taunted(mover, [mover, nearby_warden]))
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, nearby_warden]))
+	assert(not BattleRulesScript.is_taunted(mover, [mover]))
+	mover.taunted_by = -1
 	var blocker := {"id": 4, "side": 0, "kind": "Strider", "row": 0, "col": 2, "repositioned": false}
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
 	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))
+
+	var mana_units := [
+		{"side": 0, "cost": 2},
+		{"side": 0, "cost": 3},
+		{"side": 1, "cost": 4}
+	]
+	assert(BattleRulesScript.locked_mana(mana_units, 0) == 5)
+	assert(BattleRulesScript.available_mana(8, mana_units, 0) == 3)
+	assert(BattleRulesScript.available_mana(10, [mana_units[1]], 0) == 7)
 
 	var preview_unit := {"id": 6, "side": 0, "kind": "Strider", "row": 1, "col": 1, "move": 3, "range": 1}
 	assert(BattleRulesScript.attack_cells(preview_unit) == [Vector2i(2, 1)])

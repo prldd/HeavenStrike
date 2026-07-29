@@ -9,40 +9,35 @@ const MISSIONS := [
 		"id": 0,
 		"title": "Broken Skyway",
 		"briefing": "Repel a scouting crew from the abandoned eastern causeway.",
-		"enemy_hp": 18,
-		"enemy_energy": 2,
+		"enemy_hp": 8,
 		"reward": "Dawnmender"
 	},
 	{
 		"id": 1,
 		"title": "The Iron Crossing",
 		"briefing": "Break through a defensive formation guarding the weather route.",
-		"enemy_hp": 22,
-		"enemy_energy": 2,
+		"enemy_hp": 11,
 		"reward": "Mosscaller"
 	},
 	{
 		"id": 2,
 		"title": "Stormglass Reach",
 		"briefing": "Survive long-range fire while a storm closes over the battlefield.",
-		"enemy_hp": 25,
-		"enemy_energy": 3,
+		"enemy_hp": 14,
 		"reward": "Aurora Sage"
 	},
 	{
 		"id": 3,
 		"title": "Siege of Aster",
 		"briefing": "Defeat the expedition fleet before it anchors above Aster.",
-		"enemy_hp": 29,
-		"enemy_energy": 3,
+		"enemy_hp": 17,
 		"reward": "Veteran Commander Crest"
 	},
 	{
 		"id": 4,
 		"title": "Heart of the Tempest",
 		"briefing": "Take control of the ancient engine at the center of the storm.",
-		"enemy_hp": 34,
-		"enemy_energy": 4,
+		"enemy_hp": 20,
 		"reward": "Campaign Complete"
 	}
 ]

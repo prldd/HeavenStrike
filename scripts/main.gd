@@ -33,6 +33,7 @@ var squad_overlay: ColorRect
 var squad_grid: GridContainer
 var squad_count_label: Label
 var squad_save_button: Button
+var squad_start_button: Button
 var hover_card: PanelContainer
 var hover_name_label: Label
 var hover_stats_label: Label
@@ -50,7 +51,9 @@ var completed_missions: Array = []
 var current_mission_id := -1
 var campaign_battle := false
 var squad_opened_from_menu := false
+var squad_opened_for_mission := false
 var tutorial_opened_from_menu := false
+var pending_mission_id := -1
 
 var units: Array = []
 var player_hand: Array = []
@@ -309,10 +312,10 @@ func _next_tutorial_page() -> void:
 
 func _update_tutorial() -> void:
 	var pages := [
-		"1 / 5\nSELECT A CARD\nCards show Energy cost, class, attack, health, and their special ability.",
+		"1 / 5\nSELECT A CARD\nCards show Mana cost, class, attack, health, and their special ability.",
 		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units rest until your next turn.",
 		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in an adjacent row. Each unit may shift once per turn.",
-		"4 / 5\nTAUNT\nAn opposing Warden within two spaces locks units into its row until the Warden moves or is defeated.",
+		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Warden cannot change rows while that Warden remains on the battlefield.",
 		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
 	]
 	tutorial_page_label.text = pages[tutorial_page]
@@ -353,7 +356,7 @@ func _build_squad_builder() -> void:
 	title_row.add_child(squad_count_label)
 
 	var instruction := Label.new()
-	instruction.text = "Choose exactly 15 units. Selected units form your draw pile; the first selected unit is your Vanguard."
+	instruction.text = "Choose 1–15 units, with no more than 2 copies each. The first selected unit is your Vanguard."
 	instruction.add_theme_color_override("font_color", Color("#aebdda"))
 	layout.add_child(instruction)
 
@@ -391,16 +394,30 @@ func _build_squad_builder() -> void:
 	squad_save_button.pressed.connect(_save_squad)
 	actions.add_child(squad_save_button)
 
+	squad_start_button = Button.new()
+	squad_start_button.text = "START MISSION"
+	squad_start_button.custom_minimum_size = Vector2(180, 44)
+	squad_start_button.visible = false
+	squad_start_button.pressed.connect(_save_and_start_mission)
+	actions.add_child(squad_start_button)
+
 func _open_squad_builder() -> void:
-	if not input_enabled or battle_over:
+	if not input_enabled:
 		return
 	squad_opened_from_menu = false
+	squad_opened_for_mission = false
+	pending_mission_id = -1
 	editing_squad_names = squad_names.duplicate()
 	squad_overlay.visible = true
 	_rebuild_squad_grid()
 
 func _close_squad_builder() -> void:
 	squad_overlay.visible = false
+	if squad_opened_for_mission:
+		squad_opened_for_mission = false
+		pending_mission_id = -1
+		_open_mission_select()
+		return
 	if squad_opened_from_menu:
 		squad_opened_from_menu = false
 		_show_main_menu()
@@ -410,10 +427,12 @@ func _reset_squad() -> void:
 	_rebuild_squad_grid()
 
 func _toggle_squad_unit(unit_name: String) -> void:
-	if unit_name in editing_squad_names:
-		editing_squad_names.erase(unit_name)
-	elif editing_squad_names.size() < SquadStoreScript.SQUAD_SIZE:
+	var copies: int = editing_squad_names.count(unit_name)
+	if copies < 2 and editing_squad_names.size() < SquadStoreScript.SQUAD_SIZE:
 		editing_squad_names.append(unit_name)
+	elif copies >= 2:
+		while unit_name in editing_squad_names:
+			editing_squad_names.erase(unit_name)
 	_rebuild_squad_grid()
 
 func _rebuild_squad_grid() -> void:
@@ -422,7 +441,8 @@ func _rebuild_squad_grid() -> void:
 		child.queue_free()
 
 	for unit in roster:
-		var selected: bool = unit.name in editing_squad_names
+		var copies: int = editing_squad_names.count(unit.name)
+		var selected: bool = copies > 0
 		var unlocked: bool = unit.name in CampaignStoreScript.unlocked_unit_names(roster, completed_missions)
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 76)
@@ -433,6 +453,8 @@ func _rebuild_squad_grid() -> void:
 		button.text = "%s  ·  %d◆\n%s  |  %d ATK  %d HP" % [
 			unit.name.to_upper(), unit.cost, unit.kind, unit.atk, unit.hp
 		]
+		if copies > 0:
+			button.text += "\n%d / 2 COPIES" % copies
 		if not unlocked:
 			button.text += "\nLOCKED · CAMPAIGN REWARD"
 		button.pressed.connect(_toggle_squad_unit.bind(unit.name))
@@ -441,14 +463,13 @@ func _rebuild_squad_grid() -> void:
 		squad_grid.add_child(button)
 
 	squad_count_label.text = "%d / %d SELECTED" % [editing_squad_names.size(), SquadStoreScript.SQUAD_SIZE]
-	squad_count_label.add_theme_color_override(
-		"font_color",
-		Color("#70e0a1") if editing_squad_names.size() == SquadStoreScript.SQUAD_SIZE else Color("#ff8f8f")
-	)
-	squad_save_button.disabled = editing_squad_names.size() != SquadStoreScript.SQUAD_SIZE
+	squad_count_label.add_theme_color_override("font_color", Color("#70e0a1") if not editing_squad_names.is_empty() else Color("#ff8f8f"))
+	squad_save_button.disabled = editing_squad_names.is_empty()
+	squad_start_button.visible = squad_opened_for_mission
+	squad_start_button.disabled = editing_squad_names.is_empty()
 
 func _save_squad() -> void:
-	if editing_squad_names.size() != SquadStoreScript.SQUAD_SIZE:
+	if editing_squad_names.is_empty() or editing_squad_names.size() > SquadStoreScript.SQUAD_SIZE:
 		return
 	squad_names = editing_squad_names.duplicate()
 	if SquadStoreScript.save_squad(squad_names, roster):
@@ -458,17 +479,25 @@ func _save_squad() -> void:
 	_close_squad_builder()
 	_refresh()
 
+func _save_and_start_mission() -> void:
+	if editing_squad_names.is_empty() or pending_mission_id < 0:
+		return
+	squad_names = editing_squad_names.duplicate()
+	SquadStoreScript.save_squad(squad_names, roster)
+	var mission_id := pending_mission_id
+	squad_opened_for_mission = false
+	pending_mission_id = -1
+	squad_overlay.visible = false
+	_begin_mission(mission_id)
+
 func _sanitize_squad_unlocks() -> void:
 	var unlocked: Array = CampaignStoreScript.unlocked_unit_names(roster, completed_missions)
 	var allowed: Array = []
 	for unit_name in squad_names:
-		if unit_name in unlocked and unit_name not in allowed:
+		if unit_name in unlocked and allowed.count(unit_name) < 2:
 			allowed.append(unit_name)
-	for unit_name in unlocked:
-		if allowed.size() >= SquadStoreScript.SQUAD_SIZE:
-			break
-		if unit_name not in allowed:
-			allowed.append(unit_name)
+	if allowed.is_empty():
+		allowed = SquadStoreScript.default_squad(roster)
 	squad_names = allowed
 
 func _build_main_menu() -> void:
@@ -570,7 +599,9 @@ func _menu_action(label: String) -> Button:
 func _show_main_menu() -> void:
 	input_enabled = false
 	squad_opened_from_menu = false
+	squad_opened_for_mission = false
 	tutorial_opened_from_menu = false
+	pending_mission_id = -1
 	main_menu_overlay.visible = true
 	mission_overlay.visible = false
 	squad_overlay.visible = false
@@ -594,15 +625,26 @@ func _rebuild_mission_list() -> void:
 		var button := Button.new()
 		button.custom_minimum_size.y = 82
 		button.disabled = not available
-		button.text = "%s  %02d · %s\n%s\nReward: %s" % [
+		button.text = "%s  %02d · %s  ·  %d CAPTAIN HP\n%s\nReward: %s" % [
 			"✓" if complete else ("◆" if available else "🔒"),
 			mission.id + 1,
 			mission.title.to_upper(),
+			mission.enemy_hp,
 			mission.briefing,
 			mission.reward
 		]
-		button.pressed.connect(_begin_mission.bind(mission.id))
+		button.pressed.connect(_prepare_mission.bind(mission.id))
 		mission_list.add_child(button)
+
+func _prepare_mission(mission_id: int) -> void:
+	if not CampaignStoreScript.is_available(mission_id, completed_missions):
+		return
+	mission_overlay.visible = false
+	input_enabled = true
+	_open_squad_builder()
+	squad_opened_for_mission = true
+	pending_mission_id = mission_id
+	_rebuild_squad_grid()
 
 func _begin_practice() -> void:
 	campaign_battle = false
@@ -690,7 +732,7 @@ func _show_unit_details(unit: Dictionary) -> void:
 		hp_text = "%d / %d HP" % [current_hp, maximum_hp]
 
 	hover_name_label.text = "%s  ·  %s" % [definition.name.to_upper(), definition.kind]
-	hover_stats_label.text = "%d ENERGY\n%d ATK    %s    %d MOV    %d RANGE" % [
+	hover_stats_label.text = "%d MANA\n%d ATK    %s    %d MOV    %d RANGE" % [
 		definition.cost,
 		unit.get("atk", definition.atk),
 		hp_text,
@@ -737,8 +779,8 @@ func _start_new_match() -> void:
 	enemy_hp = STARTING_HP if not campaign_battle else CampaignStoreScript.MISSIONS[current_mission_id].enemy_hp
 	player_max_energy = 2
 	player_energy = 2
-	enemy_max_energy = 2 if not campaign_battle else CampaignStoreScript.MISSIONS[current_mission_id].enemy_energy
-	enemy_energy = enemy_max_energy
+	enemy_max_energy = 2
+	enemy_energy = 2
 	player_power_used = false
 	enemy_power_used = false
 	input_enabled = true
@@ -769,7 +811,8 @@ func _refresh() -> void:
 	enemy_hp_label.text = "%02d HP  ◆\n%d HAND · %d DECK" % [
 		enemy_hp, enemy_hand.size(), enemy_deck.size() - enemy_draw_index
 	]
-	energy_label.text = "ENERGY  %d / %d" % [player_energy, player_max_energy]
+	var locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
+	energy_label.text = "MANA  %d / %d  ·  %d LOCKED" % [player_energy, player_max_energy, locked_mana]
 	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
 	hint_label.text = status_message
 	end_button.disabled = not input_enabled or battle_over
@@ -891,7 +934,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> void:
 		"move": card.move,
 		"range": card.range,
 		"ready": false,
-		"repositioned": false
+		"repositioned": false,
+		"taunted_by": -1,
+		"turn_attack_bonus": 0
 	})
 	next_unit_id += 1
 
@@ -902,6 +947,7 @@ func _use_player_power() -> void:
 	for unit in units:
 		if unit.side == PLAYER:
 			unit.atk += 1
+			unit.turn_attack_bonus += 1
 			board.play_unit_effect(unit.id, "+1 ATK", Color("#ffd166"))
 	status_message = "Rally! Every allied unit gains +1 ATK."
 	_refresh()
@@ -915,6 +961,7 @@ func _end_player_turn() -> void:
 	status_message = "Your units advance."
 	_refresh()
 	await _resolve_side(PLAYER)
+	_expire_turn_buffs(PLAYER)
 	if _check_game_over():
 		return
 	await get_tree().create_timer(0.35).timeout
@@ -925,8 +972,9 @@ func _enemy_turn() -> void:
 		if unit.side == ENEMY:
 			unit.ready = true
 			unit.repositioned = false
-	enemy_max_energy = mini(10, enemy_max_energy + (1 if round_number > 1 else 0))
-	enemy_energy = enemy_max_energy
+	if round_number > 1:
+		enemy_max_energy = mini(10, enemy_max_energy + 2)
+	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
 	if round_number > 1:
 		_draw_enemy_card()
 	status_message = "Enemy is deploying..."
@@ -956,6 +1004,7 @@ func _enemy_turn() -> void:
 		for unit in units:
 			if unit.side == ENEMY:
 				unit.atk += 1
+				unit.turn_attack_bonus += 1
 				board.play_unit_effect(unit.id, "+1 ATK", Color("#ff8b70"))
 		status_message = "Enemy Rally! Hostile units gain +1 ATK."
 		_refresh()
@@ -964,12 +1013,13 @@ func _enemy_turn() -> void:
 	status_message = "Enemy units advance."
 	_refresh()
 	await _resolve_side(ENEMY)
+	_expire_turn_buffs(ENEMY)
 	if _check_game_over():
 		return
 
 	round_number += 1
-	player_max_energy = mini(10, player_max_energy + 1)
-	player_energy = player_max_energy
+	player_max_energy = mini(10, player_max_energy + 2)
+	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
 	_draw_player_card()
 	for unit in units:
 		if unit.side == PLAYER:
@@ -1066,6 +1116,9 @@ func _activate_unit(actor: Dictionary) -> void:
 			status_message = "%s hits %s for %d." % [actor.name, target.name, actor.atk]
 			board.play_unit_effect(target.id, "-%d" % actor.atk, Color("#ff668f"))
 			_apply_special_damage(actor, target)
+			if actor.kind == "Warden" and target.hp > 0:
+				target.taunted_by = actor.id
+				status_message += " Taunting Strike locks %s into this row." % target.name
 			_remove_defeated()
 			_refresh()
 			if hit + 1 < strikes:
@@ -1150,6 +1203,17 @@ func _unit_by_id(id: int):
 
 func _remove_defeated() -> void:
 	units = units.filter(func(unit): return unit.hp > 0)
+	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
+	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
+
+func _expire_turn_buffs(side: int) -> void:
+	for unit in units:
+		if unit.side != side:
+			continue
+		var bonus: int = unit.get("turn_attack_bonus", 0)
+		if bonus > 0:
+			unit.atk = maxi(0, unit.atk - bonus)
+			unit.turn_attack_bonus = 0
 
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:

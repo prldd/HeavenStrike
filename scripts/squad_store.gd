@@ -16,16 +16,11 @@ static func sanitize(candidate_names: Array, roster: Array) -> Array:
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = []
 	for unit_name in candidate_names:
-		if unit_name in valid_names and unit_name not in result:
+		if unit_name in valid_names and result.count(unit_name) < 2:
 			result.append(unit_name)
 		if result.size() >= SQUAD_SIZE:
 			return result
-	for unit_name in valid_names:
-		if unit_name not in result:
-			result.append(unit_name)
-		if result.size() >= SQUAD_SIZE:
-			break
-	return result
+	return result if not result.is_empty() else default_squad(roster)
 
 static func load_squad(roster: Array) -> Array:
 	var config := ConfigFile.new()
@@ -38,7 +33,7 @@ static func load_squad(roster: Array) -> Array:
 
 static func save_squad(names: Array, roster: Array) -> bool:
 	var clean := sanitize(names, roster)
-	if clean.size() != SQUAD_SIZE:
+	if clean.is_empty() or clean.size() > SQUAD_SIZE:
 		return false
 	var config := ConfigFile.new()
 	config.set_value("squad", "units", clean)

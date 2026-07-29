@@ -6,14 +6,11 @@ const ROWS := 3
 const COLS := 7
 
 static func is_taunted(unit: Dictionary, units: Array) -> bool:
-	var direction := 1 if unit.side == PLAYER else -1
-	for other in units:
-		if other.side == unit.side or other.kind != "Warden" or other.row != unit.row:
-			continue
-		var distance: int = (other.col - unit.col) * direction
-		if distance > 0 and distance <= 2:
-			return true
-	return false
+	var source_id: int = unit.get("taunted_by", -1)
+	if source_id < 0:
+		return false
+	var source = _unit_by_id(units, source_id)
+	return source != null and source.side != unit.side and source.kind == "Warden"
 
 static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> bool:
 	if target_row < 0 or target_row >= ROWS:
@@ -94,6 +91,16 @@ static func commander_in_range(unit: Dictionary) -> bool:
 	if unit.side == PLAYER:
 		return COLS - unit.col <= unit.range
 	return unit.col + 1 <= unit.range
+
+static func locked_mana(units: Array, side: int) -> int:
+	var locked := 0
+	for unit in units:
+		if unit.side == side:
+			locked += unit.get("cost", 0)
+	return locked
+
+static func available_mana(capacity: int, units: Array, side: int) -> int:
+	return maxi(0, capacity - locked_mana(units, side))
 
 static func _occupied(units: Array, row: int, col: int) -> bool:
 	for unit in units:

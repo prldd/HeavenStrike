@@ -37,34 +37,35 @@ Units enter from their owner's edge and advance toward the opposing Commander. U
 
 ### Squad
 
-Before battle, each side prepares a squad of 15 units:
+Before battle, each side prepares a squad of up to 15 units:
 
 - One Vanguard is always available at the start of the match.
-- The other 14 units form the draw pile.
+- Up to 14 other units form the draw pile.
 - The player begins with the Vanguard and three drawn units.
 - A hand can hold up to five units.
-- A squad may contain no more than three copies of the same unit.
+- A squad may contain no more than two copies of the same unit.
 - PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
-### Energy
+### Mana
 
-Deploying units costs Energy.
+Deploying a unit locks its Mana cost while it remains on the battlefield.
 
-- Both sides begin with 2 maximum Energy.
-- Maximum Energy increases by 1 at the start of each turn, up to 10.
-- Available Energy refills to the current maximum at the start of the turn.
-- Unspent Energy does not carry over.
+- Both sides begin with a Mana capacity of 2.
+- Capacity increases by 2 at the start of each later turn, up to 10.
+- Available Mana equals capacity minus Mana locked by active units.
+- When a unit is defeated, its locked Mana becomes available again.
 
-This creates a natural progression from inexpensive opening units to powerful late-match combinations.
+This makes committing an expensive unit a continuing resource decision rather than a one-turn payment.
 
 ### Turn Sequence
 
 Each turn has four phases.
 
 1. **Start**
-   - Increase and refill Energy.
+   - Increase Mana capacity by 2, up to 10.
+   - Recalculate available Mana after active-unit locks.
    - Draw one unit.
    - Resolve start-of-turn effects.
 
@@ -100,7 +101,7 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - If no unit blocks an attack at the end of a lane, the enemy Commander takes the damage.
 - Newly deployed units cannot act until their owner's next turn unless they have the **Quick** keyword.
 - Each deployed unit may reposition once per Command phase without losing its normal activation.
-- A Warden taunts opposing units up to two spaces ahead, preventing them from changing lanes.
+- A unit hit by a Warden's Taunting Strike cannot change lanes while that Warden remains active.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
 
 These rules are deterministic: the same board state and commands always produce the same result.
@@ -111,7 +112,7 @@ These rules are deterministic: the same board state and commands always produce 
 | --- | ---: | ---: | --- |
 | Strider | 3 | 1 | Fast attacker that strikes twice for lower damage |
 | Duelist | 2 | 1 | Melee fighter that gains attack after surviving combat |
-| Warden | 2 | 1 | Durable protector that forces nearby enemies to target it |
+| Warden | 2 | 1 | Durable protector whose strikes lock targets into their current lane |
 | Artillerist | 1 | 3 | Ranged attacker whose shots can pierce targets in a lane |
 | Channeler | 1 | 3 | Spellcaster that damages the target and adjacent tiles |
 | Lifebinder | 1 | 2 | Support unit that heals or strengthens allies |
@@ -120,10 +121,10 @@ Classes define basic behavior, while individual abilities give each unit a disti
 
 ## Example Turn
 
-The player begins a turn with 4 Energy. An enemy Warden blocks the center lane, while the top lane is open.
+The player begins a turn with 4 available Mana. An enemy Warden blocks the center lane, while the top lane is open.
 
-1. The player deploys a 2-Energy Strider in the top lane.
-2. The player deploys a 2-Energy Lifebinder behind a damaged Duelist in the center lane.
+1. The player deploys a 2-Mana Strider in the top lane.
+2. The player deploys a 2-Mana Lifebinder behind a damaged Duelist in the center lane.
 3. During resolution, the Duelist attacks the Warden.
 4. The Lifebinder heals the Duelist.
 5. The new units do not act because they were deployed this turn.
@@ -133,11 +134,7 @@ The player has traded immediate power for pressure in one lane and durability in
 
 ## Commander Powers
 
-Each Commander has one power that may be used once per battle during the Command phase. Initial powers include:
-
-- **Rally:** Give all allied units +1 attack this turn.
-- **Bulwark:** Give the Commander a temporary shield.
-- **Reposition:** Move one allied unit to the same column in an adjacent lane.
+Each Commander equips one power for battle. The planned skills are Rally, Bloodlust, Aid, Healing Wave, Shield, Last Stand, Lightning Burst, and Firestorm. The current prototype implements Rally. Friendly-unit effects normally last one turn unless a skill explicitly states otherwise.
 
 Commander selection changes a squad's strategy without adding another unit to the board.
 
@@ -162,6 +159,8 @@ Commander selection changes a squad's strategy without adding another unit to th
 - Replays and ranked seasons
 
 Online play and live-service systems are outside the first release. The battle simulation must be complete and reliable before multiplayer is considered.
+
+Campaign mission selection flows from the world map into squad selection and then battle. Missions may later contain multiple consecutive battles; reward itemization will be implemented after the battle sequence is stable.
 
 ## Progression
 
@@ -195,7 +194,7 @@ The initial milestone is a complete battle sandbox:
 
 - A functional 3-by-7 board
 - One player Commander and one AI Commander
-- Deployment, Energy, movement, attacks, and victory conditions
+- Deployment, Mana locking, movement, attacks, and victory conditions
 - One unit from each of the six classes
 - A simple AI that can deploy units and complete a match
 - Placeholder visuals
