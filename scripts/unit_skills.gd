@@ -1,7 +1,9 @@
 class_name UnitSkills
 extends RefCounted
 
-static func resolve_warcry(actor: Dictionary, units: Array) -> Dictionary:
+static func resolve_warcry(
+	actor: Dictionary, units: Array, target_id: int = -1
+) -> Dictionary:
 	var result := {"message": "", "affected": []}
 	var skill: Dictionary = actor.get("skill", {})
 	if skill.get("type", "").to_lower() != "warcry":
@@ -16,7 +18,9 @@ static func resolve_warcry(actor: Dictionary, units: Array) -> Dictionary:
 				result.message = "Fortify gives %s +3 HP for 2 turns." % target.name
 				result.affected.append(target.id)
 		"Empower":
-			var target = _highest_attack_ally(actor, units)
+			var target = _ally_by_id(actor, units, target_id)
+			if target == null:
+				target = _highest_attack_ally(actor, units)
 			if target != null:
 				target.atk += 1
 				_add_effect(target, "Empower", 2, 1, 0)
@@ -114,6 +118,16 @@ static func _add_effect(
 
 static func _other_allies(actor: Dictionary, units: Array) -> Array:
 	return units.filter(func(unit): return unit.side == actor.side and unit.id != actor.id)
+
+static func _ally_by_id(
+	actor: Dictionary, units: Array, target_id: int
+):
+	if target_id < 0:
+		return null
+	for unit in units:
+		if unit.id == target_id and unit.side == actor.side and unit.id != actor.id:
+			return unit
+	return null
 
 static func _enemies(actor: Dictionary, units: Array) -> Array:
 	return units.filter(func(unit): return unit.side != actor.side)

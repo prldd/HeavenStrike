@@ -16,7 +16,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Select a deployed unit, then a reachable tile in any other row to reposition it; units cannot pass through occupied tiles.
-- A unit can reposition once per turn unless a Defender's Taunting Strike has locked it for two turns.
+- A unit can reposition any number of times during its Command phase unless a Defender's Taunting Strike has locked it for two turns. Friendly units may be crossed, but enemies block the path.
 - Hover or select a deployed unit to preview its cyan traversal path and coral attack reach.
 - Attack reach is projected from the unit's destination after earlier allied movement is simulated.
 - Units stop before the opposing deployment column and attack into it; they never enter the opposing edge.
@@ -25,6 +25,7 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Use **Rally** once per battle to give all current allied units +1 ATK.
 - Select **Resolve Turn** to let units move and fight.
 - Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
+- Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
 - Defeat the enemy Commander before it reduces your 24 HP to zero.
 
@@ -47,10 +48,17 @@ The project uses only code-drawn visuals and has no external asset dependencies.
 - Enemy deployment AI
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
+- Mission-specific eight-card PvE squads and context-aware deployment, movement, and Captain-skill AI
+- Optional 1×/2×/4× combat resolution speed and a toggleable action log
+- Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
+- Player-selected targets for Empower Warcries
 - Commander health, Rally powers, victory, defeat, and replay
 - Persistent selection of eight Captain skills
 - Timed attack effects, healing, direct damage, area damage, and Captain shields
 - Active-effect names and remaining duration in unit hover cards
+- Persistent battlefield badges show Taunt, Immobilise, Fury stacks, and timed stat changes.
+- Floating combat feedback calls out damage, healing, status application, and Commander hits.
+- Each resolution begins with a compact ordered movement/attack preview; the combat log names unit classes and secondary-skill timing.
 - Deterministic rules with a presentation layer separated into `BoardView`
 - Five-step in-game field briefing
 - Animated damage, healing, movement, and buff feedback

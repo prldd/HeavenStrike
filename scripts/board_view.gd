@@ -32,6 +32,13 @@ const COLORS := {
 var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
+var targetable_unit_ids: Array = []
+var player_mana_text := ""
+var enemy_mana_text := ""
+var player_hp_text := ""
+var enemy_hp_text := ""
+var player_deck_text := ""
+var enemy_deck_text := ""
 var enabled := true
 var hover_row := -1
 var hover_unit_id := -1
@@ -40,6 +47,7 @@ var effect_unit_id := -1
 var effect_label := ""
 var effect_color := Color.WHITE
 var effect_strength := 0.0
+var commander_effect_side := -1
 
 func _ready() -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -52,15 +60,36 @@ func _clear_hover() -> void:
 		unit_hover_ended.emit()
 	queue_redraw()
 
-func set_state(next_units: Array, card: Dictionary, selected_id: int, can_deploy: bool, message: String) -> void:
+func set_state(
+	next_units: Array,
+	card: Dictionary,
+	selected_id: int,
+	can_deploy: bool,
+	message: String,
+	next_targetable_ids: Array = [],
+	next_player_mana_text: String = "",
+	next_enemy_mana_text: String = "",
+	next_player_hp_text: String = "",
+	next_enemy_hp_text: String = "",
+	next_player_deck_text: String = "",
+	next_enemy_deck_text: String = ""
+) -> void:
 	units = next_units
 	selected_card = card
 	selected_unit_id = selected_id
+	targetable_unit_ids = next_targetable_ids.duplicate()
+	player_mana_text = next_player_mana_text
+	enemy_mana_text = next_enemy_mana_text
+	player_hp_text = next_player_hp_text
+	enemy_hp_text = next_enemy_hp_text
+	player_deck_text = next_player_deck_text
+	enemy_deck_text = next_enemy_deck_text
 	enabled = can_deploy
 	event_text = message
 	queue_redraw()
 
 func play_unit_effect(unit_id: int, label: String, color: Color) -> void:
+	commander_effect_side = -1
 	effect_unit_id = unit_id
 	effect_label = label
 	effect_color = color
@@ -69,12 +98,23 @@ func play_unit_effect(unit_id: int, label: String, color: Color) -> void:
 	tween.tween_method(_set_effect_strength, 1.0, 0.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(_clear_effect)
 
+func play_commander_effect(side: int, label: String, color: Color) -> void:
+	commander_effect_side = side
+	effect_unit_id = -1
+	effect_label = label
+	effect_color = color
+	effect_strength = 1.0
+	var tween := create_tween()
+	tween.tween_method(_set_effect_strength, 1.0, 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_clear_effect)
+
 func _set_effect_strength(value: float) -> void:
 	effect_strength = value
 	queue_redraw()
 
 func _clear_effect() -> void:
 	effect_unit_id = -1
+	commander_effect_side = -1
 	effect_label = ""
 	queue_redraw()
 
@@ -172,22 +212,38 @@ func _draw() -> void:
 		Color("#e3edff")
 	)
 
-	var preview_id: int = selected_unit_id if selected_unit_id >= 0 else hover_unit_id
+	var preview_id: int = (
+		-1 if not targetable_unit_ids.is_empty()
+		else selected_unit_id if selected_unit_id >= 0
+		else hover_unit_id
+	)
 	var preview_unit: Variant = _unit_by_id(preview_id)
 	if preview_unit != null:
 		_draw_action_preview(preview_unit)
 
-	_draw_commander(Vector2(82, grid.get_center().y), false)
-	_draw_commander(Vector2(size.x - 82, grid.get_center().y), true)
+	_draw_commander(
+		Vector2(82, grid.get_center().y), false, player_hp_text, player_deck_text
+	)
+	_draw_commander(
+		Vector2(size.x - 82, grid.get_center().y), true, enemy_hp_text, enemy_deck_text
+	)
+	if commander_effect_side >= 0:
+		_draw_commander_effect(
+			Vector2(size.x - 82 if commander_effect_side == 1 else 82, grid.get_center().y)
+		)
+	_draw_mana_indicator(Vector2(82, grid.get_center().y - 92), player_mana_text, false)
+	_draw_mana_indicator(Vector2(size.x - 82, grid.get_center().y - 92), enemy_mana_text, true)
 
 	for unit in units:
 		_draw_unit(unit)
 		if unit.id == selected_unit_id:
 			_draw_selection(unit)
+		if unit.id in targetable_unit_ids:
+			_draw_targetable(unit)
 		if unit.id == effect_unit_id:
 			_draw_effect(unit)
 
-	if not selected_card.is_empty() and enabled:
+	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
 		for row in ROWS:
 			var deploy := _cell_rect(row, 0).grow(-8)
 			if not _occupied(row, 0):
@@ -200,7 +256,10 @@ func _draw() -> void:
 				)
 
 	var selected_unit: Variant = _unit_by_id(selected_unit_id)
-	if selected_unit != null and enabled and not BattleRulesScript.is_taunted(selected_unit, units) and not selected_unit.get("repositioned", false):
+	if (
+		selected_unit != null and enabled and targetable_unit_ids.is_empty()
+		and not BattleRulesScript.is_taunted(selected_unit, units)
+	):
 		for target_row in ROWS:
 			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
 				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
@@ -218,24 +277,71 @@ func _draw() -> void:
 			Color("#91a7ce")
 		)
 
-func _draw_commander(center: Vector2, enemy: bool) -> void:
+func _draw_targetable(unit: Dictionary) -> void:
+	var rect := _cell_rect(unit.row, unit.col).grow(-4)
+	draw_style_box(
+		_box(Color(1.0, 0.72, 0.18, 0.16), Color("#ffd166"), 12, 4),
+		rect
+	)
+	var label_rect := Rect2(rect.position + Vector2(5, 5), Vector2(rect.size.x - 10, 18))
+	draw_style_box(_box(Color(0.08, 0.07, 0.03, 0.88), Color("#ffd166"), 6, 1), label_rect)
+	draw_string(
+		get_theme_default_font(),
+		label_rect.position + Vector2(0, 14),
+		"SELECT TARGET",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		label_rect.size.x,
+		11,
+		Color("#fff1b5")
+	)
+
+func _draw_commander(center: Vector2, enemy: bool, hp_text: String, deck_text: String) -> void:
 	var color := Color("#ed5b86") if enemy else Color("#50d4e8")
 	draw_circle(center, 48, Color(color, 0.12))
 	draw_circle(center, 34, Color("#0c1529"))
 	draw_arc(center, 35, 0, TAU, 40, color, 3)
-	var icon := "◆"
 	var font := get_theme_default_font()
-	var text_size := font.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 30)
-	draw_string(font, center - text_size / 2 + Vector2(0, text_size.y * 0.75), icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 30, color)
+	var hp_lines := hp_text.split("\n")
+	var hp_value: String = hp_lines[0] if not hp_lines.is_empty() else "HP"
+	draw_string(
+		font, center + Vector2(-36, 5), hp_value,
+		HORIZONTAL_ALIGNMENT_CENTER, 72, 16, Color("#f4f8ff")
+	)
+	if hp_lines.size() > 1:
+		draw_string(
+			font, center + Vector2(-36, 21), hp_lines[1],
+			HORIZONTAL_ALIGNMENT_CENTER, 72, 9, Color("#ffd166")
+		)
 	draw_string(
 		font,
-		center + Vector2(-55, 62),
-		"ENEMY" if enemy else "YOU",
+		center + Vector2(-55, 58),
+		"%s  ·  %s" % ["ENEMY" if enemy else "YOU", deck_text],
 		HORIZONTAL_ALIGNMENT_CENTER,
 		110,
-		12,
+		11,
 		Color("#91a7ce")
 	)
+
+func _draw_mana_indicator(center: Vector2, value: String, enemy: bool) -> void:
+	if value.is_empty():
+		return
+	var color := Color("#ff8ba8") if enemy else Color("#61e8ff")
+	var rect := Rect2(center - Vector2(55, 26), Vector2(110, 52))
+	draw_style_box(_box(Color(0.025, 0.05, 0.11, 0.86), color, 9, 2), rect)
+	draw_string(
+		get_theme_default_font(), rect.position + Vector2(0, 15), "MANA",
+		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, color
+	)
+	var lines := value.split("\n")
+	draw_string(
+		get_theme_default_font(), rect.position + Vector2(0, 32), lines[0],
+		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, Color("#fff1b5")
+	)
+	if lines.size() > 1:
+		draw_string(
+			get_theme_default_font(), rect.position + Vector2(0, 46), lines[1],
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 9, Color("#91a7ce")
+		)
 
 func _draw_unit(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-10.0)
@@ -255,10 +361,40 @@ func _draw_unit(unit: Dictionary) -> void:
 	draw_circle(Vector2(rect.end.x - 15, rect.position.y + 15), 13, Color("#e8b94f"))
 	draw_string(font, rect.position + Vector2(7, 20), hp_text, HORIZONTAL_ALIGNMENT_CENTER, 16, 12, Color.WHITE)
 	draw_string(font, Vector2(rect.end.x - 23, rect.position.y + 20), atk_text, HORIZONTAL_ALIGNMENT_CENTER, 16, 12, Color("#16203a"))
+	_draw_status_badges(unit, rect)
 
 	if not unit.ready:
 		draw_circle(center, minf(rect.size.x, rect.size.y) * 0.32, Color(0.05, 0.08, 0.15, 0.48))
 		draw_string(font, Vector2(rect.position.x, rect.end.y - 7), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, Color("#b8c2d9"))
+
+func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
+	var badges: Array = []
+	if unit.get("taunt_turns", 0) > 0:
+		badges.append({"label": "T%d" % unit.taunt_turns, "color": Color("#ff9d66")})
+	if unit.get("immobilized_turns", 0) > 0:
+		badges.append({"label": "I%d" % unit.immobilized_turns, "color": Color("#c99cff")})
+	if unit.get("fury_stacks", 0) > 0:
+		badges.append({"label": "F%d" % unit.fury_stacks, "color": Color("#ffd166")})
+	for effect in unit.get("effects", []):
+		var attack: int = effect.get("attack", 0)
+		var health: int = effect.get("health", 0)
+		var prefix := "+A" if attack > 0 else ("-A" if attack < 0 else ("+H" if health > 0 else "-H"))
+		var label := "%s%d" % [prefix, effect.get("turns", 0)]
+		var color := Color("#70e0a1") if attack >= 0 and health >= 0 else Color("#ff8f8f")
+		badges.append({"label": label, "color": color})
+	for index in mini(5, badges.size()):
+		var center := Vector2(rect.position.x + 11 + index * 20, rect.end.y - 11)
+		draw_circle(center, 9, Color(0.03, 0.05, 0.10, 0.92))
+		draw_arc(center, 9, 0, TAU, 16, badges[index].color, 2)
+		draw_string(
+			get_theme_default_font(),
+			center + Vector2(-8, 4),
+			badges[index].label,
+			HORIZONTAL_ALIGNMENT_CENTER,
+			16,
+			9,
+			badges[index].color
+		)
 
 func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
 	var icon_id: int = unit.get("icon", 0)
@@ -293,6 +429,19 @@ func _draw_effect(unit: Dictionary) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		rect.size.x,
 		14,
+		Color(effect_color, effect_strength)
+	)
+
+func _draw_commander_effect(center: Vector2) -> void:
+	var radius := 42.0 + (1.0 - effect_strength) * 14.0
+	draw_arc(center, radius, 0, TAU, 32, Color(effect_color, effect_strength), 4)
+	draw_string(
+		get_theme_default_font(),
+		center + Vector2(-58, -50 - (1.0 - effect_strength) * 18),
+		effect_label,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		116,
+		15,
 		Color(effect_color, effect_strength)
 	)
 

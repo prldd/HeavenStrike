@@ -14,6 +14,32 @@ func _run() -> void:
 	assert(game.main_menu_overlay.get_child(0).texture != null)
 	assert(game.squad_overlay.get_child(0) is TextureRect)
 	assert(game.squad_overlay.get_child(0).texture != null)
+	assert(game.speed_button.text == "SPEED 1×")
+	assert(game.end_button.get_parent() != game.hint_label.get_parent())
+	game._cycle_resolution_speed()
+	assert(game.resolution_speed == 2.0)
+	assert(game.combat_log_panel != null)
+	game.board.set_state(
+		[], {}, -1, true, "Choose a target.", [42],
+		"2 / 4\n2 LOCKED", "4 / 4\n0 LOCKED",
+		"18 HP\n2 SHIELD", "12 HP", "DECK 3", "DECK 2"
+	)
+	assert(game.board.targetable_unit_ids == [42])
+	assert(game.board.player_mana_text == "2 / 4\n2 LOCKED")
+	assert(game.board.enemy_mana_text == "4 / 4\n0 LOCKED")
+	assert(game.board.player_hp_text == "18 HP\n2 SHIELD")
+	assert(game.board.player_deck_text == "DECK 3")
+	assert(game._resolution_preview(0) == "UPCOMING · No ready units.")
+	var preview_unit: Dictionary = game._spawn_unit(game.roster[0], 0, 0, 0)
+	var preview_text: String = game._resolution_preview(0)
+	assert(preview_text.begins_with("UPCOMING · 1 %s" % preview_unit.name))
+	preview_unit.taunt_turns = 2
+	preview_unit.immobilized_turns = 1
+	preview_unit.fury_stacks = 3
+	assert(preview_unit.taunt_turns == 2)
+	assert(preview_unit.immobilized_turns == 1)
+	assert(preview_unit.fury_stacks == 3)
+	game.units.clear()
 	game._open_mission_select()
 	await process_frame
 	assert(game.mission_list.get_child_count() == 62)
@@ -47,5 +73,9 @@ func _run() -> void:
 	var add_name: String = game.squad_grid.get_child(0).unit_name
 	game._on_squad_drop(add_name, "barracks", "squad")
 	assert(game.editing_squad_names.count(add_name) <= 2)
+	if game.editing_squad_names.size() > 1:
+		var previous_vanguard: String = game.editing_squad_names[0]
+		game._set_vanguard(1)
+		assert(game.editing_squad_names[1] == previous_vanguard)
 	print("Skychain UI smoke tests passed.")
 	quit()

@@ -21,13 +21,15 @@ static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> b
 		return false
 	if target_row == unit.row:
 		return false
-	if unit.get("repositioned", false) or is_taunted(unit, units):
+	if is_taunted(unit, units):
 		return false
 	var direction := 1 if target_row > unit.row else -1
 	for row in range(unit.row + direction, target_row + direction, direction):
 		for other in units:
 			if other.get("id", -1) != unit.id and other.row == row and other.col == unit.col:
-				return false
+				# Friendly units may be crossed, but no unit may share the destination.
+				if row == target_row or other.side != unit.side:
+					return false
 	return true
 
 static func attack_cells(unit: Dictionary) -> Array:

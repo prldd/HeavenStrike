@@ -150,17 +150,23 @@ static func choose_weighted_reward(candidates: Array, roll: float = -1.0) -> Str
 			return candidates[index].name
 	return candidates[-1].name
 
-static func enemy_squad_names(mission_id: int, roster: Array) -> Array:
+static func enemy_squad_names(
+	mission_id: int, encounter_index: int, roster: Array
+) -> Array:
 	var names: Array = []
 	if roster.is_empty():
 		return names
-	var offset: int = maxi(0, mission_id) * 3
-	for index in SquadStoreScript.SQUAD_SIZE:
-		var roster_index: int = (index + offset) % roster.size()
-		var unit_name: String = roster[roster_index].name
-		if names.count(unit_name) < 2:
+	var mission_encounter := encounter(mission_id, encounter_index)
+	var configured: Array = mission_encounter.get("enemy_squad", [])
+	var valid_names: Array = roster.map(func(unit): return unit.name)
+	for unit_name in configured:
+		if unit_name in valid_names and names.count(unit_name) < 2:
 			names.append(unit_name)
-	return names
+		if names.size() >= SquadStoreScript.SQUAD_SIZE:
+			break
+	if not names.is_empty():
+		return names
+	return SquadStoreScript.default_squad(roster)
 
 static func encounter(mission_id: int, encounter_index: int) -> Dictionary:
 	if mission_id < 0 or mission_id >= MISSIONS.size():

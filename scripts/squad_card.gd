@@ -1,16 +1,22 @@
 class_name SquadCard
 extends Button
 
-signal unit_dropped(dropped_unit_name: String, source: String)
+signal unit_dropped(
+	dropped_unit_name: String, source: String, source_index: int, target_index: int
+)
 
 var unit_name := ""
 var drag_source := ""
 var drag_texture: Texture2D
+var slot_index := -1
 
-func configure(name_value: String, source_value: String, texture: Texture2D) -> void:
+func configure(
+	name_value: String, source_value: String, texture: Texture2D, index_value: int = -1
+) -> void:
 	unit_name = name_value
 	drag_source = source_value
 	drag_texture = texture
+	slot_index = index_value
 
 func _get_drag_data(_position: Vector2):
 	if unit_name.is_empty() or disabled:
@@ -21,15 +27,27 @@ func _get_drag_data(_position: Vector2):
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	set_drag_preview(preview)
-	return {"unit_name": unit_name, "source": drag_source}
+	return {
+		"unit_name": unit_name,
+		"source": drag_source,
+		"source_index": slot_index
+	}
 
 func _can_drop_data(_position: Vector2, data) -> bool:
 	return (
 		data is Dictionary
 		and data.has("unit_name")
 		and data.has("source")
-		and data.source != drag_source
+		and (
+			data.source != drag_source
+			or (drag_source == "squad" and data.get("source_index", -1) != slot_index)
+		)
 	)
 
 func _drop_data(_position: Vector2, data) -> void:
-	unit_dropped.emit(str(data.unit_name), str(data.source))
+	unit_dropped.emit(
+		str(data.unit_name),
+		str(data.source),
+		int(data.get("source_index", -1)),
+		slot_index
+	)

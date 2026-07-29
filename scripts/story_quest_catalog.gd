@@ -97,6 +97,12 @@ const SKILLS := [
 	"Lightning Burst", "Healing Wave", "Firestorm", "Last Stand"
 ]
 
+const ENEMY_CORE := [
+	"Trinity Rusher", "Pub Bouncer", "Socialite Fencer", "Trinity Potshot",
+	"Claw Caster", "Chain Initiate", "LDF Peacekeeper", "Rage Spellslinger",
+	"Claw Slicer", "Factory Markswoman", "Trinity Basher", "LDF Medic"
+]
+
 static func build_missions() -> Array:
 	var missions: Array = []
 	for index in QUESTS.size():
@@ -115,8 +121,10 @@ static func build_missions() -> Array:
 			encounters.append({
 				"title": short_title if battle_index == battle_count - 1 else "%s · Approach %d" % [short_title, battle_index + 1],
 				"enemy_hp": hp,
-				"squad_offset": index * 3 + battle_index * 2,
-				"skill": SKILLS[(index + battle_index) % SKILLS.size()]
+				"skill": SKILLS[(index + battle_index) % SKILLS.size()],
+				"enemy_squad": _enemy_squad_for(
+					index, battle_index, reference_pool
+				)
 			})
 		missions.append({
 			"id": index,
@@ -127,3 +135,27 @@ static func build_missions() -> Array:
 			"reward_pool": reward_pool
 		})
 	return missions
+
+static func _enemy_squad_for(
+	mission_index: int, battle_index: int, featured_units: Array
+) -> Array:
+	var squad: Array = []
+	var featured := featured_units.duplicate()
+	var featured_offset := (
+		0 if featured.is_empty()
+		else (mission_index + battle_index) % featured.size()
+	)
+	for step in featured.size():
+		if squad.size() >= 3:
+			break
+		var unit_name: String = featured[(featured_offset + step) % featured.size()]
+		if squad.count(unit_name) < 2:
+			squad.append(unit_name)
+	var offset := (mission_index * 2 + battle_index * 3) % ENEMY_CORE.size()
+	for step in ENEMY_CORE.size():
+		if squad.size() >= 8:
+			break
+		var unit_name: String = ENEMY_CORE[(offset + step) % ENEMY_CORE.size()]
+		if squad.count(unit_name) < 2:
+			squad.append(unit_name)
+	return squad

@@ -47,7 +47,9 @@ Before battle, each side prepares a squad of up to 8 units:
 - A squad may contain no more than two copies of the same unit.
 - The Barracks begins with one copy of every base-set card and permanently keeps every card reward, including duplicates.
 - Players can drag cards between Barracks and Squad; clicking a selected squad card removes one copy.
+- Players can drag selected cards to reorder the squad or right-click a card to make it the Vanguard.
 - PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
+- Each campaign encounter defines its own eight-card enemy squad and Captain skill.
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
@@ -108,7 +110,7 @@ The match continues until a Commander reaches zero health. If both Commanders ar
 - If no unit blocks an attack at the end of a lane, the enemy Commander takes the damage.
 - The first and seventh columns are deployment and Commander zones. Units may deploy there, but opposing units stop in the adjacent column and attack into the zone instead of entering it.
 - Newly deployed units move and attack during the resolution phase of the turn in which they are placed.
-- Each deployed unit may reposition once per Command phase without losing its normal activation.
+- Deployed units may reposition any number of times during the Command phase without losing their normal activation. They may cross friendly units, but cannot cross enemies or finish on an occupied cell.
 - A lane change may cross multiple rows, but every crossed tile must be unoccupied.
 - A unit hit by a Defender's Taunting Strike cannot change lanes for its next two turns.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
@@ -208,6 +210,8 @@ Combat information must remain readable even when several abilities resolve in s
 The project will use Godot 4 and target desktop first at a touch-friendly 16:9 resolution. Unit and ability data will be stored as Godot Resources so content can be balanced without changing combat code.
 
 The battle simulation will be separated from animation and interface code. It will produce an ordered list of events—movement, attacks, healing, status changes, and defeats—which the presentation layer then animates. This supports reliable AI testing, replays, faster debugging, and possible future network play.
+
+The current presentation layer previews each side's upcoming activation order before resolution, identifies unit class and secondary-skill timing in the combat log, animates combat results, and displays persistent counters for Taunt, Immobilise, Fury, buffs, and debuffs.
 
 ## First Milestone
 

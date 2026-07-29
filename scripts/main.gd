@@ -27,12 +27,9 @@ const ENEMY := 1
 const ROWS := 3
 const COLS := 7
 const BENCH_LIMIT := 6
-const STARTING_HP := 24
+const STARTING_HP := 20
 
 var board: BoardView
-var player_hp_label: Label
-var enemy_hp_label: Label
-var energy_label: Label
 var turn_label: Label
 var hint_label: Label
 var hand_row: HBoxContainer
@@ -61,6 +58,9 @@ var hover_card: PanelContainer
 var hover_name_label: Label
 var hover_stats_label: Label
 var hover_ability_label: Label
+var speed_button: Button
+var combat_log_panel: PanelContainer
+var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
 var mission_list: VBoxContainer
@@ -95,6 +95,7 @@ var draw_index := 0
 var enemy_draw_index := 0
 var selected_hand_index := -1
 var selected_board_unit_id := -1
+var pending_empower_actor_id := -1
 var next_unit_id := 1
 var round_number := 1
 var player_hp := STARTING_HP
@@ -113,6 +114,9 @@ var input_enabled := true
 var battle_over := false
 var status_message := ""
 var has_shown_tutorial := false
+var resolution_speed := 1.0
+var combat_log_lines: Array = []
+var last_logged_message := ""
 
 func _ready() -> void:
 	_build_interface()
@@ -153,9 +157,6 @@ func _build_interface() -> void:
 	brand.custom_minimum_size.x = 170
 	header.add_child(brand)
 
-	player_hp_label = _stat_label(Color("#62e7ff"))
-	header.add_child(player_hp_label)
-
 	turn_label = Label.new()
 	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	turn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -163,8 +164,9 @@ func _build_interface() -> void:
 	turn_label.add_theme_font_size_override("font_size", 18)
 	header.add_child(turn_label)
 
-	enemy_hp_label = _stat_label(Color("#ff668f"))
-	header.add_child(enemy_hp_label)
+	var header_balance := Control.new()
+	header_balance.custom_minimum_size.x = 170
+	header.add_child(header_balance)
 
 	board = BoardViewScript.new()
 	board.custom_minimum_size = Vector2(0, 370)
@@ -175,56 +177,73 @@ func _build_interface() -> void:
 	board.unit_hover_ended.connect(_hide_unit_details)
 	root.add_child(board)
 
-	var control_bar := HBoxContainer.new()
-	control_bar.custom_minimum_size.y = 34
+	var control_bar := VBoxContainer.new()
+	control_bar.custom_minimum_size.y = 62
 	control_bar.add_theme_constant_override("separation", 8)
 	root.add_child(control_bar)
 
-	energy_label = Label.new()
-	energy_label.custom_minimum_size.x = 160
-	energy_label.add_theme_font_size_override("font_size", 16)
-	energy_label.add_theme_color_override("font_color", Color("#ffd166"))
-	control_bar.add_child(energy_label)
+	var status_row := HBoxContainer.new()
+	status_row.add_theme_constant_override("separation", 8)
+	control_bar.add_child(status_row)
 
 	hint_label = Label.new()
 	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint_label.add_theme_color_override("font_color", Color("#9fb2d6"))
-	control_bar.add_child(hint_label)
+	status_row.add_child(hint_label)
+
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_END
+	action_row.add_theme_constant_override("separation", 8)
+	control_bar.add_child(action_row)
 
 	power_button = Button.new()
 	power_button.text = "RALLY"
 	power_button.tooltip_text = "Once per battle: all allies gain +1 ATK."
 	power_button.custom_minimum_size.x = 135
 	power_button.pressed.connect(_use_player_power)
-	control_bar.add_child(power_button)
+	action_row.add_child(power_button)
+
+	speed_button = Button.new()
+	speed_button.text = "SPEED 1×"
+	speed_button.tooltip_text = "Cycle combat resolution speed."
+	speed_button.custom_minimum_size.x = 92
+	speed_button.pressed.connect(_cycle_resolution_speed)
+	action_row.add_child(speed_button)
+
+	var log_button := Button.new()
+	log_button.text = "LOG"
+	log_button.tooltip_text = "Show or hide the combat action log."
+	log_button.custom_minimum_size.x = 54
+	log_button.pressed.connect(_toggle_combat_log)
+	action_row.add_child(log_button)
 
 	var help_button := Button.new()
 	help_button.text = "?"
 	help_button.tooltip_text = "How to play"
 	help_button.custom_minimum_size.x = 42
 	help_button.pressed.connect(_open_tutorial)
-	control_bar.add_child(help_button)
+	action_row.add_child(help_button)
 
 	var squad_button := Button.new()
 	squad_button.text = "SQUAD"
 	squad_button.tooltip_text = "Choose the 8 units in your battle squad."
 	squad_button.custom_minimum_size.x = 78
 	squad_button.pressed.connect(_open_squad_builder)
-	control_bar.add_child(squad_button)
+	action_row.add_child(squad_button)
 
 	menu_button = Button.new()
 	menu_button.text = "MENU"
 	menu_button.custom_minimum_size.x = 64
 	menu_button.pressed.connect(_show_main_menu)
-	control_bar.add_child(menu_button)
+	action_row.add_child(menu_button)
 
 	end_button = Button.new()
 	end_button.text = "RESOLVE TURN"
 	end_button.custom_minimum_size.x = 145
 	end_button.pressed.connect(_end_player_turn)
-	control_bar.add_child(end_button)
+	action_row.add_child(end_button)
 
 	hand_row = HBoxContainer.new()
 	hand_row.custom_minimum_size.y = 104
@@ -232,12 +251,70 @@ func _build_interface() -> void:
 	hand_row.add_theme_constant_override("separation", 6)
 	root.add_child(hand_row)
 
+	_build_combat_log()
 	_build_overlay()
 	_build_tutorial()
 	_build_squad_builder()
 	_build_main_menu()
 	_build_mission_select()
 	_build_hover_card()
+
+func _build_combat_log() -> void:
+	combat_log_panel = PanelContainer.new()
+	combat_log_panel.set_anchor(SIDE_LEFT, 1.0)
+	combat_log_panel.set_anchor(SIDE_RIGHT, 1.0)
+	combat_log_panel.offset_left = -430
+	combat_log_panel.offset_right = -18
+	combat_log_panel.offset_top = 72
+	combat_log_panel.offset_bottom = 410
+	combat_log_panel.z_index = 80
+	combat_log_panel.visible = false
+	add_child(combat_log_panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	combat_log_panel.add_child(layout)
+	var heading := HBoxContainer.new()
+	layout.add_child(heading)
+	var title := Label.new()
+	title.text = "COMBAT LOG"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	heading.add_child(title)
+	var close := Button.new()
+	close.text = "×"
+	close.pressed.connect(_toggle_combat_log)
+	heading.add_child(close)
+	combat_log_label = RichTextLabel.new()
+	combat_log_label.bbcode_enabled = false
+	combat_log_label.scroll_following = true
+	combat_log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(combat_log_label)
+
+func _toggle_combat_log() -> void:
+	combat_log_panel.visible = not combat_log_panel.visible
+
+func _cycle_resolution_speed() -> void:
+	if resolution_speed < 1.5:
+		resolution_speed = 2.0
+	elif resolution_speed < 3.0:
+		resolution_speed = 4.0
+	else:
+		resolution_speed = 1.0
+	speed_button.text = "SPEED %d×" % int(resolution_speed)
+
+func _wait(seconds: float) -> void:
+	await get_tree().create_timer(seconds / resolution_speed).timeout
+
+func _log_action(message: String) -> void:
+	if message.is_empty() or message == last_logged_message:
+		return
+	last_logged_message = message
+	combat_log_lines.append(message)
+	if combat_log_lines.size() > 60:
+		combat_log_lines.pop_front()
+	if combat_log_label != null:
+		combat_log_label.text = "\n".join(combat_log_lines)
 
 func _build_overlay() -> void:
 	overlay = ColorRect.new()
@@ -384,7 +461,7 @@ func _update_tutorial() -> void:
 	var pages := [
 		"1 / 5\nSELECT A CARD\nCards show Mana cost, class, attack, health, and their special ability.",
 		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units move and attack when the turn resolves.",
-		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in another row. Units cannot shift through an occupied tile, and may shift once per turn.",
+		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in another row. Friendly units may be crossed, enemies block the path, and you may reposition any number of times.",
 		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Defender cannot change rows for its next two turns.",
 		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
 	]
@@ -431,7 +508,7 @@ func _build_squad_builder() -> void:
 	title_row.add_child(squad_count_label)
 
 	var instruction := Label.new()
-	instruction.text = "Drag cards between Barracks and Squad, or click to add/remove. Maximum 2 copies per unit; first card is Vanguard."
+	instruction.text = "Drag squad cards to reorder them. Slot 1 is the Vanguard; right-click any squad card to make it Vanguard. Maximum 2 copies per unit."
 	instruction.add_theme_color_override("font_color", Color("#aebdda"))
 	layout.add_child(instruction)
 
@@ -629,7 +706,7 @@ func _rebuild_squad_grid() -> void:
 		]
 		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(_add_squad_unit.bind(unit.name))
-		button.connect("unit_dropped", _on_squad_drop.bind("barracks"))
+		button.connect("unit_dropped", _on_squad_card_drop)
 		button.mouse_entered.connect(_show_unit_details.bind(unit))
 		button.mouse_exited.connect(_hide_unit_details)
 		squad_grid.add_child(button)
@@ -639,7 +716,7 @@ func _rebuild_squad_grid() -> void:
 		if unit.is_empty():
 			continue
 		var card: Button = SquadCardScript.new()
-		card.configure(unit.name, "squad", _unit_icon(unit.icon))
+		card.configure(unit.name, "squad", _unit_icon(unit.icon), index)
 		card.custom_minimum_size = Vector2(0, 72)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
@@ -651,7 +728,8 @@ func _rebuild_squad_grid() -> void:
 		]
 		card.add_theme_font_size_override("font_size", 11)
 		card.pressed.connect(_remove_squad_unit_at.bind(index))
-		card.connect("unit_dropped", _on_squad_drop.bind("squad"))
+		card.connect("unit_dropped", _on_squad_card_drop)
+		card.gui_input.connect(_on_squad_card_gui_input.bind(index))
 		card.mouse_entered.connect(_show_unit_details.bind(unit))
 		card.mouse_exited.connect(_hide_unit_details)
 		squad_selection_grid.add_child(card)
@@ -661,6 +739,46 @@ func _rebuild_squad_grid() -> void:
 	squad_save_button.disabled = editing_squad_names.is_empty()
 	squad_start_button.visible = squad_opened_for_mission
 	squad_start_button.disabled = editing_squad_names.is_empty()
+
+func _on_squad_card_drop(
+	unit_name: String, source: String, source_index: int, target_index: int
+) -> void:
+	if target_index < 0:
+		if source == "squad":
+			_remove_squad_unit_at(source_index)
+		return
+	if source == "squad":
+		_move_squad_unit(source_index, target_index)
+	elif source == "barracks":
+		var previous_size := editing_squad_names.size()
+		_add_squad_unit(unit_name)
+		if editing_squad_names.size() > previous_size:
+			_move_squad_unit(editing_squad_names.size() - 1, target_index)
+
+func _move_squad_unit(from_index: int, to_index: int) -> void:
+	if (
+		from_index < 0 or from_index >= editing_squad_names.size()
+		or to_index < 0 or to_index >= editing_squad_names.size()
+		or from_index == to_index
+	):
+		return
+	var unit_name: String = editing_squad_names[from_index]
+	editing_squad_names.remove_at(from_index)
+	editing_squad_names.insert(to_index, unit_name)
+	_rebuild_squad_grid()
+
+func _set_vanguard(index: int) -> void:
+	if index <= 0 or index >= editing_squad_names.size():
+		return
+	_move_squad_unit(index, 0)
+
+func _on_squad_card_gui_input(event: InputEvent, index: int) -> void:
+	if (
+		event is InputEventMouseButton
+		and event.button_index == MOUSE_BUTTON_RIGHT
+		and event.pressed
+	):
+		_set_vanguard(index)
 
 func _save_squad() -> void:
 	if editing_squad_names.is_empty() or editing_squad_names.size() > SquadStoreScript.SQUAD_SIZE:
@@ -836,6 +954,7 @@ func _show_main_menu() -> void:
 	tutorial_overlay.visible = false
 	overlay.visible = false
 	hover_card.visible = false
+	combat_log_panel.visible = false
 	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
 	resume_button.disabled = saved_run.is_empty()
 	resume_button.text = "RESUME MISSION"
@@ -1101,14 +1220,19 @@ func _position_hover_card() -> void:
 
 func _start_new_match() -> void:
 	units.clear()
+	combat_log_lines.clear()
+	last_logged_message = ""
+	if combat_log_label != null:
+		combat_log_label.text = ""
 	player_hand.clear()
 	enemy_hand.clear()
 	battle_deck = SquadStoreScript.shuffle_for_battle(
 		SquadStoreScript.build_deck(squad_names, roster)
 	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
-	var enemy_squad_id: int = encounter.get("squad_offset", 0)
-	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(enemy_squad_id, roster)
+	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(
+		current_mission_id, current_encounter_index, roster
+	)
 	enemy_deck = SquadStoreScript.shuffle_for_battle(
 		SquadStoreScript.build_deck(enemy_squad_names, roster)
 	)
@@ -1116,6 +1240,7 @@ func _start_new_match() -> void:
 	enemy_draw_index = 0
 	selected_hand_index = -1
 	selected_board_unit_id = -1
+	pending_empower_actor_id = -1
 	next_unit_id = 1
 	round_number = 1
 	player_hp = mission_run_captain_hp if campaign_battle else STARTING_HP
@@ -1161,19 +1286,14 @@ func _draw_enemy_card() -> void:
 	enemy_draw_index += 1
 
 func _refresh() -> void:
-	player_hp_label.text = "◆  %02d HP%s\n%d HAND · %d DECK" % [
-		player_hp, " · %d SHIELD" % player_shield if player_shield > 0 else "",
-		player_hand.size(), battle_deck.size() - draw_index
-	]
-	enemy_hp_label.text = "%02d HP%s  ◆\n%d HAND · %d DECK" % [
-		enemy_hp, " · %d SHIELD" % enemy_shield if enemy_shield > 0 else "",
-		enemy_hand.size(), enemy_deck.size() - enemy_draw_index
-	]
-	var locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
-	energy_label.text = "MANA  %d / %d  ·  %d LOCKED" % [player_energy, player_max_energy, locked_mana]
+	_log_action(status_message)
+	var player_locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
+	var enemy_locked_mana := BattleRulesScript.locked_mana(units, ENEMY)
 	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
 	hint_label.text = status_message
-	end_button.disabled = not input_enabled or battle_over
+	end_button.disabled = (
+		not input_enabled or battle_over or pending_empower_actor_id >= 0
+	)
 	menu_button.disabled = not input_enabled or battle_over
 	power_button.disabled = not input_enabled or player_power_used or battle_over
 	power_button.text = "%s USED" % player_captain_skill.to_upper() if player_power_used else player_captain_skill.to_upper()
@@ -1182,7 +1302,21 @@ func _refresh() -> void:
 	var selected := {}
 	if selected_hand_index >= 0 and selected_hand_index < player_hand.size():
 		selected = player_hand[selected_hand_index]
-	board.set_state(units, selected, selected_board_unit_id, input_enabled and not battle_over, status_message)
+	var targetable_ids: Array = []
+	if pending_empower_actor_id >= 0:
+		targetable_ids = units.filter(
+			func(unit): return unit.side == PLAYER and unit.id != pending_empower_actor_id
+		).map(func(unit): return unit.id)
+	board.set_state(
+		units, selected, selected_board_unit_id,
+		input_enabled and not battle_over, status_message, targetable_ids,
+		"%d / %d\n%d LOCKED" % [player_energy, player_max_energy, player_locked_mana],
+		"%d / %d\n%d LOCKED" % [enemy_energy, enemy_max_energy, enemy_locked_mana],
+		"%d HP%s" % [player_hp, "\n%d SHIELD" % player_shield if player_shield > 0 else ""],
+		"%d HP%s" % [enemy_hp, "\n%d SHIELD" % enemy_shield if enemy_shield > 0 else ""],
+		"DECK %d" % (battle_deck.size() - draw_index),
+		"DECK %d" % (enemy_deck.size() - enemy_draw_index)
+	)
 	_rebuild_hand()
 
 func _rebuild_hand() -> void:
@@ -1244,6 +1378,10 @@ func _show_card_reward(unit_name: String, is_new: bool) -> void:
 func _select_card(index: int) -> void:
 	if not input_enabled:
 		return
+	if pending_empower_actor_id >= 0:
+		status_message = "Choose an allied target for Empower first."
+		_refresh()
+		return
 	selected_hand_index = -1 if selected_hand_index == index else index
 	selected_board_unit_id = -1
 	if selected_hand_index >= 0:
@@ -1256,6 +1394,18 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 	if not input_enabled or battle_over:
 		return
 	var clicked = _unit_at(row, col)
+	if pending_empower_actor_id >= 0:
+		var actor = _unit_by_id(pending_empower_actor_id)
+		if (
+			actor != null and clicked != null
+			and clicked.side == PLAYER and clicked.id != actor.id
+		):
+			pending_empower_actor_id = -1
+			status_message = _resolve_warcry(actor, clicked.id)
+		else:
+			status_message = "Choose another allied unit as Empower's target."
+		_refresh()
+		return
 	if selected_board_unit_id >= 0:
 		var selected = _unit_by_id(selected_board_unit_id)
 		if selected == null:
@@ -1266,9 +1416,8 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 		elif BattleRulesScript.can_reposition(selected, row, units) and col == selected.col:
 			var old_row: int = selected.row
 			selected.row = row
-			selected.repositioned = true
-			selected_board_unit_id = -1
-			status_message = "%s shifts from lane %d to lane %d." % [selected.name, old_row + 1, row + 1]
+			selected_board_unit_id = selected.id
+			status_message = "%s shifts from lane %d to lane %d. Choose another lane or continue." % [selected.name, old_row + 1, row + 1]
 			board.play_unit_effect(selected.id, "SHIFT", Color("#71e6f5"))
 		else:
 			status_message = _reposition_block_reason(selected, row, col)
@@ -1280,15 +1429,11 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 	_refresh()
 
 func _reposition_status(unit: Dictionary) -> String:
-	if unit.get("repositioned", false):
-		return "%s has already changed lanes this turn." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted by a Defender and cannot leave this lane." % unit.name
 	return "Choose a reachable highlighted tile in another lane to reposition %s." % unit.name
 
 func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
-	if unit.get("repositioned", false):
-		return "%s has already repositioned this turn." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted and must remain in its lane." % unit.name
 	if col != unit.col or row == unit.row:
@@ -1297,6 +1442,10 @@ func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
 
 func _on_deployment_clicked(row: int) -> void:
 	if not input_enabled or selected_hand_index < 0 or selected_hand_index >= player_hand.size():
+		return
+	if pending_empower_actor_id >= 0:
+		status_message = "Choose an allied target for Empower first."
+		_refresh()
 		return
 	if _unit_at(row, 0) != null:
 		status_message = "That deployment tile is occupied."
@@ -1338,6 +1487,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"repositioned": false,
 		"taunt_turns": 0,
 		"immobilized_turns": 0,
+		"fury_stacks": 0,
 		"effects": []
 	}
 	units.append(spawned)
@@ -1345,12 +1495,29 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 	UnitSkillsScript.refresh_auras(units)
 	return spawned
 
-func _resolve_warcry(actor: Dictionary) -> String:
-	var result: Dictionary = UnitSkillsScript.resolve_warcry(actor, units)
+func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
+	var skill: Dictionary = actor.get("skill", {})
+	var has_other_ally := units.any(
+		func(unit): return unit.side == PLAYER and unit.id != actor.id
+	)
+	if (
+		actor.side == PLAYER and skill.get("name", "") == "Empower"
+		and target_id < 0
+		and has_other_ally
+	):
+		pending_empower_actor_id = actor.id
+		return "Choose another allied unit as Empower's target."
+	var result: Dictionary = UnitSkillsScript.resolve_warcry(actor, units, target_id)
 	for unit_id in result.affected:
 		var target = _unit_by_id(unit_id)
 		if target != null:
-			board.play_unit_effect(target.id, "WARCRY", Color("#ffd166"))
+			board.play_unit_effect(
+				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
+			)
+	if not result.message.is_empty():
+		_log_action("%s [WARCRY · %s] %s" % [
+			actor.name, skill.get("name", "Unknown"), result.message
+		])
 	_remove_defeated()
 	UnitSkillsScript.refresh_auras(units)
 	return result.message
@@ -1367,6 +1534,13 @@ func _use_player_power() -> void:
 func _end_player_turn() -> void:
 	if not input_enabled or battle_over:
 		return
+	if pending_empower_actor_id >= 0:
+		status_message = "Choose an allied target for Empower before resolving."
+		_refresh()
+		return
+	status_message = _resolution_preview(PLAYER)
+	_refresh()
+	await _wait(0.8)
 	input_enabled = false
 	selected_hand_index = -1
 	selected_board_unit_id = -1
@@ -1376,7 +1550,7 @@ func _end_player_turn() -> void:
 	_expire_side_effects(PLAYER)
 	if _check_game_over():
 		return
-	await get_tree().create_timer(0.35).timeout
+	await _wait(0.35)
 	await _enemy_turn()
 
 func _enemy_turn() -> void:
@@ -1392,7 +1566,7 @@ func _enemy_turn() -> void:
 		_draw_enemy_card()
 	status_message = "Enemy is deploying..."
 	_refresh()
-	await get_tree().create_timer(0.55).timeout
+	await _wait(0.55)
 	await _enemy_reposition_units()
 
 	var attempts := 0
@@ -1412,16 +1586,24 @@ func _enemy_turn() -> void:
 			if not warcry_message.is_empty():
 				status_message += " " + warcry_message
 		_refresh()
-		await get_tree().create_timer(0.35).timeout
+		await _wait(0.35)
 		attempts += 1
 
-	if not enemy_power_used and (round_number >= 2 or enemy_hp <= 8):
+	if (
+		not enemy_power_used
+		and BattleAIScript.should_use_captain_skill(
+			enemy_captain_skill, round_number, enemy_hp, units
+		)
+	):
 		if _apply_captain_skill(ENEMY, enemy_captain_skill):
 			enemy_power_used = true
 			status_message = "Enemy Captain: " + status_message
 			_refresh()
-			await get_tree().create_timer(0.45).timeout
+			await _wait(0.45)
 
+	status_message = _resolution_preview(ENEMY)
+	_refresh()
+	await _wait(0.8)
 	status_message = "Enemy units advance."
 	_refresh()
 	await _resolve_side(ENEMY)
@@ -1448,26 +1630,14 @@ func _enemy_reposition_units() -> void:
 		var unit = _unit_by_id(unit_id)
 		if unit == null or BattleRulesScript.is_taunted(unit, units):
 			continue
-		var current_threat := _player_lane_threat(unit.row, unit.col)
-		var best_row: int = unit.row
-		var best_threat := current_threat
-		for candidate_row in ROWS:
-			if candidate_row == unit.row:
-				continue
-			if not BattleRulesScript.can_reposition(unit, candidate_row, units):
-				continue
-			var candidate_threat := _player_lane_threat(candidate_row, unit.col)
-			if candidate_threat < best_threat:
-				best_threat = candidate_threat
-				best_row = candidate_row
+		var best_row: int = BattleAIScript.choose_reposition(unit, units)
 		if best_row != unit.row:
 			var old_row: int = unit.row
 			unit.row = best_row
-			unit.repositioned = true
 			status_message = "%s shifts from lane %d to lane %d." % [unit.name, old_row + 1, best_row + 1]
 			board.play_unit_effect(unit.id, "SHIFT", Color("#ff8b9f"))
 			_refresh()
-			await get_tree().create_timer(0.28).timeout
+			await _wait(0.28)
 
 func _player_lane_threat(row: int, enemy_col: int) -> int:
 	var threat := 0
@@ -1496,29 +1666,58 @@ func _resolve_side(side: int) -> void:
 		_refresh()
 		if player_hp <= 0 or enemy_hp <= 0:
 			return
-		await get_tree().create_timer(0.32).timeout
+		await _wait(0.32)
+
+func _resolution_preview(side: int) -> String:
+	var ordered := units.filter(func(unit): return unit.side == side and unit.ready)
+	ordered.sort_custom(func(a, b):
+		if a.col == b.col:
+			return a.row < b.row
+		return a.col > b.col if side == PLAYER else a.col < b.col
+	)
+	if ordered.is_empty():
+		return "UPCOMING · No ready units."
+	var entries: Array[String] = []
+	for index in mini(3, ordered.size()):
+		var unit: Dictionary = ordered[index]
+		var preview: Dictionary = BattleRulesScript.projected_action(unit.id, units)
+		var move_count: int = preview.get("traversal", []).size()
+		var attack_count: int = preview.get("attack", []).size()
+		entries.append("%d %s M%d→A%d" % [index + 1, unit.name, move_count, attack_count])
+	if ordered.size() > 3:
+		entries.append("+%d more (see LOG)" % (ordered.size() - 3))
+	return "UPCOMING · " + "  |  ".join(entries)
+
+func _actor_tag(actor: Dictionary) -> String:
+	var unit_class: String = UnitCatalogScript.display_class(actor.kind)
+	var skill: Dictionary = actor.get("skill", {})
+	if skill.is_empty():
+		return "%s [%s]" % [actor.name, unit_class]
+	return "%s [%s · %s %s]" % [
+		actor.name, unit_class, skill.get("type", "Skill"), skill.get("name", "Unknown")
+	]
 
 func _activate_unit(actor: Dictionary) -> void:
 	if actor.kind == "Lifebinder":
 		var healing_target = _lowest_health_ally(actor)
 		if healing_target != null:
 			healing_target.hp += 2
-			status_message = "%s heals %s for 2 HP." % [actor.name, healing_target.name]
+			status_message = "%s heals %s for 2 HP." % [_actor_tag(actor), healing_target.name]
 			board.play_unit_effect(healing_target.id, "+2 HP", Color("#70e0a1"))
 			_refresh()
-			await get_tree().create_timer(0.22).timeout
+			await _wait(0.22)
 
 	var path: Array = BattleRulesScript.traversal_cells(actor, units)
 	if not path.is_empty():
 		actor.col = path[-1].x
 		status_message = "%s advances %d space%s." % [
-			actor.name, path.size(), "" if path.size() == 1 else "s"
+			_actor_tag(actor), path.size(), "" if path.size() == 1 else "s"
 		]
 		board.play_unit_effect(actor.id, "ADVANCE", Color("#71e6f5"))
 		_refresh()
-		await get_tree().create_timer(0.22).timeout
+		await _wait(0.22)
 	else:
-		status_message = "%s cannot advance." % actor.name
+		status_message = "%s cannot advance." % _actor_tag(actor)
 
 	var target = _find_target(actor)
 	if target != null:
@@ -1529,12 +1728,13 @@ func _activate_unit(actor: Dictionary) -> void:
 			if target == null:
 				break
 			target.hp -= actor.atk
-			status_message = "%s hits %s for %d." % [actor.name, target.name, actor.atk]
+			status_message = "%s hits %s for %d." % [_actor_tag(actor), target.name, actor.atk]
 			board.play_unit_effect(target.id, "-%d" % actor.atk, Color("#ff668f"))
 			_apply_special_damage(actor, target)
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
+				board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
 			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(actor, target, units)
 			if not strike_result.message.is_empty():
 				status_message += " " + strike_result.message
@@ -1545,10 +1745,12 @@ func _activate_unit(actor: Dictionary) -> void:
 			_remove_defeated()
 			_refresh()
 			if hit + 1 < strikes:
-				await get_tree().create_timer(0.18).timeout
+				await _wait(0.18)
 		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
 			actor.atk += 1
+			actor.fury_stacks = actor.get("fury_stacks", 0) + 1
 			status_message += " Its ATK rises."
+			board.play_unit_effect(actor.id, "FURY +1", Color("#ffd166"))
 		return
 
 	if _commander_in_range(actor):
@@ -1557,12 +1759,15 @@ func _activate_unit(actor: Dictionary) -> void:
 		var dealt: int
 		if actor.side == PLAYER:
 			dealt = _damage_captain(ENEMY, damage)
-			status_message = "%s strikes the enemy Commander for %d!" % [actor.name, dealt]
+			status_message = "%s strikes the enemy Commander for %d!" % [_actor_tag(actor), dealt]
+			board.play_commander_effect(ENEMY, "-%d HP" % dealt, Color("#ff668f"))
 		else:
 			dealt = _damage_captain(PLAYER, damage)
-			status_message = "%s strikes your Commander for %d!" % [actor.name, dealt]
+			status_message = "%s strikes your Commander for %d!" % [_actor_tag(actor), dealt]
+			board.play_commander_effect(PLAYER, "-%d HP" % dealt, Color("#ff668f"))
 		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
 			actor.atk += 1
+			actor.fury_stacks = actor.get("fury_stacks", 0) + 1
 			status_message += " Fury grants +1 ATK."
 		return
 
@@ -1573,6 +1778,7 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
 		for other in units:
 			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
 				other.hp -= splash_damage
+				board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
 		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
 	elif actor.kind == "Artillerist":
 		var direction := 1 if actor.side == PLAYER else -1
@@ -1584,6 +1790,7 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> void:
 			if distance > 0 and distance <= actor.range:
 				other.hp -= actor.atk
 				pierced.append(other.name)
+				board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
 		if not pierced.is_empty():
 			status_message += " Piercing Shot also hits %s." % ", ".join(pierced)
 
@@ -1643,6 +1850,9 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 	status_message = result.message
 	if not result.success:
 		return false
+	_log_action("%s CAPTAIN [SKILL · %s] %s" % [
+		"YOUR" if side == PLAYER else "ENEMY", skill_name, result.message
+	])
 
 	if result.shield > 0:
 		if side == PLAYER:
@@ -1679,6 +1889,7 @@ func _resolve_chants(side: int) -> void:
 	for result in UnitSkillsScript.resolve_chants(side, units):
 		if not result.get("message", "").is_empty():
 			status_message = result.message
+			_log_action("[%s CHANT] %s" % ["ALLY" if side == PLAYER else "ENEMY", result.message])
 		for unit_id in result.get("affected", []):
 			var target = _unit_by_id(unit_id)
 			if target != null:

@@ -145,13 +145,15 @@ func _init() -> void:
 	]
 	assert(CampaignStoreScript.choose_weighted_reward(rarity_candidates, 0.93) == "One Star")
 	assert(CampaignStoreScript.choose_weighted_reward(rarity_candidates, 0.99) == "Five Star")
-	var enemy_squad: Array = CampaignStoreScript.enemy_squad_names(2, roster)
+	var enemy_squad: Array = CampaignStoreScript.enemy_squad_names(2, 0, roster)
 	assert(enemy_squad.size() == 8)
 	var unique_enemy_cards: Array = []
 	for card_name in enemy_squad:
 		if card_name not in unique_enemy_cards:
 			unique_enemy_cards.append(card_name)
 	assert(unique_enemy_cards.size() == 8)
+	assert(enemy_squad != CampaignStoreScript.enemy_squad_names(3, 0, roster))
+	assert(CampaignStoreScript.encounter(0, 0).enemy_squad.size() == 8)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunt_turns": 0}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}
@@ -174,11 +176,25 @@ func _init() -> void:
 		"repositioned": false, "taunt_turns": 0
 	}
 	assert(BattleRulesScript.can_reposition(top_lane_mover, 2, [top_lane_mover]))
+	var friendly_between := {
+		"id": 7, "side": 0, "kind": "Strider", "row": 1, "col": 2
+	}
+	assert(BattleRulesScript.can_reposition(top_lane_mover, 2, [top_lane_mover, friendly_between]))
+	var enemy_between := {
+		"id": 8, "side": 1, "kind": "Strider", "row": 1, "col": 2
+	}
+	assert(not BattleRulesScript.can_reposition(top_lane_mover, 2, [top_lane_mover, enemy_between]))
+	top_lane_mover.repositioned = true
+	assert(BattleRulesScript.can_reposition(top_lane_mover, 2, [top_lane_mover]))
 	var middle_lane_blocker := {
 		"id": 51, "side": 1, "kind": "Warden", "row": 1, "col": 2
 	}
 	assert(not BattleRulesScript.can_reposition(
 		top_lane_mover, 2, [top_lane_mover, middle_lane_blocker]
+	))
+	assert(BattleAIScript.choose_reposition(top_lane_mover, [top_lane_mover]) == 0)
+	assert(BattleAIScript.should_use_captain_skill(
+		"Shield", 4, 18, []
 	))
 
 	var mana_units := [
@@ -244,6 +260,14 @@ func _init() -> void:
 	}
 	assert(not UnitSkillsScript.resolve_warcry(brute, [brute, fortify_ally]).message.is_empty())
 	assert(fortify_ally.atk == 3)
+	var empower_target := {
+		"id": 41, "side": 0, "name": "Chosen Ally", "atk": 1,
+		"hp": 4, "max_hp": 4, "effects": []
+	}
+	assert(not UnitSkillsScript.resolve_warcry(
+		brute, [brute, fortify_ally, empower_target], 41
+	).message.is_empty())
+	assert(empower_target.atk == 2)
 	var gunner := {
 		"id": 34, "side": 0, "name": "LDF Gunner", "atk": 3,
 		"hp": 2, "max_hp": 2, "effects": [],
