@@ -1,4 +1,4 @@
-# Skychain Tactics
+# Aether Engine Tactics
 
 A playable Godot 4 prototype of the original lane-based strategy RPG described in [PROJECT.md](PROJECT.md).
 

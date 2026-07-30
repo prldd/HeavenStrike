@@ -1,6 +1,6 @@
-# Skychain Tactics
+# Aether Engine Tactics
 
-Skychain Tactics is a compact, turn-based strategy RPG inspired by the lane-based battles of *Heavenstrike Rivals*. Players assemble a squad of original fantasy units, deploy them onto a small battlefield, and use their class behaviors and abilities to defeat the enemy Commander.
+Aether Engine Tactics is a compact, turn-based strategy RPG inspired by the lane-based battles of *Heavenstrike Rivals*. Players assemble a squad of original fantasy units, deploy them onto a small battlefield, and use their class behaviors and abilities to defeat the enemy Commander.
 
 This is a spiritual successor, not a remake. Its setting, characters, artwork, audio, story, terminology, interface, and progression will be original.
 
@@ -266,4 +266,4 @@ The milestone is successful when a player can finish a full five-to-eight-minute
 
 ## Intellectual Property Boundary
 
-The project may draw inspiration from compact lane-based tactical combat, but it must not use the *Heavenstrike Rivals* name, characters, factions, story, dialogue, unit designs, artwork, audio, extracted assets, branding, or copied interface. All production content will be created specifically for Skychain Tactics.
+The project may draw inspiration from compact lane-based tactical combat, but it must not use the *Heavenstrike Rivals* name, characters, factions, story, dialogue, unit designs, artwork, audio, extracted assets, branding, or copied interface. All production content will be created specifically for Aether Engine Tactics.

@@ -239,5 +239,5 @@ func _run() -> void:
 	game.queue_free()
 	await process_frame
 	await process_frame
-	print("Skychain UI smoke tests passed.")
+	print("Aether Engine UI smoke tests passed.")
 	quit()

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://d2d7evw5ibscn" path="res://scripts/main.gd" id="1"]
 
-[node name="SkychainTactics" type="Control" unique_id=1482149025]
+[node name="AetherEngineTactics" type="Control" unique_id=1482149025]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

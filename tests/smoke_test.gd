@@ -703,5 +703,5 @@ func _init() -> void:
 	]
 	assert(BattleAIScript.choose_deployment(roster, 10, blocked_units).is_empty())
 
-	print("Skychain smoke tests passed.")
+	print("Aether Engine smoke tests passed.")
 	quit()

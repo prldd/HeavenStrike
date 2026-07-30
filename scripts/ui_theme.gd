@@ -1,4 +1,4 @@
-class_name SkychainUITheme
+class_name AetherEngineUITheme
 extends RefCounted
 
 const INK := Color("#241b19")

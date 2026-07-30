@@ -193,7 +193,7 @@ func _build_interface() -> void:
 	root.add_child(header)
 
 	var brand := Label.new()
-	brand.text = "SKYCHAIN\nTACTICS"
+	brand.text = "AETHER ENGINE\nTACTICS"
 	brand.add_theme_font_size_override("font_size", 17)
 	brand.add_theme_color_override("font_color", UIThemeScript.title_color())
 	brand.custom_minimum_size.x = 170
@@ -1173,14 +1173,14 @@ func _build_main_menu() -> void:
 	plaque.add_child(layout)
 
 	var title := Label.new()
-	title.text = "SKYCHAIN\nTACTICS"
+	title.text = "AETHER ENGINE\nTACTICS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "CONTROL THE LANES  ·  BREAK THE LINE"
+	subtitle.text = "CONTROL THE LANE  ·  BREAK THE LINE"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
