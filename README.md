@@ -42,14 +42,14 @@ assets required by the prototype.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 75 units across six distinct classes
+- 82 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 62 sequential story missions across two acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
 - Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
-- 42 unpromoted units plus 33 standalone promotion cards with implemented secondary abilities
+- 45 unpromoted units plus 37 standalone promotion cards with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles
@@ -60,6 +60,7 @@ assets required by the prototype.
 - Envenom Warcries with explicit enemy targeting and two-turn Poison
 - Pin Down Warcries that damage and Immobilise the strongest eligible melee enemy
 - Lane-targeted Demoralize Warcries and automatic Punish attack debuffs
+- Poison Strike attacks and Sunder Armour vulnerability setup
 - Official detail-page full-body sprites on the battlefield and official unit-list portraits everywhere else
 - A ready-to-use library of all 1,048 live reference unit portraits, generated from 177 official high-resolution sheets
 - Enemy deployment AI

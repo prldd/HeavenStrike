@@ -37,7 +37,13 @@ const ADDITIONAL_DROPS := {
 	"Street Urchin": [23, 27, 38, 44, 60],
 	"Street Hoodlum": [13, 14, 27, 38, 44, 60],
 	"LDF Crowd Mage": [7, 28, 33, 57, 59, 61],
-	"LDF Riot Mage": [28, 33, 57, 59, 61]
+	"LDF Riot Mage": [28, 33, 57, 59, 61],
+	"Claw Chopper": [14, 15, 30, 31, 36, 40, 47, 48],
+	"Claw Cleaver": [9, 30, 31, 36, 40, 47],
+	"LDF Bowgunner": [15, 20, 33, 42, 56, 58, 59, 61],
+	"LDF Bolt Slinger": [20, 33, 42, 56, 58, 59, 61],
+	"LDF Swordwielder": [35],
+	"LDF Greatsword": [35]
 }
 
 const QUESTS := [

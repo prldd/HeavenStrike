@@ -11,7 +11,7 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 75, "The playable roster must contain 75 units.")
+	assert(roster.size() == 82, "The playable roster must contain 82 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
@@ -46,13 +46,13 @@ func _init() -> void:
 	assert(captain_hit.shield_absorbed == 2)
 	assert(captain_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 80
+		func(icon_id): return icon_id >= 1 and icon_id <= 87
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 2).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 22)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 18)
-	assert(roster.filter(func(unit): return unit.stars == 5).size() == 11)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 14)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 25)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 19)
+	assert(roster.filter(func(unit): return unit.stars == 5).size() == 12)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	var unique_icon_ids: Array = []
 	for icon_id in icon_ids:
@@ -60,9 +60,9 @@ func _init() -> void:
 			unique_icon_ids.append(icon_id)
 	assert(icon_ids.size() == unique_icon_ids.size())
 	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 17)
-	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 10)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 15)
 	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 6)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 16)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 18)
 	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 14)
 	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 12)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
@@ -106,6 +106,8 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("LDF Flight Officer").skill.name == "Punish")
 	assert(UnitCatalogScript.by_name("Prison Guv'nor").promotion_of == "Prison Warden")
 	assert(UnitCatalogScript.by_name("The Bard").promotion_of == "Shakespeare")
+	assert(UnitCatalogScript.by_name("Claw Chopper").skill.name == "Poison Strike")
+	assert(UnitCatalogScript.by_name("LDF Mastersword").skill.name == "Sunder Armour")
 	assert(roster.filter(
 		func(unit): return unit.get("skill", {}).get("name", "") == "Mend"
 	).size() == 4)
@@ -124,6 +126,12 @@ func _init() -> void:
 	assert(roster.filter(
 		func(unit): return unit.get("skill", {}).get("name", "") == "Punish"
 	).size() == 6)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Poison Strike"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Sunder Armour"
+	).size() == 5)
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
 	assert(UnitCatalogScript.art_id(27) == 83)
@@ -132,6 +140,7 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(39) == 535)
 	assert(UnitCatalogScript.art_id(68) == 629)
 	assert(UnitCatalogScript.art_id(80) == 488)
+	assert(UnitCatalogScript.art_id(87) == 609)
 	for unit in roster:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		assert(FileAccess.file_exists(
@@ -140,7 +149,7 @@ func _init() -> void:
 		assert(FileAccess.file_exists(
 			"res://assets/units/full/%03d.png" % art_id
 		))
-	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 33)
+	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 37)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -194,12 +203,12 @@ func _init() -> void:
 	assert(CampaignStoreScript.is_available(1, [0]))
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
-	assert(starting_unlocks.size() == 29)
+	assert(starting_unlocks.size() == 30)
 	assert("Chain Initiate" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
 		roster, ["Chain Initiate", "LDF Medic"]
 	)
-	assert(earned_unlocks.size() == 31)
+	assert(earned_unlocks.size() == 32)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
 	assert(CampaignStoreScript.reward_summary(2) == "Random: Street Nurse, Rage Brute")
@@ -578,6 +587,35 @@ func _init() -> void:
 	assert(warcry_enemy.immobilized_turns == 1)
 	UnitSkillsScript.expire_statuses([warcry_enemy], 1)
 	assert(warcry_enemy.immobilized_turns == 0)
+	var poison_striker := {
+		"id": 91, "side": 0, "name": "Claw Chopper",
+		"skill": {"name": "Poison Strike", "type": "Strike"}
+	}
+	assert(not UnitSkillsScript.resolve_strike(
+		poison_striker, warcry_enemy, [], 0.49
+	).message.is_empty())
+	assert(warcry_enemy.poison_turns == 2)
+	var sunder_actor := {
+		"id": 92, "side": 0, "name": "LDF Bowgunner",
+		"skill": {"name": "Sunder Armour", "type": "Warcry"}
+	}
+	var sunder_defender := {
+		"id": 93, "side": 1, "name": "Armoured Target", "kind": "Warden",
+		"hp": 8, "max_hp": 8, "effects": []
+	}
+	var sunder_scout := {
+		"id": 94, "side": 1, "name": "Ineligible Target", "kind": "Strider",
+		"hp": 10, "max_hp": 10, "effects": []
+	}
+	var sunder_result := UnitSkillsScript.resolve_warcry(
+		sunder_actor, [sunder_actor, sunder_defender, sunder_scout]
+	)
+	assert(sunder_result.affected == [93])
+	assert(sunder_defender.hp == 7 and sunder_defender.vulnerable_turns == 2)
+	assert(BattleSimulatorScript.apply_unit_damage(sunder_defender, 2).damage == 3)
+	assert(sunder_defender.hp == 4)
+	UnitSkillsScript.expire_statuses([sunder_defender], 1)
+	assert(sunder_defender.vulnerable_turns == 1)
 	skirmisher.skill = {"name": "Pinning Slice", "type": "Strike"}
 	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.59).message.is_empty())
 	warcry_enemy.immobilized_turns = 0

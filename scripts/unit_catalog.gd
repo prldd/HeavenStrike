@@ -37,6 +37,13 @@ const ICON_ART_IDS := {
 	41: 611, # Talon Slicer
 	43: 41, # Street Urchin
 	44: 42, # Street Hoodlum
+	81: 39, # Claw Chopper
+	82: 40, # Claw Cleaver
+	83: 43, # LDF Bowgunner
+	84: 44, # LDF Bolt Slinger
+	85: 75, # LDF Swordwielder
+	86: 76, # LDF Greatsword
+	87: 609, # LDF Mastersword
 	49: 47, # Street Nurse
 	50: 48, # Street Matron
 	51: 59, # Blight Doctor
@@ -146,7 +153,14 @@ const UNITS := [
 	{"name": "Prison Warden", "icon": 77, "stars": 3, "kind": "Strider", "cost": 4, "atk": 3, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
 	{"name": "Prison Guv'nor", "icon": 78, "stars": 4, "kind": "Strider", "cost": 4, "atk": 4, "hp": 6, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Prison Warden", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
 	{"name": "Shakespeare", "icon": 79, "stars": 4, "kind": "Strider", "cost": 2, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "The Bard", "icon": 80, "stars": 5, "kind": "Strider", "cost": 2, "atk": 2, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Shakespeare", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}}
+	{"name": "The Bard", "icon": 80, "stars": 5, "kind": "Strider", "cost": 2, "atk": 2, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Shakespeare", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
+	{"name": "Claw Chopper", "icon": 81, "stars": 2, "kind": "Duelist", "cost": 3, "atk": 3, "hp": 8, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Poison Strike", "type": "Strike", "text": "50% chance to Poison the attacked enemy for 2 turns."}},
+	{"name": "Claw Cleaver", "icon": 82, "stars": 3, "kind": "Duelist", "cost": 3, "atk": 4, "hp": 9, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "Claw Chopper", "skill": {"name": "Poison Strike", "type": "Strike", "chance": 0.60, "text": "60% chance to Poison the attacked enemy for 2 turns."}},
+	{"name": "LDF Bowgunner", "icon": 83, "stars": 2, "kind": "Artillerist", "cost": 4, "atk": 5, "hp": 4, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
+	{"name": "LDF Bolt Slinger", "icon": 84, "stars": 3, "kind": "Artillerist", "cost": 4, "atk": 6, "hp": 6, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "LDF Bowgunner", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
+	{"name": "LDF Swordwielder", "icon": 85, "stars": 3, "kind": "Duelist", "cost": 2, "atk": 4, "hp": 5, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
+	{"name": "LDF Greatsword", "icon": 86, "stars": 4, "kind": "Duelist", "cost": 2, "atk": 5, "hp": 6, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "LDF Swordwielder", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
+	{"name": "LDF Mastersword", "icon": 87, "stars": 5, "kind": "Duelist", "cost": 2, "atk": 6, "hp": 7, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "LDF Greatsword", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}}
 ]
 
 static func all_units() -> Array:

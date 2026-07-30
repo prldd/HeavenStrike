@@ -20,7 +20,9 @@ const REWARD_UNITS := [
 	"LDF Riot Mage", "Fortune Teller", "Fortune Diviner",
 	"Street Nurse", "Street Matron", "Captain Kerryson", "Kerryson the Stoic",
 	"Garrett Talon", "Garrett the Claw", "Precision Shooter", "Precision Sniper",
-	"Greyson the Shifty", "LDF Flight Officer", "LDF Flight Commander"
+	"Greyson the Shifty", "LDF Flight Officer", "LDF Flight Commander",
+	"Claw Chopper", "Claw Cleaver", "LDF Bowgunner", "LDF Bolt Slinger",
+	"LDF Swordwielder", "LDF Greatsword"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

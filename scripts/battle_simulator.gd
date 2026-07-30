@@ -192,8 +192,11 @@ static func estimate_squad_power(cards: Array) -> float:
 
 static func apply_unit_damage(unit: Dictionary, amount: int) -> Dictionary:
 	var before: int = unit.get("hp", 0)
-	var dealt := mini(before, maxi(0, amount))
-	unit.hp = before - maxi(0, amount)
+	var adjusted_amount := maxi(0, amount)
+	if adjusted_amount > 0 and unit.get("vulnerable_turns", 0) > 0:
+		adjusted_amount += 1
+	var dealt := mini(before, adjusted_amount)
+	unit.hp = before - adjusted_amount
 	return {
 		"unit_id": unit.get("id", -1),
 		"before": before,

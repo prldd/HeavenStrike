@@ -2344,6 +2344,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"immobilized_turns": 0,
 		"poison_turns": 0,
 		"poison_damage": 0,
+		"vulnerable_turns": 0,
 		"fury_stacks": 0,
 		"effects": []
 	}
@@ -2391,7 +2392,9 @@ func _resolve_warcry(
 			board.play_unit_effect(
 				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
 			)
-			if skill.get("name", "") in ["Bolt", "Heaven's Wrath", "Plague", "Pin Down"]:
+			if skill.get("name", "") in [
+				"Bolt", "Heaven's Wrath", "Plague", "Pin Down", "Sunder Armour"
+			]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
 			elif skill.get("name", "") in ["Fortify", "Empower", "Mend"]:
@@ -2647,15 +2650,20 @@ func _activate_unit(actor: Dictionary) -> void:
 				break
 			_play_attack_sound(actor.kind)
 			await board.animate_attack(actor.id, target.id, actor.kind, _animation_duration(0.24))
-			BattleSimulatorScript.apply_unit_damage(target, actor.atk)
+			var damage_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
+				target, actor.atk
+			)
+			var damage_dealt: int = damage_result.damage
 			battle_simulator.record("attack", {
 				"actor_id": actor.id,
 				"target_id": target.id,
-				"damage": actor.atk,
+				"damage": damage_dealt,
 				"target_hp": target.hp
 			})
-			status_message = "%s hits %s for %d." % [_actor_tag(actor), target.name, actor.atk]
-			var impact_label := "-%d" % actor.atk
+			status_message = "%s hits %s for %d." % [
+				_actor_tag(actor), target.name, damage_dealt
+			]
+			var impact_label := "-%d" % damage_dealt
 			var impact_color := Color("#ff668f")
 			if actor.kind == "Channeler":
 				impact_label += " BLAST"
@@ -2675,11 +2683,21 @@ func _activate_unit(actor: Dictionary) -> void:
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
 				battle_audio.play("status")
 				board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
-			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(actor, target, units)
+			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(
+				actor, target, units, battle_simulator.rng.randf()
+			)
 			if not strike_result.message.is_empty():
 				status_message += " " + strike_result.message
 				battle_audio.play("status")
-				board.play_unit_effect(target.id, "IMMOBILISED", Color("#ffd166"))
+				var strike_label := (
+					"POISONED" if actor.get("skill", {}).get("name", "") == "Poison Strike"
+					else "IMMOBILISED"
+				)
+				var strike_color := (
+					Color("#8ee36b") if strike_label == "POISONED"
+					else Color("#ffd166")
+				)
+				board.play_unit_effect(target.id, strike_label, strike_color)
 			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(target, actor, units)
 			if not reaction_result.message.is_empty():
 				status_message += " " + reaction_result.message

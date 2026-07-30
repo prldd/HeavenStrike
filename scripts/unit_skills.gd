@@ -97,6 +97,18 @@ static func resolve_warcry(
 					)
 				result.message = "Pin Down deals 1 damage to %s and Immobilises it for 1 turn." % target.name
 				result.affected.append(target.id)
+		"Sunder Armour":
+			var target = _highest_health_enemy_classes(
+				actor, units, ["Warden", "Duelist"]
+			)
+			if target != null:
+				BattleSimulatorScript.apply_unit_damage(target, 1)
+				if target.hp > 0:
+					target.vulnerable_turns = maxi(
+						target.get("vulnerable_turns", 0), 2
+					)
+				result.message = "Sunder Armour deals 1 damage to %s and makes it Vulnerable for 2 turns." % target.name
+				result.affected.append(target.id)
 		"Demoralize":
 			var lane := target_lane
 			if lane < 0:
@@ -164,6 +176,14 @@ static func resolve_strike(
 			target.immobilized_turns = maxi(target.get("immobilized_turns", 0), 1)
 			result.message = "%s immobilises %s for 1 turn." % [skill_name, target.name]
 			result.affected.append(target.id)
+	elif skill_name == "Poison Strike":
+		var poison_chance: float = skill.get("chance", 0.50)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < poison_chance and target.hp > 0:
+			target.poison_turns = maxi(target.get("poison_turns", 0), 2)
+			target.poison_damage = maxi(target.get("poison_damage", 0), 1)
+			result.message = "Poison Strike Poisons %s for 2 turns." % target.name
+			result.affected.append(target.id)
 	return result
 
 static func resolve_reaction(
@@ -180,6 +200,8 @@ static func expire_statuses(units: Array, side: int) -> void:
 	for unit in units:
 		if unit.side == side and unit.get("immobilized_turns", 0) > 0:
 			unit.immobilized_turns -= 1
+		if unit.side == side and unit.get("vulnerable_turns", 0) > 0:
+			unit.vulnerable_turns -= 1
 
 static func timing_tooltip(skill_type: String) -> String:
 	match skill_type.to_lower():
@@ -251,6 +273,19 @@ static func _highest_attack_ally(actor: Dictionary, units: Array):
 
 static func _highest_health_enemy(actor: Dictionary, units: Array):
 	var candidates := _enemies(actor, units)
+	candidates.sort_custom(func(a, b):
+		if a.hp == b.hp:
+			return a.id < b.id
+		return a.hp > b.hp
+	)
+	return null if candidates.is_empty() else candidates[0]
+
+static func _highest_health_enemy_classes(
+	actor: Dictionary, units: Array, kinds: Array
+):
+	var candidates := _enemies(actor, units).filter(
+		func(unit): return unit.kind in kinds
+	)
 	candidates.sort_custom(func(a, b):
 		if a.hp == b.hp:
 			return a.id < b.id
