@@ -3,6 +3,7 @@ extends RefCounted
 
 const SQUAD_SIZE := 8
 const SAVE_PATH := "user://player.cfg"
+const SAVE_VERSION := 1
 const DEFAULT_CAPTAIN_SKILL := "Rally"
 
 static func default_squad(roster: Array) -> Array:
@@ -57,6 +58,7 @@ static func save_squad(names: Array, roster: Array) -> bool:
 		return false
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("squad", "units", clean)
 	return config.save(SAVE_PATH) == OK
 
@@ -72,6 +74,7 @@ static func save_captain_skill(skill_name: String, valid_skills: Array) -> bool:
 		return false
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("squad", "captain_skill", skill_name)
 	return config.save(SAVE_PATH) == OK
 

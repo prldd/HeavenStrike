@@ -180,6 +180,8 @@ static func build_missions() -> Array:
 		var battle_count := 1 if index < 10 else (2 if index < 30 else 3)
 		var encounters: Array = []
 		var short_title: String = quest[0].split(" - ", true, 1)[-1]
+		var act := 1 if index < 22 else 2
+		var act_mission := index + 1 if act == 1 else index - 21
 		for battle_index in battle_count:
 			var hp := maxi(8, enemy_hp - (battle_count - battle_index - 1) * 2)
 			encounters.append({
@@ -190,13 +192,40 @@ static func build_missions() -> Array:
 			})
 		missions.append({
 			"id": index,
+			"act": act,
+			"act_mission": act_mission,
 			"title": quest[0],
-			"briefing": "Complete this story mission and earn one card from its drop pool.",
+			"short_title": short_title,
+			"briefing": _mission_briefing(index, short_title),
+			"debriefing": _mission_debriefing(index, short_title),
 			"enemy_hp": enemy_hp,
 			"encounters": encounters,
 			"reward_pool": reward_pool
 		})
 	return missions
+
+static func _mission_briefing(index: int, title: String) -> String:
+	var objectives := [
+		"Secure the approach before the rival Captain can reinforce it.",
+		"Break the opposing formation and keep the skyway open.",
+		"Read the enemy lanes carefully; their squad is prepared for an ambush.",
+		"Protect the expedition while pushing through the hostile line."
+	]
+	var chapter := (
+		"Command has traced the first Tempest Engine signals"
+		if index < 22
+		else "The pursuit of the Tempest Engine has reached the outer skyways"
+	)
+	return "%s near %s. %s" % [chapter, title, objectives[index % objectives.size()]]
+
+static func _mission_debriefing(index: int, title: String) -> String:
+	var outcomes := [
+		"The route is secure and the expedition can advance.",
+		"Enemy resistance has broken; new intelligence points farther ahead.",
+		"The captured position reveals another fragment of the Engine's trail.",
+		"Your squad holds the field while Command prepares the next operation."
+	]
+	return "%s complete. %s" % [title, outcomes[index % outcomes.size()]]
 
 static func _enemy_squad_for(mission_index: int) -> Array:
 	if mission_index < 0 or mission_index >= MISSION_ENEMY_SQUADS.size():

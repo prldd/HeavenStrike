@@ -59,6 +59,10 @@ var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
 var captain_skill_option: OptionButton
+var mission_intel_panel: PanelContainer
+var mission_intel_label: Label
+var mission_enemy_preview_row: HBoxContainer
+var reward_carry_label: Label
 var hover_card: PanelContainer
 var hover_name_label: Label
 var hover_stats_label: Label
@@ -76,6 +80,7 @@ var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
 var mission_list: VBoxContainer
+var campaign_progress_label: Label
 var resume_button: Button
 var replay_button: Button
 var replay_panel: PanelContainer
@@ -108,6 +113,7 @@ var squad_opened_from_menu := false
 var squad_opened_for_mission := false
 var tutorial_opened_from_menu := false
 var pending_mission_id := -1
+var recent_reward_name := ""
 
 var units: Array = []
 var player_hand: Array = []
@@ -707,6 +713,23 @@ func _build_squad_builder() -> void:
 	instruction.add_theme_color_override("font_color", Color("#aebdda"))
 	layout.add_child(instruction)
 
+	mission_intel_panel = PanelContainer.new()
+	mission_intel_panel.visible = false
+	layout.add_child(mission_intel_panel)
+	var intel_layout := HBoxContainer.new()
+	intel_layout.add_theme_constant_override("separation", 12)
+	mission_intel_panel.add_child(intel_layout)
+	mission_intel_label = Label.new()
+	mission_intel_label.custom_minimum_size.x = 330
+	mission_intel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	mission_intel_label.add_theme_color_override("font_color", Color("#ffb0c2"))
+	intel_layout.add_child(mission_intel_label)
+	mission_enemy_preview_row = HBoxContainer.new()
+	mission_enemy_preview_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_enemy_preview_row.alignment = BoxContainer.ALIGNMENT_END
+	mission_enemy_preview_row.add_theme_constant_override("separation", 5)
+	intel_layout.add_child(mission_enemy_preview_row)
+
 	var skill_row := HBoxContainer.new()
 	skill_row.add_theme_constant_override("separation", 12)
 	layout.add_child(skill_row)
@@ -745,6 +768,10 @@ func _build_squad_builder() -> void:
 	barracks_title.add_theme_font_size_override("font_size", 16)
 	barracks_title.add_theme_color_override("font_color", Color("#71e6f5"))
 	barracks_layout.add_child(barracks_title)
+	reward_carry_label = Label.new()
+	reward_carry_label.visible = false
+	reward_carry_label.add_theme_color_override("font_color", Color("#ffd166"))
+	barracks_layout.add_child(reward_carry_label)
 	var barracks_scroll := ScrollContainer.new()
 	barracks_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	barracks_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -934,6 +961,9 @@ func _rebuild_squad_grid() -> void:
 	for child in squad_selection_grid.get_children():
 		squad_selection_grid.remove_child(child)
 		child.queue_free()
+	_refresh_mission_intel()
+	reward_carry_label.visible = not recent_reward_name.is_empty()
+	reward_carry_label.text = "★ NEW REWARD ADDED · %s" % recent_reward_name.to_upper()
 
 	var inventory := CampaignStoreScript.inventory_counts(roster, earned_reward_units)
 	for unit in roster:
@@ -951,9 +981,12 @@ func _rebuild_squad_grid() -> void:
 			copies >= mini(2, owned)
 			or editing_squad_names.size() >= SquadStoreScript.SQUAD_SIZE
 		)
-		button.text = "%s\nOWNED %d · IN SQUAD %d" % [
+		button.text = "%s%s\nOWNED %d · IN SQUAD %d" % [
+			"★ NEW REWARD · " if unit.name == recent_reward_name else "",
 			unit.name.to_upper(), owned, copies
 		]
+		if unit.name == recent_reward_name:
+			button.add_theme_color_override("font_color", Color("#ffd166"))
 		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(_add_squad_unit.bind(unit.name))
 		button.connect("unit_dropped", _on_squad_card_drop)
@@ -989,6 +1022,42 @@ func _rebuild_squad_grid() -> void:
 	squad_save_button.disabled = editing_squad_names.is_empty()
 	squad_start_button.visible = squad_opened_for_mission
 	squad_start_button.disabled = editing_squad_names.is_empty()
+
+func _refresh_mission_intel() -> void:
+	for child in mission_enemy_preview_row.get_children():
+		mission_enemy_preview_row.remove_child(child)
+		child.queue_free()
+	mission_intel_panel.visible = (
+		squad_opened_for_mission
+		and pending_mission_id >= 0
+		and pending_mission_id < CampaignStoreScript.MISSIONS.size()
+	)
+	if not mission_intel_panel.visible:
+		return
+	var mission: Dictionary = CampaignStoreScript.MISSIONS[pending_mission_id]
+	var encounter: Dictionary = mission.encounters[0]
+	mission_intel_label.text = (
+		"UPCOMING · ACT %d / MISSION %d\n%s · %d HP · CAPTAIN: %s"
+		% [
+			mission.act, mission.act_mission, mission.short_title.to_upper(),
+			encounter.enemy_hp, encounter.skill.to_upper()
+		]
+	)
+	for unit_name in encounter.enemy_squad:
+		var unit: Dictionary = UnitCatalogScript.by_name(unit_name)
+		if unit.is_empty():
+			continue
+		var portrait := TextureRect.new()
+		portrait.custom_minimum_size = Vector2(42, 48)
+		portrait.texture = _unit_icon(unit.icon)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.tooltip_text = "%s · %s" % [
+			unit.name, UnitCatalogScript.display_class(unit.kind)
+		]
+		portrait.mouse_entered.connect(_show_unit_details.bind(unit))
+		portrait.mouse_exited.connect(_hide_unit_details)
+		mission_enemy_preview_row.add_child(portrait)
 
 func _on_squad_card_drop(
 	unit_name: String, source: String, source_index: int, target_index: int
@@ -1054,6 +1123,7 @@ func _save_and_start_mission() -> void:
 	squad_opened_for_mission = false
 	pending_mission_id = -1
 	squad_overlay.visible = false
+	recent_reward_name = ""
 	_begin_mission(mission_id)
 
 func _sanitize_squad_unlocks() -> void:
@@ -1276,10 +1346,9 @@ func _build_mission_select() -> void:
 	title.add_theme_color_override("font_color", Color("#71e6f5"))
 	layout.add_child(title)
 
-	var subtitle := Label.new()
-	subtitle.text = "Complete missions in order. Victories unlock new support units."
-	subtitle.add_theme_color_override("font_color", Color("#9fb2d6"))
-	layout.add_child(subtitle)
+	campaign_progress_label = Label.new()
+	campaign_progress_label.add_theme_color_override("font_color", Color("#9fb2d6"))
+	layout.add_child(campaign_progress_label)
 
 	var mission_scroll := ScrollContainer.new()
 	mission_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1569,6 +1638,23 @@ func _rebuild_mission_list() -> void:
 	for child in mission_list.get_children():
 		mission_list.remove_child(child)
 		child.queue_free()
+	var act_one_complete := completed_missions.filter(func(id): return id < 22).size()
+	var act_two_complete := completed_missions.filter(func(id): return id >= 22).size()
+	var saved_run: Dictionary = MissionRunStoreScript.load_run(
+		CampaignStoreScript.MISSIONS.size()
+	)
+	var run_text := ""
+	if not saved_run.is_empty():
+		var run_mission: Dictionary = CampaignStoreScript.MISSIONS[saved_run.mission_id]
+		run_text = "  ·  ACTIVE RUN: ACT %d MISSION %d · BATTLE %d/%d · %d HP" % [
+			run_mission.act, run_mission.act_mission,
+			saved_run.encounter_index + 1, run_mission.encounters.size(),
+			saved_run.captain_hp
+		]
+	campaign_progress_label.text = (
+		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE%s"
+		% [act_one_complete, act_two_complete, run_text]
+	)
 	for mission in CampaignStoreScript.MISSIONS:
 		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
 		var complete: bool = mission.id in completed_missions
@@ -1582,10 +1668,11 @@ func _rebuild_mission_list() -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.disabled = not available
-		button.text = "%s  %02d · %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s" % [
+		button.text = "%s  ACT %d · MISSION %02d  ·  %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s" % [
 			"✓" if complete else ("◆" if available else "🔒"),
-			mission.id + 1,
-			mission.title.to_upper(),
+			mission.act,
+			mission.act_mission,
+			mission.short_title.to_upper(),
 			mission.encounters.size(),
 			"" if mission.encounters.size() == 1 else "S",
 			mission.enemy_hp,
@@ -2732,10 +2819,19 @@ func _check_game_over() -> bool:
 			earned_reward_units = CampaignStoreScript.award_reward(
 				reward, roster, earned_reward_units
 			)
+			recent_reward_name = reward
 			_show_card_reward(reward, not was_unlocked)
 		overlay_title.text = "MISSION COMPLETE" if campaign_battle else "VICTORY"
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
-		overlay_detail.text = "Victory achieved in %d rounds." % round_number
+		overlay_detail.text = (
+			"%s\nVictory achieved in %d rounds."
+			% [
+				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
+				round_number
+			]
+			if campaign_battle
+			else "Victory achieved in %d rounds." % round_number
+		)
 		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
 		result_continue_button.visible = (
 			campaign_battle

@@ -111,6 +111,8 @@ func _run() -> void:
 	game._open_mission_select()
 	await process_frame
 	assert(game.mission_list.get_child_count() == 62)
+	assert(game.campaign_progress_label.text.contains("ACT 1"))
+	assert(game.campaign_progress_label.text.contains("ACT 2"))
 	var first_entry: VBoxContainer = game.mission_list.get_child(0)
 	assert(first_entry.size_flags_horizontal == Control.SIZE_EXPAND_FILL)
 	assert(first_entry.get_child(1) is HBoxContainer)
@@ -159,12 +161,18 @@ func _run() -> void:
 	game.current_mission_id = 0
 	game.completed_missions = [0]
 	game.mission_finished = true
+	game.recent_reward_name = "Chain Initiate"
 	game.overlay.visible = true
 	game._continue_campaign()
 	assert(not game.overlay.visible)
 	assert(game.squad_overlay.visible)
 	assert(game.squad_opened_for_mission)
 	assert(game.pending_mission_id == 1)
+	assert(game.mission_intel_panel.visible)
+	assert(game.mission_enemy_preview_row.get_child_count() == 8)
+	assert(game.mission_intel_label.text.contains("CAPTAIN:"))
+	assert(game.reward_carry_label.visible)
+	assert(game.reward_carry_label.text.contains("CHAIN INITIATE"))
 	game.squad_overlay.visible = false
 	game.squad_opened_for_mission = false
 	game.pending_mission_id = -1

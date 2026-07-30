@@ -2,6 +2,7 @@ class_name BattleSettings
 extends RefCounted
 
 const SAVE_PATH := "user://player.cfg"
+const SAVE_VERSION := 1
 
 static func load_settings() -> Dictionary:
 	var config := ConfigFile.new()
@@ -16,6 +17,7 @@ static func load_settings() -> Dictionary:
 static func save_settings(settings: Dictionary) -> bool:
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("battle", "speed", settings.get("speed", 1.0))
 	config.set_value("battle", "volume", settings.get("volume", 2))
 	config.set_value("battle", "reduced_motion", settings.get("reduced_motion", false))

@@ -185,6 +185,8 @@ Online play and live-service systems are outside the first release. The battle s
 
 Campaign mission selection flows from the scrollable world map into squad selection and then one to three consecutive battles. All 62 reference story missions are present across two acts. The battlefield, decks, Mana, and Captain-skill use reset between encounters, while the player's Captain carries remaining HP forward. In-progress runs can be resumed.
 
+The campaign map reports completion by Act and any active run. Each mission has its own briefing, completion debriefing, authored enemy squad, and Captain configuration. Before deployment, squad selection previews the upcoming enemy cards, Captain skill, and HP. Continuing after a mission victory opens the next mission's workshop and marks the newly awarded card in Barracks.
+
 ## Progression
 
 Campaign victories award one random card from that quest's eligible drop list. Drop weight halves with each additional Star Rarity, making lower-star cards progressively more likely. Earned card unlocks persist and expand strategic options rather than directly increasing unit statistics.

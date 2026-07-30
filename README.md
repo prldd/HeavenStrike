@@ -60,6 +60,10 @@ assets required by the prototype.
 - Visible hand and remaining-deck counters for both sides
 - Sixty-two authored, mission-specific eight-card PvE squads and
   context-aware deployment, movement, and Captain-skill AI
+- Mission-specific briefings and debriefings, Act completion tracking, active
+  run status, and pre-battle enemy squad/Captain intelligence
+- Continued campaign victories carry the awarded card into Barracks with a
+  visible new-reward marker
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
 - Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
 - Player-selected targets for Empower Warcries
@@ -98,6 +102,9 @@ the player configuration. Completed battles are added newest-first to
 oldest as new battles finish. `user://last_replay.json` remains as a
 backward-compatible latest-replay save. The viewer reconstructs each battle
 timeline and verifies its final Captain HP state.
+
+Player, campaign, and in-progress mission-run saves include version metadata.
+Legacy unversioned saves remain loadable as version-zero data.
 
 ## Current Checkpoint
 

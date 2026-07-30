@@ -125,6 +125,8 @@ func _init() -> void:
 	)
 	assert(owned_squad == ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"])
 	assert(CaptainSkillsScript.SKILLS.size() == 8)
+	assert(CampaignStoreScript.SAVE_VERSION == 1)
+	assert(SquadStoreScript.SAVE_VERSION == 1)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 62)
 	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - Training Day")

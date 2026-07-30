@@ -4,6 +4,7 @@ extends RefCounted
 const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const SAVE_PATH := "user://campaign.cfg"
+const SAVE_VERSION := 1
 const REWARD_UNITS := [
 	"Chain Initiate", "LDF Medic",
 	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",
@@ -45,6 +46,8 @@ static func complete_mission(mission_id: int, completed: Array) -> Array:
 		result.append(mission_id)
 		result.sort()
 	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("campaign", "completed", result)
 	config.save(SAVE_PATH)
 	return result
@@ -73,6 +76,7 @@ static func award_reward(unit_name: String, roster: Array, earned: Array) -> Arr
 		result.append(unit_name)
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("campaign", "reward_units", result)
 	config.save(SAVE_PATH)
 	return result

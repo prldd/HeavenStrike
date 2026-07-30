@@ -13,8 +13,12 @@ func _init() -> void:
 	var weakest_ratio := INF
 	var strongest_ratio := 0.0
 	var encounter_total := 0
+	var previous_mission_difficulty := -1.0
+	var largest_difficulty_jump := 0.0
 
 	for mission_id in CampaignStoreScript.MISSIONS.size():
+		var mission_peak_difficulty := 0.0
+		var previous_encounter_hp := 0
 		for encounter_index in CampaignStoreScript.encounter_count(mission_id):
 			var names := CampaignStoreScript.enemy_squad_names(
 				mission_id, encounter_index, roster
@@ -27,11 +31,30 @@ func _init() -> void:
 			var ratio := power / baseline_power
 			weakest_ratio = minf(weakest_ratio, ratio)
 			strongest_ratio = maxf(strongest_ratio, ratio)
+			var encounter_data: Dictionary = CampaignStoreScript.encounter(
+				mission_id, encounter_index
+			)
+			assert(encounter_data.enemy_hp >= previous_encounter_hp)
+			previous_encounter_hp = encounter_data.enemy_hp
+			var difficulty: float = (
+				ratio * 0.70 + (encounter_data.enemy_hp / 20.0) * 0.30
+			)
+			mission_peak_difficulty = maxf(mission_peak_difficulty, difficulty)
 			encounter_total += 1
+		if previous_mission_difficulty >= 0.0:
+			largest_difficulty_jump = maxf(
+				largest_difficulty_jump,
+				mission_peak_difficulty - previous_mission_difficulty
+			)
+		previous_mission_difficulty = mission_peak_difficulty
 
 	assert(encounter_total >= CampaignStoreScript.MISSIONS.size())
+	assert(largest_difficulty_jump <= 0.18)
 	print(
-		"Balance simulation passed: %d encounters, power ratio %.2f–%.2f."
-		% [encounter_total, weakest_ratio, strongest_ratio]
+		"Balance simulation passed: %d encounters, power ratio %.2f–%.2f, max difficulty jump %.2f."
+		% [
+			encounter_total, weakest_ratio, strongest_ratio,
+			largest_difficulty_jump
+		]
 	)
 	quit()
