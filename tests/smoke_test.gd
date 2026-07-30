@@ -126,8 +126,20 @@ func _init() -> void:
 	).size() == 6)
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
+	assert(UnitCatalogScript.art_id(27) == 83)
+	assert(UnitCatalogScript.art_id(28) == 177)
+	assert(UnitCatalogScript.art_id(29) == 423)
+	assert(UnitCatalogScript.art_id(39) == 535)
 	assert(UnitCatalogScript.art_id(68) == 629)
 	assert(UnitCatalogScript.art_id(80) == 488)
+	for unit in roster:
+		var art_id: int = UnitCatalogScript.art_id(unit.icon)
+		assert(FileAccess.file_exists(
+			"res://assets/units/portraits/%03d.png" % art_id
+		))
+		assert(FileAccess.file_exists(
+			"res://assets/units/full/%03d.png" % art_id
+		))
 	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 33)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 

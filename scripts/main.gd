@@ -14,14 +14,6 @@ const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
-const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
-const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
-const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
-const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
-const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
-const UNIT_SPRITES_6 := preload("res://assets/units/reference-units-031-036.png")
-const UNIT_SPRITES_7 := preload("res://assets/units/reference-units-037-042.png")
-const UNIT_SPRITES_8 := preload("res://assets/units/reference-units-043-048.png")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-sky-citadel.png")
 const SQUAD_WORKSHOP_BACKGROUND := preload("res://assets/squad-workshop-armory.png")
 
@@ -2090,50 +2082,18 @@ func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
 	var cache_key := "%d:%d" % [icon_id, size]
 	if unit_icon_cache.has(cache_key):
 		return unit_icon_cache[cache_key]
-	if icon_id > 48:
-		var art_path := (
-			"res://assets/units/full/%03d.png"
-			% UnitCatalogScript.art_id(icon_id)
-		)
-		var art_texture := load(art_path) as Texture2D
-		if art_texture == null:
-			return null
-		var art_image := art_texture.get_image()
-		var used_rect := art_image.get_used_rect()
-		if used_rect.size.x > 0 and used_rect.size.y > 0:
-			art_image = art_image.get_region(used_rect)
-		var art_scale := minf(
-			size / float(art_image.get_width()),
-			size / float(art_image.get_height())
-		)
-		var draw_size := Vector2i(
-			maxi(1, int(art_image.get_width() * art_scale)),
-			maxi(1, int(art_image.get_height() * art_scale))
-		)
-		art_image.resize(draw_size.x, draw_size.y, Image.INTERPOLATE_LANCZOS)
-		var icon_canvas := Image.create(size, size, false, Image.FORMAT_RGBA8)
-		icon_canvas.fill(Color.TRANSPARENT)
-		icon_canvas.blit_rect(
-			art_image,
-			Rect2i(Vector2i.ZERO, draw_size),
-			Vector2i((size - draw_size.x) / 2, (size - draw_size.y) / 2)
-		)
-		var direct_icon := ImageTexture.create_from_image(icon_canvas)
-		unit_icon_cache[cache_key] = direct_icon
-		return direct_icon
-	var sheets: Array[Texture2D] = [
-		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4,
-		UNIT_SPRITES_5, UNIT_SPRITES_6, UNIT_SPRITES_7, UNIT_SPRITES_8
-	]
-	var atlas: Texture2D = sheets[int((icon_id - 1) / 6)]
-	var source_image: Image = atlas.get_image()
-	var icon_image := source_image.get_region(
-		Rect2i(((icon_id - 1) % 6) * 100, 0, 100, 100)
+	var portrait_path := (
+		"res://assets/units/portraits/%03d.png"
+		% UnitCatalogScript.art_id(icon_id)
 	)
-	icon_image.resize(size, size, Image.INTERPOLATE_LANCZOS)
-	var icon := ImageTexture.create_from_image(icon_image)
-	unit_icon_cache[cache_key] = icon
-	return icon
+	var portrait_texture := load(portrait_path) as Texture2D
+	if portrait_texture == null:
+		return null
+	var portrait_image := portrait_texture.get_image()
+	portrait_image.resize(size, size, Image.INTERPOLATE_LANCZOS)
+	var portrait_icon := ImageTexture.create_from_image(portrait_image)
+	unit_icon_cache[cache_key] = portrait_icon
+	return portrait_icon
 
 func _show_card_reward(unit_name: String, is_new: bool) -> void:
 	var unit: Dictionary = UnitCatalogScript.by_name(unit_name)

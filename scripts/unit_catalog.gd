@@ -20,6 +20,23 @@ const CLASS_COLORS := {
 }
 
 const ICON_ART_IDS := {
+	25: 29, # Order Apostle
+	26: 33, # Trinity Messenger
+	27: 83, # Minerva the Brave
+	28: 177, # Naruku the Lookout
+	29: 423, # Whirling Ragnr
+	31: 30, # Order Missionary
+	32: 34, # Trinity Herald
+	33: 84, # Minerva the Lionheart
+	34: 178, # Farsight Naruku
+	35: 424, # Macewielder Ragnr
+	37: 77, # Talon Scratcher
+	38: 78, # Talon Slasher
+	39: 535, # Innocent Gretel
+	40: 536, # Witchkiller Gretel
+	41: 611, # Talon Slicer
+	43: 41, # Street Urchin
+	44: 42, # Street Hoodlum
 	49: 47, # Street Nurse
 	50: 48, # Street Matron
 	51: 59, # Blight Doctor

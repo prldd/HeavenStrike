@@ -60,6 +60,8 @@ assets required by the prototype.
 - Envenom Warcries with explicit enemy targeting and two-turn Poison
 - Pin Down Warcries that damage and Immobilise the strongest eligible melee enemy
 - Lane-targeted Demoralize Warcries and automatic Punish attack debuffs
+- Official detail-page full-body sprites on the battlefield and official unit-list portraits everywhere else
+- A ready-to-use library of all 1,048 live reference unit portraits, generated from 177 official high-resolution sheets
 - Enemy deployment AI
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides

@@ -1,6 +1,8 @@
 class_name StoryQuestCatalog
 extends RefCounted
 
+# Exact mission appearances from https://chainguardians.com/story-quests.
+# A unit must not be added here unless that reference lists it for the mission.
 const ADDITIONAL_DROPS := {
 	"Street Nurse": [3, 13, 14, 19, 27, 37, 38, 45],
 	"Street Matron": [10, 13, 17, 23, 27, 37, 38, 45],
