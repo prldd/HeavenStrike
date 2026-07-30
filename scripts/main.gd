@@ -59,7 +59,8 @@ var reward_carry_label: Label
 var hover_card: PanelContainer
 var hover_name_label: Label
 var hover_stats_label: Label
-var hover_ability_label: Label
+var hover_ability_label: RichTextLabel
+var hover_drop_label: Label
 var speed_button: Button
 var audio_button: Button
 var animation_button: Button
@@ -153,6 +154,7 @@ var replay_history_index := 0
 const REPLAY_PATH := "user://last_replay.json"
 const REPLAY_HISTORY_PATH := "user://replay_history.json"
 const NORMAL_SPEED_DURATION_SCALE := 2.0
+const HOVER_CARD_SIZE := Vector2(340, 300)
 
 func _ready() -> void:
 	theme = UIThemeScript.create()
@@ -1673,9 +1675,11 @@ func _rebuild_mission_list() -> void:
 		mission_list.add_child(entry)
 
 		var button := Button.new()
-		button.custom_minimum_size.y = 58
+		button.custom_minimum_size.y = 92
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 		button.disabled = not available
 		button.text = "%s  ACT %d · MISSION %02d  ·  %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s" % [
 			"✓" if complete else ("◆" if available else "🔒"),
@@ -1809,7 +1813,9 @@ func _open_squad_from_menu() -> void:
 
 func _build_hover_card() -> void:
 	hover_card = PanelContainer.new()
-	hover_card.custom_minimum_size = Vector2(340, 236)
+	hover_card.custom_minimum_size = HOVER_CARD_SIZE
+	hover_card.size = HOVER_CARD_SIZE
+	hover_card.clip_contents = true
 	hover_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_card.z_index = 100
 	hover_card.visible = false
@@ -1822,13 +1828,13 @@ func _build_hover_card() -> void:
 	style.content_margin_left = 14
 	style.content_margin_right = 14
 	style.content_margin_top = 12
-	style.content_margin_bottom = 12
+	style.content_margin_bottom = 18
 	hover_card.add_theme_stylebox_override("panel", style)
 	add_child(hover_card)
 
 	var content := VBoxContainer.new()
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_theme_constant_override("separation", 6)
+	content.add_theme_constant_override("separation", 8)
 	hover_card.add_child(content)
 
 	hover_name_label = Label.new()
@@ -1843,12 +1849,26 @@ func _build_hover_card() -> void:
 	hover_stats_label.add_theme_color_override("font_color", UIThemeScript.PARCHMENT_LIGHT)
 	content.add_child(hover_stats_label)
 
-	hover_ability_label = Label.new()
+	hover_ability_label = RichTextLabel.new()
 	hover_ability_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hover_ability_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hover_ability_label.bbcode_enabled = true
+	hover_ability_label.custom_minimum_size.y = 166
+	hover_ability_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hover_ability_label.fit_content = false
+	hover_ability_label.scroll_active = true
+	hover_ability_label.scroll_following = false
 	hover_ability_label.add_theme_font_size_override("font_size", 13)
-	hover_ability_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	hover_ability_label.add_theme_color_override("default_color", UIThemeScript.muted_color())
 	content.add_child(hover_ability_label)
+
+	hover_drop_label = Label.new()
+	hover_drop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hover_drop_label.visible = false
+	hover_drop_label.custom_minimum_size.y = 22
+	hover_drop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hover_drop_label.add_theme_font_size_override("font_size", 13)
+	hover_drop_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	content.add_child(hover_drop_label)
 
 func _show_unit_details(unit: Dictionary) -> void:
 	var definition: Dictionary = UnitCatalogScript.by_name(unit.name)
@@ -1873,23 +1893,35 @@ func _show_unit_details(unit: Dictionary) -> void:
 		definition.range
 	]
 	var active_effects: String = CaptainSkillsScript.effect_summary(unit)
-	hover_ability_label.text = definition.text
+	hover_ability_label.text = _format_primary_ability(definition.text)
 	var skill: Dictionary = definition.get("skill", {})
 	if not skill.is_empty():
-		hover_ability_label.text += "\n\n%s · %s\n%s\n%s" % [
+		hover_ability_label.text += "\n\n%s · %s\n[font_size=12][color=#c4b99f]%s[/color][/font_size]\n[font_size=11][color=#938b7b]%s[/color][/font_size]" % [
 			skill.name.to_upper(),
 			skill.type.to_upper(),
 			skill.text,
 			UnitSkillsScript.timing_tooltip(skill.type)
 		]
 	if not active_effects.is_empty():
-		hover_ability_label.text += "\nActive: " + active_effects
+		hover_ability_label.text += "\nACTIVE  [font_size=12][color=#c4b99f]%s[/color][/font_size]" % active_effects
+	hover_drop_label.visible = false
+	hover_card.size = HOVER_CARD_SIZE
 	hover_card.visible = true
 	_position_hover_card()
 
 func _show_reward_details(unit: Dictionary, chance: float) -> void:
 	_show_unit_details(unit)
-	hover_ability_label.text += "\nDrop likelihood: %.1f%% on mission victory." % (chance * 100.0)
+	hover_drop_label.text = "DROP CHANCE  ·  %.1f%%" % (chance * 100.0)
+	hover_drop_label.visible = true
+
+func _format_primary_ability(description: String) -> String:
+	var divider := description.find(" — ")
+	if divider < 0:
+		return "[font_size=12][color=#c4b99f]%s[/color][/font_size]" % description
+	return "%s — [font_size=12][color=#c4b99f]%s[/color][/font_size]" % [
+		description.left(divider),
+		description.substr(divider + 3)
+	]
 
 func _hide_unit_details() -> void:
 	hover_card.visible = false
@@ -1900,7 +1932,7 @@ func _process(_delta: float) -> void:
 
 func _position_hover_card() -> void:
 	var pointer := get_viewport().get_mouse_position()
-	var card_size := Vector2(340, 236)
+	var card_size := HOVER_CARD_SIZE
 	var viewport_size := get_viewport_rect().size
 	var target := pointer + Vector2(18, 18)
 	if target.x + card_size.x > viewport_size.x - 10:

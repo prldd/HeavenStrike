@@ -532,10 +532,36 @@ func _draw_unit(unit: Dictionary) -> void:
 	var font := get_theme_default_font()
 	var hp_text := "%d" % unit.hp
 	var atk_text := "%d" % unit.atk
-	draw_circle(rect.position + Vector2(15, 15), 13, Color("#e95778"))
-	draw_circle(Vector2(rect.end.x - 15, rect.position.y + 15), 13, Color("#e8b94f"))
-	draw_string(font, rect.position + Vector2(7, 20), hp_text, HORIZONTAL_ALIGNMENT_CENTER, 16, 12, Color.WHITE)
-	draw_string(font, Vector2(rect.end.x - 23, rect.position.y + 20), atk_text, HORIZONTAL_ALIGNMENT_CENTER, 16, 12, Color("#16203a"))
+	var pill_size := Vector2(minf(38.0, rect.size.x * 0.42), 20.0)
+	var pill_y := rect.end.y - pill_size.y - 5.0
+	var health_pill := Rect2(Vector2(rect.position.x + 3, pill_y), pill_size)
+	var attack_pill := Rect2(Vector2(rect.end.x - pill_size.x - 3, pill_y), pill_size)
+	draw_style_box(
+		_box(Color("#3f7554"), Color("#91b886"), 10, 1),
+		health_pill
+	)
+	draw_style_box(
+		_box(Color("#9b4145"), Color("#d08076"), 10, 1),
+		attack_pill
+	)
+	draw_string(
+		font,
+		health_pill.position + Vector2(0, 15),
+		hp_text,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		health_pill.size.x,
+		12,
+		Color.WHITE
+	)
+	draw_string(
+		font,
+		attack_pill.position + Vector2(0, 15),
+		atk_text,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		attack_pill.size.x,
+		12,
+		Color.WHITE
+	)
 	_draw_status_badges(unit, rect)
 
 	if not unit.ready:
@@ -599,7 +625,7 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 		var color := Color("#70e0a1") if attack >= 0 and health >= 0 else Color("#ff8f8f")
 		badges.append({"label": label, "color": color})
 	for index in mini(5, badges.size()):
-		var center := Vector2(rect.position.x + 11 + index * 20, rect.end.y - 11)
+		var center := Vector2(rect.position.x + 11 + index * 20, rect.position.y + 11)
 		draw_circle(center, 9, Color(0.03, 0.05, 0.10, 0.92))
 		draw_arc(center, 9, 0, TAU, 16, badges[index].color, 2)
 		draw_string(
