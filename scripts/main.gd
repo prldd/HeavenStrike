@@ -15,8 +15,7 @@ const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
-const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-sky-citadel.png")
-const SQUAD_WORKSHOP_BACKGROUND := preload("res://assets/squad-workshop-armory.png")
+const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -590,11 +589,16 @@ func _build_overlay() -> void:
 
 func _build_tutorial() -> void:
 	tutorial_overlay = ColorRect.new()
-	tutorial_overlay.color = Color(0.035, 0.026, 0.02, 0.95)
+	tutorial_overlay.color = Color.TRANSPARENT
 	tutorial_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tutorial_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	tutorial_overlay.visible = false
 	add_child(tutorial_overlay)
+	_add_overlay_background(
+		tutorial_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.035, 0.025, 0.02, 0.72)
+	)
 
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -683,7 +687,7 @@ func _build_squad_builder() -> void:
 	add_child(squad_overlay)
 	_add_overlay_background(
 		squad_overlay,
-		SQUAD_WORKSHOP_BACKGROUND,
+		MAIN_MENU_BACKGROUND,
 		Color(0.035, 0.025, 0.02, 0.68)
 	)
 
@@ -1333,11 +1337,16 @@ func _replay_squad_column(
 
 func _build_mission_select() -> void:
 	mission_overlay = ColorRect.new()
-	mission_overlay.color = Color("#171c25")
+	mission_overlay.color = Color.TRANSPARENT
 	mission_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mission_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	mission_overlay.visible = false
 	add_child(mission_overlay)
+	_add_overlay_background(
+		mission_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.035, 0.025, 0.02, 0.78)
+	)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -1666,6 +1675,9 @@ func _rebuild_mission_list() -> void:
 		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE%s"
 		% [act_one_complete, act_two_complete, run_text]
 	)
+	var inventory: Dictionary = CampaignStoreScript.inventory_counts(
+		roster, earned_reward_units
+	)
 	for mission in CampaignStoreScript.MISSIONS:
 		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
 		var complete: bool = mission.id in completed_missions
@@ -1713,13 +1725,19 @@ func _rebuild_mission_list() -> void:
 
 		for option in reward_options:
 			var reward_unit: Dictionary = option.unit
+			var is_unobtained: bool = int(inventory.get(reward_unit.name, 0)) <= 0
 			var tile := VBoxContainer.new()
 			tile.custom_minimum_size = Vector2(34, 40)
 			tile.add_theme_constant_override("separation", 0)
 			rewards.add_child(tile)
 
+			var art_slot := Control.new()
+			art_slot.custom_minimum_size = Vector2(32, 30)
+			art_slot.mouse_filter = Control.MOUSE_FILTER_PASS
+			tile.add_child(art_slot)
+
 			var portrait := TextureRect.new()
-			portrait.custom_minimum_size = Vector2(32, 30)
+			portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 			portrait.texture = _unit_icon(reward_unit.icon)
 			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -1728,7 +1746,20 @@ func _rebuild_mission_list() -> void:
 				_show_reward_details.bind(reward_unit, float(option.chance))
 			)
 			portrait.mouse_exited.connect(_hide_unit_details)
-			tile.add_child(portrait)
+			art_slot.add_child(portrait)
+
+			if is_unobtained:
+				var new_tag := Label.new()
+				new_tag.text = "NEW"
+				new_tag.position = Vector2(-2, -4)
+				new_tag.size = Vector2(28, 12)
+				new_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				new_tag.z_index = 2
+				new_tag.add_theme_font_size_override("font_size", 8)
+				new_tag.add_theme_color_override("font_color", Color("#8ee0a6"))
+				new_tag.add_theme_color_override("font_outline_color", Color("#102018"))
+				new_tag.add_theme_constant_override("outline_size", 2)
+				art_slot.add_child(new_tag)
 
 			var stars := Label.new()
 			stars.text = "★".repeat(reward_unit.get("stars", 1))

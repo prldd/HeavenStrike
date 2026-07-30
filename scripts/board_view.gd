@@ -11,7 +11,7 @@ const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png"
 const UNIT_SPRITES_6 := preload("res://assets/units/reference-units-031-036.png")
 const UNIT_SPRITES_7 := preload("res://assets/units/reference-units-037-042.png")
 const UNIT_SPRITES_8 := preload("res://assets/units/reference-units-043-048.png")
-const BOARD_BACKGROUND := preload("res://assets/board-sky-citadel.png")
+const BOARD_BACKGROUND := preload("res://assets/board-steampunk-courtyard.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
