@@ -228,12 +228,13 @@ func _build_interface() -> void:
 	root.add_child(board)
 
 	var control_bar := VBoxContainer.new()
-	control_bar.custom_minimum_size.y = 62
+	control_bar.custom_minimum_size.y = 44
 	control_bar.add_theme_constant_override("separation", 8)
 	root.add_child(control_bar)
 
 	var status_row := HBoxContainer.new()
 	status_row.add_theme_constant_override("separation", 8)
+	status_row.visible = false
 	control_bar.add_child(status_row)
 
 	hint_label = Label.new()
@@ -273,10 +274,10 @@ func _build_interface() -> void:
 	end_button.tooltip_text = "Resolve turn (Enter)"
 	end_button.add_theme_font_size_override("font_size", 28)
 	end_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	end_button.offset_left = -70
-	end_button.offset_top = -62
-	end_button.offset_right = -14
-	end_button.offset_bottom = -12
+	end_button.offset_left = -74
+	end_button.offset_top = -68
+	end_button.offset_right = -18
+	end_button.offset_bottom = -18
 	end_button.z_index = 20
 	end_button.pressed.connect(_end_player_turn)
 	board.add_child(end_button)
@@ -532,7 +533,7 @@ func _build_overlay() -> void:
 	panel.add_child(reward_reveal)
 
 	var reward_heading := Label.new()
-	reward_heading.text = "CARD REWARD"
+	reward_heading.text = "UNIT ACQUIRED"
 	reward_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_heading.add_theme_font_size_override("font_size", 16)
 	reward_heading.add_theme_color_override("font_color", UIThemeScript.muted_color())
@@ -615,7 +616,7 @@ func _build_tutorial() -> void:
 	plaque.add_child(panel)
 
 	var title := Label.new()
-	title.text = "FIELD BRIEFING"
+	title.text = "TACTICAL DOCTRINE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
@@ -670,11 +671,11 @@ func _next_tutorial_page() -> void:
 
 func _update_tutorial() -> void:
 	var pages := [
-		"1 / 5\nSELECT A CARD\nCards show Mana cost, class, attack, health, and their special ability.",
-		"2 / 5\nCHOOSE A LANE\nDeploy on an open glowing tile at the left edge. New units move and attack when the turn resolves.",
-		"3 / 5\nREPOSITION\nSelect one of your deployed units, then an open highlighted tile in another row. Friendly units may be crossed, enemies block the path, and you may reposition any number of times.",
-		"4 / 5\nTAUNTING STRIKE\nA unit hit by a Defender cannot change rows for its next two turns.",
-		"5 / 5\nBREAK THE COMMANDER\nResolve the board, cross an open lane, and deal enough damage to defeat the enemy Commander."
+		"1 / 5\nASSEMBLE YOUR OPTIONS\nUnit cards show Mana cost, role, attack, health, and tactical ability.",
+		"2 / 5\nCOMMIT TO A LANE\nDeploy on an open tile at your edge. Preview the route, then account for movement before the attack.",
+		"3 / 5\nREFORM THE LINE\nReposition deployed units between open rows. Allies may be crossed, enemies obstruct the route, and you may reposition any number of times.",
+		"4 / 5\nCONTROL THEIR MOVEMENT\nTaunt and Immobilise deny enemy lane changes, letting you isolate threats and protect weak positions.",
+		"5 / 5\nBREAK THEIR COMMAND\nControl the lanes, create an opening, and project enough force through it to defeat the enemy Captain."
 	]
 	tutorial_page_label.text = pages[tutorial_page]
 
@@ -707,7 +708,7 @@ func _build_squad_builder() -> void:
 	layout.add_child(title_row)
 
 	var title := Label.new()
-	title.text = "SQUAD WORKSHOP"
+	title.text = "FORMATION COMMAND"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
@@ -719,7 +720,7 @@ func _build_squad_builder() -> void:
 	title_row.add_child(squad_count_label)
 
 	var instruction := Label.new()
-	instruction.text = "Drag squad cards to reorder them. Slot 1 is the Vanguard; right-click any squad card to make it Vanguard. Maximum 2 copies per unit."
+	instruction.text = "Shape an eight-unit plan. Drag to reorder; slot 1 leads the opening hand. Right-click a unit to assign the Vanguard. Maximum 2 copies per unit."
 	instruction.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(instruction)
 
@@ -745,7 +746,7 @@ func _build_squad_builder() -> void:
 	layout.add_child(skill_row)
 
 	var skill_label := Label.new()
-	skill_label.text = "CAPTAIN SKILL"
+	skill_label.text = "COMMAND TACTIC"
 	skill_label.custom_minimum_size.x = 150
 	skill_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	skill_label.add_theme_color_override("font_color", UIThemeScript.title_color())
@@ -774,7 +775,7 @@ func _build_squad_builder() -> void:
 	barracks_layout.add_theme_constant_override("separation", 8)
 	barracks_zone.add_child(barracks_layout)
 	var barracks_title := Label.new()
-	barracks_title.text = "BARRACKS · OWNED CARDS"
+	barracks_title.text = "RESERVES · OWNED UNITS"
 	barracks_title.add_theme_font_size_override("font_size", 16)
 	barracks_title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	barracks_layout.add_child(barracks_title)
@@ -804,7 +805,7 @@ func _build_squad_builder() -> void:
 	selection_layout.add_theme_constant_override("separation", 8)
 	selection_zone.add_child(selection_layout)
 	var selection_title := Label.new()
-	selection_title.text = "SQUAD · CLICK A CARD TO REMOVE"
+	selection_title.text = "ACTIVE FORMATION · CLICK TO REMOVE"
 	selection_title.add_theme_font_size_override("font_size", 16)
 	selection_title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	selection_layout.add_child(selection_title)
@@ -837,13 +838,13 @@ func _build_squad_builder() -> void:
 	actions.add_child(cancel)
 
 	squad_save_button = Button.new()
-	squad_save_button.text = "SAVE SQUAD"
+	squad_save_button.text = "SAVE FORMATION"
 	squad_save_button.custom_minimum_size = Vector2(170, 44)
 	squad_save_button.pressed.connect(_save_squad)
 	actions.add_child(squad_save_button)
 
 	squad_start_button = Button.new()
-	squad_start_button.text = "START MISSION"
+	squad_start_button.text = "DEPLOY FORMATION"
 	squad_start_button.custom_minimum_size = Vector2(180, 44)
 	squad_start_button.visible = false
 	squad_start_button.pressed.connect(_save_and_start_mission)
@@ -1179,8 +1180,9 @@ func _build_main_menu() -> void:
 	layout.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "COMMAND THE DRIFTING SKYWAYS"
+	subtitle.text = "PLAN THE ROUTE  ·  CONTROL THE LANES  ·  BREAK THE LINE"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(subtitle)
 
@@ -1200,7 +1202,7 @@ func _build_main_menu() -> void:
 	replay_button.pressed.connect(_open_last_replay)
 	layout.add_child(replay_button)
 
-	var squad := _menu_action("SQUAD WORKSHOP")
+	var squad := _menu_action("FORMATION COMMAND")
 	squad.pressed.connect(_open_squad_from_menu)
 	layout.add_child(squad)
 
@@ -1295,7 +1297,7 @@ func _build_replay_squad_overlay() -> void:
 	layout.add_theme_constant_override("separation", 18)
 	margin.add_child(layout)
 	var title := Label.new()
-	title.text = "REPLAY SQUADS"
+	title.text = "RECORDED FORMATIONS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
@@ -1361,7 +1363,7 @@ func _build_mission_select() -> void:
 	margin.add_child(layout)
 
 	var title := Label.new()
-	title.text = "CAMPAIGN · THE TEMPEST ENGINE"
+	title.text = "OPERATIONS MAP · THE TEMPEST FRONT"
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
@@ -2946,7 +2948,7 @@ func _check_game_over() -> bool:
 				mission_run_captain_hp = player_hp
 				MissionRunStoreScript.save_run(current_mission_id, current_encounter_index + 1, mission_run_captain_hp)
 				var next_encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index + 1)
-				overlay_title.text = "BATTLE WON"
+				overlay_title.text = "FIELD SECURED"
 				overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 				overlay_detail.text = "Captain HP carried forward: %d\nNext: Battle %d/%d · %s" % [
 					player_hp, current_encounter_index + 2, encounter_count, next_encounter.title
@@ -2966,7 +2968,10 @@ func _check_game_over() -> bool:
 			)
 			recent_reward_name = reward
 			_show_card_reward(reward, not was_unlocked)
-		overlay_title.text = "MISSION COMPLETE" if campaign_battle else "VICTORY"
+		overlay_title.text = (
+			"OPERATION COMPLETE" if campaign_battle
+			else "TACTICAL VICTORY"
+		)
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = (
 			"%s\nVictory achieved in %d rounds."
@@ -2986,7 +2991,7 @@ func _check_game_over() -> bool:
 	else:
 		if campaign_battle:
 			MissionRunStoreScript.clear_run()
-		overlay_title.text = "DEFEAT"
+		overlay_title.text = "LINE BROKEN"
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
 		overlay_detail.text = "Your skyway has fallen.\nRebuild your formation and try again."
 		result_primary_button.text = "RETRY BATTLE"

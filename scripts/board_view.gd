@@ -374,16 +374,21 @@ func _draw() -> void:
 				base = Color(0.08, 0.62, 0.78, 0.42)
 			draw_style_box(_box(base, Color(0.72, 0.58, 0.38, 0.55), 5, 1), cell_rect)
 
+	var event_width := minf(grid.size.x * 0.68, 620.0)
+	var event_rect := Rect2(
+		Vector2((size.x - event_width) * 0.5, 6),
+		Vector2(event_width, 28)
+	)
 	draw_style_box(
-		_box(Color(0.055, 0.06, 0.07, 0.88), Color(0.72, 0.54, 0.30, 0.75), 6, 1),
-		Rect2(Vector2(grid.position.x, 6), Vector2(minf(grid.size.x * 0.62, 590), 28))
+		_box(Color(0.055, 0.06, 0.07, 0.72), Color(0.72, 0.54, 0.30, 0.68), 6, 1),
+		event_rect
 	)
 	draw_string(
 		get_theme_default_font(),
-		Vector2(grid.position.x + 11, 25),
+		event_rect.position + Vector2(0, 19),
 		event_text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		minf(grid.size.x * 0.60, 570),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		event_rect.size.x,
 		14,
 		Color("#f4e6c7")
 	)
