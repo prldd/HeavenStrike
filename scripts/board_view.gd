@@ -27,6 +27,7 @@ var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
 var targetable_unit_ids: Array = []
+var targetable_rows: Array = []
 var player_mana_text := ""
 var enemy_mana_text := ""
 var player_hp_text := ""
@@ -35,6 +36,7 @@ var player_deck_text := ""
 var enemy_deck_text := ""
 var enabled := true
 var hover_row := -1
+var hover_col := -1
 var hover_unit_id := -1
 var event_text := "Choose a unit, then choose a lane."
 var effect_unit_id := -1
@@ -61,6 +63,7 @@ func _ready() -> void:
 
 func _clear_hover() -> void:
 	hover_row = -1
+	hover_col = -1
 	if hover_unit_id >= 0:
 		hover_unit_id = -1
 		unit_hover_ended.emit()
@@ -78,12 +81,14 @@ func set_state(
 	next_player_hp_text: String = "",
 	next_enemy_hp_text: String = "",
 	next_player_deck_text: String = "",
-	next_enemy_deck_text: String = ""
+	next_enemy_deck_text: String = "",
+	next_targetable_rows: Array = []
 ) -> void:
 	units = next_units
 	selected_card = card
 	selected_unit_id = selected_id
 	targetable_unit_ids = next_targetable_ids.duplicate()
+	targetable_rows = next_targetable_rows.duplicate()
 	player_mana_text = next_player_mana_text
 	enemy_mana_text = next_enemy_mana_text
 	player_hp_text = next_player_hp_text
@@ -281,6 +286,7 @@ func _clear_effect() -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		hover_row = _row_at(event.position)
+		hover_col = _col_at(event.position)
 		_update_unit_hover(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -361,7 +367,10 @@ func _draw() -> void:
 				base = Color(0.08, 0.29, 0.34, 0.42)
 			elif col == COLS - 1:
 				base = Color(0.43, 0.09, 0.16, 0.40)
-			if row == hover_row and col == 0 and enabled and not selected_card.is_empty():
+			if (
+				row == hover_row and hover_col == 0 and col == 0
+				and enabled and not selected_card.is_empty()
+			):
 				base = Color(0.08, 0.62, 0.78, 0.42)
 			draw_style_box(_box(base, Color(0.72, 0.58, 0.38, 0.55), 5, 1), cell_rect)
 
@@ -380,13 +389,27 @@ func _draw() -> void:
 	)
 
 	var preview_id: int = (
-		-1 if not targetable_unit_ids.is_empty()
+		-1 if not targetable_unit_ids.is_empty() or not targetable_rows.is_empty()
 		else selected_unit_id if selected_unit_id >= 0
 		else hover_unit_id
 	)
 	var preview_unit: Variant = _unit_by_id(preview_id)
 	if preview_unit != null:
 		_draw_action_preview(preview_unit)
+	var deployment_preview := {}
+	if (
+		preview_unit == null and not selected_card.is_empty()
+		and hover_row >= 0 and hover_col == 0 and not _occupied(hover_row, 0)
+		and targetable_unit_ids.is_empty() and targetable_rows.is_empty()
+	):
+		var projected_unit := selected_card.duplicate(true)
+		projected_unit.side = 0
+		projected_unit.row = hover_row
+		projected_unit.col = 0
+		deployment_preview = BattleRulesScript.projected_deployment(
+			selected_card, hover_row, units
+		)
+		_draw_action_preview_data(projected_unit, deployment_preview)
 
 	_draw_commander(
 		Vector2(82, grid.get_center().y), false, player_hp_text, player_deck_text
@@ -411,6 +434,27 @@ func _draw() -> void:
 			_draw_effect(unit)
 	_draw_projectile()
 
+	for target_row in targetable_rows:
+		for col in COLS:
+			var lane_cell := _cell_rect(target_row, col).grow(-4)
+			draw_style_box(
+				_box(Color(0.74, 0.50, 0.14, 0.14), Color("#d6aa5d"), 7, 2),
+				lane_cell
+			)
+		var lane_rect := Rect2(
+			_cell_rect(target_row, 0).position,
+			Vector2(grid.size.x, _cell_rect(target_row, 0).size.y)
+		).grow(-10)
+		draw_string(
+			get_theme_default_font(),
+			lane_rect.position + Vector2(0, 17),
+			"SELECT LANE %d" % (target_row + 1),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			lane_rect.size.x,
+			12,
+			Color("#fff0c2")
+		)
+
 	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
 		for row in ROWS:
 			var deploy := _cell_rect(row, 0).grow(-8)
@@ -433,7 +477,7 @@ func _draw() -> void:
 				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
 				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)
 
-	if preview_unit != null:
+	if preview_unit != null or not deployment_preview.is_empty():
 		var legend := "CYAN  TRAVERSE    CORAL  ATTACK REACH"
 		draw_string(
 			get_theme_default_font(),
@@ -751,8 +795,11 @@ func _draw_selection(unit: Dictionary) -> void:
 	draw_style_box(_box(Color(0.25, 0.8, 0.9, 0.08), Color("#71e6f5"), 12, 3), rect)
 
 func _draw_action_preview(unit: Dictionary) -> void:
-	var direction := 1 if unit.side == 0 else -1
 	var preview: Dictionary = BattleRulesScript.projected_action(unit.id, units)
+	_draw_action_preview_data(unit, preview)
+
+func _draw_action_preview_data(unit: Dictionary, preview: Dictionary) -> void:
+	var direction := 1 if unit.side == 0 else -1
 	for cell in preview.attack:
 		var attack_rect := _cell_rect(cell.y, cell.x).grow(-8)
 		var occupied_target := _enemy_at(unit, cell.y, cell.x)

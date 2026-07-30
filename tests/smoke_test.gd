@@ -517,18 +517,38 @@ func _init() -> void:
 		"id": 52, "side": 1, "name": "Lane Mage", "kind": "Channeler",
 		"row": 2, "atk": 6, "hp": 5, "max_hp": 5, "effects": []
 	}
+	var lane_defender := {
+		"id": 55, "side": 1, "name": "Lane Defender", "kind": "Warden",
+		"row": 2, "atk": 3, "hp": 8, "max_hp": 8, "effects": []
+	}
 	var other_lane_scout := {
 		"id": 53, "side": 1, "name": "Other Scout", "kind": "Strider",
 		"row": 1, "atk": 4, "hp": 5, "max_hp": 5, "effects": []
 	}
 	var debuff_units := [
-		demoralize_actor, lane_fighter, lane_mage, other_lane_scout
+		demoralize_actor, lane_fighter, lane_mage, lane_defender, other_lane_scout
 	]
 	var demoralize_result := UnitSkillsScript.resolve_warcry(
 		demoralize_actor, debuff_units, -1, null, 2
 	)
-	assert(demoralize_result.affected == [51])
-	assert(lane_fighter.atk == 4 and lane_mage.atk == 6)
+	assert(demoralize_result.affected == [51, 55])
+	assert(
+		lane_fighter.atk == 4 and lane_defender.atk == 2
+		and lane_mage.atk == 6 and other_lane_scout.atk == 4
+	)
+	var deploy_preview := BattleRulesScript.projected_deployment(
+		{"move": 3, "range": 1}, 0, []
+	)
+	assert(deploy_preview.traversal == [
+		Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)
+	])
+	assert(deploy_preview.attack == [Vector2i(4, 0)])
+	var blocked_deploy_preview := BattleRulesScript.projected_deployment(
+		{"move": 3, "range": 1}, 0,
+		[{"id": 90, "side": 1, "row": 0, "col": 2, "ready": true, "move": 1, "range": 1}]
+	)
+	assert(blocked_deploy_preview.traversal == [Vector2i(1, 0)])
+	assert(blocked_deploy_preview.attack == [Vector2i(2, 0)])
 	var punish_actor := {
 		"id": 54, "side": 0, "name": "LDF Flight Officer", "kind": "Duelist",
 		"atk": 4, "hp": 4, "max_hp": 4, "effects": [],

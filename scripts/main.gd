@@ -2057,11 +2057,16 @@ func _refresh() -> void:
 			func(unit): return unit.side == ENEMY
 		).map(func(unit): return unit.id)
 	elif pending_demoralize_actor_id >= 0:
-		targetable_ids = units.filter(
-			func(unit): return unit.side == ENEMY and unit.kind in [
-				"Duelist", "Strider", "Warden"
-			]
-		).map(func(unit): return unit.id)
+		targetable_ids = []
+	var targetable_rows: Array = []
+	if pending_demoralize_actor_id >= 0:
+		for row in ROWS:
+			if units.any(
+				func(unit): return unit.side == ENEMY and unit.row == row and unit.kind in [
+					"Duelist", "Strider", "Warden"
+				]
+			):
+				targetable_rows.append(row)
 	board.set_state(
 		units, selected, selected_board_unit_id,
 		input_enabled and not battle_over, status_message, targetable_ids,
@@ -2070,7 +2075,8 @@ func _refresh() -> void:
 		"%d HP%s" % [player_hp, "\n%d SHIELD" % player_shield if player_shield > 0 else ""],
 		"%d HP%s" % [enemy_hp, "\n%d SHIELD" % enemy_shield if enemy_shield > 0 else ""],
 		"DECK %d" % (battle_deck.size() - draw_index),
-		"DECK %d" % (enemy_deck.size() - enemy_draw_index)
+		"DECK %d" % (enemy_deck.size() - enemy_draw_index),
+		targetable_rows
 	)
 	_rebuild_hand()
 
@@ -2195,7 +2201,7 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			pending_demoralize_actor_id = -1
 			status_message = await _resolve_warcry(actor, -1, row)
 		else:
-			status_message = "Choose a lane containing a highlighted melee enemy."
+			status_message = "Choose one of the highlighted lanes."
 		_refresh()
 		return
 	if selected_board_unit_id >= 0:
@@ -2342,7 +2348,7 @@ func _resolve_warcry(
 		)
 	):
 		pending_demoralize_actor_id = actor.id
-		return "Choose a lane containing a highlighted melee enemy."
+		return "Choose one of the highlighted lanes."
 	var result: Dictionary = UnitSkillsScript.resolve_warcry(
 		actor, units, target_id, battle_simulator.rng, target_lane
 	)

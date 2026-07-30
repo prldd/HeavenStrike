@@ -93,6 +93,23 @@ static func projected_action(unit_id: int, units: Array) -> Dictionary:
 
 	return {"traversal": [], "attack": [], "origin_col": -1, "projected_col": -1}
 
+static func projected_deployment(card: Dictionary, row: int, units: Array) -> Dictionary:
+	if row < 0 or row >= ROWS or _occupied(units, row, 0):
+		return {"traversal": [], "attack": [], "origin_col": -1, "projected_col": -1}
+	var projected_units: Array = units.duplicate(true)
+	var projected_unit := card.duplicate(true)
+	var projected_id := -1
+	while _unit_by_id(projected_units, projected_id) != null:
+		projected_id -= 1
+	projected_unit.id = projected_id
+	projected_unit.side = PLAYER
+	projected_unit.row = row
+	projected_unit.col = 0
+	projected_unit.ready = true
+	projected_unit.immobilized_turns = 0
+	projected_units.append(projected_unit)
+	return projected_action(projected_id, projected_units)
+
 static func has_target_in_range(unit: Dictionary, units: Array) -> bool:
 	var direction := 1 if unit.side == PLAYER else -1
 	for other in units:

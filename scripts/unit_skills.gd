@@ -101,17 +101,20 @@ static func resolve_warcry(
 			var lane := target_lane
 			if lane < 0:
 				lane = _best_enemy_lane(actor, units, ["Duelist", "Strider", "Warden"])
-			var targets := _enemies(actor, units).filter(
-				func(unit):
-					return unit.row == lane and unit.kind in ["Duelist", "Strider", "Warden"]
-			)
-			for target in targets:
+			var target_count := 0
+			for target in units:
+				if (
+					target.side == actor.side or target.row != lane
+					or target.kind not in ["Duelist", "Strider", "Warden"]
+				):
+					continue
 				target.atk = maxi(0, target.atk - 1)
 				_add_effect(target, "Demoralize", 2, -1, 0)
 				result.affected.append(target.id)
-			if not targets.is_empty():
+				target_count += 1
+			if target_count > 0:
 				result.message = "Demoralize gives %d enem%s in lane %d -1 ATK for 2 turns." % [
-					targets.size(), "y" if targets.size() == 1 else "ies", lane + 1
+					target_count, "y" if target_count == 1 else "ies", lane + 1
 				]
 		"Punish":
 			var target = _highest_attack_enemy_classes(
