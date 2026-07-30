@@ -11,7 +11,7 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 45, "The playable roster must contain 45 units.")
+	assert(roster.size() == 75, "The playable roster must contain 75 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
@@ -46,22 +46,25 @@ func _init() -> void:
 	assert(captain_hit.shield_absorbed == 2)
 	assert(captain_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 48
+		func(icon_id): return icon_id >= 1 and icon_id <= 80
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 2).size() == 10)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 13)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 6)
-	assert(roster.filter(func(unit): return unit.stars == 5).size() == 4)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 12)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 22)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 18)
+	assert(roster.filter(func(unit): return unit.stars == 5).size() == 11)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
-	icon_ids.sort()
-	assert(icon_ids == range(1, 30) + range(31, 36) + range(37, 42) + range(43, 49))
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 11)
-	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 6)
-	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 4)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 6)
-	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 12)
-	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 6)
+	var unique_icon_ids: Array = []
+	for icon_id in icon_ids:
+		if icon_id not in unique_icon_ids:
+			unique_icon_ids.append(icon_id)
+	assert(icon_ids.size() == unique_icon_ids.size())
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 17)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 10)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 6)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 16)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 14)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 12)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
 	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
@@ -88,7 +91,44 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("LDF Riot Mage").promotion_of == "LDF Crowd Mage")
 	assert(UnitCatalogScript.by_name("Fortune Teller").kind == "Channeler")
 	assert(UnitCatalogScript.by_name("Fortune Diviner").hp == 7)
-	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 17)
+	assert(UnitCatalogScript.by_name("Street Nurse").skill.name == "Mend")
+	assert(UnitCatalogScript.by_name("Kerryson the Stoic").atk == 4)
+	assert(UnitCatalogScript.by_name("Blight Doctor").skill.name == "Plague")
+	assert(UnitCatalogScript.by_name("Dart Shooter").skill.name == "Envenom")
+	assert(UnitCatalogScript.by_name("Lizard-Licker Keru").promotion_of == "Frog-Hopper Keru")
+	assert(UnitCatalogScript.by_name("Toxic Shot").stars == 5)
+	assert(UnitCatalogScript.by_name("Garrett Talon").skill.name == "Pin Down")
+	assert(UnitCatalogScript.by_name("Garrett the Raider").promotion_of == "Garrett the Claw")
+	assert(UnitCatalogScript.by_name("Precision Trigger").promotion_of == "Precision Sniper")
+	assert(UnitCatalogScript.by_name("Greyson the Shifty").skill.name == "Demoralize")
+	assert(UnitCatalogScript.by_name("The Telecommunicator").stars == 5)
+	assert(UnitCatalogScript.by_name("Pierrot the Deciever").promotion_of == "Vicious Pierrot")
+	assert(UnitCatalogScript.by_name("LDF Flight Officer").skill.name == "Punish")
+	assert(UnitCatalogScript.by_name("Prison Guv'nor").promotion_of == "Prison Warden")
+	assert(UnitCatalogScript.by_name("The Bard").promotion_of == "Shakespeare")
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Mend"
+	).size() == 4)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Plague"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Envenom"
+	).size() == 6)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Pin Down"
+	).size() == 6)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Demoralize"
+	).size() == 6)
+	assert(roster.filter(
+		func(unit): return unit.get("skill", {}).get("name", "") == "Punish"
+	).size() == 6)
+	assert(UnitCatalogScript.art_id(49) == 47)
+	assert(UnitCatalogScript.art_id(56) == 58)
+	assert(UnitCatalogScript.art_id(68) == 629)
+	assert(UnitCatalogScript.art_id(80) == 488)
+	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 33)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -142,15 +182,15 @@ func _init() -> void:
 	assert(CampaignStoreScript.is_available(1, [0]))
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
-	assert(starting_unlocks.size() == 10)
+	assert(starting_unlocks.size() == 29)
 	assert("Chain Initiate" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
 		roster, ["Chain Initiate", "LDF Medic"]
 	)
-	assert(earned_unlocks.size() == 12)
+	assert(earned_unlocks.size() == 31)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
-	assert(CampaignStoreScript.reward_summary(2) == "Random: Rage Brute")
+	assert(CampaignStoreScript.reward_summary(2) == "Random: Street Nurse, Rage Brute")
 	assert(CampaignStoreScript.reward_summary(3) == "Random: Talon Scratcher")
 	assert(CampaignStoreScript.reward_summary(7) == "Random: Claw Caster, Claw Slicer, Rage Brute, Claw Skirmisher, Claw Ambusher")
 	var training_rewards: Array = CampaignStoreScript.reward_options(0, roster)
@@ -163,6 +203,17 @@ func _init() -> void:
 	assert("Master Builder" in CampaignStoreScript.MISSIONS[10].reward_pool)
 	assert("Claw Ambusher" in CampaignStoreScript.MISSIONS[7].reward_pool)
 	assert("Order Missionary" in CampaignStoreScript.MISSIONS[27].reward_pool)
+	assert("Street Nurse" in CampaignStoreScript.MISSIONS[2].reward_pool)
+	assert("Street Matron" in CampaignStoreScript.MISSIONS[9].reward_pool)
+	assert("Captain Kerryson" in CampaignStoreScript.MISSIONS[17].reward_pool)
+	assert("Kerryson the Stoic" in CampaignStoreScript.MISSIONS[17].reward_pool)
+	assert("Garrett Talon" in CampaignStoreScript.MISSIONS[8].reward_pool)
+	assert("Garrett the Claw" in CampaignStoreScript.MISSIONS[49].reward_pool)
+	assert("Precision Shooter" in CampaignStoreScript.MISSIONS[52].reward_pool)
+	assert("Precision Sniper" in CampaignStoreScript.MISSIONS[60].reward_pool)
+	assert("Greyson the Shifty" in CampaignStoreScript.MISSIONS[13].reward_pool)
+	assert("LDF Flight Officer" in CampaignStoreScript.MISSIONS[18].reward_pool)
+	assert("LDF Flight Commander" in CampaignStoreScript.MISSIONS[14].reward_pool)
 	for mission in CampaignStoreScript.MISSIONS:
 		assert("Farsight Naruku" not in mission.reward_pool)
 		assert("Macewielder Ragnr" not in mission.reward_pool)
@@ -171,6 +222,25 @@ func _init() -> void:
 		assert("Talon Slicer" not in mission.reward_pool)
 		assert("Fortune Teller" not in mission.reward_pool)
 		assert("Fortune Diviner" not in mission.reward_pool)
+		assert("Blight Doctor" not in mission.reward_pool)
+		assert("Blight Physician" not in mission.reward_pool)
+		assert("Dart Shooter" not in mission.reward_pool)
+		assert("Dart Sharpshooter" not in mission.reward_pool)
+		assert("Frog-Hopper Keru" not in mission.reward_pool)
+		assert("Lizard-Licker Keru" not in mission.reward_pool)
+		assert("Blightshot" not in mission.reward_pool)
+		assert("Toxic Shot" not in mission.reward_pool)
+		assert("Garrett the Raider" not in mission.reward_pool)
+		assert("Precision Trigger" not in mission.reward_pool)
+		assert("Greyson the Shrewd" not in mission.reward_pool)
+		assert("Communicator Ripley" not in mission.reward_pool)
+		assert("The Telecommunicator" not in mission.reward_pool)
+		assert("Vicious Pierrot" not in mission.reward_pool)
+		assert("Pierrot the Deciever" not in mission.reward_pool)
+		assert("Prison Warden" not in mission.reward_pool)
+		assert("Prison Guv'nor" not in mission.reward_pool)
+		assert("Shakespeare" not in mission.reward_pool)
+		assert("The Bard" not in mission.reward_pool)
 	var rarity_candidates := [
 		{"name": "One Star", "stars": 1},
 		{"name": "Five Star", "stars": 5}
@@ -356,6 +426,110 @@ func _init() -> void:
 	assert(enemy_scout.atk == 4)
 	CaptainSkillsScript.expire_effects(misfortune_units, 1)
 	assert(enemy_scout.atk == 5)
+	var mend_actor := {
+		"id": 41, "side": 0, "name": "Street Nurse", "kind": "Lifebinder",
+		"atk": 2, "hp": 3, "max_hp": 3, "effects": [],
+		"skill": {"name": "Mend", "type": "Warcry"}
+	}
+	var mend_target := {
+		"id": 42, "side": 0, "name": "Wounded Ally", "kind": "Duelist",
+		"atk": 2, "hp": 2, "max_hp": 5, "effects": []
+	}
+	var mend_result := UnitSkillsScript.resolve_warcry(
+		mend_actor, [mend_actor, mend_target]
+	)
+	assert(not mend_result.message.is_empty())
+	assert(mend_target.hp == 5)
+	var plague_actor := {
+		"id": 43, "side": 0, "name": "Blight Doctor", "kind": "Lifebinder",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Plague", "type": "Warcry"}
+	}
+	var plague_ally := {
+		"id": 44, "side": 0, "name": "Plagued Ally", "kind": "Duelist",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var plague_enemy := {
+		"id": 45, "side": 1, "name": "Plagued Enemy", "kind": "Warden",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var plague_units := [plague_actor, plague_ally, plague_enemy]
+	var plague_result := UnitSkillsScript.resolve_warcry(plague_actor, plague_units)
+	assert(plague_result.affected.size() == 2)
+	assert(plague_actor.hp == 6)
+	assert(plague_ally.hp == 4 and plague_enemy.hp == 4)
+	assert(plague_ally.poison_turns == 2 and plague_enemy.poison_turns == 2)
+	assert(UnitSkillsScript.resolve_start_statuses(1, plague_units).size() == 1)
+	assert(plague_enemy.hp == 3 and plague_enemy.poison_turns == 1)
+	assert(UnitSkillsScript.resolve_start_statuses(1, plague_units).size() == 1)
+	assert(plague_enemy.hp == 2 and plague_enemy.poison_turns == 0)
+	var envenom_actor := {
+		"id": 46, "side": 0, "name": "Dart Shooter", "kind": "Artillerist",
+		"atk": 4, "hp": 3, "max_hp": 3, "effects": [],
+		"skill": {"name": "Envenom", "type": "Warcry"}
+	}
+	var envenom_target := {
+		"id": 47, "side": 1, "name": "Chosen Enemy", "kind": "Channeler",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var envenom_other := {
+		"id": 48, "side": 1, "name": "Other Enemy", "kind": "Warden",
+		"atk": 5, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var envenom_result := UnitSkillsScript.resolve_warcry(
+		envenom_actor, [envenom_actor, envenom_target, envenom_other], 47
+	)
+	assert(envenom_result.affected == [47])
+	assert(envenom_target.poison_turns == 2)
+	assert(not envenom_other.has("poison_turns"))
+	var pin_actor := {
+		"id": 49, "side": 0, "name": "Garrett Talon", "kind": "Artillerist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Pin Down", "type": "Warcry"}
+	}
+	var pin_result := UnitSkillsScript.resolve_warcry(
+		pin_actor, [pin_actor, envenom_target, envenom_other]
+	)
+	assert(pin_result.affected == [48])
+	assert(envenom_other.hp == 7 and envenom_other.immobilized_turns == 1)
+	var demoralize_actor := {
+		"id": 50, "side": 0, "name": "Greyson the Shifty", "kind": "Strider",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Demoralize", "type": "Warcry"}
+	}
+	var lane_fighter := {
+		"id": 51, "side": 1, "name": "Lane Fighter", "kind": "Duelist",
+		"row": 2, "atk": 5, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var lane_mage := {
+		"id": 52, "side": 1, "name": "Lane Mage", "kind": "Channeler",
+		"row": 2, "atk": 6, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var other_lane_scout := {
+		"id": 53, "side": 1, "name": "Other Scout", "kind": "Strider",
+		"row": 1, "atk": 4, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var debuff_units := [
+		demoralize_actor, lane_fighter, lane_mage, other_lane_scout
+	]
+	var demoralize_result := UnitSkillsScript.resolve_warcry(
+		demoralize_actor, debuff_units, -1, null, 2
+	)
+	assert(demoralize_result.affected == [51])
+	assert(lane_fighter.atk == 4 and lane_mage.atk == 6)
+	var punish_actor := {
+		"id": 54, "side": 0, "name": "LDF Flight Officer", "kind": "Duelist",
+		"atk": 4, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Punish", "type": "Warcry"}
+	}
+	var punish_result := UnitSkillsScript.resolve_warcry(
+		punish_actor, debuff_units + [punish_actor]
+	)
+	assert(punish_result.affected == [52])
+	assert(lane_mage.atk == 5)
+	CaptainSkillsScript.expire_effects(debuff_units, 1)
+	CaptainSkillsScript.expire_effects(debuff_units, 1)
+	assert(lane_fighter.atk == 5 and lane_mage.atk == 6)
 	var pupil := {
 		"id": 36, "side": 0, "name": "Order Pupil", "atk": 3,
 		"hp": 2, "max_hp": 2, "effects": [],

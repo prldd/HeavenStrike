@@ -53,7 +53,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
-The current prototype roster contains 28 unpromoted units and 17 standalone promoted forms. Promotion and leveling logic is deferred; promoted forms currently enter the reward pool as independent cards when their secondary skill is implemented.
+The current prototype roster contains 42 unpromoted units and 33 standalone promoted forms. Promotion and leveling logic is deferred; promoted forms currently enter the reward pool as independent cards when their secondary skill is implemented.
 
 Campaign missions only award implemented cards listed for that exact story quest in the reference data. Cards listed solely for events, raids, arenas, or gacha are not inserted into campaign pools.
 
@@ -140,7 +140,7 @@ Board order and targeting are deterministic except where an ability explicitly s
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
-The implemented roster contains 45 cards: 28 unpromoted units and 17 standalone promoted forms. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks.
+The implemented roster contains 75 cards: 42 unpromoted units and 33 standalone promoted forms. Mend restores 3 HP to the most-wounded other ally when its unit is deployed. Plague deals 1 damage to every other unit and Poisons each survivor for two turns, dealing 1 additional damage at the start of its side's turns. Envenom lets the player select an enemy to Poison for two turns. Pin Down deals 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilises it for one turn. Demoralize weakens eligible melee enemies in a player-selected lane, while Punish weakens the highest-ATK enemy Fighter or Mage. Units beyond the starting set are earned as mission rewards and are not included in the starting Barracks unless the reference provides no story-quest source for them.
 
 ## Example Turn
 
@@ -169,7 +169,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 - Full 62-mission, two-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 45 reference units across all six classes
+- 75 reference units across all six classes
 - Three Commanders
 
 ### Later Possibilities

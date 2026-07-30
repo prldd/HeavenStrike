@@ -124,6 +124,8 @@ var enemy_draw_index := 0
 var selected_hand_index := -1
 var selected_board_unit_id := -1
 var pending_empower_actor_id := -1
+var pending_envenom_actor_id := -1
+var pending_demoralize_actor_id := -1
 var next_unit_id := 1
 var round_number := 1
 var player_hp := STARTING_HP
@@ -1931,6 +1933,8 @@ func _start_new_match() -> void:
 	selected_hand_index = -1
 	selected_board_unit_id = -1
 	pending_empower_actor_id = -1
+	pending_envenom_actor_id = -1
+	pending_demoralize_actor_id = -1
 	next_unit_id = 1
 	round_number = 1
 	player_hp = mission_run_captain_hp if campaign_battle else STARTING_HP
@@ -1992,7 +1996,9 @@ func _refresh() -> void:
 	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
 	hint_label.text = status_message
 	end_button.disabled = (
-		not input_enabled or battle_over or pending_empower_actor_id >= 0
+		not input_enabled or battle_over
+		or pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
+		or pending_demoralize_actor_id >= 0
 	)
 	menu_button.disabled = not input_enabled or battle_over
 	power_button.disabled = not input_enabled or player_power_used or battle_over
@@ -2006,6 +2012,16 @@ func _refresh() -> void:
 	if pending_empower_actor_id >= 0:
 		targetable_ids = units.filter(
 			func(unit): return unit.side == PLAYER and unit.id != pending_empower_actor_id
+		).map(func(unit): return unit.id)
+	elif pending_envenom_actor_id >= 0:
+		targetable_ids = units.filter(
+			func(unit): return unit.side == ENEMY
+		).map(func(unit): return unit.id)
+	elif pending_demoralize_actor_id >= 0:
+		targetable_ids = units.filter(
+			func(unit): return unit.side == ENEMY and unit.kind in [
+				"Duelist", "Strider", "Warden"
+			]
 		).map(func(unit): return unit.id)
 	board.set_state(
 		units, selected, selected_board_unit_id,
@@ -2069,11 +2085,42 @@ func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)
 
 func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
-	if icon_id < 1 or icon_id > 48:
+	if icon_id < 1:
 		return null
 	var cache_key := "%d:%d" % [icon_id, size]
 	if unit_icon_cache.has(cache_key):
 		return unit_icon_cache[cache_key]
+	if icon_id > 48:
+		var art_path := (
+			"res://assets/units/full/%03d.png"
+			% UnitCatalogScript.art_id(icon_id)
+		)
+		var art_texture := load(art_path) as Texture2D
+		if art_texture == null:
+			return null
+		var art_image := art_texture.get_image()
+		var used_rect := art_image.get_used_rect()
+		if used_rect.size.x > 0 and used_rect.size.y > 0:
+			art_image = art_image.get_region(used_rect)
+		var art_scale := minf(
+			size / float(art_image.get_width()),
+			size / float(art_image.get_height())
+		)
+		var draw_size := Vector2i(
+			maxi(1, int(art_image.get_width() * art_scale)),
+			maxi(1, int(art_image.get_height() * art_scale))
+		)
+		art_image.resize(draw_size.x, draw_size.y, Image.INTERPOLATE_LANCZOS)
+		var icon_canvas := Image.create(size, size, false, Image.FORMAT_RGBA8)
+		icon_canvas.fill(Color.TRANSPARENT)
+		icon_canvas.blit_rect(
+			art_image,
+			Rect2i(Vector2i.ZERO, draw_size),
+			Vector2i((size - draw_size.x) / 2, (size - draw_size.y) / 2)
+		)
+		var direct_icon := ImageTexture.create_from_image(icon_canvas)
+		unit_icon_cache[cache_key] = direct_icon
+		return direct_icon
 	var sheets: Array[Texture2D] = [
 		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4,
 		UNIT_SPRITES_5, UNIT_SPRITES_6, UNIT_SPRITES_7, UNIT_SPRITES_8
@@ -2100,8 +2147,11 @@ func _show_card_reward(unit_name: String, is_new: bool) -> void:
 func _select_card(index: int) -> void:
 	if not input_enabled:
 		return
-	if pending_empower_actor_id >= 0:
-		status_message = "Choose an allied target for Empower first."
+	if (
+		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
+		or pending_demoralize_actor_id >= 0
+	):
+		status_message = "Choose the highlighted Warcry target first."
 		_refresh()
 		return
 	selected_hand_index = -1 if selected_hand_index == index else index
@@ -2126,6 +2176,28 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			status_message = await _resolve_warcry(actor, clicked.id)
 		else:
 			status_message = "Choose another allied unit as Empower's target."
+		_refresh()
+		return
+	if pending_envenom_actor_id >= 0:
+		var actor = _unit_by_id(pending_envenom_actor_id)
+		if actor != null and clicked != null and clicked.side == ENEMY:
+			pending_envenom_actor_id = -1
+			status_message = await _resolve_warcry(actor, clicked.id)
+		else:
+			status_message = "Choose a highlighted enemy unit as Envenom's target."
+		_refresh()
+		return
+	if pending_demoralize_actor_id >= 0:
+		var actor = _unit_by_id(pending_demoralize_actor_id)
+		if actor != null and units.any(
+			func(unit): return unit.side == ENEMY and unit.row == row and unit.kind in [
+				"Duelist", "Strider", "Warden"
+			]
+		):
+			pending_demoralize_actor_id = -1
+			status_message = await _resolve_warcry(actor, -1, row)
+		else:
+			status_message = "Choose a lane containing a highlighted melee enemy."
 		_refresh()
 		return
 	if selected_board_unit_id >= 0:
@@ -2178,8 +2250,11 @@ func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
 func _on_deployment_clicked(row: int) -> void:
 	if not input_enabled or selected_hand_index < 0 or selected_hand_index >= player_hand.size():
 		return
-	if pending_empower_actor_id >= 0:
-		status_message = "Choose an allied target for Empower first."
+	if (
+		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
+		or pending_demoralize_actor_id >= 0
+	):
+		status_message = "Choose the highlighted Warcry target first."
 		_refresh()
 		return
 	if _unit_at(row, 0) != null:
@@ -2230,6 +2305,8 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"repositioned": false,
 		"taunt_turns": 0,
 		"immobilized_turns": 0,
+		"poison_turns": 0,
+		"poison_damage": 0,
 		"fury_stacks": 0,
 		"effects": []
 	}
@@ -2238,7 +2315,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 	UnitSkillsScript.refresh_auras(units)
 	return spawned
 
-func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
+func _resolve_warcry(
+	actor: Dictionary, target_id: int = -1, target_lane: int = -1
+) -> String:
 	var skill: Dictionary = actor.get("skill", {})
 	var has_other_ally := units.any(
 		func(unit): return unit.side == PLAYER and unit.id != actor.id
@@ -2250,8 +2329,24 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 	):
 		pending_empower_actor_id = actor.id
 		return "Choose another allied unit as Empower's target."
+	if (
+		actor.side == PLAYER and skill.get("name", "") == "Envenom"
+		and target_id < 0 and units.any(func(unit): return unit.side == ENEMY)
+	):
+		pending_envenom_actor_id = actor.id
+		return "Choose a highlighted enemy unit as Envenom's target."
+	if (
+		actor.side == PLAYER and skill.get("name", "") == "Demoralize"
+		and target_lane < 0 and units.any(
+			func(unit): return unit.side == ENEMY and unit.kind in [
+				"Duelist", "Strider", "Warden"
+			]
+		)
+	):
+		pending_demoralize_actor_id = actor.id
+		return "Choose a lane containing a highlighted melee enemy."
 	var result: Dictionary = UnitSkillsScript.resolve_warcry(
-		actor, units, target_id, battle_simulator.rng
+		actor, units, target_id, battle_simulator.rng, target_lane
 	)
 	for unit_id in result.affected:
 		var target = _unit_by_id(unit_id)
@@ -2259,12 +2354,14 @@ func _resolve_warcry(actor: Dictionary, target_id: int = -1) -> String:
 			board.play_unit_effect(
 				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
 			)
-			if skill.get("name", "") in ["Bolt", "Heaven's Wrath"]:
+			if skill.get("name", "") in ["Bolt", "Heaven's Wrath", "Plague", "Pin Down"]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
-			elif skill.get("name", "") in ["Fortify", "Empower"]:
+			elif skill.get("name", "") in ["Fortify", "Empower", "Mend"]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
+			elif skill.get("name", "") in ["Envenom", "Demoralize", "Punish"]:
+				battle_audio.play("status")
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
 			actor.name, skill.get("name", "Unknown"), result.message
@@ -2287,8 +2384,11 @@ func _use_player_power() -> void:
 func _end_player_turn() -> void:
 	if not input_enabled or battle_over:
 		return
-	if pending_empower_actor_id >= 0:
-		status_message = "Choose an allied target for Empower before resolving."
+	if (
+		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
+		or pending_demoralize_actor_id >= 0
+	):
+		status_message = "Choose the highlighted Warcry target before resolving."
 		_refresh()
 		return
 	status_message = _resolution_preview(PLAYER)
@@ -2720,6 +2820,16 @@ func _expire_side_effects(side: int) -> void:
 			enemy_shield = 0
 
 func _resolve_chants(side: int) -> void:
+	for result in UnitSkillsScript.resolve_start_statuses(side, units):
+		if not result.get("message", "").is_empty():
+			status_message = result.message
+			_log_action("[%s STATUS] %s" % [
+				"ALLY" if side == PLAYER else "ENEMY", result.message
+			])
+		for unit_id in result.get("affected", []):
+			var target = _unit_by_id(unit_id)
+			if target != null:
+				board.play_unit_effect(target.id, "POISON", Color("#8ee36b"))
 	for result in UnitSkillsScript.resolve_chants(side, units):
 		if not result.get("message", "").is_empty():
 			status_message = result.message

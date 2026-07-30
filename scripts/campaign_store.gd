@@ -17,7 +17,10 @@ const REWARD_UNITS := [
 	"Talon Scratcher", "Talon Slasher", "Innocent Gretel",
 	"Witchkiller Gretel", "Talon Slicer",
 	"Street Urchin", "Street Hoodlum", "LDF Crowd Mage",
-	"LDF Riot Mage", "Fortune Teller", "Fortune Diviner"
+	"LDF Riot Mage", "Fortune Teller", "Fortune Diviner",
+	"Street Nurse", "Street Matron", "Captain Kerryson", "Kerryson the Stoic",
+	"Garrett Talon", "Garrett the Claw", "Precision Shooter", "Precision Sniper",
+	"Greyson the Shifty", "LDF Flight Officer", "LDF Flight Commander"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

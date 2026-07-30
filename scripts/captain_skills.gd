@@ -141,6 +141,8 @@ static func effect_summary(unit: Dictionary) -> String:
 		labels.append("Taunted (%d turns)" % unit.taunt_turns)
 	if unit.get("immobilized_turns", 0) > 0:
 		labels.append("Immobilised (%d turns)" % unit.immobilized_turns)
+	if unit.get("poison_turns", 0) > 0:
+		labels.append("Poisoned (%d turns)" % unit.poison_turns)
 	return ", ".join(labels)
 
 static func _add_attack_effect(unit: Dictionary, effect_name: String, amount: int, turns: int) -> void:

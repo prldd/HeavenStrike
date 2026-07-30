@@ -584,6 +584,8 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 		badges.append({"label": "T%d" % unit.taunt_turns, "color": Color("#ff9d66")})
 	if unit.get("immobilized_turns", 0) > 0:
 		badges.append({"label": "I%d" % unit.immobilized_turns, "color": Color("#c99cff")})
+	if unit.get("poison_turns", 0) > 0:
+		badges.append({"label": "P%d" % unit.poison_turns, "color": Color("#8ee36b")})
 	if unit.get("fury_stacks", 0) > 0:
 		badges.append({"label": "F%d" % unit.fury_stacks, "color": Color("#ffd166")})
 	for effect in unit.get("effects", []):
@@ -629,7 +631,7 @@ func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
 
 func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	var icon_id: int = unit.get("icon", 0)
-	if icon_id < 1 or icon_id > 48:
+	if icon_id < 1:
 		return
 	var texture: Texture2D = _full_unit_texture(icon_id)
 	if texture == null:
@@ -652,7 +654,7 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 func _full_unit_texture(icon_id: int) -> Texture2D:
 	if full_unit_texture_cache.has(icon_id):
 		return full_unit_texture_cache[icon_id]
-	var path := "res://assets/units/full/%03d.png" % icon_id
+	var path := "res://assets/units/full/%03d.png" % UnitCatalogScript.art_id(icon_id)
 	var texture := load(path) as Texture2D
 	full_unit_texture_cache[icon_id] = texture
 	return texture

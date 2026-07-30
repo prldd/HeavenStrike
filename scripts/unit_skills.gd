@@ -7,7 +7,8 @@ static func resolve_warcry(
 	actor: Dictionary,
 	units: Array,
 	target_id: int = -1,
-	rng: RandomNumberGenerator = null
+	rng: RandomNumberGenerator = null,
+	target_lane: int = -1
 ) -> Dictionary:
 	var result := {"message": "", "affected": []}
 	var skill: Dictionary = actor.get("skill", {})
@@ -58,11 +59,88 @@ static func resolve_warcry(
 				_add_effect(target, "Misfortune", 2, -1, 0)
 				result.message = "Misfortune gives %s -1 ATK for 2 turns." % target.name
 				result.affected.append(target.id)
+		"Mend":
+			var target = _lowest_health_ally(actor, units)
+			if target != null:
+				BattleSimulatorScript.apply_unit_healing(target, 3, true)
+				result.message = "Mend restores 3 HP to %s." % target.name
+				result.affected.append(target.id)
+		"Plague":
+			var victims: Array = units.filter(func(unit): return unit.id != actor.id)
+			for target in victims:
+				BattleSimulatorScript.apply_unit_damage(target, 1)
+				target.poison_turns = maxi(target.get("poison_turns", 0), 2)
+				target.poison_damage = maxi(target.get("poison_damage", 0), 1)
+				result.affected.append(target.id)
+			if not victims.is_empty():
+				result.message = "Plague deals 1 damage and Poisons %d other unit%s for 2 turns." % [
+					victims.size(), "" if victims.size() == 1 else "s"
+				]
+		"Envenom":
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				target = _highest_health_enemy(actor, units)
+			if target != null:
+				target.poison_turns = maxi(target.get("poison_turns", 0), 2)
+				target.poison_damage = maxi(target.get("poison_damage", 0), 1)
+				result.message = "Envenom Poisons %s for 2 turns." % target.name
+				result.affected.append(target.id)
+		"Pin Down":
+			var target = _highest_attack_enemy_classes(
+				actor, units, ["Warden", "Duelist", "Strider"]
+			)
+			if target != null:
+				BattleSimulatorScript.apply_unit_damage(target, 1)
+				if target.hp > 0:
+					target.immobilized_turns = maxi(
+						target.get("immobilized_turns", 0), 1
+					)
+				result.message = "Pin Down deals 1 damage to %s and Immobilises it for 1 turn." % target.name
+				result.affected.append(target.id)
+		"Demoralize":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_enemy_lane(actor, units, ["Duelist", "Strider", "Warden"])
+			var targets := _enemies(actor, units).filter(
+				func(unit):
+					return unit.row == lane and unit.kind in ["Duelist", "Strider", "Warden"]
+			)
+			for target in targets:
+				target.atk = maxi(0, target.atk - 1)
+				_add_effect(target, "Demoralize", 2, -1, 0)
+				result.affected.append(target.id)
+			if not targets.is_empty():
+				result.message = "Demoralize gives %d enem%s in lane %d -1 ATK for 2 turns." % [
+					targets.size(), "y" if targets.size() == 1 else "ies", lane + 1
+				]
+		"Punish":
+			var target = _highest_attack_enemy_classes(
+				actor, units, ["Duelist", "Channeler"]
+			)
+			if target != null:
+				target.atk = maxi(0, target.atk - 1)
+				_add_effect(target, "Punish", 2, -1, 0)
+				result.message = "Punish gives %s -1 ATK for 2 turns." % target.name
+				result.affected.append(target.id)
 	return result
 
 static func resolve_chants(_side: int, _units: Array) -> Array:
 	# Timing hook for later Chant units.
 	return []
+
+static func resolve_start_statuses(side: int, units: Array) -> Array:
+	var results: Array = []
+	for unit in units:
+		if unit.side != side or unit.get("poison_turns", 0) <= 0:
+			continue
+		var damage: int = maxi(1, unit.get("poison_damage", 1))
+		BattleSimulatorScript.apply_unit_damage(unit, damage)
+		unit.poison_turns -= 1
+		results.append({
+			"message": "Poison deals %d damage to %s." % [damage, unit.name],
+			"affected": [unit.id]
+		})
+	return results
 
 static func resolve_strike(
 	actor: Dictionary, target: Dictionary, _units: Array, roll: float = -1.0
@@ -142,6 +220,14 @@ static func _ally_by_id(
 static func _enemies(actor: Dictionary, units: Array) -> Array:
 	return units.filter(func(unit): return unit.side != actor.side)
 
+static func _enemy_by_id(actor: Dictionary, units: Array, target_id: int):
+	if target_id < 0:
+		return null
+	for unit in units:
+		if unit.id == target_id and unit.side != actor.side:
+			return unit
+	return null
+
 static func _lowest_health_ally(actor: Dictionary, units: Array):
 	var candidates := _other_allies(actor, units)
 	candidates.sort_custom(func(a, b):
@@ -181,3 +267,16 @@ static func _highest_attack_enemy_classes(
 		return a.atk > b.atk
 	)
 	return null if candidates.is_empty() else candidates[0]
+
+static func _best_enemy_lane(actor: Dictionary, units: Array, kinds: Array) -> int:
+	var best_lane := -1
+	var best_score := -1
+	for lane in 3:
+		var score := 0
+		for unit in _enemies(actor, units):
+			if unit.row == lane and unit.kind in kinds:
+				score += 10 + unit.atk
+		if score > best_score:
+			best_lane = lane
+			best_score = score
+	return best_lane
