@@ -55,6 +55,7 @@ var shake_tween: Tween
 var reduced_motion := false
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	mouse_exited.connect(_clear_hover)
 
@@ -669,8 +670,8 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	var content_rect := _full_unit_content_rect(icon_id, texture)
 	var content_size := content_rect.size
 	var art_scale := minf(rect.size.x / content_size.x, rect.size.y / content_size.y)
-	var draw_size := content_size * art_scale
-	var center := rect.get_center()
+	var draw_size := (content_size * art_scale).round()
+	var center := rect.get_center().round()
 	var scale_x := -1.0 if unit.side == 0 else 1.0
 	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
 	draw_texture_rect_region(
