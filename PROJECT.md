@@ -207,6 +207,21 @@ The visual direction combines:
 
 Combat information must remain readable even when several abilities resolve in sequence.
 
+The current prototype uses its official unit illustrations as the visual source of
+truth. Its interface should feel like a richly illustrated chibi fantasy strategy
+game presented through an ornate, tactile storybook:
+
+- Deep ink navy and charcoal establish field and panel surfaces.
+- Warm parchment, antique brass, and muted cream define hierarchy and readable text.
+- Class colors communicate roles on cards and the battlefield without replacing the
+  shared brass-and-parchment interface language.
+- Compact bevels, double-line borders, and subtle shadows take precedence over
+  luminous science-fiction glass.
+- Background paintings remain low-contrast atmosphere so units carry the strongest
+  color, contrast, and detail.
+- Portrait sprites appear in menus, rewards, decks, and workshop cards. Full-body
+  sprites remain exclusive to the battlefield.
+
 ## Technical Direction
 
 The project will use Godot 4 and target desktop first at a touch-friendly 16:9 resolution. Unit and ability data will be stored as Godot Resources so content can be balanced without changing combat code.

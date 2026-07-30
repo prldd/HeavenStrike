@@ -2,6 +2,7 @@ class_name SquadCard
 extends Button
 
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const UIThemeScript = preload("res://scripts/ui_theme.gd")
 
 signal unit_dropped(
 	dropped_unit_name: String, source: String, source_index: int, target_index: int
@@ -32,16 +33,7 @@ func _apply_class_style(color: Color) -> void:
 	add_theme_stylebox_override("disabled", _card_style(color, 0.07, 0.24, 0))
 
 func _card_style(color: Color, tint: float, border_alpha: float, glow: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#0d162b").lerp(color, tint)
-	style.border_color = Color(color, border_alpha)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.shadow_color = Color(color, 0.22 if glow > 0 else 0.0)
-	style.shadow_size = glow
-	return style
+	return UIThemeScript.card_style(color, tint, border_alpha, glow)
 
 func _get_drag_data(_position: Vector2):
 	if unit_name.is_empty() or disabled:

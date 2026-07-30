@@ -14,6 +14,7 @@ const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
+const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-sky-citadel.png")
 const SQUAD_WORKSHOP_BACKGROUND := preload("res://assets/squad-workshop-armory.png")
 
@@ -154,6 +155,7 @@ const REPLAY_HISTORY_PATH := "user://replay_history.json"
 const NORMAL_SPEED_DURATION_SCALE := 2.0
 
 func _ready() -> void:
+	theme = UIThemeScript.create()
 	_build_interface()
 	battle_audio = BattleAudioScript.new()
 	add_child(battle_audio)
@@ -169,7 +171,7 @@ func _ready() -> void:
 
 func _build_interface() -> void:
 	var background := ColorRect.new()
-	background.color = Color("#070c18")
+	background.color = UIThemeScript.NAVY_DEEP
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 
@@ -192,7 +194,7 @@ func _build_interface() -> void:
 	var brand := Label.new()
 	brand.text = "SKYCHAIN\nTACTICS"
 	brand.add_theme_font_size_override("font_size", 17)
-	brand.add_theme_color_override("font_color", Color("#71e6f5"))
+	brand.add_theme_color_override("font_color", UIThemeScript.title_color())
 	brand.custom_minimum_size.x = 170
 	header.add_child(brand)
 
@@ -237,7 +239,7 @@ func _build_interface() -> void:
 	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hint_label.add_theme_color_override("font_color", Color("#9fb2d6"))
+	hint_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	status_row.add_child(hint_label)
 
 	var action_row := HBoxContainer.new()
@@ -331,7 +333,7 @@ func _build_settings_menu() -> void:
 	var title := Label.new()
 	title.text = "SETTINGS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 
 	speed_button = _settings_action("SPEED 1×", "Cycle combat resolution speed.")
@@ -393,7 +395,7 @@ func _build_combat_log() -> void:
 	var title := Label.new()
 	title.text = "COMBAT LOG"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	heading.add_child(title)
 	var close := Button.new()
 	close.text = "×"
@@ -491,7 +493,7 @@ func _log_action(message: String) -> void:
 
 func _build_overlay() -> void:
 	overlay = ColorRect.new()
-	overlay.color = Color(0.02, 0.035, 0.07, 0.93)
+	overlay.color = Color(0.035, 0.026, 0.02, 0.94)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.visible = false
@@ -501,11 +503,15 @@ func _build_overlay() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(center)
 
+	var plaque := PanelContainer.new()
+	plaque.custom_minimum_size = Vector2(520, 430)
+	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
+	center.add_child(plaque)
 	var panel := VBoxContainer.new()
-	panel.custom_minimum_size = Vector2(480, 390)
+	panel.custom_minimum_size = Vector2(460, 370)
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_theme_constant_override("separation", 14)
-	center.add_child(panel)
+	plaque.add_child(panel)
 
 	overlay_title = Label.new()
 	overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -515,7 +521,7 @@ func _build_overlay() -> void:
 	overlay_detail = Label.new()
 	overlay_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	overlay_detail.add_theme_font_size_override("font_size", 17)
-	overlay_detail.add_theme_color_override("font_color", Color("#afbeda"))
+	overlay_detail.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	panel.add_child(overlay_detail)
 
 	reward_reveal = VBoxContainer.new()
@@ -528,7 +534,7 @@ func _build_overlay() -> void:
 	reward_heading.text = "CARD REWARD"
 	reward_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_heading.add_theme_font_size_override("font_size", 16)
-	reward_heading.add_theme_color_override("font_color", Color("#9fb2d6"))
+	reward_heading.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	reward_reveal.add_child(reward_heading)
 
 	var portrait_center := CenterContainer.new()
@@ -545,7 +551,7 @@ func _build_overlay() -> void:
 	reward_stars_label = Label.new()
 	reward_stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_stars_label.add_theme_font_size_override("font_size", 18)
-	reward_stars_label.add_theme_color_override("font_color", Color("#ffd166"))
+	reward_stars_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	reward_reveal.add_child(reward_stars_label)
 
 	reward_new_label = Label.new()
@@ -582,7 +588,7 @@ func _build_overlay() -> void:
 
 func _build_tutorial() -> void:
 	tutorial_overlay = ColorRect.new()
-	tutorial_overlay.color = Color(0.02, 0.035, 0.07, 0.94)
+	tutorial_overlay.color = Color(0.035, 0.026, 0.02, 0.95)
 	tutorial_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tutorial_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	tutorial_overlay.visible = false
@@ -592,17 +598,21 @@ func _build_tutorial() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tutorial_overlay.add_child(center)
 
+	var plaque := PanelContainer.new()
+	plaque.custom_minimum_size = Vector2(610, 380)
+	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
+	center.add_child(plaque)
 	var panel := VBoxContainer.new()
-	panel.custom_minimum_size = Vector2(560, 330)
+	panel.custom_minimum_size = Vector2(550, 320)
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_theme_constant_override("separation", 22)
-	center.add_child(panel)
+	plaque.add_child(panel)
 
 	var title := Label.new()
 	title.text = "FIELD BRIEFING"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	panel.add_child(title)
 
 	tutorial_page_label = Label.new()
@@ -611,7 +621,7 @@ func _build_tutorial() -> void:
 	tutorial_page_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	tutorial_page_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tutorial_page_label.add_theme_font_size_override("font_size", 18)
-	tutorial_page_label.add_theme_color_override("font_color", Color("#c1cee5"))
+	tutorial_page_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	panel.add_child(tutorial_page_label)
 
 	var actions := HBoxContainer.new()
@@ -672,7 +682,7 @@ func _build_squad_builder() -> void:
 	_add_overlay_background(
 		squad_overlay,
 		SQUAD_WORKSHOP_BACKGROUND,
-		Color(0.015, 0.025, 0.055, 0.42)
+		Color(0.035, 0.025, 0.02, 0.68)
 	)
 
 	var margin := MarginContainer.new()
@@ -694,7 +704,7 @@ func _build_squad_builder() -> void:
 	title.text = "SQUAD WORKSHOP"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	title_row.add_child(title)
 
 	squad_count_label = Label.new()
@@ -704,7 +714,7 @@ func _build_squad_builder() -> void:
 
 	var instruction := Label.new()
 	instruction.text = "Drag squad cards to reorder them. Slot 1 is the Vanguard; right-click any squad card to make it Vanguard. Maximum 2 copies per unit."
-	instruction.add_theme_color_override("font_color", Color("#aebdda"))
+	instruction.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(instruction)
 
 	mission_intel_panel = PanelContainer.new()
@@ -716,7 +726,7 @@ func _build_squad_builder() -> void:
 	mission_intel_label = Label.new()
 	mission_intel_label.custom_minimum_size.x = 330
 	mission_intel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	mission_intel_label.add_theme_color_override("font_color", Color("#ffb0c2"))
+	mission_intel_label.add_theme_color_override("font_color", Color("#e8b4a2"))
 	intel_layout.add_child(mission_intel_label)
 	mission_enemy_preview_row = HBoxContainer.new()
 	mission_enemy_preview_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -732,7 +742,7 @@ func _build_squad_builder() -> void:
 	skill_label.text = "CAPTAIN SKILL"
 	skill_label.custom_minimum_size.x = 150
 	skill_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	skill_label.add_theme_color_override("font_color", Color("#ffd166"))
+	skill_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	skill_row.add_child(skill_label)
 
 	captain_skill_option = OptionButton.new()
@@ -760,11 +770,11 @@ func _build_squad_builder() -> void:
 	var barracks_title := Label.new()
 	barracks_title.text = "BARRACKS · OWNED CARDS"
 	barracks_title.add_theme_font_size_override("font_size", 16)
-	barracks_title.add_theme_color_override("font_color", Color("#71e6f5"))
+	barracks_title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	barracks_layout.add_child(barracks_title)
 	reward_carry_label = Label.new()
 	reward_carry_label.visible = false
-	reward_carry_label.add_theme_color_override("font_color", Color("#ffd166"))
+	reward_carry_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	barracks_layout.add_child(reward_carry_label)
 	var barracks_scroll := ScrollContainer.new()
 	barracks_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -790,7 +800,7 @@ func _build_squad_builder() -> void:
 	var selection_title := Label.new()
 	selection_title.text = "SQUAD · CLICK A CARD TO REMOVE"
 	selection_title.add_theme_font_size_override("font_size", 16)
-	selection_title.add_theme_color_override("font_color", Color("#ffd166"))
+	selection_title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	selection_layout.add_child(selection_title)
 	var selection_scroll := ScrollContainer.new()
 	selection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -980,7 +990,7 @@ func _rebuild_squad_grid() -> void:
 			unit.name.to_upper(), owned, copies
 		]
 		if unit.name == recent_reward_name:
-			button.add_theme_color_override("font_color", Color("#ffd166"))
+			button.add_theme_color_override("font_color", UIThemeScript.title_color())
 		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(_add_squad_unit.bind(unit.name))
 		button.connect("unit_dropped", _on_squad_card_drop)
@@ -1137,30 +1147,35 @@ func _build_main_menu() -> void:
 	_add_overlay_background(
 		main_menu_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.015, 0.025, 0.06, 0.48)
+		Color(0.035, 0.025, 0.02, 0.66)
 	)
 
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	main_menu_overlay.add_child(center)
 
+	var plaque := PanelContainer.new()
+	plaque.custom_minimum_size = Vector2(480, 590)
+	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
+	center.add_child(plaque)
+
 	var layout := VBoxContainer.new()
-	layout.custom_minimum_size = Vector2(460, 560)
+	layout.custom_minimum_size = Vector2(420, 540)
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
 	layout.add_theme_constant_override("separation", 16)
-	center.add_child(layout)
+	plaque.add_child(layout)
 
 	var title := Label.new()
 	title.text = "SKYCHAIN\nTACTICS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
-	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "COMMAND THE DRIFTING SKYWAYS"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_color_override("font_color", Color("#8da2c8"))
+	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(subtitle)
 
 	var campaign := _menu_action("CAMPAIGN")
@@ -1227,7 +1242,7 @@ func _build_replay_controls() -> void:
 	transport_actions.add_child(step)
 	replay_event_label = Label.new()
 	replay_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	replay_event_label.add_theme_color_override("font_color", Color("#9fb2d6"))
+	replay_event_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	transport.add_child(replay_event_label)
 
 	row.add_child(VSeparator.new())
@@ -1238,7 +1253,7 @@ func _build_replay_controls() -> void:
 	replay_timeline_label = Label.new()
 	replay_timeline_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	replay_timeline_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	replay_timeline_label.add_theme_color_override("font_color", Color("#71e6f5"))
+	replay_timeline_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	history.add_child(replay_timeline_label)
 	var history_actions := HBoxContainer.new()
 	history_actions.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1257,7 +1272,7 @@ func _build_replay_controls() -> void:
 
 func _build_replay_squad_overlay() -> void:
 	replay_squad_overlay = ColorRect.new()
-	replay_squad_overlay.color = Color(0.015, 0.025, 0.06, 0.96)
+	replay_squad_overlay.color = Color(0.035, 0.026, 0.02, 0.97)
 	replay_squad_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	replay_squad_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	replay_squad_overlay.z_index = 110
@@ -1277,13 +1292,13 @@ func _build_replay_squad_overlay() -> void:
 	title.text = "REPLAY SQUADS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color("#ffd166"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 24)
 	layout.add_child(columns)
-	replay_player_squad_grid = _replay_squad_column(columns, "PLAYER SQUAD", Color("#61e8ff"))
+	replay_player_squad_grid = _replay_squad_column(columns, "PLAYER SQUAD", Color("#8bc2c6"))
 	replay_enemy_squad_grid = _replay_squad_column(columns, "ENEMY SQUAD", Color("#ff8ba8"))
 	var close := Button.new()
 	close.text = "RETURN TO REPLAY"
@@ -1316,7 +1331,7 @@ func _replay_squad_column(
 
 func _build_mission_select() -> void:
 	mission_overlay = ColorRect.new()
-	mission_overlay.color = Color("#091124")
+	mission_overlay.color = Color("#171c25")
 	mission_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mission_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	mission_overlay.visible = false
@@ -1337,11 +1352,11 @@ func _build_mission_select() -> void:
 	var title := Label.new()
 	title.text = "CAMPAIGN · THE TEMPEST ENGINE"
 	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color("#71e6f5"))
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 
 	campaign_progress_label = Label.new()
-	campaign_progress_label.add_theme_color_override("font_color", Color("#9fb2d6"))
+	campaign_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(campaign_progress_label)
 
 	var mission_scroll := ScrollContainer.new()
@@ -1689,7 +1704,7 @@ func _rebuild_mission_list() -> void:
 		reward_label.custom_minimum_size.x = 118
 		reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		reward_label.add_theme_font_size_override("font_size", 11)
-		reward_label.add_theme_color_override("font_color", Color("#8fa5ca"))
+		reward_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 		rewards.add_child(reward_label)
 
 		for option in reward_options:
@@ -1716,7 +1731,7 @@ func _rebuild_mission_list() -> void:
 			stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			stars.add_theme_font_size_override("font_size", 9)
-			stars.add_theme_color_override("font_color", Color("#ffd166"))
+			stars.add_theme_color_override("font_color", UIThemeScript.title_color())
 			tile.add_child(stars)
 
 		var divider := HSeparator.new()
@@ -1800,10 +1815,10 @@ func _build_hover_card() -> void:
 	hover_card.visible = false
 
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#111d36")
-	style.border_color = Color("#66d9ff")
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(12)
+	style.bg_color = Color("#172334")
+	style.border_color = UIThemeScript.BRASS
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(8)
 	style.content_margin_left = 14
 	style.content_margin_right = 14
 	style.content_margin_top = 12
@@ -1819,20 +1834,20 @@ func _build_hover_card() -> void:
 	hover_name_label = Label.new()
 	hover_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_name_label.add_theme_font_size_override("font_size", 18)
-	hover_name_label.add_theme_color_override("font_color", Color("#71e6f5"))
+	hover_name_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	content.add_child(hover_name_label)
 
 	hover_stats_label = Label.new()
 	hover_stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_stats_label.add_theme_font_size_override("font_size", 13)
-	hover_stats_label.add_theme_color_override("font_color", Color("#e7edf8"))
+	hover_stats_label.add_theme_color_override("font_color", UIThemeScript.PARCHMENT_LIGHT)
 	content.add_child(hover_stats_label)
 
 	hover_ability_label = Label.new()
 	hover_ability_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_ability_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hover_ability_label.add_theme_font_size_override("font_size", 13)
-	hover_ability_label.add_theme_color_override("font_color", Color("#aebdda"))
+	hover_ability_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	content.add_child(hover_ability_label)
 
 func _show_unit_details(unit: Dictionary) -> void:
@@ -2062,16 +2077,7 @@ func _apply_class_card_style(button: Button, kind: String) -> void:
 func _class_card_style(
 	color: Color, tint: float, border_alpha: float, glow: int
 ) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#0d162b").lerp(color, tint)
-	style.border_color = Color(color, border_alpha)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.shadow_color = Color(color, 0.22 if glow > 0 else 0.0)
-	style.shadow_size = glow
-	return style
+	return UIThemeScript.card_style(color, tint, border_alpha, glow)
 
 func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)

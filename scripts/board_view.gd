@@ -341,28 +341,31 @@ func _cell_rect(row: int, col: int) -> Rect2:
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
 	draw_texture_rect(BOARD_BACKGROUND, panel, false)
-	draw_rect(panel, Color(0.025, 0.045, 0.09, 0.16))
-	draw_style_box(_box(Color.TRANSPARENT, Color("#536b91"), 18, 2), panel.grow(-1))
+	# The board art is atmospheric scenery; the warm ink-and-brass frame and
+	# quiet playmat keep the illustrated units as the visual focus.
+	draw_rect(panel, Color(0.075, 0.055, 0.035, 0.42))
+	draw_style_box(_box(Color.TRANSPARENT, Color("#b88a48"), 12, 3), panel.grow(-2))
+	draw_style_box(_box(Color.TRANSPARENT, Color("#4e3824"), 10, 1), panel.grow(-7))
 
 	var grid := _grid_rect()
 	for row in ROWS:
 		for col in COLS:
 			var cell_rect := _cell_rect(row, col).grow(-3.0)
 			var base := (
-				Color(0.04, 0.09, 0.16, 0.25)
+				Color(0.08, 0.075, 0.07, 0.48)
 				if (row + col) % 2 == 0
-				else Color(0.08, 0.12, 0.19, 0.18)
+				else Color(0.12, 0.105, 0.085, 0.42)
 			)
 			if col == 0:
-				base = Color(0.04, 0.33, 0.52, 0.30)
+				base = Color(0.08, 0.29, 0.34, 0.42)
 			elif col == COLS - 1:
-				base = Color(0.55, 0.08, 0.28, 0.28)
+				base = Color(0.43, 0.09, 0.16, 0.40)
 			if row == hover_row and col == 0 and enabled and not selected_card.is_empty():
 				base = Color(0.08, 0.62, 0.78, 0.42)
-			draw_style_box(_box(base, Color(0.55, 0.67, 0.82, 0.46), 7, 1), cell_rect)
+			draw_style_box(_box(base, Color(0.72, 0.58, 0.38, 0.55), 5, 1), cell_rect)
 
 	draw_style_box(
-		_box(Color(0.025, 0.05, 0.11, 0.78), Color(0.43, 0.60, 0.78, 0.55), 8, 1),
+		_box(Color(0.055, 0.06, 0.07, 0.88), Color(0.72, 0.54, 0.30, 0.75), 6, 1),
 		Rect2(Vector2(grid.position.x, 6), Vector2(minf(grid.size.x * 0.62, 590), 28))
 	)
 	draw_string(
@@ -372,7 +375,7 @@ func _draw() -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		minf(grid.size.x * 0.60, 570),
 		14,
-		Color("#e3edff")
+		Color("#f4e6c7")
 	)
 
 	var preview_id: int = (
