@@ -1180,7 +1180,7 @@ func _build_main_menu() -> void:
 	layout.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "PLAN THE ROUTE  ·  CONTROL THE LANES  ·  BREAK THE LINE"
+	subtitle.text = "CONTROL THE LANES  ·  BREAK THE LINE"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
@@ -1198,7 +1198,7 @@ func _build_main_menu() -> void:
 	practice.pressed.connect(_begin_practice)
 	layout.add_child(practice)
 
-	replay_button = _menu_action("WATCH LAST REPLAY")
+	replay_button = _menu_action("REPLAYS")
 	replay_button.pressed.connect(_open_last_replay)
 	layout.add_child(replay_button)
 

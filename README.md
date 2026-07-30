@@ -29,7 +29,7 @@ assets required by the prototype.
 - Open the upper-right **Settings** gear to change 1×/2×/4× resolution
   speed, sound volume, animation skipping, reduced motion, or to open the
   combat log and field briefing. These settings apply to battles and replays.
-- Select **Watch Last Replay** from the main menu to play, pause, or
+- Select **Replays** from the main menu to play, pause, or
   single-step a completed battle.
 - Use **Older** and **Newer** beneath the replay seed to page through the ten
   most recently completed battles.
