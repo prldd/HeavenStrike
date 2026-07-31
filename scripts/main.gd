@@ -54,6 +54,7 @@ var squad_start_button: Button
 var captain_skill_option: OptionButton
 var mission_intel_panel: PanelContainer
 var mission_intel_label: Label
+var mission_intel_stats_label: Label
 var mission_enemy_preview_row: HBoxContainer
 var reward_carry_label: Label
 var hover_card: PanelContainer
@@ -751,6 +752,14 @@ func _build_squad_builder() -> void:
 	mission_intel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	mission_intel_label.add_theme_color_override("font_color", Color("#e8b4a2"))
 	intel_layout.add_child(mission_intel_label)
+	mission_intel_stats_label = Label.new()
+	mission_intel_stats_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_intel_stats_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	mission_intel_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	mission_intel_stats_label.clip_text = true
+	mission_intel_stats_label.add_theme_font_size_override("font_size", 11)
+	mission_intel_stats_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	intel_layout.add_child(mission_intel_stats_label)
 	mission_enemy_preview_row = HBoxContainer.new()
 	mission_enemy_preview_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mission_enemy_preview_row.alignment = BoxContainer.ALIGNMENT_END
@@ -1089,6 +1098,7 @@ func _refresh_mission_intel() -> void:
 			encounter.enemy_hp, encounter.skill.to_upper()
 		]
 	)
+	mission_intel_stats_label.text = _enemy_squad_summary(encounter.enemy_squad)
 	for unit_name in encounter.enemy_squad:
 		var unit := UnitCatalogScript.by_name(unit_name)
 		if unit == null:
@@ -1104,6 +1114,46 @@ func _refresh_mission_intel() -> void:
 		portrait.mouse_entered.connect(_show_unit_details.bind(unit.to_dict()))
 		portrait.mouse_exited.connect(_hide_unit_details)
 		mission_enemy_preview_row.add_child(portrait)
+
+func _enemy_squad_summary(enemy_squad: Array) -> String:
+	var enemy_cards := SquadStoreScript.build_deck(enemy_squad, roster)
+	if enemy_cards.is_empty():
+		return ""
+	var mana_total := 0
+	var class_counts := {}
+	var class_order: Array = []
+	for card in enemy_cards:
+		mana_total += int(card.get("cost", 0))
+		var unit_class := UnitCatalogScript.display_class(str(card.get("kind", "")))
+		if not class_counts.has(unit_class):
+			class_counts[unit_class] = 0
+			class_order.append(unit_class)
+		class_counts[unit_class] += 1
+	var class_parts: Array = []
+	for unit_class in class_order:
+		class_parts.append("%s ×%d" % [unit_class.to_upper(), class_counts[unit_class]])
+	return "AVG MANA %.1f · RECOMMENDED %s\n%s" % [
+		mana_total / float(enemy_cards.size()),
+		_recommended_squad_level(enemy_cards),
+		" · ".join(class_parts)
+	]
+
+func _recommended_squad_level(enemy_cards: Array) -> String:
+	if editing_squad_names.is_empty():
+		return "—"
+	var enemy_power := BattleSimulatorScript.estimate_squad_power(enemy_cards)
+	var player_cards := SquadStoreScript.build_deck(
+		editing_squad_names, roster, collection_instances
+	)
+	for level in range(1, KineticCrucibleScript.MAX_LEVEL + 1):
+		var scaled_cards: Array = []
+		for card in player_cards:
+			var scaled: Dictionary = card.duplicate()
+			scaled.level = level
+			scaled_cards.append(scaled)
+		if BattleSimulatorScript.estimate_squad_power(scaled_cards) >= enemy_power:
+			return "CRUCIBLE LV %d" % level
+	return "CRUCIBLE LV %d+" % KineticCrucibleScript.MAX_LEVEL
 
 func _on_squad_card_drop(
 	instance_id: String, source: String, source_index: int, target_index: int

@@ -221,6 +221,9 @@ func _run() -> void:
 	assert(game.mission_intel_panel.visible)
 	assert(game.mission_enemy_preview_row.get_child_count() == 8)
 	assert(game.mission_intel_label.text.contains("CAPTAIN:"))
+	assert(game.mission_intel_stats_label.text.contains("AVG MANA"))
+	assert(game.mission_intel_stats_label.text.contains("RECOMMENDED"))
+	assert(game.mission_intel_stats_label.text.contains("×"))
 	assert(game.reward_carry_label.visible)
 	assert(game.reward_carry_label.text.contains("CHAIN INITIATE"))
 	game.squad_overlay.visible = false
