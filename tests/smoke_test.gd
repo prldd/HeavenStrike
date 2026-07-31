@@ -45,6 +45,25 @@ func _init() -> void:
 	]
 	assert(KineticCrucibleScript.active_instances(instance_copies).size() == 3)
 	assert(KineticCrucibleScript.inventory_counts(instance_copies)["Trinity Rusher"] == 2)
+	var reserve_instances: Array = [
+		{"id": "unit_000004", "name": "Order Pupil", "level": 2, "points": 0, "consumed": false},
+		{"id": "unit_000002", "name": "LDF Bowgunner", "level": 1, "points": 0, "consumed": false},
+		{"id": "unit_000007", "name": "Order Pupil", "level": 5, "points": 0, "consumed": false},
+		{"id": "unit_000001", "name": "Trinity Rusher", "level": 1, "points": 0, "consumed": false},
+		{"id": "unit_000005", "name": "Order Scholar", "level": 1, "points": 0, "consumed": false},
+		{"id": "unit_000006", "name": "Order Pupil", "level": 5, "points": 0, "consumed": false},
+		{"id": "unit_000003", "name": "LDF Bolt Slinger", "level": 1, "points": 0, "consumed": false}
+	]
+	var sorted_reserves := KineticCrucibleScript.sort_reserves(reserve_instances, roster)
+	assert(sorted_reserves.map(func(instance): return instance.id) == [
+		"unit_000001", # Strider class group first
+		"unit_000003", # Artillerist tree: promoted 3-star before 2-star base
+		"unit_000002",
+		"unit_000005", # Channeler tree: promoted 3-star before base copies
+		"unit_000007", # same unit: level 5 before level 2, id descending on ties
+		"unit_000006",
+		"unit_000004"
+	])
 	assert(KineticCrucibleScript.can_merge(
 		instance_copies[0], instance_copies[1], roster, true, instance_copies
 	))
@@ -654,10 +673,27 @@ func _init() -> void:
 	)
 	assert(sunder_result.affected == [93])
 	assert(sunder_defender.hp == 7 and sunder_defender.vulnerable_turns == 2)
+	assert(sunder_defender.vulnerable_stacks == 1)
 	assert(BattleSimulatorScript.apply_unit_damage(sunder_defender, 2).damage == 3)
 	assert(sunder_defender.hp == 4)
 	UnitSkillsScript.expire_statuses([sunder_defender], 1)
 	assert(sunder_defender.vulnerable_turns == 1)
+	var sunder_result_two := UnitSkillsScript.resolve_warcry(
+		sunder_actor, [sunder_actor, sunder_defender, sunder_scout]
+	)
+	assert(sunder_result_two.affected == [93])
+	assert(sunder_defender.vulnerable_stacks == 2)
+	assert(sunder_defender.vulnerable_turns == 2)
+	assert("stack 2" in sunder_result_two.message)
+	sunder_defender.hp = 8
+	assert(BattleSimulatorScript.apply_unit_damage(sunder_defender, 2).damage == 4)
+	assert(sunder_defender.hp == 4)
+	UnitSkillsScript.expire_statuses([sunder_defender], 1)
+	assert(sunder_defender.vulnerable_turns == 1)
+	assert(sunder_defender.vulnerable_stacks == 2)
+	UnitSkillsScript.expire_statuses([sunder_defender], 1)
+	assert(sunder_defender.vulnerable_turns == 0)
+	assert(sunder_defender.vulnerable_stacks == 0)
 	skirmisher.skill = {"name": "Pinning Slice", "type": "Strike"}
 	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.59).message.is_empty())
 	warcry_enemy.immobilized_turns = 0

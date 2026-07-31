@@ -52,6 +52,10 @@ var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
 var captain_skill_option: OptionButton
+var reserve_class_option: OptionButton
+var reserve_search_edit: LineEdit
+var reserve_filter_class := ""
+var reserve_filter_text := ""
 var mission_intel_panel: PanelContainer
 var mission_intel_label: Label
 var mission_intel_stats_label: Label
@@ -82,6 +86,10 @@ var crucible_detail_label: Label
 var crucible_merge_button: Button
 var crucible_promote_button: Button
 var crucible_extras_toggle: CheckButton
+var crucible_class_option: OptionButton
+var crucible_search_edit: LineEdit
+var crucible_filter_class := ""
+var crucible_filter_text := ""
 var crucible_target_id := ""
 var crucible_donor_ids: Array = []
 var collection_instances: Array = []
@@ -808,6 +816,22 @@ func _build_squad_builder() -> void:
 	reward_carry_label.visible = false
 	reward_carry_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	barracks_layout.add_child(reward_carry_label)
+	var reserve_filter_row := HBoxContainer.new()
+	reserve_filter_row.add_theme_constant_override("separation", 8)
+	barracks_layout.add_child(reserve_filter_row)
+	reserve_class_option = _make_reserve_class_option()
+	reserve_class_option.item_selected.connect(
+		func(index):
+			reserve_filter_class = reserve_class_option.get_item_metadata(index)
+			_rebuild_squad_grid()
+	)
+	reserve_filter_row.add_child(reserve_class_option)
+	reserve_search_edit = _make_reserve_search_edit(
+		func(text):
+			reserve_filter_text = text
+			_rebuild_squad_grid()
+	)
+	reserve_filter_row.add_child(reserve_search_edit)
 	var barracks_scroll := ScrollContainer.new()
 	barracks_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	barracks_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -996,6 +1020,29 @@ func _on_squad_drop(instance_id: String, source: String, destination: String) ->
 	elif destination == "barracks" and source == "squad":
 		_remove_one_squad_unit(instance_id)
 
+func _make_reserve_class_option() -> OptionButton:
+	var option := OptionButton.new()
+	option.add_item("ALL CLASSES")
+	option.set_item_metadata(0, "")
+	for kind in UnitCatalogScript.CLASS_NAMES.keys():
+		option.add_item(UnitCatalogScript.CLASS_NAMES[kind])
+		option.set_item_metadata(option.item_count - 1, kind)
+	return option
+
+func _make_reserve_search_edit(on_text_changed: Callable) -> LineEdit:
+	var edit := LineEdit.new()
+	edit.placeholder_text = "SEARCH UNITS"
+	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	edit.text_changed.connect(on_text_changed)
+	return edit
+
+func _reserve_visible(unit: UnitData, filter_class: String, filter_text: String) -> bool:
+	if not filter_class.is_empty() and unit.kind != filter_class:
+		return false
+	if not filter_text.is_empty() and unit.name.to_lower().find(filter_text.to_lower()) == -1:
+		return false
+	return true
+
 func _rebuild_squad_grid() -> void:
 	for child in squad_grid.get_children():
 		squad_grid.remove_child(child)
@@ -1011,9 +1058,12 @@ func _rebuild_squad_grid() -> void:
 	var selected_names := SquadStoreScript.instance_names(
 		editing_squad_names, collection_instances
 	)
-	for instance in KineticCrucibleScript.active_instances(collection_instances):
+	var reserves := KineticCrucibleScript.sort_reserves(
+		KineticCrucibleScript.active_instances(collection_instances), roster
+	)
+	for instance in reserves:
 		var unit := UnitCatalogScript.by_name(instance.name)
-		if unit == null:
+		if unit == null or not _reserve_visible(unit, reserve_filter_class, reserve_filter_text):
 			continue
 		var copies: int = selected_names.count(instance.name)
 		var button: Button = SquadCardScript.new()
@@ -1538,11 +1588,27 @@ func _build_kinetic_crucible() -> void:
 	crucible_extras_toggle = CheckButton.new()
 	crucible_extras_toggle.text = "EXTRAS ONLY"
 	crucible_extras_toggle.tooltip_text = (
-		"Only allow donors that leave another active copy in the roster."
+		"Only show spare copies: the two highest-level copies of each unit stay protected and hidden."
 	)
 	crucible_extras_toggle.button_pressed = true
 	crucible_extras_toggle.toggled.connect(_toggle_crucible_extras)
 	reserves_header.add_child(crucible_extras_toggle)
+	var crucible_filter_row := HBoxContainer.new()
+	crucible_filter_row.add_theme_constant_override("separation", 8)
+	reserves_layout.add_child(crucible_filter_row)
+	crucible_class_option = _make_reserve_class_option()
+	crucible_class_option.item_selected.connect(
+		func(index):
+			crucible_filter_class = crucible_class_option.get_item_metadata(index)
+			_rebuild_crucible()
+	)
+	crucible_filter_row.add_child(crucible_class_option)
+	crucible_search_edit = _make_reserve_search_edit(
+		func(text):
+			crucible_filter_text = text
+			_rebuild_crucible()
+	)
+	crucible_filter_row.add_child(crucible_search_edit)
 	var reserves_scroll := ScrollContainer.new()
 	reserves_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	reserves_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -1690,8 +1756,13 @@ func _rebuild_crucible() -> void:
 		for child in grid.get_children():
 			grid.remove_child(child)
 			child.queue_free()
-	for instance in active:
+	var protected_ids := _crucible_protected_ids(active)
+	for instance in KineticCrucibleScript.sort_reserves(active, roster):
+		if instance.id in protected_ids:
+			continue
 		var unit := UnitCatalogScript.by_name(instance.name)
+		if unit == null or not _reserve_visible(unit, crucible_filter_class, crucible_filter_text):
+			continue
 		var card: Button = SquadCardScript.new()
 		card.configure(
 			instance.id, "crucible_reserve", _unit_icon(unit.icon), -1, unit.kind
@@ -1713,7 +1784,7 @@ func _rebuild_crucible() -> void:
 					_crucible_target(), instance, roster
 				)
 			else:
-				state = "RETAINED · NEEDS AN EXTRA COPY"
+				state = "NOT A VALID DONOR"
 				card.disabled = true
 		card.text = "%s · LV %d\n%s" % [
 			unit.name.to_upper(), instance.level, state
@@ -1786,22 +1857,32 @@ func _crucible_target() -> Dictionary:
 
 func _crucible_donor_allowed(donor: Dictionary) -> bool:
 	var target := _crucible_target()
-	if not KineticCrucibleScript.can_merge(target, donor, roster):
-		return false
+	return KineticCrucibleScript.can_merge(target, donor, roster)
+
+## When EXTRAS ONLY is on, the two most-invested copies of each unit name
+## (highest level, then points) are protected from sacrifice and hidden from
+## the reserves list, so only spare copies are offered for consumption.
+func _crucible_protected_ids(active: Array) -> Array:
 	if not crucible_extras_toggle.button_pressed:
-		return true
-	var active := KineticCrucibleScript.active_instances(collection_instances)
-	var active_count := active.filter(
-		func(instance): return instance.name == donor.name
-	).size()
-	var queued_count := crucible_donor_ids.filter(
-		func(instance_id):
-			var queued := KineticCrucibleScript.instance_by_id(
-				collection_instances, instance_id
-			)
-			return queued.get("name", "") == donor.name
-	).size()
-	return active_count - queued_count >= 2
+		return []
+	var by_name := {}
+	for instance in active:
+		if not by_name.has(instance.name):
+			by_name[instance.name] = []
+		by_name[instance.name].append(instance)
+	var protected: Array = []
+	for copies in by_name.values():
+		copies.sort_custom(
+			func(a, b):
+				if a.level != b.level:
+					return a.level > b.level
+				if a.get("points", 0) != b.get("points", 0):
+					return a.get("points", 0) > b.get("points", 0)
+				return a.id < b.id
+		)
+		for index in mini(2, copies.size()):
+			protected.append(copies[index].id)
+	return protected
 
 func _refresh_crucible_detail() -> void:
 	var target := _crucible_target()
@@ -2862,6 +2943,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"poison_turns": 0,
 		"poison_damage": 0,
 		"vulnerable_turns": 0,
+		"vulnerable_stacks": 0,
 		"fury_stacks": 0,
 		"effects": []
 	}

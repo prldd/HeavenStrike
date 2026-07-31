@@ -666,8 +666,11 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	if unit.get("poison_turns", 0) > 0:
 		badges.append({"label": "P%d" % unit.poison_turns, "color": Color("#8ee36b")})
 	if unit.get("vulnerable_turns", 0) > 0:
+		var vulnerable_label := "V%d" % unit.vulnerable_turns
+		if unit.get("vulnerable_stacks", 1) > 1:
+			vulnerable_label = "V%dx%d" % [unit.vulnerable_turns, unit.vulnerable_stacks]
 		badges.append({
-			"label": "V%d" % unit.vulnerable_turns,
+			"label": vulnerable_label,
 			"color": Color("#ef8b72")
 		})
 	if unit.get("fury_stacks", 0) > 0:

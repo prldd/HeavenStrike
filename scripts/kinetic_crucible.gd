@@ -186,6 +186,73 @@ static func promotion_target(unit_name: String, roster: Array) -> UnitData:
 			return unit
 	return null
 
+## Orders reserve instances for display: grouped by class (catalog class
+## order), then by promotion tree, then strongest first — stars, catalog
+## order, level, and instance id all descending. Returns a sorted copy;
+## the input array is left unchanged.
+static func sort_reserves(instances: Array, roster: Array) -> Array:
+	var class_order := UnitCatalog.CLASS_NAMES.keys()
+	var by_name := {}
+	var catalog_index := {}
+	for index in roster.size():
+		by_name[roster[index].name] = roster[index]
+		catalog_index[roster[index].name] = index
+	var tree_roots := {}
+	var sorted := instances.duplicate()
+	sorted.sort_custom(
+		func(a, b):
+			var key_a := _reserve_sort_key(a, by_name, catalog_index, tree_roots, class_order)
+			var key_b := _reserve_sort_key(b, by_name, catalog_index, tree_roots, class_order)
+			for i in key_a.size():
+				if key_a[i] != key_b[i]:
+					return key_a[i] < key_b[i]
+			return false
+	)
+	return sorted
+
+## Sort key for sort_reserves. Descending fields are negated so the whole key
+## compares ascending.
+static func _reserve_sort_key(
+	instance: Dictionary,
+	by_name: Dictionary,
+	catalog_index: Dictionary,
+	tree_roots: Dictionary,
+	class_order: Array
+) -> Array:
+	var unit: UnitData = by_name.get(instance.get("name", ""))
+	var class_idx := class_order.size()
+	var stars := 0
+	var unit_index := -1
+	if unit != null:
+		var found := class_order.find(unit.kind)
+		if found >= 0:
+			class_idx = found
+		stars = unit.stars
+		unit_index = catalog_index.get(unit.name, -1)
+	var root := _promotion_root(instance.get("name", ""), by_name, tree_roots)
+	var id_text := str(instance.get("id", ""))
+	return [
+		class_idx,
+		-int(catalog_index.get(root, -1)),
+		-stars,
+		-unit_index,
+		-int(instance.get("level", 1)),
+		-int(id_text.trim_prefix("unit_"))
+	]
+
+static func _promotion_root(unit_name: String, by_name: Dictionary, memo: Dictionary) -> String:
+	if memo.has(unit_name):
+		return memo[unit_name]
+	var root := unit_name
+	var unit: UnitData = by_name.get(root)
+	var guard := 0
+	while unit != null and not unit.promotion_of.is_empty() and guard < 16:
+		root = unit.promotion_of
+		unit = by_name.get(root)
+		guard += 1
+	memo[unit_name] = root
+	return root
+
 ## Converts a level-5 instance into its promoted form. The instance keeps its
 ## id (so squads fielding it automatically field the promoted unit) and starts
 ## over at level 1; the next sync replenishes a fresh level-1 base copy.

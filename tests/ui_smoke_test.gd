@@ -4,6 +4,7 @@ const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 
 func _init() -> void:
 	call_deferred("_run")
@@ -133,9 +134,41 @@ func _run() -> void:
 	var crucible_units: Array = KineticCrucibleScript.active_instances(
 		game.collection_instances
 	)
+	# EXTRAS ONLY hides the two highest-level copies of each unit name.
+	var names_seen := {}
+	var protected_count := 0
+	for instance in crucible_units:
+		names_seen[instance.name] = names_seen.get(instance.name, 0) + 1
+	for copy_count in names_seen.values():
+		protected_count += mini(2, copy_count)
+	assert(
+		game.crucible_reserve_grid.get_child_count()
+		== crucible_units.size() - protected_count
+	)
+	game.crucible_extras_toggle.button_pressed = false
+	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
+	# Class filter and name search narrow the crucible reserves list.
+	game.crucible_class_option.select(1)
+	game.crucible_class_option.item_selected.emit(1)
+	var filter_kind: String = game.crucible_class_option.get_item_metadata(1)
+	var expected_in_class := 0
+	for instance in crucible_units:
+		if UnitCatalogScript.by_name(instance.name).kind == filter_kind:
+			expected_in_class += 1
+	assert(game.crucible_reserve_grid.get_child_count() == expected_in_class)
+	game.crucible_class_option.select(0)
+	game.crucible_class_option.item_selected.emit(0)
+	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
+	var search_term: String = crucible_units[0].name
+	game.crucible_search_edit.text_changed.emit(search_term)
+	var expected_in_search := 0
+	for instance in crucible_units:
+		if instance.name.to_lower().contains(search_term.to_lower()):
+			expected_in_search += 1
+	assert(game.crucible_reserve_grid.get_child_count() == expected_in_search)
+	game.crucible_search_edit.text_changed.emit("")
 	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
 	assert(game.crucible_target_grid.get_child_count() == 1)
-	game.crucible_extras_toggle.button_pressed = false
 	game._select_crucible_unit(crucible_units[0].id)
 	assert(game.crucible_target_id == crucible_units[0].id)
 	assert(game.crucible_target_grid.get_child_count() == 1)
@@ -149,6 +182,39 @@ func _run() -> void:
 	assert(game.crucible_target_id.is_empty())
 	assert(game.crucible_donor_ids.is_empty())
 	assert(game.crucible_promote_button.disabled)
+	# EXTRAS ONLY protects the two highest-level copies, exposing the lowest.
+	var extras_config := ConfigFile.new()
+	extras_config.set_value("meta", "instances_migrated", true)
+	extras_config.set_value("collection", "next_id", 4)
+	extras_config.set_value("collection", "instances", [
+		{
+			"id": "unit_000001", "name": "Apprentice Builder",
+			"level": 1, "points": 0, "consumed": false
+		},
+		{
+			"id": "unit_000002", "name": "Apprentice Builder",
+			"level": 5, "points": 0, "consumed": false
+		},
+		{
+			"id": "unit_000003", "name": "Apprentice Builder",
+			"level": 3, "points": 0, "consumed": false
+		}
+	])
+	extras_config.save(KineticCrucibleScript.SAVE_PATH)
+	game.crucible_extras_toggle.button_pressed = true
+	game._open_kinetic_crucible()
+	await process_frame
+	var visible_ids: Array = []
+	for card in game.crucible_reserve_grid.get_children():
+		visible_ids.append(card.unit_name)
+	assert("unit_000001" in visible_ids)
+	assert("unit_000002" not in visible_ids)
+	assert("unit_000003" not in visible_ids)
+	game.crucible_extras_toggle.button_pressed = false
+	visible_ids = []
+	for card in game.crucible_reserve_grid.get_children():
+		visible_ids.append(card.unit_name)
+	assert("unit_000002" in visible_ids and "unit_000003" in visible_ids)
 	# Promotion: a level-5 copy with an implemented next form can be promoted.
 	var promo_config := ConfigFile.new()
 	promo_config.set_value("meta", "instances_migrated", true)
@@ -190,6 +256,30 @@ func _run() -> void:
 	assert(game.squad_grid.get_child_count() == owned_types)
 	assert(game.squad_grid.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	assert(game.squad_selection_grid.get_child_count() == game.editing_squad_names.size())
+	# Class filter and name search narrow the squad builder reserves list.
+	var squad_active := KineticCrucibleScript.active_instances(game.collection_instances)
+	game.reserve_class_option.select(1)
+	game.reserve_class_option.item_selected.emit(1)
+	var squad_filter_kind: String = game.reserve_class_option.get_item_metadata(1)
+	var expected_squad_in_class := 0
+	for instance in squad_active:
+		if UnitCatalogScript.by_name(instance.name).kind == squad_filter_kind:
+			expected_squad_in_class += 1
+	assert(game.squad_grid.get_child_count() == expected_squad_in_class)
+	game.reserve_class_option.select(0)
+	game.reserve_class_option.item_selected.emit(0)
+	assert(game.squad_grid.get_child_count() == owned_types)
+	var search_instance := KineticCrucibleScript.instance_by_id(
+		game.collection_instances, game.squad_grid.get_child(0).unit_name
+	)
+	game.reserve_search_edit.text_changed.emit(search_instance.name)
+	var expected_squad_in_search := 0
+	for instance in squad_active:
+		if instance.name.to_lower().contains(search_instance.name.to_lower()):
+			expected_squad_in_search += 1
+	assert(game.squad_grid.get_child_count() == expected_squad_in_search)
+	game.reserve_search_edit.text_changed.emit("")
+	assert(game.squad_grid.get_child_count() == owned_types)
 	var previous_size: int = game.editing_squad_names.size()
 	game._remove_squad_unit_at(0)
 	assert(game.editing_squad_names.size() == previous_size - 1)

@@ -143,11 +143,18 @@ static func resolve_warcry(
 				var turns := rank_value(skill, level, 1, 2)
 				BattleSimulatorScript.apply_unit_damage(target, damage)
 				if target.hp > 0:
+					if target.get("vulnerable_turns", 0) > 0:
+						target.vulnerable_stacks = target.get("vulnerable_stacks", 1) + 1
+					else:
+						target.vulnerable_stacks = 1
 					target.vulnerable_turns = maxi(
 						target.get("vulnerable_turns", 0), turns
 					)
-				result.message = "Sunder Armour deals %d damage to %s and makes it Vulnerable for %s." % [
-					damage, target.name, _turn_label(turns)
+				var stack_note := ""
+				if target.hp > 0 and target.get("vulnerable_stacks", 1) > 1:
+					stack_note = " (stack %d)" % target.vulnerable_stacks
+				result.message = "Sunder Armour deals %d damage to %s and makes it Vulnerable for %s%s." % [
+					damage, target.name, _turn_label(turns), stack_note
 				]
 				result.affected.append(target.id)
 		"Demoralize":
@@ -256,6 +263,8 @@ static func expire_statuses(units: Array, side: int) -> void:
 			unit.immobilized_turns -= 1
 		if unit.side == side and unit.get("vulnerable_turns", 0) > 0:
 			unit.vulnerable_turns -= 1
+			if unit.vulnerable_turns <= 0:
+				unit.vulnerable_stacks = 0
 
 static func timing_tooltip(skill_type: String) -> String:
 	match skill_type.to_lower():
