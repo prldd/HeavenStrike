@@ -23,6 +23,8 @@ const COLS := 7
 const BOARD_MARGIN := 16.0
 const CELL_ASPECT_RATIO := 0.88
 const UNIT_ART_EXPANSION := 6.0
+const IDLE_BOB_AMPLITUDE := 2.6
+const IDLE_BOB_FREQUENCY := 1.1
 var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
@@ -55,11 +57,19 @@ var projectile_progress := 0.0
 var projectile_kind := ""
 var shake_tween: Tween
 var reduced_motion := false
+var idle_bob_enabled := true
+var idle_time := 0.0
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	mouse_exited.connect(_clear_hover)
+
+func _process(delta: float) -> void:
+	if reduced_motion or not idle_bob_enabled or units.is_empty() or not is_visible_in_tree():
+		return
+	idle_time += delta
+	queue_redraw()
 
 func _clear_hover() -> void:
 	hover_row = -1
@@ -151,11 +161,19 @@ func animate_attack(
 	var destination := _cell_rect(target.row, target.col).get_center()
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
 		var lunge_scale := 0.35 if reduced_motion else 1.0
-		var lunge := (destination - origin).normalized() * minf(28.0, origin.distance_to(destination) * 0.22) * lunge_scale
+		var direction := (destination - origin).normalized()
+		var lunge := direction * minf(28.0, origin.distance_to(destination) * 0.22) * lunge_scale
+		# Wind up by pulling back from the target, then spring forward into the
+		# strike. The strike eases in so it accelerates through the hit.
+		var windup := -direction * minf(9.0, origin.distance_to(destination) * 0.08) * lunge_scale
+		duration *= 1.35
 		var tween := create_tween()
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
-		tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, windup, duration * 0.30)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), windup, lunge, duration * 0.28)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.42)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tween.tween_callback(_clear_unit_visual.bind(actor_id))
 		return tween.finished
 	return _animate_projectile(origin, destination, unit_kind, duration)
@@ -169,10 +187,17 @@ func animate_commander_attack(
 	var origin := _cell_rect(actor.row, actor.col).get_center()
 	var destination := Vector2(size.x - 82 if commander_side == 1 else 82, _grid_rect().get_center().y)
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
-		var lunge := (destination - origin).normalized() * (10.0 if reduced_motion else 30.0)
+		var direction := (destination - origin).normalized()
+		var lunge := direction * (10.0 if reduced_motion else 30.0)
+		var windup := -direction * (4.0 if reduced_motion else 11.0)
+		duration *= 1.35
 		var tween := create_tween()
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, lunge, duration * 0.42)
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.58)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, windup, duration * 0.30)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), windup, lunge, duration * 0.28)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.42)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tween.tween_callback(_clear_unit_visual.bind(actor_id))
 		return tween.finished
 	return _animate_projectile(origin, destination, unit_kind, duration)
@@ -482,18 +507,6 @@ func _draw() -> void:
 				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
 				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)
 
-	if preview_unit != null or not deployment_preview.is_empty():
-		var legend := "CYAN  TRAVERSE    CORAL  ATTACK REACH"
-		draw_string(
-			get_theme_default_font(),
-			Vector2(grid.end.x - 330, 24),
-			legend,
-			HORIZONTAL_ALIGNMENT_RIGHT,
-			330,
-			11,
-			Color("#91a7ce")
-		)
-
 func _draw_targetable(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-4)
 	draw_style_box(
@@ -571,8 +584,12 @@ func _draw_unit(unit: Dictionary) -> void:
 		rect.grow(5)
 	)
 	# Let portrait art use nearly the full cell. Stats and statuses are drawn
-	# afterward, so they remain readable over the larger silhouette.
-	_draw_unit_art(unit, rect.grow(UNIT_ART_EXPANSION))
+	# afterward, so they remain readable over the larger silhouette. The upper
+	# half of the art idles with a gentle bob over a soft ground shadow so
+	# deployed units read as characters standing on the board, not static cards.
+	var bob := _idle_bob_offset(unit)
+	_draw_unit_shadow(rect, bob)
+	_draw_unit_art(unit, rect.grow(UNIT_ART_EXPANSION), bob)
 	var flash: float = unit_flash_strength.get(unit.id, 0.0)
 	if flash > 0.0:
 		draw_style_box(
@@ -716,13 +733,33 @@ func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
+func _idle_bob_offset(unit: Dictionary) -> float:
+	if reduced_motion or not idle_bob_enabled or unit_defeat_strength.has(unit.id) or int(unit.get("hp", 1)) <= 0:
+		return 0.0
+	# Golden-angle phase spread per unit id keeps units from bobbing in sync;
+	# the second harmonic makes the motion feel like breathing, not floating.
+	var phase := fposmod(float(int(unit.get("id", 0))) * 2.4, TAU)
+	var t := idle_time * IDLE_BOB_FREQUENCY * TAU + phase
+	var amplitude := IDLE_BOB_AMPLITUDE * (1.0 if unit.get("ready", true) else 0.55)
+	return (sin(t) * 0.8 + sin(t * 2.0 + 1.3) * 0.2) * amplitude
+
+func _draw_unit_shadow(rect: Rect2, bob: float) -> void:
+	# Shadow squashes and lightens as the unit bobs up, grounding the sprite.
+	var lift := clampf(-bob / IDLE_BOB_AMPLITUDE, -1.0, 1.0)
+	var half_width := rect.size.x * (0.30 - lift * 0.03)
+	var half_height := half_width * 0.22
+	var shadow_center := Vector2(rect.get_center().x, rect.end.y - 4.0)
+	draw_set_transform(shadow_center, 0.0, Vector2(1.0, half_height / half_width))
+	draw_circle(Vector2.ZERO, half_width, Color(0.02, 0.03, 0.06, 0.30 - lift * 0.05))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
 	var icon_id: int = unit.get("icon", 0)
 	if icon_id < 1:
 		return
 	var texture: Texture2D = _full_unit_texture(icon_id)
 	if texture == null:
-		_draw_unit_icon(unit, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.68)
+		_draw_unit_icon(unit, rect.get_center() + Vector2(0, bob), minf(rect.size.x, rect.size.y) * 0.68)
 		return
 	var content_rect := _full_unit_content_rect(icon_id, texture)
 	var content_size := content_rect.size
@@ -731,10 +768,25 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	var center := rect.get_center().round()
 	var scale_x := -1.0 if unit.side == 0 else 1.0
 	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
+	# Draw the sprite in two slices: everything below the knees stays planted
+	# so the unit keeps its footing, while the upper body carries the idle bob
+	# as a pure translation. The top slice samples a few pixels past the split
+	# and is drawn over the legs, so the overlap always covers the seam and the
+	# bob never tears the art.
+	var split_source_y := content_size.y * 0.72
+	var split_draw_y := draw_size.y * 0.72
+	var top_y := -draw_size.y * 0.5
+	var overlap_draw := IDLE_BOB_AMPLITUDE + 2.0
+	var overlap_source := minf(overlap_draw / art_scale, content_size.y - split_source_y)
 	draw_texture_rect_region(
 		texture,
-		Rect2(-draw_size * 0.5, draw_size),
-		content_rect
+		Rect2(Vector2(-draw_size.x * 0.5, top_y + split_draw_y), Vector2(draw_size.x, draw_size.y - split_draw_y)),
+		Rect2(content_rect.position + Vector2(0, split_source_y), Vector2(content_size.x, content_size.y - split_source_y))
+	)
+	draw_texture_rect_region(
+		texture,
+		Rect2(Vector2(-draw_size.x * 0.5, top_y + bob), Vector2(draw_size.x, split_draw_y + overlap_draw)),
+		Rect2(content_rect.position, Vector2(content_size.x, split_source_y + overlap_source))
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
