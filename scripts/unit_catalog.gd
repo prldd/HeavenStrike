@@ -78,102 +78,143 @@ const ICON_ART_IDS := {
 	80: 488 # The Bard
 }
 
-const UNITS := [
-	{"name": "Trinity Rusher", "icon": 3, "stars": 1, "kind": "Strider", "cost": 2, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action."},
-	{"name": "Claw Slicer", "icon": 9, "stars": 1, "kind": "Strider", "cost": 3, "atk": 3, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action."},
-	{"name": "Pub Bouncer", "icon": 2, "stars": 1, "kind": "Duelist", "cost": 2, "atk": 3, "hp": 7, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking."},
-	{"name": "Trinity Basher", "icon": 8, "stars": 1, "kind": "Duelist", "cost": 2, "atk": 3, "hp": 5, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking."},
-	{"name": "Socialite Fencer", "icon": 1, "stars": 1, "kind": "Warden", "cost": 3, "atk": 3, "hp": 10, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns."},
-	{"name": "LDF Peacekeeper", "icon": 7, "stars": 1, "kind": "Warden", "cost": 2, "atk": 2, "hp": 8, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns."},
-	{"name": "Trinity Potshot", "icon": 4, "stars": 1, "kind": "Artillerist", "cost": 2, "atk": 3, "hp": 4, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane."},
-	{"name": "Factory Markswoman", "icon": 10, "stars": 1, "kind": "Artillerist", "cost": 3, "atk": 4, "hp": 5, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane."},
-	{"name": "Claw Caster", "icon": 5, "stars": 1, "kind": "Channeler", "cost": 3, "atk": 5, "hp": 4, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage."},
-	{"name": "Rage Spellslinger", "icon": 11, "stars": 1, "kind": "Channeler", "cost": 2, "atk": 4, "hp": 3, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage."},
-	{"name": "Chain Initiate", "icon": 6, "stars": 1, "kind": "Lifebinder", "cost": 2, "atk": 2, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally."},
-	{"name": "LDF Medic", "icon": 12, "stars": 1, "kind": "Lifebinder", "cost": 3, "atk": 3, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally."},
-	{"name": "Apprentice Builder", "icon": 13, "stars": 2, "kind": "Warden", "cost": 3, "atk": 2, "hp": 4, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns.", "skill": {"name": "Fortify", "type": "Warcry", "text": "Other allied unit with the lowest HP gains +3 HP for 2 turns."}},
-	{"name": "Rage Brute", "icon": 15, "stars": 2, "kind": "Duelist", "cost": 2, "atk": 2, "hp": 4, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
-	{"name": "Claw Skirmisher", "icon": 17, "stars": 2, "kind": "Strider", "cost": 3, "atk": 2, "hp": 3, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Pinning Strike", "type": "Strike", "text": "30% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "LDF Gunner", "icon": 19, "stars": 2, "kind": "Artillerist", "cost": 2, "atk": 3, "hp": 2, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
-	{"name": "Order Pupil", "icon": 21, "stars": 2, "kind": "Channeler", "cost": 2, "atk": 3, "hp": 2, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Heaven's Wrath", "type": "Warcry", "text": "Deal 1 damage split between random enemy units."}},
-	{"name": "Order Cleric", "icon": 23, "stars": 2, "kind": "Lifebinder", "cost": 3, "atk": 2, "hp": 4, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
-	{"name": "Order Apostle", "icon": 25, "stars": 2, "kind": "Strider", "cost": 2, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Heaven's Wrath", "type": "Warcry", "text": "Deal 1 damage split between random enemy units."}},
-	{"name": "Trinity Messenger", "icon": 26, "stars": 2, "kind": "Channeler", "cost": 3, "atk": 4, "hp": 2, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
-	{"name": "Minerva the Brave", "icon": 27, "stars": 3, "kind": "Lifebinder", "cost": 2, "atk": 3, "hp": 4, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "skill": {"name": "Fortify", "type": "Warcry", "text": "Other allied unit with the lowest HP gains +3 HP for 2 turns."}},
-	{"name": "Naruku the Lookout", "icon": 28, "stars": 4, "kind": "Channeler", "cost": 3, "atk": 3, "hp": 6, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
-	{"name": "Whirling Ragnr", "icon": 29, "stars": 4, "kind": "Duelist", "cost": 2, "atk": 3, "hp": 5, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
-	{"name": "Master Builder", "icon": 14, "stars": 3, "kind": "Warden", "cost": 3, "atk": 3, "hp": 6, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns.", "promotion_of": "Apprentice Builder", "skill": {"name": "Fortify", "type": "Warcry", "text": "Other allied unit with the lowest HP gains +3 HP for 2 turns."}},
-	{"name": "Rage Bruiser", "icon": 16, "stars": 3, "kind": "Duelist", "cost": 2, "atk": 3, "hp": 6, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "Rage Brute", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
-	{"name": "Claw Ambusher", "icon": 18, "stars": 3, "kind": "Strider", "cost": 3, "atk": 3, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Claw Skirmisher", "skill": {"name": "Pinning Strike", "type": "Strike", "text": "30% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "LDF Sureshot", "icon": 20, "stars": 3, "kind": "Artillerist", "cost": 2, "atk": 4, "hp": 4, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "LDF Gunner", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
-	{"name": "Order Scholar", "icon": 22, "stars": 3, "kind": "Channeler", "cost": 2, "atk": 4, "hp": 4, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "promotion_of": "Order Pupil", "skill": {"name": "Heaven's Wrath", "type": "Warcry", "text": "Deal 1 damage split between random enemy units."}},
-	{"name": "Order Chaplain", "icon": 24, "stars": 3, "kind": "Lifebinder", "cost": 3, "atk": 3, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "promotion_of": "Order Cleric", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
-	{"name": "Order Missionary", "icon": 31, "stars": 3, "kind": "Strider", "cost": 2, "atk": 2, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Order Apostle", "skill": {"name": "Heaven's Wrath", "type": "Warcry", "text": "Deal 1 damage split between random enemy units."}},
-	{"name": "Trinity Herald", "icon": 32, "stars": 3, "kind": "Channeler", "cost": 3, "atk": 5, "hp": 4, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "promotion_of": "Trinity Messenger", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
-	{"name": "Minerva the Lionheart", "icon": 33, "stars": 4, "kind": "Lifebinder", "cost": 2, "atk": 4, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "promotion_of": "Minerva the Brave", "skill": {"name": "Fortify", "type": "Warcry", "text": "Other allied unit with the lowest HP gains +3 HP for 2 turns."}},
-	{"name": "Farsight Naruku", "icon": 34, "stars": 5, "kind": "Channeler", "cost": 3, "atk": 4, "hp": 6, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "promotion_of": "Naruku the Lookout", "skill": {"name": "Empower", "type": "Warcry", "text": "Another allied unit gains +1 ATK for 2 turns."}},
-	{"name": "Macewielder Ragnr", "icon": 35, "stars": 5, "kind": "Duelist", "cost": 2, "atk": 3, "hp": 6, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "Whirling Ragnr", "skill": {"name": "Bolt", "type": "Warcry", "text": "Deal 1 damage to the enemy unit with the highest HP."}},
-	{"name": "Talon Scratcher", "icon": 37, "stars": 3, "kind": "Strider", "cost": 4, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Pinning Slice", "type": "Strike", "text": "60% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "Talon Slasher", "icon": 38, "stars": 4, "kind": "Strider", "cost": 4, "atk": 3, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Talon Scratcher", "skill": {"name": "Pinning Slice", "type": "Strike", "text": "60% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "Innocent Gretel", "icon": 39, "stars": 4, "kind": "Artillerist", "cost": 3, "atk": 3, "hp": 6, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Pinning Slice", "type": "Strike", "text": "60% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "Witchkiller Gretel", "icon": 40, "stars": 5, "kind": "Artillerist", "cost": 3, "atk": 3, "hp": 7, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Innocent Gretel", "skill": {"name": "Pinning Slice", "type": "Strike", "text": "60% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "Talon Slicer", "icon": 41, "stars": 5, "kind": "Strider", "cost": 3, "atk": 3, "hp": 6, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Talon Slasher", "skill": {"name": "Pinning Slice", "type": "Strike", "text": "60% chance to Immobilise the attacked enemy for 1 turn."}},
-	{"name": "Street Urchin", "icon": 43, "stars": 2, "kind": "Strider", "cost": 3, "atk": 2, "hp": 2, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Misfortune", "type": "Warcry", "text": "Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns."}},
-	{"name": "Street Hoodlum", "icon": 44, "stars": 3, "kind": "Strider", "cost": 3, "atk": 3, "hp": 3, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Street Urchin", "skill": {"name": "Misfortune", "type": "Warcry", "text": "Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns."}},
-	{"name": "LDF Crowd Mage", "icon": 45, "stars": 2, "kind": "Channeler", "cost": 2, "atk": 2, "hp": 4, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Misfortune", "type": "Warcry", "text": "Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns."}},
-	{"name": "LDF Riot Mage", "icon": 46, "stars": 3, "kind": "Channeler", "cost": 2, "atk": 3, "hp": 6, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "promotion_of": "LDF Crowd Mage", "skill": {"name": "Misfortune", "type": "Warcry", "text": "Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns."}},
-	{"name": "Fortune Teller", "icon": 55, "stars": 3, "kind": "Channeler", "cost": 2, "atk": 2, "hp": 5, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Misfortune", "type": "Warcry", "text": "Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns."}},
-	{"name": "Fortune Diviner", "icon": 56, "stars": 4, "kind": "Channeler", "cost": 2, "atk": 3, "hp": 7, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "promotion_of": "Fortune Teller", "skill": {"name": "Misfortune", "type": "Warcry", "text": "Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns."}},
-	{"name": "Street Nurse", "icon": 49, "stars": 2, "kind": "Lifebinder", "cost": 3, "atk": 2, "hp": 3, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "skill": {"name": "Mend", "type": "Warcry", "text": "Restore 3 HP to the allied unit with the lowest HP."}},
-	{"name": "Street Matron", "icon": 50, "stars": 3, "kind": "Lifebinder", "cost": 3, "atk": 3, "hp": 4, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "promotion_of": "Street Nurse", "skill": {"name": "Mend", "type": "Warcry", "text": "Restore 3 HP to the allied unit with the lowest HP."}},
-	{"name": "Blight Doctor", "icon": 51, "stars": 3, "kind": "Lifebinder", "cost": 3, "atk": 2, "hp": 6, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "skill": {"name": "Plague", "type": "Warcry", "text": "Deal 1 damage to every other unit and Poison them for 2 turns."}},
-	{"name": "Blight Physician", "icon": 52, "stars": 4, "kind": "Lifebinder", "cost": 3, "atk": 3, "hp": 7, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "promotion_of": "Blight Doctor", "skill": {"name": "Plague", "type": "Warcry", "text": "Deal 1 damage to every other unit and Poison them for 2 turns."}},
-	{"name": "Captain Kerryson", "icon": 53, "stars": 3, "kind": "Warden", "cost": 2, "atk": 3, "hp": 6, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns.", "skill": {"name": "Mend", "type": "Warcry", "text": "Restore 3 HP to the allied unit with the lowest HP."}},
-	{"name": "Kerryson the Stoic", "icon": 54, "stars": 4, "kind": "Warden", "cost": 2, "atk": 4, "hp": 8, "move": 2, "range": 1, "text": "Taunting Strike — Target cannot change lanes for 2 turns.", "promotion_of": "Captain Kerryson", "skill": {"name": "Mend", "type": "Warcry", "text": "Restore 3 HP to the allied unit with the lowest HP."}},
-	{"name": "Dart Shooter", "icon": 57, "stars": 3, "kind": "Artillerist", "cost": 3, "atk": 4, "hp": 3, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Envenom", "type": "Warcry", "text": "Poison a selected enemy unit for 2 turns."}},
-	{"name": "Dart Sharpshooter", "icon": 58, "stars": 4, "kind": "Artillerist", "cost": 3, "atk": 5, "hp": 5, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Dart Shooter", "skill": {"name": "Envenom", "type": "Warcry", "text": "Poison a selected enemy unit for 2 turns."}},
-	{"name": "Frog-Hopper Keru", "icon": 59, "stars": 4, "kind": "Channeler", "cost": 2, "atk": 3, "hp": 7, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "skill": {"name": "Envenom", "type": "Warcry", "text": "Poison a selected enemy unit for 2 turns."}},
-	{"name": "Lizard-Licker Keru", "icon": 60, "stars": 5, "kind": "Channeler", "cost": 2, "atk": 4, "hp": 8, "move": 1, "range": 3, "text": "Blast — Adjacent enemies take half ATK damage.", "promotion_of": "Frog-Hopper Keru", "skill": {"name": "Envenom", "type": "Warcry", "text": "Poison a selected enemy unit for 2 turns."}},
-	{"name": "Blightshot", "icon": 61, "stars": 4, "kind": "Artillerist", "cost": 2, "atk": 2, "hp": 6, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Envenom", "type": "Warcry", "text": "Poison a selected enemy unit for 2 turns."}},
-	{"name": "Toxic Shot", "icon": 62, "stars": 5, "kind": "Artillerist", "cost": 2, "atk": 3, "hp": 8, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Blightshot", "skill": {"name": "Envenom", "type": "Warcry", "text": "Poison a selected enemy unit for 2 turns."}},
-	{"name": "Garrett Talon", "icon": 63, "stars": 3, "kind": "Artillerist", "cost": 3, "atk": 3, "hp": 6, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Pin Down", "type": "Warcry", "text": "Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn."}},
-	{"name": "Garrett the Claw", "icon": 64, "stars": 4, "kind": "Artillerist", "cost": 3, "atk": 4, "hp": 7, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Garrett Talon", "skill": {"name": "Pin Down", "type": "Warcry", "text": "Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn."}},
-	{"name": "Garrett the Raider", "icon": 65, "stars": 5, "kind": "Artillerist", "cost": 2, "atk": 5, "hp": 7, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Garrett the Claw", "skill": {"name": "Pin Down", "type": "Warcry", "text": "Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn."}},
-	{"name": "Precision Shooter", "icon": 66, "stars": 3, "kind": "Artillerist", "cost": 3, "atk": 3, "hp": 5, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Pin Down", "type": "Warcry", "text": "Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn."}},
-	{"name": "Precision Sniper", "icon": 67, "stars": 4, "kind": "Artillerist", "cost": 3, "atk": 4, "hp": 7, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Precision Shooter", "skill": {"name": "Pin Down", "type": "Warcry", "text": "Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn."}},
-	{"name": "Precision Trigger", "icon": 68, "stars": 5, "kind": "Artillerist", "cost": 2, "atk": 4, "hp": 8, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "Precision Sniper", "skill": {"name": "Pin Down", "type": "Warcry", "text": "Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn."}},
-	{"name": "Greyson the Shifty", "icon": 69, "stars": 3, "kind": "Strider", "cost": 4, "atk": 2, "hp": 6, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Demoralize", "type": "Warcry", "text": "Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns."}},
-	{"name": "Greyson the Shrewd", "icon": 70, "stars": 4, "kind": "Strider", "cost": 4, "atk": 4, "hp": 6, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Greyson the Shifty", "skill": {"name": "Demoralize", "type": "Warcry", "text": "Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns."}},
-	{"name": "Communicator Ripley", "icon": 71, "stars": 4, "kind": "Lifebinder", "cost": 2, "atk": 3, "hp": 4, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "skill": {"name": "Demoralize", "type": "Warcry", "text": "Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns."}},
-	{"name": "The Telecommunicator", "icon": 72, "stars": 5, "kind": "Lifebinder", "cost": 2, "atk": 4, "hp": 5, "move": 1, "range": 2, "text": "Heal — Before moving, gives 2 HP to the lowest-health ally.", "promotion_of": "Communicator Ripley", "skill": {"name": "Demoralize", "type": "Warcry", "text": "Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns."}},
-	{"name": "Vicious Pierrot", "icon": 73, "stars": 4, "kind": "Duelist", "cost": 3, "atk": 5, "hp": 7, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Demoralize", "type": "Warcry", "text": "Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns."}},
-	{"name": "Pierrot the Deciever", "icon": 74, "stars": 5, "kind": "Duelist", "cost": 3, "atk": 7, "hp": 9, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "Vicious Pierrot", "skill": {"name": "Demoralize", "type": "Warcry", "text": "Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns."}},
-	{"name": "LDF Flight Officer", "icon": 75, "stars": 2, "kind": "Duelist", "cost": 2, "atk": 4, "hp": 4, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "LDF Flight Commander", "icon": 76, "stars": 3, "kind": "Duelist", "cost": 2, "atk": 5, "hp": 4, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "LDF Flight Officer", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "Prison Warden", "icon": 77, "stars": 3, "kind": "Strider", "cost": 4, "atk": 3, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "Prison Guv'nor", "icon": 78, "stars": 4, "kind": "Strider", "cost": 4, "atk": 4, "hp": 6, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Prison Warden", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "Shakespeare", "icon": 79, "stars": 4, "kind": "Strider", "cost": 2, "atk": 2, "hp": 4, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "The Bard", "icon": 80, "stars": 5, "kind": "Strider", "cost": 2, "atk": 2, "hp": 5, "move": 3, "range": 1, "text": "Double Strike — Attacks twice each action.", "promotion_of": "Shakespeare", "skill": {"name": "Punish", "type": "Warcry", "text": "The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns."}},
-	{"name": "Claw Chopper", "icon": 81, "stars": 2, "kind": "Duelist", "cost": 3, "atk": 3, "hp": 8, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Poison Strike", "type": "Strike", "text": "50% chance to Poison the attacked enemy for 2 turns."}},
-	{"name": "Claw Cleaver", "icon": 82, "stars": 3, "kind": "Duelist", "cost": 3, "atk": 4, "hp": 9, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "Claw Chopper", "skill": {"name": "Poison Strike", "type": "Strike", "chance": 0.60, "text": "60% chance to Poison the attacked enemy for 2 turns."}},
-	{"name": "LDF Bowgunner", "icon": 83, "stars": 2, "kind": "Artillerist", "cost": 4, "atk": 5, "hp": 4, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
-	{"name": "LDF Bolt Slinger", "icon": 84, "stars": 3, "kind": "Artillerist", "cost": 4, "atk": 6, "hp": 6, "move": 1, "range": 3, "text": "Piercing Shot — Damages every enemy in range in its lane.", "promotion_of": "LDF Bowgunner", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
-	{"name": "LDF Swordwielder", "icon": 85, "stars": 3, "kind": "Duelist", "cost": 2, "atk": 4, "hp": 5, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
-	{"name": "LDF Greatsword", "icon": 86, "stars": 4, "kind": "Duelist", "cost": 2, "atk": 5, "hp": 6, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "LDF Swordwielder", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}},
-	{"name": "LDF Mastersword", "icon": 87, "stars": 5, "kind": "Duelist", "cost": 2, "atk": 6, "hp": 7, "move": 2, "range": 1, "text": "Fury — Permanently gains +1 ATK after attacking.", "promotion_of": "LDF Greatsword", "skill": {"name": "Sunder Armour", "type": "Warcry", "text": "Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns."}}
-]
+static var _units: Array[UnitData] = []
 
-static func all_units() -> Array:
-	var result: Array = []
-	for unit in UNITS:
-		result.append(unit.duplicate(true))
-	return result
+static func _skill(name: String, type: String, chance: float, text: String) -> SkillData:
+	var s := SkillData.new()
+	s.name = name
+	s.type = type
+	s.chance = chance
+	s.description = text
+	return s
 
-static func by_name(unit_name: String) -> Dictionary:
-	for unit in UNITS:
+static func _unit(
+	name: String,
+	icon: int,
+	stars: int,
+	kind: String,
+	cost: int,
+	atk: int,
+	hp: int,
+	move: int,
+	range: int,
+	text: String,
+	promotion_of: String = "",
+	skill: SkillData = null
+) -> UnitData:
+	var u := UnitData.new()
+	u.name = name
+	u.icon = icon
+	u.stars = stars
+	u.kind = kind
+	u.cost = cost
+	u.atk = atk
+	u.hp = hp
+	u.move = move
+	u.range = range
+	u.description = text
+	u.promotion_of = promotion_of
+	u.skill = skill
+	return u
+
+static func _build() -> void:
+	if not _units.is_empty():
+		return
+	_units = [
+		_unit('Trinity Rusher', 3, 1, 'Strider', 2, 2, 4, 3, 1, 'Double Strike — Attacks twice each action.', '', null),
+		_unit('Claw Slicer', 9, 1, 'Strider', 3, 3, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', null),
+		_unit('Pub Bouncer', 2, 1, 'Duelist', 2, 3, 7, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', null),
+		_unit('Trinity Basher', 8, 1, 'Duelist', 2, 3, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', null),
+		_unit('Socialite Fencer', 1, 1, 'Warden', 3, 3, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', null),
+		_unit('LDF Peacekeeper', 7, 1, 'Warden', 2, 2, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', null),
+		_unit('Trinity Potshot', 4, 1, 'Artillerist', 2, 3, 4, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', null),
+		_unit('Factory Markswoman', 10, 1, 'Artillerist', 3, 4, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', null),
+		_unit('Claw Caster', 5, 1, 'Channeler', 3, 5, 4, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', null),
+		_unit('Rage Spellslinger', 11, 1, 'Channeler', 2, 4, 3, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', null),
+		_unit('Chain Initiate', 6, 1, 'Lifebinder', 2, 2, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', null),
+		_unit('LDF Medic', 12, 1, 'Lifebinder', 3, 3, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', null),
+		_unit('Apprentice Builder', 13, 2, 'Warden', 3, 2, 4, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Fortify', 'Warcry', -1.0, 'Other allied unit with the lowest HP gains +3 HP for 2 turns.')),
+		_unit('Rage Brute', 15, 2, 'Duelist', 2, 2, 4, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Empower', 'Warcry', -1.0, 'Another allied unit gains +1 ATK for 2 turns.')),
+		_unit('Claw Skirmisher', 17, 2, 'Strider', 3, 2, 3, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Pinning Strike', 'Strike', -1.0, '30% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('LDF Gunner', 19, 2, 'Artillerist', 2, 3, 2, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Bolt', 'Warcry', -1.0, 'Deal 1 damage to the enemy unit with the highest HP.')),
+		_unit('Order Pupil', 21, 2, 'Channeler', 2, 3, 2, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill("Heaven's Wrath", 'Warcry', -1.0, 'Deal 1 damage split between random enemy units.')),
+		_unit('Order Cleric', 23, 2, 'Lifebinder', 3, 2, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Empower', 'Warcry', -1.0, 'Another allied unit gains +1 ATK for 2 turns.')),
+		_unit('Order Apostle', 25, 2, 'Strider', 2, 2, 4, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill("Heaven's Wrath", 'Warcry', -1.0, 'Deal 1 damage split between random enemy units.')),
+		_unit('Trinity Messenger', 26, 2, 'Channeler', 3, 4, 2, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Bolt', 'Warcry', -1.0, 'Deal 1 damage to the enemy unit with the highest HP.')),
+		_unit('Minerva the Brave', 27, 3, 'Lifebinder', 2, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Fortify', 'Warcry', -1.0, 'Other allied unit with the lowest HP gains +3 HP for 2 turns.')),
+		_unit('Naruku the Lookout', 28, 4, 'Channeler', 3, 3, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Empower', 'Warcry', -1.0, 'Another allied unit gains +1 ATK for 2 turns.')),
+		_unit('Whirling Ragnr', 29, 4, 'Duelist', 2, 3, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Bolt', 'Warcry', -1.0, 'Deal 1 damage to the enemy unit with the highest HP.')),
+		_unit('Master Builder', 14, 3, 'Warden', 3, 3, 6, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Apprentice Builder', _skill('Fortify', 'Warcry', -1.0, 'Other allied unit with the lowest HP gains +3 HP for 2 turns.')),
+		_unit('Rage Bruiser', 16, 3, 'Duelist', 2, 3, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Rage Brute', _skill('Empower', 'Warcry', -1.0, 'Another allied unit gains +1 ATK for 2 turns.')),
+		_unit('Claw Ambusher', 18, 3, 'Strider', 3, 3, 4, 3, 1, 'Double Strike — Attacks twice each action.', 'Claw Skirmisher', _skill('Pinning Strike', 'Strike', -1.0, '30% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('LDF Sureshot', 20, 3, 'Artillerist', 2, 4, 4, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'LDF Gunner', _skill('Bolt', 'Warcry', -1.0, 'Deal 1 damage to the enemy unit with the highest HP.')),
+		_unit('Order Scholar', 22, 3, 'Channeler', 2, 4, 4, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Order Pupil', _skill("Heaven's Wrath", 'Warcry', -1.0, 'Deal 1 damage split between random enemy units.')),
+		_unit('Order Chaplain', 24, 3, 'Lifebinder', 3, 3, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Order Cleric', _skill('Empower', 'Warcry', -1.0, 'Another allied unit gains +1 ATK for 2 turns.')),
+		_unit('Order Missionary', 31, 3, 'Strider', 2, 2, 5, 3, 1, 'Double Strike — Attacks twice each action.', 'Order Apostle', _skill("Heaven's Wrath", 'Warcry', -1.0, 'Deal 1 damage split between random enemy units.')),
+		_unit('Trinity Herald', 32, 3, 'Channeler', 3, 5, 4, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Trinity Messenger', _skill('Bolt', 'Warcry', -1.0, 'Deal 1 damage to the enemy unit with the highest HP.')),
+		_unit('Minerva the Lionheart', 33, 4, 'Lifebinder', 2, 4, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Minerva the Brave', _skill('Fortify', 'Warcry', -1.0, 'Other allied unit with the lowest HP gains +3 HP for 2 turns.')),
+		_unit('Farsight Naruku', 34, 5, 'Channeler', 3, 4, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Naruku the Lookout', _skill('Empower', 'Warcry', -1.0, 'Another allied unit gains +1 ATK for 2 turns.')),
+		_unit('Macewielder Ragnr', 35, 5, 'Duelist', 2, 3, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Whirling Ragnr', _skill('Bolt', 'Warcry', -1.0, 'Deal 1 damage to the enemy unit with the highest HP.')),
+		_unit('Talon Scratcher', 37, 3, 'Strider', 4, 2, 4, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Pinning Slice', 'Strike', -1.0, '60% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('Talon Slasher', 38, 4, 'Strider', 4, 3, 5, 3, 1, 'Double Strike — Attacks twice each action.', 'Talon Scratcher', _skill('Pinning Slice', 'Strike', -1.0, '60% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('Innocent Gretel', 39, 4, 'Artillerist', 3, 3, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Pinning Slice', 'Strike', -1.0, '60% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('Witchkiller Gretel', 40, 5, 'Artillerist', 3, 3, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Innocent Gretel', _skill('Pinning Slice', 'Strike', -1.0, '60% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('Talon Slicer', 41, 5, 'Strider', 3, 3, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Talon Slasher', _skill('Pinning Slice', 'Strike', -1.0, '60% chance to Immobilise the attacked enemy for 1 turn.')),
+		_unit('Street Urchin', 43, 2, 'Strider', 3, 2, 2, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Misfortune', 'Warcry', -1.0, 'Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns.')),
+		_unit('Street Hoodlum', 44, 3, 'Strider', 3, 3, 3, 3, 1, 'Double Strike — Attacks twice each action.', 'Street Urchin', _skill('Misfortune', 'Warcry', -1.0, 'Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns.')),
+		_unit('LDF Crowd Mage', 45, 2, 'Channeler', 2, 2, 4, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Misfortune', 'Warcry', -1.0, 'Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns.')),
+		_unit('LDF Riot Mage', 46, 3, 'Channeler', 2, 3, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'LDF Crowd Mage', _skill('Misfortune', 'Warcry', -1.0, 'Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns.')),
+		_unit('Fortune Teller', 55, 3, 'Channeler', 2, 2, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Misfortune', 'Warcry', -1.0, 'Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns.')),
+		_unit('Fortune Diviner', 56, 4, 'Channeler', 2, 3, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Fortune Teller', _skill('Misfortune', 'Warcry', -1.0, 'Enemy Scout or Gunner with the highest ATK loses 1 ATK for 2 turns.')),
+		_unit('Street Nurse', 49, 2, 'Lifebinder', 3, 2, 3, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Mend', 'Warcry', -1.0, 'Restore 3 HP to the allied unit with the lowest HP.')),
+		_unit('Street Matron', 50, 3, 'Lifebinder', 3, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Street Nurse', _skill('Mend', 'Warcry', -1.0, 'Restore 3 HP to the allied unit with the lowest HP.')),
+		_unit('Blight Doctor', 51, 3, 'Lifebinder', 3, 2, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Plague', 'Warcry', -1.0, 'Deal 1 damage to every other unit and Poison them for 2 turns.')),
+		_unit('Blight Physician', 52, 4, 'Lifebinder', 3, 3, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Blight Doctor', _skill('Plague', 'Warcry', -1.0, 'Deal 1 damage to every other unit and Poison them for 2 turns.')),
+		_unit('Captain Kerryson', 53, 3, 'Warden', 2, 3, 6, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Mend', 'Warcry', -1.0, 'Restore 3 HP to the allied unit with the lowest HP.')),
+		_unit('Kerryson the Stoic', 54, 4, 'Warden', 2, 4, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Captain Kerryson', _skill('Mend', 'Warcry', -1.0, 'Restore 3 HP to the allied unit with the lowest HP.')),
+		_unit('Dart Shooter', 57, 3, 'Artillerist', 3, 4, 3, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for 2 turns.')),
+		_unit('Dart Sharpshooter', 58, 4, 'Artillerist', 3, 5, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Dart Shooter', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for 2 turns.')),
+		_unit('Frog-Hopper Keru', 59, 4, 'Channeler', 2, 3, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for 2 turns.')),
+		_unit('Lizard-Licker Keru', 60, 5, 'Channeler', 2, 4, 8, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Frog-Hopper Keru', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for 2 turns.')),
+		_unit('Blightshot', 61, 4, 'Artillerist', 2, 2, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for 2 turns.')),
+		_unit('Toxic Shot', 62, 5, 'Artillerist', 2, 3, 8, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Blightshot', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for 2 turns.')),
+		_unit('Garrett Talon', 63, 3, 'Artillerist', 3, 3, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Pin Down', 'Warcry', -1.0, 'Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn.')),
+		_unit('Garrett the Claw', 64, 4, 'Artillerist', 3, 4, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Garrett Talon', _skill('Pin Down', 'Warcry', -1.0, 'Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn.')),
+		_unit('Garrett the Raider', 65, 5, 'Artillerist', 2, 5, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Garrett the Claw', _skill('Pin Down', 'Warcry', -1.0, 'Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn.')),
+		_unit('Precision Shooter', 66, 3, 'Artillerist', 3, 3, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Pin Down', 'Warcry', -1.0, 'Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn.')),
+		_unit('Precision Sniper', 67, 4, 'Artillerist', 3, 4, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Precision Shooter', _skill('Pin Down', 'Warcry', -1.0, 'Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn.')),
+		_unit('Precision Trigger', 68, 5, 'Artillerist', 2, 4, 8, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Precision Sniper', _skill('Pin Down', 'Warcry', -1.0, 'Deal 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilise it for 1 turn.')),
+		_unit('Greyson the Shifty', 69, 3, 'Strider', 4, 2, 6, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Demoralize', 'Warcry', -1.0, 'Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns.')),
+		_unit('Greyson the Shrewd', 70, 4, 'Strider', 4, 4, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Greyson the Shifty', _skill('Demoralize', 'Warcry', -1.0, 'Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns.')),
+		_unit('Communicator Ripley', 71, 4, 'Lifebinder', 2, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Demoralize', 'Warcry', -1.0, 'Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns.')),
+		_unit('The Telecommunicator', 72, 5, 'Lifebinder', 2, 4, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Communicator Ripley', _skill('Demoralize', 'Warcry', -1.0, 'Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns.')),
+		_unit('Vicious Pierrot', 73, 4, 'Duelist', 3, 5, 7, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Demoralize', 'Warcry', -1.0, 'Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns.')),
+		_unit('Pierrot the Deciever', 74, 5, 'Duelist', 3, 7, 9, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Vicious Pierrot', _skill('Demoralize', 'Warcry', -1.0, 'Enemy Fighters, Scouts, and Defenders in a selected lane lose 1 ATK for 2 turns.')),
+		_unit('LDF Flight Officer', 75, 2, 'Duelist', 2, 4, 4, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Punish', 'Warcry', -1.0, 'The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns.')),
+		_unit('LDF Flight Commander', 76, 3, 'Duelist', 2, 5, 4, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'LDF Flight Officer', _skill('Punish', 'Warcry', -1.0, 'The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns.')),
+		_unit('Prison Warden', 77, 3, 'Strider', 4, 3, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Punish', 'Warcry', -1.0, 'The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns.')),
+		_unit("Prison Guv'nor", 78, 4, 'Strider', 4, 4, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Prison Warden', _skill('Punish', 'Warcry', -1.0, 'The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns.')),
+		_unit('Shakespeare', 79, 4, 'Strider', 2, 2, 4, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Punish', 'Warcry', -1.0, 'The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns.')),
+		_unit('The Bard', 80, 5, 'Strider', 2, 2, 5, 3, 1, 'Double Strike — Attacks twice each action.', 'Shakespeare', _skill('Punish', 'Warcry', -1.0, 'The highest-ATK enemy Fighter or Mage loses 1 ATK for 2 turns.')),
+		_unit('Claw Chopper', 81, 2, 'Duelist', 3, 3, 8, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Poison Strike', 'Strike', -1.0, '50% chance to Poison the attacked enemy for 2 turns.')),
+		_unit('Claw Cleaver', 82, 3, 'Duelist', 3, 4, 9, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Claw Chopper', _skill('Poison Strike', 'Strike', 0.6, '60% chance to Poison the attacked enemy for 2 turns.')),
+		_unit('LDF Bowgunner', 83, 2, 'Artillerist', 4, 5, 4, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns.')),
+		_unit('LDF Bolt Slinger', 84, 3, 'Artillerist', 4, 6, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'LDF Bowgunner', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns.')),
+		_unit('LDF Swordwielder', 85, 3, 'Duelist', 2, 4, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns.')),
+		_unit('LDF Greatsword', 86, 4, 'Duelist', 2, 5, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'LDF Swordwielder', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns.')),
+		_unit('LDF Mastersword', 87, 5, 'Duelist', 2, 6, 7, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'LDF Greatsword', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal 1 damage to the highest-HP enemy Defender or Fighter and make it Vulnerable for 2 turns.')),
+	]
+
+static func all_units() -> Array[UnitData]:
+	_build()
+	return _units
+
+static func by_name(unit_name: String) -> UnitData:
+	_build()
+	for unit in _units:
 		if unit.name == unit_name:
-			return unit.duplicate(true)
-	return {}
+			return unit
+	return null
 
 static func display_class(kind: String) -> String:
 	return CLASS_NAMES.get(kind, kind)

@@ -18,7 +18,7 @@ func _init() -> void:
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
 	assert(UnitCatalogScript.class_color("Strider") != UnitCatalogScript.class_color("Duelist"))
 	assert(UnitCatalogScript.class_color("Warden") != UnitCatalogScript.class_color("Lifebinder"))
-	assert(UnitCatalogScript.by_name("Missing").is_empty())
+	assert(UnitCatalogScript.by_name("Missing") == null)
 	assert(KineticCrucibleScript.LEVEL_COSTS == [3, 6, 12, 24])
 	assert(KineticCrucibleScript.apply_points(
 		{"level": 1, "points": 0}, 2
@@ -151,28 +151,28 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Claw Chopper").skill.name == "Poison Strike")
 	assert(UnitCatalogScript.by_name("LDF Mastersword").skill.name == "Sunder Armour")
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Mend"
+		func(unit): return unit.skill != null and unit.skill.name == "Mend"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Plague"
+		func(unit): return unit.skill != null and unit.skill.name == "Plague"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Envenom"
+		func(unit): return unit.skill != null and unit.skill.name == "Envenom"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Pin Down"
+		func(unit): return unit.skill != null and unit.skill.name == "Pin Down"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Demoralize"
+		func(unit): return unit.skill != null and unit.skill.name == "Demoralize"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Punish"
+		func(unit): return unit.skill != null and unit.skill.name == "Punish"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Poison Strike"
+		func(unit): return unit.skill != null and unit.skill.name == "Poison Strike"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.get("skill", {}).get("name", "") == "Sunder Armour"
+		func(unit): return unit.skill != null and unit.skill.name == "Sunder Armour"
 	).size() == 5)
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
@@ -191,7 +191,7 @@ func _init() -> void:
 		assert(FileAccess.file_exists(
 			"res://assets/units/full/%03d.png" % art_id
 		))
-	assert(roster.filter(func(unit): return unit.has("promotion_of")).size() == 37)
+	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 37)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -726,11 +726,12 @@ func _init() -> void:
 	var units := [
 		{"side": 0, "row": 1, "col": 5, "atk": 3, "hp": 4, "max_hp": 4}
 	]
-	var choice: Dictionary = BattleAIScript.choose_deployment(roster, 2, units)
+	var ai_hand: Array = roster.map(func(unit): return unit.to_dict())
+	var choice: Dictionary = BattleAIScript.choose_deployment(ai_hand, 2, units)
 	assert(not choice.is_empty(), "AI should find an affordable deployment.")
 	assert(choice.card.cost <= 2)
 	assert(choice.row == 1, "AI should answer the most dangerous lane.")
-	var finite_hand: Array = roster.slice(0, 4)
+	var finite_hand: Array = roster.slice(0, 4).map(func(unit): return unit.to_dict())
 	var hand_choice: Dictionary = BattleAIScript.choose_deployment(finite_hand, 2, units)
 	assert(not hand_choice.is_empty())
 	var chosen_index: int = finite_hand.find(hand_choice.card)
@@ -743,7 +744,7 @@ func _init() -> void:
 		{"side": 1, "row": 1, "col": 6, "atk": 1, "hp": 1, "max_hp": 1},
 		{"side": 1, "row": 2, "col": 6, "atk": 1, "hp": 1, "max_hp": 1}
 	]
-	assert(BattleAIScript.choose_deployment(roster, 10, blocked_units).is_empty())
+	assert(BattleAIScript.choose_deployment(ai_hand, 10, blocked_units).is_empty())
 
 	print("Aether Engine smoke tests passed.")
 	quit()

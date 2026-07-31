@@ -906,8 +906,8 @@ func _populate_replay_squad_grid(grid: GridContainer, names: Array) -> void:
 		grid.add_child(unavailable)
 		return
 	for index in names.size():
-		var unit: Dictionary = UnitCatalogScript.by_name(names[index])
-		if unit.is_empty():
+		var unit := UnitCatalogScript.by_name(names[index])
+		if unit == null:
 			continue
 		var card := Button.new()
 		card.custom_minimum_size = Vector2(0, 82)
@@ -922,7 +922,7 @@ func _populate_replay_squad_grid(grid: GridContainer, names: Array) -> void:
 		]
 		card.add_theme_font_size_override("font_size", 11)
 		_apply_class_card_style(card, unit.kind)
-		card.mouse_entered.connect(_show_unit_details.bind(unit))
+		card.mouse_entered.connect(_show_unit_details.bind(unit.to_dict()))
 		card.mouse_exited.connect(_hide_unit_details)
 		grid.add_child(card)
 
@@ -1002,8 +1002,8 @@ func _rebuild_squad_grid() -> void:
 		editing_squad_names, collection_instances
 	)
 	for instance in KineticCrucibleScript.active_instances(collection_instances):
-		var unit: Dictionary = UnitCatalogScript.by_name(instance.name)
-		if unit.is_empty():
+		var unit := UnitCatalogScript.by_name(instance.name)
+		if unit == null:
 			continue
 		var copies: int = selected_names.count(instance.name)
 		var button: Button = SquadCardScript.new()
@@ -1039,7 +1039,7 @@ func _rebuild_squad_grid() -> void:
 		)
 		if instance.is_empty():
 			continue
-		var unit: Dictionary = UnitCatalogScript.by_name(instance.name)
+		var unit := UnitCatalogScript.by_name(instance.name)
 		var card: Button = SquadCardScript.new()
 		card.configure(instance.id, "squad", _unit_icon(unit.icon), index, unit.kind)
 		card.custom_minimum_size = Vector2(0, 72)
@@ -1089,8 +1089,8 @@ func _refresh_mission_intel() -> void:
 		]
 	)
 	for unit_name in encounter.enemy_squad:
-		var unit: Dictionary = UnitCatalogScript.by_name(unit_name)
-		if unit.is_empty():
+		var unit := UnitCatalogScript.by_name(unit_name)
+		if unit == null:
 			continue
 		var portrait := TextureRect.new()
 		portrait.custom_minimum_size = Vector2(42, 48)
@@ -1100,7 +1100,7 @@ func _refresh_mission_intel() -> void:
 		portrait.tooltip_text = "%s · %s" % [
 			unit.name, UnitCatalogScript.display_class(unit.kind)
 		]
-		portrait.mouse_entered.connect(_show_unit_details.bind(unit))
+		portrait.mouse_entered.connect(_show_unit_details.bind(unit.to_dict()))
 		portrait.mouse_exited.connect(_hide_unit_details)
 		mission_enemy_preview_row.add_child(portrait)
 
@@ -1632,7 +1632,7 @@ func _rebuild_crucible() -> void:
 			grid.remove_child(child)
 			child.queue_free()
 	for instance in active:
-		var unit: Dictionary = UnitCatalogScript.by_name(instance.name)
+		var unit := UnitCatalogScript.by_name(instance.name)
 		var card: Button = SquadCardScript.new()
 		card.configure(
 			instance.id, "crucible_reserve", _unit_icon(unit.icon), -1, unit.kind
@@ -1751,7 +1751,7 @@ func _refresh_crucible_detail() -> void:
 		crucible_merge_button.disabled = true
 		return
 	var promotion_available := roster.any(
-		func(unit): return unit.get("promotion_of", "") == target.name
+		func(unit): return unit.promotion_of == target.name
 	)
 	var progression := (
 		"LEVEL 5 · MAXIMUM%s" % (
@@ -1815,8 +1815,8 @@ func _sync_collection() -> void:
 		CampaignStoreScript.inventory_counts(roster, earned_reward_units)
 	)
 
-func _unit_with_instance(unit: Dictionary, instance: Dictionary) -> Dictionary:
-	var result := unit.duplicate(true)
+func _unit_with_instance(unit: UnitData, instance: Dictionary) -> Dictionary:
+	var result := unit.to_dict()
 	result.instance_id = instance.get("id", "")
 	result.level = instance.get("level", 1)
 	result.level_points = instance.get("points", 0)
@@ -1993,12 +1993,12 @@ func _apply_next_replay_event() -> void:
 		"combat_log":
 			status_message = event.get("message", "")
 		"deploy":
-			var card: Dictionary = UnitCatalogScript.by_name(event.get("card", ""))
-			if not card.is_empty():
+			var card := UnitCatalogScript.by_name(event.get("card", ""))
+			if card != null:
 				var side: int = event.get("side", PLAYER)
 				var row: int = event.get("row", 0)
 				var col := 0 if side == PLAYER else COLS - 1
-				var spawned := _spawn_unit(card, side, row, col)
+				var spawned := _spawn_unit(card.to_dict(), side, row, col)
 				spawned.id = event.get("unit_id", spawned.id)
 				next_unit_id = maxi(next_unit_id, spawned.id + 1)
 				battle_audio.play("deploy")
@@ -2157,7 +2157,7 @@ func _rebuild_mission_list() -> void:
 		rewards.add_child(reward_label)
 
 		for option in reward_options:
-			var reward_unit: Dictionary = option.unit
+			var reward_unit: UnitData = option.unit
 			var is_unobtained: bool = int(inventory.get(reward_unit.name, 0)) <= 0
 			var tile := VBoxContainer.new()
 			tile.custom_minimum_size = Vector2(34, 40)
@@ -2176,7 +2176,7 @@ func _rebuild_mission_list() -> void:
 			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			portrait.mouse_default_cursor_shape = Control.CURSOR_HELP
 			portrait.mouse_entered.connect(
-				_show_reward_details.bind(reward_unit, float(option.chance))
+				_show_reward_details.bind(reward_unit.to_dict(), float(option.chance))
 			)
 			portrait.mouse_exited.connect(_hide_unit_details)
 			art_slot.add_child(portrait)
@@ -2195,7 +2195,7 @@ func _rebuild_mission_list() -> void:
 				art_slot.add_child(new_tag)
 
 			var stars := Label.new()
-			stars.text = "★".repeat(reward_unit.get("stars", 1))
+			stars.text = "★".repeat(reward_unit.stars)
 			stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			stars.add_theme_font_size_override("font_size", 9)
@@ -2335,9 +2335,10 @@ func _build_hover_card() -> void:
 	content.add_child(hover_drop_label)
 
 func _show_unit_details(unit: Dictionary) -> void:
-	var definition: Dictionary = UnitCatalogScript.by_name(unit.name)
-	if definition.is_empty():
-		definition = unit
+	var definition := UnitCatalogScript.by_name(unit.name)
+	if definition == null:
+		_hide_unit_details()
+		return
 	var current_hp: int = unit.get("hp", definition.hp)
 	var maximum_hp: int = unit.get("max_hp", definition.hp)
 	var hp_text := "%d HP" % current_hp
@@ -2352,20 +2353,20 @@ func _show_unit_details(unit: Dictionary) -> void:
 	hover_stats_label.text = "LEVEL %d · %d MANA · %s\n%d ATK    %s    %d MOV    %d RANGE" % [
 		unit_level,
 		definition.cost,
-		"★".repeat(definition.get("stars", 1)),
+		"★".repeat(definition.stars),
 		unit.get("atk", definition.atk),
 		hp_text,
 		definition.move,
 		definition.range
 	]
 	var active_effects: String = CaptainSkillsScript.effect_summary(unit)
-	hover_ability_label.text = _format_primary_ability(definition.text)
-	var skill: Dictionary = definition.get("skill", {})
-	if not skill.is_empty():
+	hover_ability_label.text = _format_primary_ability(definition.description)
+	var skill: SkillData = definition.skill
+	if skill != null:
 		hover_ability_label.text += "\n\n%s · %s\n[font_size=12][color=#c4b99f]%s[/color][/font_size]\n[font_size=11][color=#938b7b]%s[/color][/font_size]" % [
 			skill.name.to_upper(),
 			skill.type.to_upper(),
-			skill.text,
+			skill.description,
 			UnitSkillsScript.timing_tooltip(skill.type)
 		]
 	if not active_effects.is_empty():
@@ -2610,12 +2611,12 @@ func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
 	return portrait_icon
 
 func _show_card_reward(unit_name: String, is_new: bool) -> void:
-	var unit: Dictionary = UnitCatalogScript.by_name(unit_name)
-	reward_reveal.visible = not unit.is_empty()
-	if unit.is_empty():
+	var unit := UnitCatalogScript.by_name(unit_name)
+	reward_reveal.visible = unit != null
+	if unit == null:
 		return
 	reward_portrait.texture = _unit_icon_at_size(unit.icon, 100)
-	reward_stars_label.text = "★".repeat(unit.get("stars", 1))
+	reward_stars_label.text = "★".repeat(unit.stars)
 	reward_new_label.visible = is_new
 
 func _select_card(index: int) -> void:

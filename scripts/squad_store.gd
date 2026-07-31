@@ -151,7 +151,7 @@ static func build_deck(names: Array, roster: Array, instances: Array = []) -> Ar
 		var unit_name = resolved_names[index]
 		for unit in roster:
 			if unit.name == unit_name:
-				var card: Dictionary = unit.duplicate(true)
+				var card: Dictionary = unit.to_dict()
 				if not instances.is_empty() and index < clean_ids.size():
 					var instance := _instance_by_id(instances, str(clean_ids[index]))
 					if not instance.is_empty():

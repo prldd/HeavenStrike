@@ -144,7 +144,7 @@ static func reward_options(mission_id: int, roster: Array) -> Array:
 	var total_weight := 0
 	var weighted: Array = []
 	for unit in candidates:
-		var stars: int = clampi(unit.get("stars", 1), 1, 6)
+		var stars: int = clampi(unit.stars, 1, 6)
 		var weight: int = 1 << (6 - stars)
 		weighted.append({"unit": unit, "weight": weight})
 		total_weight += weight
@@ -162,7 +162,9 @@ static func choose_weighted_reward(candidates: Array, roll: float = -1.0) -> Str
 	var total_weight := 0
 	var weights: Array = []
 	for unit in candidates:
-		var stars: int = clampi(unit.get("stars", 1), 1, 6)
+		# One-arg get() reads both catalog Resources and plain Dictionary fixtures.
+		var stars_value = unit.get("stars")
+		var stars: int = clampi(stars_value if stars_value != null else 1, 1, 6)
 		var weight: int = 1 << (6 - stars)
 		weights.append(weight)
 		total_weight += weight

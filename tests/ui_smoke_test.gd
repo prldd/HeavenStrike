@@ -99,7 +99,7 @@ func _run() -> void:
 	assert(game.board.has_method("animate_defeat"))
 	assert(game.board.has_method("shake"))
 	assert(game._resolution_preview(0) == "UPCOMING · No ready units.")
-	var preview_unit: Dictionary = game._spawn_unit(game.roster[0], 0, 0, 0)
+	var preview_unit: Dictionary = game._spawn_unit(game.roster[0].to_dict(), 0, 0, 0)
 	var preview_text: String = game._resolution_preview(0)
 	assert(preview_text.begins_with("UPCOMING · 1 %s" % preview_unit.name))
 	preview_unit.taunt_turns = 2

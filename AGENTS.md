@@ -28,7 +28,7 @@ The prototype is intentionally a single-player, desktop-first Godot project. All
 ├── README.md              # Player-facing controls and feature list
 ├── PROJECT.md             # Design document: rules, classes, progression, roadmap
 ├── AGENTS.md              # This file
-├── scripts/               # All GDScript source
+├── scripts/               # All GDScript source (Resource classes live in scripts/resources/)
 ├── tests/                 # Headless Godot test scripts
 ├── tools/                 # Development utilities
 ├── assets/                # Spritesheets, generated portraits, generated full-body sprites, backgrounds
@@ -53,7 +53,9 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
-| `unit_catalog.gd` | Authoritative unit roster: 82 units as inline Dictionaries with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative unit roster: 82 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
+| `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
 | `captain_skills.gd` | Static resolution of the eight Commander powers and effect expiration. |
 | `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Captain-skill storage. |
@@ -96,6 +98,13 @@ Run all three headless tests before committing gameplay or UI changes:
 ./tools/godot-headless.sh --script res://tests/balance_simulation.gd
 ```
 
+On Windows (where the Linux launcher cannot run), use the local Windows binary directly. Override `APPDATA` so tests get an isolated user profile — `ui_smoke_test.gd` is sensitive to existing save data in the real profile:
+
+```bash
+mkdir -p .tools/godot-user-win
+APPDATA="$(pwd -W)/.tools/godot-user-win" "/e/Tools/Godot/Godot.exe" --headless --path . --script res://tests/smoke_test.gd
+```
+
 - `smoke_test.gd` — validates the unit catalog, art files, simulator, replay history, damage/healing, Captain shields, squad store, Kinetic Crucible, and skill data. Extensive `assert()` calls; fails fast on regression.
 - `ui_smoke_test.gd` — instantiates `main.tscn`, probes the UI control tree, toggles settings, checks audio labels, verifies the board view API, and exercises the Kinetic Crucible UI.
 - `balance_simulation.gd` — audits all 62 campaign missions: every configured enemy encounter has a valid squad, positive power, monotonic HP progression, and the difficulty curve stays within the allowed max jump.
@@ -125,7 +134,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 
 - **Single main scene:** `main.tscn` is the only committed scene. The rest of the UI is built in code inside `main.gd`. Add new UI elements inside `main.gd` unless there is a strong reason to introduce a scene file.
 - **Simulation vs. presentation:** keep deterministic combat rules in `BattleSimulator`, `BattleRules`, `BattleAI`, `UnitSkills`, and `CaptainSkills`. Keep drawing, animation, audio, and input in `BoardView` and `main.gd`. Do not add combat logic to `BoardView`.
-- **Unit data as dictionaries:** units are plain Dictionaries, not Resources. New units belong in `UnitCatalog.UNITS`. Any new secondary skill needs a matching resolution branch in `UnitSkills` and an AI consideration in `BattleAI` if relevant.
+- **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards. Any new secondary skill needs a matching resolution branch in `UnitSkills` and an AI consideration in `BattleAI` if relevant.
 - **Deterministic replays:** the simulator records events. Replays are saved to `user://last_replay.json` and archived newest-first to `user://replay_history.json` (limit 10). Keep replay serialization backward-compatible where possible; the tests already assert version 1 format.
 - **Persistence:** all player save data is written under `user://` via `ConfigFile` or `JSON`. Files include `user://player.cfg`, `user://campaign.cfg`, `user://mission_run.cfg`, and `user://kinetic_crucible.cfg`. Migration code is kept in the relevant store scripts, not in `main.gd`.
 - **Portraits:** generated from `assets/units/portrait_manifest.tsv` and the source sheets in `assets/units/portrait_sheets/`. The generator asserts exactly 1,048 portraits. Regenerate with:
@@ -188,7 +197,7 @@ If you add an export workflow, keep credentials out of the repository and write 
 
 ## Common tasks
 
-- **Add a unit:** edit `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, update `smoke_test.gd` counts if intentional, and run the three tests.
+- **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, update `smoke_test.gd` counts if intentional, and run the three tests.
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
 - **Add a Captain skill:** edit `scripts/captain_skills.gd`, add the name to `CaptainSkills.SKILLS`, and update the description.
 - **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`.

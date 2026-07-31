@@ -81,7 +81,7 @@ static func merge_value(target: Dictionary, donor: Dictionary, roster: Array = [
 		return 5
 	var target_unit := _definition(target, roster)
 	var donor_unit := _definition(donor, roster)
-	if not target_unit.is_empty() and target_unit.kind == donor_unit.get("kind", ""):
+	if target_unit != null and donor_unit != null and target_unit.kind == donor_unit.kind:
 		return 2
 	# Retain pure-data compatibility for rules tests.
 	if target.get("kind", "") != "" and target.get("kind", "") == donor.get("kind", ""):
@@ -109,8 +109,7 @@ static func can_merge(
 			func(instance): return instance.name == donor.name
 		).size() < 2:
 			return false
-	return not _definition(target, roster).is_empty() \
-		and not _definition(donor, roster).is_empty()
+	return _definition(target, roster) != null and _definition(donor, roster) != null
 
 static func record_merge(
 	target_id: String,
@@ -198,11 +197,11 @@ static func points_to_next(progress: Dictionary) -> int:
 		return 0
 	return LEVEL_COSTS[clean.level - 1] - clean.points
 
-static func _definition(instance: Dictionary, roster: Array) -> Dictionary:
+static func _definition(instance: Dictionary, roster: Array) -> UnitData:
 	for unit in roster:
 		if unit.name == instance.get("name", ""):
 			return unit
-	return {}
+	return null
 
 static func _sanitize_instance(value: Dictionary) -> Dictionary:
 	var progress := _sanitize_progress(value)
