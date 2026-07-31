@@ -53,7 +53,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
-The current prototype roster contains 45 unpromoted units and 37 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
+The current prototype roster contains 48 unpromoted units and 40 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
 
 Campaign missions only award implemented cards listed for that exact story quest in the reference data. Cards listed solely for events, raids, arenas, or gacha are not inserted into campaign pools.
 
@@ -175,7 +175,7 @@ For development, the Crucible also exposes a clearly labeled debug inventory
 button that grants enough copies to leave at least four active copies of every
 implemented unit without resetting existing levels or merge progress.
 
-The implemented roster contains 82 cards: 45 unpromoted units and 37 standalone promoted forms. Mend restores 3 HP to the most-wounded other ally when its unit is deployed. Plague deals 1 damage to every other unit and Poisons each survivor for two turns, dealing 1 additional damage at the start of its side's turns. Envenom lets the player select an enemy to Poison for two turns, while Poison Strike can apply the same damage-over-time pressure during an attack. Pin Down deals 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilises it for one turn. Demoralize weakens eligible melee enemies in a player-selected lane, Punish weakens the highest-ATK enemy Fighter or Mage, and Sunder Armour damages the highest-HP enemy Fighter or Defender before making it Vulnerable to +1 damage for two turns. Units beyond the starting set are earned as mission rewards and are not included in the starting Reserves unless the reference provides no story-quest source for them.
+The implemented roster contains 88 cards: 48 unpromoted units and 40 standalone promoted forms. Mend restores 3 HP to the most-wounded other ally when its unit is deployed. Plague deals 1 damage to every other unit and Poisons each survivor for two turns, dealing 1 additional damage at the start of its side's turns. Envenom lets the player select an enemy to Poison for two turns, while Poison Strike can apply the same damage-over-time pressure during an attack. Pin Down deals 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilises it for one turn. Demoralize weakens eligible melee enemies in a player-selected lane, Punish weakens the highest-ATK enemy Fighter or Mage, and Sunder Armour damages the highest-HP enemy Fighter or Defender before making it Vulnerable to +1 damage for two turns. Big Game Hunter damages the highest-HP enemy and makes it Vulnerable, Contagion damages and Poisons every enemy Mage and Priest, and Meteor Barrage damages every enemy in a player-selected lane. Units beyond the starting set are earned as mission rewards and are not included in the starting Reserves unless the reference provides no story-quest source for them.
 
 ## Example Turn
 
@@ -204,7 +204,7 @@ Commander selection changes a squad's strategy without adding another unit to th
 - Full 62-mission, two-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 82 reference units across all six classes
+- 88 reference units across all six classes
 - Three Commanders
 
 ### Later Possibilities

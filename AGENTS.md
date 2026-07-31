@@ -53,7 +53,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
-| `unit_catalog.gd` | Authoritative unit roster: 82 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative unit roster: 88 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
@@ -159,7 +159,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (82 units, 12/14/25/19/12 star distribution, 37 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (88 units, 12/15/28/21/12 star distribution, 40 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
 
 ## Save files and persistence
 
@@ -195,9 +195,104 @@ If you add an export workflow, keep credentials out of the repository and write 
 - Avoid using `eval`, `OS.execute`, or `FileAccess` on arbitrary paths. If you need to load a user-provided file, validate the path and extension.
 - Save files are plain text ConfigFile/JSON. This is acceptable for a single-player prototype; do not treat them as authoritative for multiplayer.
 
+## Porting units and skills from the reference
+
+The authoritative unit source is chainguardians.com (a Heavenstrike Rivals
+database). The project's roster, rank tables, and campaign drop lists are
+ported from it. Follow this workflow when adding more.
+
+### Extracting the reference database
+
+The site is an AngularJS app; HTML fetches return only the shell. The full unit
+database (1,052 units) is embedded as a JS literal in the app bundle:
+
+1. Fetch any page (e.g. `https://chainguardians.com/units`) and find the
+   `sky-app.min.<hash>.js` script name (the hash changes between deploys).
+2. Download that bundle, then in Node extract the array starting at
+   `function UnitData(){var e={units:[` with bracket matching and `eval()` it
+   into JSON (it is an unquoted JS literal, not strict JSON).
+
+Each unit record has: `numberId` (zero-padded string), `name`, `className`
+(defender/fighter/scout/gunner/mage/priest), `starCount`, `manaCost`,
+`maxAttack`, `maxHealth`, `race`, `promotionIds`, and `skill` with `name`,
+`type` (warcry/strike/chant/reaction/aura), `description` (with `{0}`/`{1}`
+placeholders), and `values` (five per-level rank rows). Drop sources are split
+into `storyQuests`, `events`, `raids`, `arenas`, and `gatcha` — **only
+`storyQuests` matter for campaign rewards** (`Act N Mission M - Title`, where M
+is the global 1–62 mission number used in `ADDITIONAL_DROPS`). Units with zero
+story quests are starting-Reserve cards instead of reward cards.
+
+### Art assets
+
+- **Portraits** (`assets/units/portraits/%03d.png`) are pre-generated for all
+  1,048 manifest units — no work needed for new units.
+  `assets/units/portrait_manifest.tsv` columns: art ID (= reference
+  `numberId`), portrait sheet, slot, full-body sheet, slot, unit name. The
+  960×160 six-slot portrait sheets live in `assets/units/portrait_sheets/`.
+- **Full-body sprites** (`assets/units/full/%03d.png`) exist only for a subset
+  of units, and the full-body sheets are *not* mirrored locally. Download
+  missing ones from `https://chainguardians.com/img/full/<numberId>.png`
+  (a `_hires` variant exists at `img/full_hires/<numberId>.png`). They are
+  roughly 415px-wide chibi PNGs. `smoke_test.gd` asserts both files exist for
+  every roster unit; commit the `.import` files Godot generates on the next
+  run.
+
+### Catalog conventions
+
+- Project `icon` IDs are project-local and do **not** equal reference
+  `numberId`s (e.g. Order Apostle is icon 25 but art 29). New units take the
+  next free project icon and an `ICON_ART_IDS` entry mapping it to the
+  reference `numberId`; `art_id()` defaults to identity when unmapped.
+- Class mapping: defender→Warden, fighter→Duelist, scout→Strider,
+  gunner→Artillerist, mage→Channeler, priest→Lifebinder. Movement/range by
+  class: Warden 2/1, Duelist 2/1, Strider 3/1, Artillerist 1/3, Channeler 1/3,
+  Lifebinder 1/2. Cost/ATK/HP are ported verbatim from `manaCost`/`maxAttack`/
+  `maxHealth`. Class ability text is a fixed string per class (see existing
+  entries).
+- Secondary skill description text is the reference description verbatim; the
+  five `values` rows go into `UnitCatalog.RANK_VALUES` keyed by skill name.
+
+### Skill implementation checklist
+
+1. `RANK_VALUES` entry + `_skill(...)` on each unit in `UnitCatalog._build()`.
+2. A resolution branch in `scripts/unit_skills.gd` (`resolve_warcry`,
+   `resolve_strike`; `resolve_chants`, `resolve_reaction`, and
+   `refresh_auras` are still stub hooks). The `target_id = -1` /
+   `target_lane = -1` fallbacks are what the enemy AI uses — `BattleAI` itself
+   only scores by class and usually needs no per-skill changes.
+3. If the player chooses a target, wire `main.gd`: ally-target follows the
+   `pending_empower_actor_id` pattern, enemy-target the
+   `pending_envenom_actor_id` pattern, and lane-target the
+   `pending_lane_actor_id` + `_lane_target_kinds()` pattern. Add the skill to
+   the damage/heal/status audio and animation lists in `_resolve_warcry`.
+4. Rewards: add the unit to `ADDITIONAL_DROPS` in
+   `scripts/story_quest_catalog.gd` (missions from the reference `storyQuests`)
+   and to `REWARD_UNITS` in `scripts/campaign_store.gd`. Never edit
+   `MISSION_ENEMY_SQUADS` for this — those decks are deliberately authored.
+
+### Updating the tests
+
+`tests/smoke_test.gd` hardcodes roster facts that must move together: total
+roster size, the icon upper bound, the five star-count buckets, the six class
+counts, the promotion count, per-skill unit counts, `art_id()` assertions, and
+reward-pool assertions. Add resolution tests for each new skill following the
+existing fixtures. `tests/balance_simulation.gd` must keep
+`largest_difficulty_jump <= 0.18` (reward pools do not affect it, enemy-squad
+edits do).
+
+Gotchas when running the Windows binary headless:
+
+- A failed `assert()` prints the error but leaves Godot running idle instead
+  of exiting — kill the process after a timeout and read the captured log.
+- `smoke_test.gd` never loads `main.tscn`, so parse errors in `main.gd` only
+  surface in `ui_smoke_test.gd`.
+- GDScript lambdas cannot span lines inside a call unless the body is wrapped
+  in parentheses: `func(u): return (u.a and u.b)` — otherwise the parser
+  reports "Expected closing \")\" after call arguments".
+
 ## Common tasks
 
-- **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, update `smoke_test.gd` counts if intentional, and run the three tests.
+- **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, update `smoke_test.gd` counts if intentional, and run the three tests. For reference-sourced units follow the full workflow in "Porting units and skills from the reference" above.
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
 - **Add a Captain skill:** edit `scripts/captain_skills.gd`, add the name to `CaptainSkills.SKILLS`, and update the description.
 - **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`.

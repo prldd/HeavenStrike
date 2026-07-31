@@ -43,7 +43,13 @@ const ADDITIONAL_DROPS := {
 	"LDF Bowgunner": [15, 20, 33, 42, 56, 58, 59, 61],
 	"LDF Bolt Slinger": [20, 33, 42, 56, 58, 59, 61],
 	"LDF Swordwielder": [35],
-	"LDF Greatsword": [35]
+	"LDF Greatsword": [35],
+	"Haven Trapper": [10, 26, 32, 39, 40, 44, 49, 60],
+	"Haven Huntsman": [10, 23, 26, 32, 39, 40, 44, 49, 60],
+	"Macabre Embalmer": [27, 29, 37, 41, 45],
+	"Macabre Undertaker": [27, 29, 37, 41, 45],
+	"Devout Mage": [21, 22, 24, 56],
+	"Devout Warlock": [21, 22, 24, 56]
 }
 
 const QUESTS := [

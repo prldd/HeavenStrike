@@ -12,7 +12,7 @@ const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 82, "The playable roster must contain 82 units.")
+	assert(roster.size() == 88, "The playable roster must contain 88 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
@@ -107,12 +107,12 @@ func _init() -> void:
 	assert(captain_hit.shield_absorbed == 2)
 	assert(captain_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 87
+		func(icon_id): return icon_id >= 1 and icon_id <= 93
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 2).size() == 14)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 25)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 19)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 15)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 28)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 21)
 	assert(roster.filter(func(unit): return unit.stars == 5).size() == 12)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	var unique_icon_ids: Array = []
@@ -123,8 +123,8 @@ func _init() -> void:
 	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 17)
 	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 15)
 	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 6)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 18)
-	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 14)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 20)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 18)
 	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 12)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
@@ -169,6 +169,12 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("The Bard").promotion_of == "Shakespeare")
 	assert(UnitCatalogScript.by_name("Claw Chopper").skill.name == "Poison Strike")
 	assert(UnitCatalogScript.by_name("LDF Mastersword").skill.name == "Sunder Armour")
+	assert(UnitCatalogScript.by_name("Haven Trapper").skill.name == "Big Game Hunter")
+	assert(UnitCatalogScript.by_name("Haven Huntsman").promotion_of == "Haven Trapper")
+	assert(UnitCatalogScript.by_name("Macabre Embalmer").skill.name == "Contagion")
+	assert(UnitCatalogScript.by_name("Macabre Undertaker").promotion_of == "Macabre Embalmer")
+	assert(UnitCatalogScript.by_name("Devout Mage").skill.name == "Meteor Barrage")
+	assert(UnitCatalogScript.by_name("Devout Warlock").promotion_of == "Devout Mage")
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Mend"
 	).size() == 4)
@@ -193,6 +199,15 @@ func _init() -> void:
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Sunder Armour"
 	).size() == 5)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Big Game Hunter"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Contagion"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Meteor Barrage"
+	).size() == 2)
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
 	assert(UnitCatalogScript.art_id(27) == 83)
@@ -202,6 +217,12 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(68) == 629)
 	assert(UnitCatalogScript.art_id(80) == 488)
 	assert(UnitCatalogScript.art_id(87) == 609)
+	assert(UnitCatalogScript.art_id(88) == 31)
+	assert(UnitCatalogScript.art_id(89) == 32)
+	assert(UnitCatalogScript.art_id(90) == 93)
+	assert(UnitCatalogScript.art_id(91) == 94)
+	assert(UnitCatalogScript.art_id(92) == 81)
+	assert(UnitCatalogScript.art_id(93) == 82)
 	for unit in roster:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		assert(FileAccess.file_exists(
@@ -210,7 +231,7 @@ func _init() -> void:
 		assert(FileAccess.file_exists(
 			"res://assets/units/full/%03d.png" % art_id
 		))
-	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 37)
+	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 40)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -296,6 +317,12 @@ func _init() -> void:
 	assert("Greyson the Shifty" in CampaignStoreScript.MISSIONS[13].reward_pool)
 	assert("LDF Flight Officer" in CampaignStoreScript.MISSIONS[18].reward_pool)
 	assert("LDF Flight Commander" in CampaignStoreScript.MISSIONS[14].reward_pool)
+	assert("Haven Trapper" in CampaignStoreScript.MISSIONS[9].reward_pool)
+	assert("Haven Huntsman" in CampaignStoreScript.MISSIONS[22].reward_pool)
+	assert("Macabre Embalmer" in CampaignStoreScript.MISSIONS[26].reward_pool)
+	assert("Macabre Undertaker" in CampaignStoreScript.MISSIONS[28].reward_pool)
+	assert("Devout Mage" in CampaignStoreScript.MISSIONS[20].reward_pool)
+	assert("Devout Warlock" in CampaignStoreScript.MISSIONS[55].reward_pool)
 	for mission in CampaignStoreScript.MISSIONS:
 		assert("Farsight Naruku" not in mission.reward_pool)
 		assert("Macewielder Ragnr" not in mission.reward_pool)
@@ -694,6 +721,73 @@ func _init() -> void:
 	UnitSkillsScript.expire_statuses([sunder_defender], 1)
 	assert(sunder_defender.vulnerable_turns == 0)
 	assert(sunder_defender.vulnerable_stacks == 0)
+	var hunter_actor := {
+		"id": 95, "side": 0, "name": "Haven Trapper", "kind": "Artillerist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Big Game Hunter", "type": "Warcry"}
+	}
+	var hunter_big := {
+		"id": 96, "side": 1, "name": "Big Target", "kind": "Strider",
+		"atk": 4, "hp": 9, "max_hp": 9, "effects": []
+	}
+	var hunter_small := {
+		"id": 97, "side": 1, "name": "Small Target", "kind": "Warden",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var hunter_result := UnitSkillsScript.resolve_warcry(
+		hunter_actor, [hunter_actor, hunter_big, hunter_small]
+	)
+	assert(hunter_result.affected == [96])
+	assert(hunter_big.hp == 8 and hunter_big.vulnerable_turns == 2)
+	assert(hunter_big.vulnerable_stacks == 1)
+	assert(not hunter_small.has("vulnerable_turns"))
+	var contagion_actor := {
+		"id": 98, "side": 0, "name": "Macabre Embalmer", "kind": "Channeler",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Contagion", "type": "Warcry"}
+	}
+	var contagion_mage := {
+		"id": 99, "side": 1, "name": "Enemy Mage", "kind": "Channeler",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var contagion_priest := {
+		"id": 100, "side": 1, "name": "Enemy Priest", "kind": "Lifebinder",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var contagion_fighter := {
+		"id": 101, "side": 1, "name": "Enemy Fighter", "kind": "Duelist",
+		"atk": 5, "hp": 7, "max_hp": 7, "effects": []
+	}
+	var contagion_result := UnitSkillsScript.resolve_warcry(
+		contagion_actor,
+		[contagion_actor, contagion_mage, contagion_priest, contagion_fighter]
+	)
+	assert(contagion_result.affected == [99, 100])
+	assert(contagion_mage.hp == 4 and contagion_mage.poison_turns == 2)
+	assert(contagion_priest.hp == 5 and contagion_priest.poison_damage == 1)
+	assert(contagion_fighter.hp == 7 and not contagion_fighter.has("poison_turns"))
+	var meteor_actor := {
+		"id": 102, "side": 0, "name": "Devout Mage", "kind": "Channeler",
+		"row": 0, "atk": 5, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Meteor Barrage", "type": "Warcry"}
+	}
+	var meteor_lane_one := {
+		"id": 103, "side": 1, "name": "Lane One Target", "kind": "Duelist",
+		"row": 1, "atk": 5, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var meteor_lane_two := {
+		"id": 104, "side": 1, "name": "Lane Two Target", "kind": "Strider",
+		"row": 2, "atk": 3, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var meteor_units := [meteor_actor, meteor_lane_one, meteor_lane_two]
+	var meteor_result := UnitSkillsScript.resolve_warcry(
+		meteor_actor, meteor_units, -1, null, 2
+	)
+	assert(meteor_result.affected == [104])
+	assert(meteor_lane_two.hp == 6 and meteor_lane_one.hp == 6)
+	var meteor_fallback := UnitSkillsScript.resolve_warcry(meteor_actor, meteor_units)
+	assert(meteor_fallback.affected == [103])
+	assert(meteor_lane_one.hp == 4)
 	skirmisher.skill = {"name": "Pinning Slice", "type": "Strike"}
 	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.59).message.is_empty())
 	warcry_enemy.immobilized_turns = 0

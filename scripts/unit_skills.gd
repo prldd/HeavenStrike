@@ -192,6 +192,59 @@ static func resolve_warcry(
 					target.name, amount, _turn_label(turns)
 				]
 				result.affected.append(target.id)
+		"Big Game Hunter":
+			var target = _highest_health_enemy(actor, units)
+			if target != null:
+				var damage := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				if target.hp > 0:
+					if target.get("vulnerable_turns", 0) > 0:
+						target.vulnerable_stacks = target.get("vulnerable_stacks", 1) + 1
+					else:
+						target.vulnerable_stacks = 1
+					target.vulnerable_turns = maxi(
+						target.get("vulnerable_turns", 0), turns
+					)
+				var stack_note := ""
+				if target.hp > 0 and target.get("vulnerable_stacks", 1) > 1:
+					stack_note = " (stack %d)" % target.vulnerable_stacks
+				result.message = "Big Game Hunter deals %d damage to %s and makes it Vulnerable for %s%s." % [
+					damage, target.name, _turn_label(turns), stack_note
+				]
+				result.affected.append(target.id)
+		"Contagion":
+			var damage := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
+			var victims := _enemies(actor, units).filter(
+				func(unit): return unit.kind in ["Channeler", "Lifebinder"]
+			)
+			for target in victims:
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				target.poison_turns = maxi(target.get("poison_turns", 0), turns)
+				target.poison_damage = maxi(target.get("poison_damage", 0), 1)
+				result.affected.append(target.id)
+			if not victims.is_empty():
+				result.message = "Contagion deals %d damage to %d enemy Mage%s and Priest%s and Poisons them for %s." % [
+					damage, victims.size(), "" if victims.size() == 1 else "s",
+					"" if victims.size() == 1 else "s", _turn_label(turns)
+				]
+		"Meteor Barrage":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_enemy_lane(actor, units, [])
+			var damage := rank_value(skill, level, 0, 2)
+			var target_count := 0
+			for target in units:
+				if target.side == actor.side or target.row != lane:
+					continue
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				result.affected.append(target.id)
+				target_count += 1
+			if target_count > 0:
+				result.message = "Meteor Barrage deals %d damage to %d enem%s in lane %d." % [
+					damage, target_count, "y" if target_count == 1 else "ies", lane + 1
+				]
 	return result
 
 static func resolve_chants(_side: int, _units: Array) -> Array:
@@ -391,7 +444,7 @@ static func _best_enemy_lane(actor: Dictionary, units: Array, kinds: Array) -> i
 	for lane in 3:
 		var score := 0
 		for unit in _enemies(actor, units):
-			if unit.row == lane and unit.kind in kinds:
+			if unit.row == lane and (kinds.is_empty() or unit.kind in kinds):
 				score += 10 + unit.atk
 		if score > best_score:
 			best_lane = lane

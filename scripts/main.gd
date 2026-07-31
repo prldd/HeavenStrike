@@ -140,7 +140,7 @@ var selected_hand_index := -1
 var selected_board_unit_id := -1
 var pending_empower_actor_id := -1
 var pending_envenom_actor_id := -1
-var pending_demoralize_actor_id := -1
+var pending_lane_actor_id := -1
 var next_unit_id := 1
 var round_number := 1
 var player_hp := STARTING_HP
@@ -2603,7 +2603,7 @@ func _start_new_match() -> void:
 	selected_board_unit_id = -1
 	pending_empower_actor_id = -1
 	pending_envenom_actor_id = -1
-	pending_demoralize_actor_id = -1
+	pending_lane_actor_id = -1
 	next_unit_id = 1
 	round_number = 1
 	player_hp = mission_run_captain_hp if campaign_battle else STARTING_HP
@@ -2669,7 +2669,7 @@ func _refresh() -> void:
 	end_button.disabled = (
 		not input_enabled or battle_over
 		or pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
-		or pending_demoralize_actor_id >= 0
+		or pending_lane_actor_id >= 0
 	)
 	menu_button.disabled = not input_enabled or battle_over
 	power_button.disabled = not input_enabled or player_power_used or battle_over
@@ -2688,15 +2688,20 @@ func _refresh() -> void:
 		targetable_ids = units.filter(
 			func(unit): return unit.side == ENEMY
 		).map(func(unit): return unit.id)
-	elif pending_demoralize_actor_id >= 0:
+	elif pending_lane_actor_id >= 0:
 		targetable_ids = []
 	var targetable_rows: Array = []
-	if pending_demoralize_actor_id >= 0:
+	if pending_lane_actor_id >= 0:
+		var lane_actor = _unit_by_id(pending_lane_actor_id)
+		var lane_kinds: Array = _lane_target_kinds(
+			lane_actor.get("skill", {}).get("name", "") if lane_actor != null else ""
+		)
 		for row in ROWS:
 			if units.any(
-				func(unit): return unit.side == ENEMY and unit.row == row and unit.kind in [
-					"Duelist", "Strider", "Warden"
-				]
+				func(unit): return (
+					unit.side == ENEMY and unit.row == row
+					and (lane_kinds.is_empty() or unit.kind in lane_kinds)
+				)
 			):
 				targetable_rows.append(row)
 	board.set_state(
@@ -2785,7 +2790,7 @@ func _select_card(index: int) -> void:
 		return
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
-		or pending_demoralize_actor_id >= 0
+		or pending_lane_actor_id >= 0
 	):
 		status_message = "Choose the highlighted Warcry target first."
 		_refresh()
@@ -2823,14 +2828,18 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			status_message = "Choose a highlighted enemy unit as Envenom's target."
 		_refresh()
 		return
-	if pending_demoralize_actor_id >= 0:
-		var actor = _unit_by_id(pending_demoralize_actor_id)
+	if pending_lane_actor_id >= 0:
+		var actor = _unit_by_id(pending_lane_actor_id)
+		var lane_kinds: Array = _lane_target_kinds(
+			actor.get("skill", {}).get("name", "") if actor != null else ""
+		)
 		if actor != null and units.any(
-			func(unit): return unit.side == ENEMY and unit.row == row and unit.kind in [
-				"Duelist", "Strider", "Warden"
-			]
+			func(unit): return (
+				unit.side == ENEMY and unit.row == row
+				and (lane_kinds.is_empty() or unit.kind in lane_kinds)
+			)
 		):
-			pending_demoralize_actor_id = -1
+			pending_lane_actor_id = -1
 			status_message = await _resolve_warcry(actor, -1, row)
 		else:
 			status_message = "Choose one of the highlighted lanes."
@@ -2888,7 +2897,7 @@ func _on_deployment_clicked(row: int) -> void:
 		return
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
-		or pending_demoralize_actor_id >= 0
+		or pending_lane_actor_id >= 0
 	):
 		status_message = "Choose the highlighted Warcry target first."
 		_refresh()
@@ -2977,15 +2986,18 @@ func _resolve_warcry(
 	):
 		pending_envenom_actor_id = actor.id
 		return "Choose a highlighted enemy unit as Envenom's target."
+	var lane_kinds: Array = _lane_target_kinds(skill.get("name", ""))
 	if (
-		actor.side == PLAYER and skill.get("name", "") == "Demoralize"
+		actor.side == PLAYER
+		and skill.get("name", "") in ["Demoralize", "Meteor Barrage"]
 		and target_lane < 0 and units.any(
-			func(unit): return unit.side == ENEMY and unit.kind in [
-				"Duelist", "Strider", "Warden"
-			]
+			func(unit): return (
+				unit.side == ENEMY
+				and (lane_kinds.is_empty() or unit.kind in lane_kinds)
+			)
 		)
 	):
-		pending_demoralize_actor_id = actor.id
+		pending_lane_actor_id = actor.id
 		return "Choose one of the highlighted lanes."
 	var result: Dictionary = UnitSkillsScript.resolve_warcry(
 		actor, units, target_id, battle_simulator.rng, target_lane
@@ -2997,7 +3009,8 @@ func _resolve_warcry(
 				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
 			)
 			if skill.get("name", "") in [
-				"Bolt", "Heaven's Wrath", "Plague", "Pin Down", "Sunder Armour"
+				"Bolt", "Heaven's Wrath", "Plague", "Pin Down", "Sunder Armour",
+				"Big Game Hunter", "Contagion", "Meteor Barrage"
 			]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
@@ -3015,6 +3028,13 @@ func _resolve_warcry(
 	UnitSkillsScript.refresh_auras(units)
 	return result.message
 
+## Eligible enemy classes for lane-targeted Warcries. An empty list means any
+## enemy unit makes its lane a valid target.
+func _lane_target_kinds(skill_name: String) -> Array:
+	if skill_name == "Demoralize":
+		return ["Duelist", "Strider", "Warden"]
+	return []
+
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
 		return
@@ -3030,7 +3050,7 @@ func _end_player_turn() -> void:
 		return
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
-		or pending_demoralize_actor_id >= 0
+		or pending_lane_actor_id >= 0
 	):
 		status_message = "Choose the highlighted Warcry target before resolving."
 		_refresh()

@@ -75,7 +75,13 @@ const ICON_ART_IDS := {
 	77: 89, # Prison Warden
 	78: 90, # Prison Guv'nor
 	79: 487, # Shakespeare
-	80: 488 # The Bard
+	80: 488, # The Bard
+	88: 31, # Haven Trapper
+	89: 32, # Haven Huntsman
+	90: 93, # Macabre Embalmer
+	91: 94, # Macabre Undertaker
+	92: 81, # Devout Mage
+	93: 82 # Devout Warlock
 }
 
 static var _units: Array[UnitData] = []
@@ -98,7 +104,10 @@ const RANK_VALUES := {
 	"Punish": [["1 ATK", "2 turns"], ["2 ATK", "2 turns"], ["3 ATK", "2 turns"], ["3 ATK", "3 turns"], ["4 ATK", "3 turns"]],
 	"Pinning Strike": [["30% chance", "1 turn"], ["32% chance", "1 turn"], ["35% chance", "1 turn"], ["37% chance", "2 turns"], ["40% chance", "2 turns"]],
 	"Pinning Slice": [["60% chance", "1 turn"], ["70% chance", "1 turn"], ["80% chance", "1 turn"], ["90% chance", "2 turns"], ["100% chance", "2 turns"]],
-	"Poison Strike": [["50% chance", "2 turns"], ["60% chance", "2 turns"], ["70% chance", "2 turns"], ["80% chance", "3 turns"], ["90% chance", "3 turns"]]
+	"Poison Strike": [["50% chance", "2 turns"], ["60% chance", "2 turns"], ["70% chance", "2 turns"], ["80% chance", "3 turns"], ["90% chance", "3 turns"]],
+	"Big Game Hunter": [["1 damage", "2 turns"], ["2 damage", "2 turns"], ["2 damage", "3 turns"], ["3 damage", "3 turns"], ["3 damage", "4 turns"]],
+	"Contagion": [["1 damage", "2 turns"], ["2 damage", "2 turns"], ["2 damage", "3 turns"], ["2 damage", "4 turns"], ["3 damage", "4 turns"]],
+	"Meteor Barrage": [["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"], ["4 damage"]]
 }
 
 static func _skill(name: String, type: String, chance: float, text: String) -> SkillData:
@@ -225,6 +234,12 @@ static func _build() -> void:
 		_unit('LDF Swordwielder', 85, 3, 'Duelist', 2, 4, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal {0} to the highest-HP enemy Defender or Fighter and make it Vulnerable for {1}.')),
 		_unit('LDF Greatsword', 86, 4, 'Duelist', 2, 5, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'LDF Swordwielder', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal {0} to the highest-HP enemy Defender or Fighter and make it Vulnerable for {1}.')),
 		_unit('LDF Mastersword', 87, 5, 'Duelist', 2, 6, 7, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'LDF Greatsword', _skill('Sunder Armour', 'Warcry', -1.0, 'Deal {0} to the highest-HP enemy Defender or Fighter and make it Vulnerable for {1}.')),
+		_unit('Haven Trapper', 88, 2, 'Artillerist', 3, 3, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Big Game Hunter', 'Warcry', -1.0, 'Enemy unit with the highest HP takes {0} and becomes Vulnerable for {1}.')),
+		_unit('Haven Huntsman', 89, 3, 'Artillerist', 3, 4, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Haven Trapper', _skill('Big Game Hunter', 'Warcry', -1.0, 'Enemy unit with the highest HP takes {0} and becomes Vulnerable for {1}.')),
+		_unit('Macabre Embalmer', 90, 3, 'Channeler', 3, 3, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Contagion', 'Warcry', -1.0, 'Deal {0} to all enemy Mages and Priests and Poison them for {1}.')),
+		_unit('Macabre Undertaker', 91, 4, 'Channeler', 3, 4, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Macabre Embalmer', _skill('Contagion', 'Warcry', -1.0, 'Deal {0} to all enemy Mages and Priests and Poison them for {1}.')),
+		_unit('Devout Mage', 92, 3, 'Channeler', 4, 5, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Meteor Barrage', 'Warcry', -1.0, 'Deal {0} to enemy units in target lane.')),
+		_unit('Devout Warlock', 93, 4, 'Channeler', 4, 6, 8, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Devout Mage', _skill('Meteor Barrage', 'Warcry', -1.0, 'Deal {0} to enemy units in target lane.'))
 	]
 
 static func all_units() -> Array[UnitData]:

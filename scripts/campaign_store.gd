@@ -22,7 +22,9 @@ const REWARD_UNITS := [
 	"Garrett Talon", "Garrett the Claw", "Precision Shooter", "Precision Sniper",
 	"Greyson the Shifty", "LDF Flight Officer", "LDF Flight Commander",
 	"Claw Chopper", "Claw Cleaver", "LDF Bowgunner", "LDF Bolt Slinger",
-	"LDF Swordwielder", "LDF Greatsword"
+	"LDF Swordwielder", "LDF Greatsword",
+	"Haven Trapper", "Haven Huntsman", "Macabre Embalmer", "Macabre Undertaker",
+	"Devout Mage", "Devout Warlock"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

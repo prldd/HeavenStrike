@@ -42,14 +42,14 @@ assets required by the prototype.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 82 units across six distinct classes
+- 88 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 62 sequential story missions across two acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
 - Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
-- 45 unpromoted units plus 37 standalone promotion cards with implemented secondary abilities
+- 48 unpromoted units plus 40 standalone promotion cards with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles
