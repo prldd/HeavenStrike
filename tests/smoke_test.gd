@@ -746,5 +746,97 @@ func _init() -> void:
 	]
 	assert(BattleAIScript.choose_deployment(ai_hand, 10, blocked_units).is_empty())
 
+	# Level growth: +10% ATK / max HP per level above 1, never below base.
+	assert(KineticCrucibleScript.scaled_stat(10, 1) == 10)
+	assert(KineticCrucibleScript.scaled_stat(10, 5) == 14)
+	assert(KineticCrucibleScript.scaled_stat(2, 5) == 3)
+	assert(KineticCrucibleScript.scaled_stat(1, 5) == 1)
+	assert(KineticCrucibleScript.scaled_stat(0, 5) == 0)
+	assert(KineticCrucibleScript.scaled_stat(3, 3) == 4)
+
+	# Secondary skills scale with unit level via the reference rank tables.
+	var mend_skill: Dictionary = UnitCatalogScript.by_name("Street Nurse").skill.to_dict()
+	assert(mend_skill.has("rank_values"))
+	assert(UnitSkillsScript.rank_value(mend_skill, 1, 0, 3) == 3)
+	assert(UnitSkillsScript.rank_value(mend_skill, 5, 0, 3) == 7)
+	assert(UnitSkillsScript.rank_value(mend_skill, 99, 0, 3) == 7)
+	assert(UnitSkillsScript.rank_value({"name": "Mend"}, 5, 0, 3) == 3)
+	var nurse_skill: SkillData = UnitCatalogScript.by_name("Street Nurse").skill
+	assert(nurse_skill.format_text(1) == "Restore 3 HP to the allied unit with the lowest HP.")
+	assert(nurse_skill.format_text(5) == "Restore 7 HP to the allied unit with the lowest HP.")
+	var veteran_nurse := {
+		"id": 95, "side": 0, "name": "Street Nurse", "kind": "Lifebinder",
+		"atk": 2, "hp": 3, "max_hp": 3, "effects": [], "level": 5,
+		"skill": mend_skill
+	}
+	var veteran_patient := {
+		"id": 96, "side": 0, "name": "Hurt Ally", "kind": "Duelist",
+		"atk": 2, "hp": 1, "max_hp": 10, "effects": []
+	}
+	assert(not UnitSkillsScript.resolve_warcry(
+		veteran_nurse, [veteran_nurse, veteran_patient]
+	).message.is_empty())
+	assert(veteran_patient.hp == 8)
+	var apostle_skill: Dictionary = UnitCatalogScript.by_name("Order Apostle").skill.to_dict()
+	var veteran_apostle := {
+		"id": 97, "side": 0, "name": "Order Apostle", "atk": 2,
+		"hp": 4, "max_hp": 4, "effects": [], "level": 5, "skill": apostle_skill
+	}
+	var wrath_enemy := {
+		"id": 98, "side": 1, "name": "Wrath Target", "kind": "Strider",
+		"atk": 2, "hp": 9, "max_hp": 9, "effects": []
+	}
+	var wrath_rng := RandomNumberGenerator.new()
+	wrath_rng.seed = 7
+	var wrath_result := UnitSkillsScript.resolve_warcry(
+		veteran_apostle, [veteran_apostle, wrath_enemy], -1, wrath_rng
+	)
+	assert(wrath_enemy.hp == 4)
+	assert("split between random enemy units" in wrath_result.message)
+	var veteran_skirmisher := {
+		"id": 99, "side": 0, "name": "Claw Skirmisher", "level": 5,
+		"skill": UnitCatalogScript.by_name("Claw Skirmisher").skill.to_dict()
+	}
+	var strike_target := {
+		"id": 100, "side": 1, "name": "Strike Target",
+		"hp": 5, "max_hp": 5, "effects": []
+	}
+	assert(UnitSkillsScript.resolve_strike(
+		veteran_skirmisher, strike_target, [], 0.41
+	).message.is_empty())
+	assert(not UnitSkillsScript.resolve_strike(
+		veteran_skirmisher, strike_target, [], 0.39
+	).message.is_empty())
+	assert(strike_target.immobilized_turns == 2)
+
+	# Promotion conversion: a level-5 copy becomes its promoted form at level 1.
+	assert(KineticCrucibleScript.promotion_target("Apprentice Builder", roster).name == "Master Builder")
+	assert(KineticCrucibleScript.promotion_target("Master Builder", roster) == null)
+	var promo_config := ConfigFile.new()
+	promo_config.set_value("meta", "instances_migrated", true)
+	promo_config.set_value("collection", "next_id", 11)
+	promo_config.set_value("collection", "instances", [
+		{"id": "unit_000001", "name": "Apprentice Builder", "level": 5, "points": 0, "consumed": false},
+		{"id": "unit_000010", "name": "Trinity Rusher", "level": 5, "points": 0, "consumed": false}
+	])
+	promo_config.save(KineticCrucibleScript.SAVE_PATH)
+	var promo_counts := {"Apprentice Builder": 1, "Trinity Rusher": 1}
+	var promoted: Dictionary = KineticCrucibleScript.record_promotion(
+		"unit_000001", roster, promo_counts
+	)
+	assert(promoted.ok and promoted.to == "Master Builder")
+	var after_promotion: Array = KineticCrucibleScript.sync_instances(roster, promo_counts)
+	var promoted_copy := KineticCrucibleScript.instance_by_id(
+		after_promotion, "unit_000001"
+	)
+	assert(promoted_copy.name == "Master Builder")
+	assert(promoted_copy.level == 1 and promoted_copy.points == 0)
+	assert(after_promotion.filter(
+		func(instance): return instance.name == "Apprentice Builder"
+	).size() == 1)
+	assert(not KineticCrucibleScript.record_promotion("unit_000010", roster, promo_counts).ok)
+	assert(not KineticCrucibleScript.record_promotion("unit_000001", roster, promo_counts).ok)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
+
 	print("Aether Engine smoke tests passed.")
 	quit()

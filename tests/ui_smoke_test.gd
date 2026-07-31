@@ -148,6 +148,34 @@ func _run() -> void:
 	game._clear_crucible_target()
 	assert(game.crucible_target_id.is_empty())
 	assert(game.crucible_donor_ids.is_empty())
+	assert(game.crucible_promote_button.disabled)
+	# Promotion: a level-5 copy with an implemented next form can be promoted.
+	var promo_config := ConfigFile.new()
+	promo_config.set_value("meta", "instances_migrated", true)
+	promo_config.set_value("collection", "next_id", 2)
+	promo_config.set_value("collection", "instances", [
+		{
+			"id": "unit_000001", "name": "Apprentice Builder",
+			"level": 5, "points": 0, "consumed": false
+		}
+	])
+	promo_config.save(KineticCrucibleScript.SAVE_PATH)
+	game._open_kinetic_crucible()
+	await process_frame
+	game._select_crucible_unit("unit_000001")
+	assert(game.crucible_target_id == "unit_000001")
+	assert(not game.crucible_promote_button.disabled)
+	assert(game.crucible_detail_label.text.contains("MASTER BUILDER"))
+	game._promote_crucible_unit()
+	var promoted_copy := KineticCrucibleScript.instance_by_id(
+		game.collection_instances, "unit_000001"
+	)
+	assert(promoted_copy.name == "Master Builder")
+	assert(promoted_copy.level == 1 and promoted_copy.points == 0)
+	assert(game.crucible_notice.contains("promoted"))
+	assert(game.crucible_promote_button.disabled)
+	# Restore a fresh collection so later runs are unaffected.
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	game._show_main_menu()
 	game.input_enabled = true
 	game._open_squad_builder()

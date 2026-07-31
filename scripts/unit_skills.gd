@@ -14,105 +14,148 @@ static func resolve_warcry(
 	var skill: Dictionary = actor.get("skill", {})
 	if skill.get("type", "").to_lower() != "warcry":
 		return result
+	var level := int(actor.get("level", 1))
 	match skill.get("name", ""):
 		"Fortify":
 			var target = _lowest_health_ally(actor, units)
 			if target != null:
-				target.hp += 3
-				target.max_hp += 3
-				_add_effect(target, "Fortify", 2, 0, 3)
-				result.message = "Fortify gives %s +3 HP for 2 turns." % target.name
+				var amount := rank_value(skill, level, 0, 3)
+				var turns := rank_value(skill, level, 1, 2)
+				target.hp += amount
+				target.max_hp += amount
+				_add_effect(target, "Fortify", turns, 0, amount)
+				result.message = "Fortify gives %s +%d HP for %s." % [
+					target.name, amount, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 		"Empower":
 			var target = _ally_by_id(actor, units, target_id)
 			if target == null:
 				target = _highest_attack_ally(actor, units)
 			if target != null:
-				target.atk += 1
-				_add_effect(target, "Empower", 2, 1, 0)
-				result.message = "Empower gives %s +1 ATK for 2 turns." % target.name
+				var amount := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				target.atk += amount
+				_add_effect(target, "Empower", turns, amount, 0)
+				result.message = "Empower gives %s +%d ATK for %s." % [
+					target.name, amount, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 		"Bolt":
 			var target = _highest_health_enemy(actor, units)
 			if target != null:
-				BattleSimulatorScript.apply_unit_damage(target, 1)
-				result.message = "Bolt deals 1 damage to %s." % target.name
+				var damage := rank_value(skill, level, 0, 1)
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				result.message = "Bolt deals %d damage to %s." % [damage, target.name]
 				result.affected.append(target.id)
 		"Heaven's Wrath":
-			var candidates := _enemies(actor, units)
-			var target = null
-			if not candidates.is_empty():
-				target = (
+			var damage := rank_value(skill, level, 0, 1)
+			var hits := 0
+			var last_target = null
+			for strike in damage:
+				var candidates := _enemies(actor, units).filter(
+					func(unit): return unit.hp > 0
+				)
+				if candidates.is_empty():
+					break
+				last_target = (
 					candidates[rng.randi_range(0, candidates.size() - 1)]
 					if rng != null else candidates.pick_random()
 				)
-			if target != null:
-				BattleSimulatorScript.apply_unit_damage(target, 1)
-				result.message = "Heaven's Wrath deals 1 damage to %s." % target.name
-				result.affected.append(target.id)
+				BattleSimulatorScript.apply_unit_damage(last_target, 1)
+				if last_target.id not in result.affected:
+					result.affected.append(last_target.id)
+				hits += 1
+			if hits == 1:
+				result.message = "Heaven's Wrath deals 1 damage to %s." % last_target.name
+			elif hits > 1:
+				result.message = (
+					"Heaven's Wrath deals %d damage split between random enemy units." % hits
+				)
 		"Misfortune":
 			var target = _highest_attack_enemy_classes(
 				actor, units, ["Strider", "Artillerist"]
 			)
 			if target != null:
-				target.atk = maxi(0, target.atk - 1)
-				_add_effect(target, "Misfortune", 2, -1, 0)
-				result.message = "Misfortune gives %s -1 ATK for 2 turns." % target.name
+				var amount := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				target.atk = maxi(0, target.atk - amount)
+				_add_effect(target, "Misfortune", turns, -amount, 0)
+				result.message = "Misfortune gives %s -%d ATK for %s." % [
+					target.name, amount, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 		"Mend":
 			var target = _lowest_health_ally(actor, units)
 			if target != null:
-				BattleSimulatorScript.apply_unit_healing(target, 3, true)
-				result.message = "Mend restores 3 HP to %s." % target.name
+				var amount := rank_value(skill, level, 0, 3)
+				BattleSimulatorScript.apply_unit_healing(target, amount, true)
+				result.message = "Mend restores %d HP to %s." % [amount, target.name]
 				result.affected.append(target.id)
 		"Plague":
+			var damage := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
 			var victims: Array = units.filter(func(unit): return unit.id != actor.id)
 			for target in victims:
-				BattleSimulatorScript.apply_unit_damage(target, 1)
-				target.poison_turns = maxi(target.get("poison_turns", 0), 2)
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				target.poison_turns = maxi(target.get("poison_turns", 0), turns)
 				target.poison_damage = maxi(target.get("poison_damage", 0), 1)
 				result.affected.append(target.id)
 			if not victims.is_empty():
-				result.message = "Plague deals 1 damage and Poisons %d other unit%s for 2 turns." % [
-					victims.size(), "" if victims.size() == 1 else "s"
+				result.message = "Plague deals %d damage and Poisons %d other unit%s for %s." % [
+					damage, victims.size(), "" if victims.size() == 1 else "s",
+					_turn_label(turns)
 				]
 		"Envenom":
 			var target = _enemy_by_id(actor, units, target_id)
 			if target == null:
 				target = _highest_health_enemy(actor, units)
 			if target != null:
-				target.poison_turns = maxi(target.get("poison_turns", 0), 2)
+				var turns := rank_value(skill, level, 0, 2)
+				target.poison_turns = maxi(target.get("poison_turns", 0), turns)
 				target.poison_damage = maxi(target.get("poison_damage", 0), 1)
-				result.message = "Envenom Poisons %s for 2 turns." % target.name
+				result.message = "Envenom Poisons %s for %s." % [
+					target.name, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 		"Pin Down":
 			var target = _highest_attack_enemy_classes(
 				actor, units, ["Warden", "Duelist", "Strider"]
 			)
 			if target != null:
-				BattleSimulatorScript.apply_unit_damage(target, 1)
+				var damage := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 1)
+				BattleSimulatorScript.apply_unit_damage(target, damage)
 				if target.hp > 0:
 					target.immobilized_turns = maxi(
-						target.get("immobilized_turns", 0), 1
+						target.get("immobilized_turns", 0), turns
 					)
-				result.message = "Pin Down deals 1 damage to %s and Immobilises it for 1 turn." % target.name
+				result.message = "Pin Down deals %d damage to %s and Immobilises it for %s." % [
+					damage, target.name, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 		"Sunder Armour":
 			var target = _highest_health_enemy_classes(
 				actor, units, ["Warden", "Duelist"]
 			)
 			if target != null:
-				BattleSimulatorScript.apply_unit_damage(target, 1)
+				var damage := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				BattleSimulatorScript.apply_unit_damage(target, damage)
 				if target.hp > 0:
 					target.vulnerable_turns = maxi(
-						target.get("vulnerable_turns", 0), 2
+						target.get("vulnerable_turns", 0), turns
 					)
-				result.message = "Sunder Armour deals 1 damage to %s and makes it Vulnerable for 2 turns." % target.name
+				result.message = "Sunder Armour deals %d damage to %s and makes it Vulnerable for %s." % [
+					damage, target.name, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 		"Demoralize":
 			var lane := target_lane
 			if lane < 0:
 				lane = _best_enemy_lane(actor, units, ["Duelist", "Strider", "Warden"])
+			var amount := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
 			var target_count := 0
 			for target in units:
 				if (
@@ -120,22 +163,27 @@ static func resolve_warcry(
 					or target.kind not in ["Duelist", "Strider", "Warden"]
 				):
 					continue
-				target.atk = maxi(0, target.atk - 1)
-				_add_effect(target, "Demoralize", 2, -1, 0)
+				target.atk = maxi(0, target.atk - amount)
+				_add_effect(target, "Demoralize", turns, -amount, 0)
 				result.affected.append(target.id)
 				target_count += 1
 			if target_count > 0:
-				result.message = "Demoralize gives %d enem%s in lane %d -1 ATK for 2 turns." % [
-					target_count, "y" if target_count == 1 else "ies", lane + 1
+				result.message = "Demoralize gives %d enem%s in lane %d -%d ATK for %s." % [
+					target_count, "y" if target_count == 1 else "ies", lane + 1,
+					amount, _turn_label(turns)
 				]
 		"Punish":
 			var target = _highest_attack_enemy_classes(
 				actor, units, ["Duelist", "Channeler"]
 			)
 			if target != null:
-				target.atk = maxi(0, target.atk - 1)
-				_add_effect(target, "Punish", 2, -1, 0)
-				result.message = "Punish gives %s -1 ATK for 2 turns." % target.name
+				var amount := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				target.atk = maxi(0, target.atk - amount)
+				_add_effect(target, "Punish", turns, -amount, 0)
+				result.message = "Punish gives %s -%d ATK for %s." % [
+					target.name, amount, _turn_label(turns)
+				]
 				result.affected.append(target.id)
 	return result
 
@@ -165,24 +213,30 @@ static func resolve_strike(
 	if skill.get("type", "").to_lower() != "strike":
 		return result
 	var skill_name: String = skill.get("name", "")
-	var pin_chance := 0.0
-	if skill_name == "Pinning Strike":
-		pin_chance = 0.30
-	elif skill_name == "Pinning Slice":
-		pin_chance = 0.60
-	if pin_chance > 0.0:
+	var level := int(actor.get("level", 1))
+	if skill_name == "Pinning Strike" or skill_name == "Pinning Slice":
+		var fallback := 30 if skill_name == "Pinning Strike" else 60
+		var pin_chance := rank_value(skill, level, 0, fallback) / 100.0
+		var turns := rank_value(skill, level, 1, 1)
 		var chance_roll := randf() if roll < 0.0 else roll
 		if chance_roll < pin_chance and target.hp > 0:
-			target.immobilized_turns = maxi(target.get("immobilized_turns", 0), 1)
-			result.message = "%s immobilises %s for 1 turn." % [skill_name, target.name]
+			target.immobilized_turns = maxi(target.get("immobilized_turns", 0), turns)
+			result.message = "%s immobilises %s for %s." % [
+				skill_name, target.name, _turn_label(turns)
+			]
 			result.affected.append(target.id)
 	elif skill_name == "Poison Strike":
-		var poison_chance: float = skill.get("chance", 0.50)
+		var poison_chance: float = skill.get("chance", -1.0)
+		if poison_chance < 0.0:
+			poison_chance = rank_value(skill, level, 0, 50) / 100.0
+		var turns := rank_value(skill, level, 1, 2)
 		var chance_roll := randf() if roll < 0.0 else roll
 		if chance_roll < poison_chance and target.hp > 0:
-			target.poison_turns = maxi(target.get("poison_turns", 0), 2)
+			target.poison_turns = maxi(target.get("poison_turns", 0), turns)
 			target.poison_damage = maxi(target.get("poison_damage", 0), 1)
-			result.message = "Poison Strike Poisons %s for 2 turns." % target.name
+			result.message = "Poison Strike Poisons %s for %s." % [
+				target.name, _turn_label(turns)
+			]
 			result.affected.append(target.id)
 	return result
 
@@ -228,6 +282,22 @@ static func _add_effect(
 		"health": health
 	})
 	unit.effects = effects
+
+## Reads the magnitude in column `index` of the skill's rank table at the
+## given unit level, falling back when the table is missing. Rank table
+## entries look like "3 HP" or "30% chance"; the leading number is returned.
+static func rank_value(skill: Dictionary, level: int, index: int, fallback: int) -> int:
+	var rows: Array = skill.get("rank_values", [])
+	if rows.is_empty():
+		return fallback
+	var row = rows[clampi(level, 1, rows.size()) - 1]
+	if row is not Array or index >= row.size():
+		return fallback
+	var token := str(row[index]).split(" ")[0].trim_suffix("%")
+	return int(token) if token.is_valid_int() else fallback
+
+static func _turn_label(turns: int) -> String:
+	return "%d turn%s" % [turns, "" if turns == 1 else "s"]
 
 static func _other_allies(actor: Dictionary, units: Array) -> Array:
 	return units.filter(func(unit): return unit.side == actor.side and unit.id != actor.id)

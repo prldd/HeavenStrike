@@ -62,7 +62,7 @@ assets required by the prototype.
 - Lane-targeted Demoralize Warcries and automatic Punish attack debuffs
 - Poison Strike attacks and Sunder Armour vulnerability setup
 - Persistent per-copy Kinetic Crucible progression with five unit levels, donor merging,
-  collection consumption, and promotion-ready state
+  collection consumption, level-scaled stats and skills, and promotion into the next form
 - Official detail-page full-body sprites on the battlefield and official unit-list portraits everywhere else
 - A ready-to-use library of all 1,048 live reference unit portraits, generated from 177 official high-resolution sheets
 - Enemy deployment AI

@@ -2,6 +2,7 @@ class_name BattleSimulator
 extends RefCounted
 
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
+const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -182,9 +183,10 @@ static func estimate_squad_power(cards: Array) -> float:
 	for card in cards:
 		var reach: float = card.get("move", 1) + card.get("range", 1)
 		var class_multiplier := 1.35 if card.get("kind", "") == "Strider" else 1.0
+		var level: int = card.get("level", 1)
 		score += (
-			card.get("atk", 0) * class_multiplier
-			+ card.get("hp", 0) * 0.45
+			KineticCrucibleScript.scaled_stat(card.get("atk", 0), level) * class_multiplier
+			+ KineticCrucibleScript.scaled_stat(card.get("hp", 0), level) * 0.45
 			+ reach * 0.55
 			- card.get("cost", 0) * 0.25
 		)

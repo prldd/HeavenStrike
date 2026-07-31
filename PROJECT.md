@@ -53,7 +53,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, and one or more abilities.
 
-The current prototype roster contains 45 unpromoted units and 37 standalone promoted forms. Promotion and leveling logic is deferred; promoted forms currently enter the reward pool as independent cards when their secondary skill is implemented.
+The current prototype roster contains 45 unpromoted units and 37 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
 
 Campaign missions only award implemented cards listed for that exact story quest in the reference data. Cards listed solely for events, raids, arenas, or gacha are not inserted into campaign pools.
 
@@ -148,9 +148,17 @@ copy can have its own level and Crucible progress. Units begin at level 1 and
 advance to level 5 by consuming spare collection copies in the Kinetic Crucible.
 Level thresholds are 3, 6, 12, and 24 points. An unrelated donor
 grants 1 point, a donor of the same class grants 2 points, and another copy of the
-same unit grants 5 points. Overflow carries into the next level. Level-5 units with
-an implemented next form are marked promotion-ready; the promotion conversion
-itself remains deferred until its cost and inventory result are defined.
+same unit grants 5 points. Overflow carries into the next level. Each level
+raises the copy's ATK and max HP by 10% of its base value (level 5 ≈ 1.4×),
+and its secondary skill uses the matching rank of the reference value table:
+level 1 is the base effect and level 5 is the strongest rank.
+
+Level-5 units with an implemented next form are promotion-ready. Promoting
+converts the copy 1:1 into its promoted form at no additional cost: the copy
+keeps its identity (saved squads now field the promoted unit), starts over at
+level 1 so it can be levelled again, and a fresh level-1 copy of the base unit
+is restored to the collection on the next sync. Promoted forms with their own
+next form can be levelled and promoted again along the same family tree.
 
 The Crucible uses the same two-panel collection language as Formation Command.
 Every individual owned copy appears in Reserves on the left. The first selected

@@ -5,6 +5,14 @@ const SAVE_PATH := "user://kinetic_crucible.cfg"
 const SAVE_VERSION := 2
 const MAX_LEVEL := 5
 const LEVEL_COSTS := [3, 6, 12, 24]
+## Fraction of base ATK / max HP gained per level above 1 (level 5 = 1.4x).
+const STAT_GROWTH_PER_LEVEL := 0.1
+
+## Returns a base stat grown for the given unit level. Growth is deliberately
+## slow and never reduces the base value.
+static func scaled_stat(base: int, level: int) -> int:
+	var clamped := clampi(level, 1, MAX_LEVEL)
+	return maxi(base, int(round(base * (1.0 + STAT_GROWTH_PER_LEVEL * (clamped - 1)))))
 
 static func sync_instances(roster: Array, base_counts: Dictionary) -> Array:
 	var config := ConfigFile.new()
@@ -170,6 +178,51 @@ static func instance_by_id(instances: Array, instance_id: String) -> Dictionary:
 		if instance.id == instance_id:
 			return instance
 	return {}
+
+## Returns the catalog unit that `unit_name` promotes into, or null.
+static func promotion_target(unit_name: String, roster: Array) -> UnitData:
+	for unit in roster:
+		if unit.promotion_of == unit_name:
+			return unit
+	return null
+
+## Converts a level-5 instance into its promoted form. The instance keeps its
+## id (so squads fielding it automatically field the promoted unit) and starts
+## over at level 1; the next sync replenishes a fresh level-1 base copy.
+static func record_promotion(
+	instance_id: String,
+	roster: Array,
+	base_counts: Dictionary
+) -> Dictionary:
+	var instances := sync_instances(roster, base_counts)
+	var instance := instance_by_id(instances, instance_id)
+	if instance.is_empty() or instance.get("consumed", false):
+		return {"ok": false, "message": "That unit is no longer available."}
+	if int(instance.get("level", 1)) < MAX_LEVEL:
+		return {
+			"ok": false,
+			"message": "Only a level %d unit can be promoted." % MAX_LEVEL
+		}
+	var target := promotion_target(instance.get("name", ""), roster)
+	if target == null:
+		return {"ok": false, "message": "This unit has no promoted form."}
+	var previous: String = instance.name
+	instance.name = target.name
+	instance.level = 1
+	instance.points = 0
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
+	config.set_value("collection", "instances", instances)
+	var error := config.save(SAVE_PATH)
+	return {
+		"ok": error == OK,
+		"from": previous,
+		"to": target.name,
+		"message": "%s was promoted to %s and can be levelled again." % [
+			previous, target.name
+		]
+	}
 
 static func display_label(instance: Dictionary) -> String:
 	return "%s · LV %d" % [

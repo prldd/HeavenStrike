@@ -79,6 +79,7 @@ var crucible_target_grid: GridContainer
 var crucible_donor_grid: GridContainer
 var crucible_detail_label: Label
 var crucible_merge_button: Button
+var crucible_promote_button: Button
 var crucible_extras_toggle: CheckButton
 var crucible_target_id := ""
 var crucible_donor_ids: Array = []
@@ -1558,6 +1559,14 @@ func _build_kinetic_crucible() -> void:
 	debug_copies.custom_minimum_size = Vector2(180, 46)
 	debug_copies.pressed.connect(_debug_grant_four_of_each)
 	actions.add_child(debug_copies)
+	crucible_promote_button = Button.new()
+	crucible_promote_button.text = "PROMOTE"
+	crucible_promote_button.tooltip_text = (
+		"Convert a level 5 unit into its promoted form. The promoted form starts at level 1."
+	)
+	crucible_promote_button.custom_minimum_size = Vector2(200, 46)
+	crucible_promote_button.pressed.connect(_promote_crucible_unit)
+	actions.add_child(crucible_promote_button)
 	crucible_merge_button = Button.new()
 	crucible_merge_button.text = "MERGE QUEUE"
 	crucible_merge_button.custom_minimum_size = Vector2(200, 46)
@@ -1749,13 +1758,14 @@ func _refresh_crucible_detail() -> void:
 	if target.is_empty():
 		crucible_detail_label.text = "Choose the individual unit you want to enhance."
 		crucible_merge_button.disabled = true
+		crucible_promote_button.disabled = true
 		return
-	var promotion_available := roster.any(
-		func(unit): return unit.promotion_of == target.name
-	)
+	var promoted := KineticCrucibleScript.promotion_target(target.name, roster)
+	var promotion_available := promoted != null
 	var progression := (
 		"LEVEL 5 · MAXIMUM%s" % (
-			" · PROMOTION READY" if promotion_available else ""
+			" · PROMOTION READY → %s" % promoted.name.to_upper()
+			if promotion_available else ""
 		)
 		if target.level >= KineticCrucibleScript.MAX_LEVEL
 		else "LEVEL %d · %d / %d POINTS · %d TO NEXT LEVEL" % [
@@ -1774,7 +1784,7 @@ func _refresh_crucible_detail() -> void:
 	var merge_text := "Select one or more donor units from Reserves."
 	if target.level >= KineticCrucibleScript.MAX_LEVEL:
 		merge_text = (
-			"Promotion conversion will unlock once its cost is defined."
+			"Promote to convert it into %s, which starts at level 1." % promoted.name
 			if promotion_available
 			else "This unit has reached its final form."
 		)
@@ -1792,6 +1802,21 @@ func _refresh_crucible_detail() -> void:
 		crucible_donor_ids.is_empty()
 		or target.level >= KineticCrucibleScript.MAX_LEVEL
 	)
+	crucible_promote_button.disabled = (
+		target.level < KineticCrucibleScript.MAX_LEVEL
+		or not promotion_available
+	)
+
+func _promote_crucible_unit() -> void:
+	var result: Dictionary = KineticCrucibleScript.record_promotion(
+		crucible_target_id,
+		roster,
+		CampaignStoreScript.inventory_counts(roster, earned_reward_units)
+	)
+	crucible_notice = result.get("message", "Promotion failed.")
+	crucible_donor_ids.clear()
+	_sanitize_squad_unlocks()
+	_rebuild_crucible()
 
 func _merge_crucible_units() -> void:
 	var result: Dictionary = KineticCrucibleScript.record_merge_batch(
@@ -2366,7 +2391,7 @@ func _show_unit_details(unit: Dictionary) -> void:
 		hover_ability_label.text += "\n\n%s · %s\n[font_size=12][color=#c4b99f]%s[/color][/font_size]\n[font_size=11][color=#938b7b]%s[/color][/font_size]" % [
 			skill.name.to_upper(),
 			skill.type.to_upper(),
-			skill.description,
+			skill.format_text(unit_level),
 			UnitSkillsScript.timing_tooltip(skill.type)
 		]
 	if not active_effects.is_empty():
@@ -2759,6 +2784,7 @@ func _on_deployment_clicked(row: int) -> void:
 	_refresh()
 
 func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
+	var unit_level: int = card.get("level", 1)
 	var spawned := {
 		"id": next_unit_id,
 		"side": side,
@@ -2768,9 +2794,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"icon": card.get("icon", 0),
 		"kind": card.kind,
 		"cost": card.cost,
-		"atk": card.atk,
-		"hp": card.hp,
-		"max_hp": card.hp,
+		"atk": KineticCrucibleScript.scaled_stat(card.atk, unit_level),
+		"hp": KineticCrucibleScript.scaled_stat(card.hp, unit_level),
+		"max_hp": KineticCrucibleScript.scaled_stat(card.hp, unit_level),
 		"move": card.move,
 		"range": card.range,
 		"skill": card.get("skill", {}).duplicate(true),
