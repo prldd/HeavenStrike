@@ -12,6 +12,7 @@ const UNIT_SPRITES_6 := preload("res://assets/units/reference-units-031-036.png"
 const UNIT_SPRITES_7 := preload("res://assets/units/reference-units-037-042.png")
 const UNIT_SPRITES_8 := preload("res://assets/units/reference-units-043-048.png")
 const BOARD_BACKGROUND := preload("res://assets/board-steampunk-courtyard.png")
+const PRACTICE_BACKGROUND := preload("res://assets/board-steampunk-training-hall.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -37,6 +38,7 @@ var enemy_hp_text := ""
 var player_deck_text := ""
 var enemy_deck_text := ""
 var enabled := true
+var practice_mode := false
 var hover_row := -1
 var hover_col := -1
 var hover_unit_id := -1
@@ -77,6 +79,12 @@ func _clear_hover() -> void:
 	if hover_unit_id >= 0:
 		hover_unit_id = -1
 		unit_hover_ended.emit()
+	queue_redraw()
+
+func set_practice_mode(enabled_flag: bool) -> void:
+	if practice_mode == enabled_flag:
+		return
+	practice_mode = enabled_flag
 	queue_redraw()
 
 func set_state(
@@ -372,7 +380,7 @@ func _cell_rect(row: int, col: int) -> Rect2:
 
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
-	draw_texture_rect(BOARD_BACKGROUND, panel, false)
+	draw_texture_rect(PRACTICE_BACKGROUND if practice_mode else BOARD_BACKGROUND, panel, false)
 	# The board art is atmospheric scenery; the warm ink-and-brass frame and
 	# quiet playmat keep the illustrated units as the visual focus.
 	draw_rect(panel, Color(0.075, 0.055, 0.035, 0.42))

@@ -2376,6 +2376,7 @@ func _prepare_mission(mission_id: int) -> void:
 
 func _begin_practice() -> void:
 	campaign_battle = false
+	board.set_practice_mode(true)
 	current_mission_id = -1
 	current_encounter_index = 0
 	awaiting_next_encounter = false
@@ -2388,6 +2389,7 @@ func _begin_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):
 		return
 	campaign_battle = true
+	board.set_practice_mode(false)
 	current_mission_id = mission_id
 	current_encounter_index = 0
 	mission_run_captain_hp = STARTING_HP
@@ -2408,6 +2410,7 @@ func _resume_mission() -> void:
 		_show_main_menu()
 		return
 	campaign_battle = true
+	board.set_practice_mode(false)
 	current_mission_id = saved_run.mission_id
 	current_encounter_index = saved_run.encounter_index
 	mission_run_captain_hp = saved_run.captain_hp

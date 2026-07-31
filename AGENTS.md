@@ -150,7 +150,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 - `assets/units/portraits/` — 160×160 generated portrait PNGs.
 - `assets/units/full/` — generated full-body sprites used on the battlefield.
 - `assets/units/portrait_manifest.tsv` — TSV mapping `art_id`, `sheet_name`, `slot`, `...` used by the generator.
-- Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`).
+- Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`). Practice battles use `assets/board-steampunk-training-hall.png` instead of the courtyard; `BoardView.set_practice_mode()` switches between them. The training-hall art is generated procedurally — regenerate with `python tools/generate_practice_background.py`.
 
 Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 
