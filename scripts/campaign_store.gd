@@ -86,6 +86,22 @@ static func award_reward(unit_name: String, roster: Array, earned: Array) -> Arr
 	config.save(SAVE_PATH)
 	return result
 
+static func debug_grant_minimum_copies(
+	roster: Array, earned: Array, active_counts: Dictionary, minimum_copies: int
+) -> Array:
+	var result: Array = earned.duplicate()
+	var target := maxi(0, minimum_copies)
+	for unit in roster:
+		var missing := maxi(0, target - int(active_counts.get(unit.name, 0)))
+		for copy in missing:
+			result.append(unit.name)
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
+	config.set_value("campaign", "reward_units", result)
+	config.save(SAVE_PATH)
+	return result
+
 static func unlocked_unit_names(roster: Array, earned_rewards: Array) -> Array:
 	var unlocked: Array = []
 	for unit in roster:

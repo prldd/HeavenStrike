@@ -140,6 +140,33 @@ Board order and targeting are deterministic except where an ability explicitly s
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
+### Kinetic Crucible
+
+Unit progression belongs to each individual copy and persists between sessions.
+Duplicate units appear separately in the collection and squad workshop, so every
+copy can have its own level and Crucible progress. Units begin at level 1 and
+advance to level 5 by consuming spare collection copies in the Kinetic Crucible.
+Level thresholds are 3, 6, 12, and 24 points. An unrelated donor
+grants 1 point, a donor of the same class grants 2 points, and another copy of the
+same unit grants 5 points. Overflow carries into the next level. Level-5 units with
+an implemented next form are marked promotion-ready; the promotion conversion
+itself remains deferred until its cost and inventory result are defined.
+
+The Crucible uses the same two-panel collection language as Formation Command.
+Every individual owned copy appears in Reserves on the left. The first selected
+copy becomes the enhancement target at the top of the right panel; any number of
+additional copies can then be queued beneath it and merged together. Target and
+queue cards can be clicked to clear or remove them before committing.
+
+The Crucible includes an “extras only” donor filter. When enabled, unsafe donor
+copies remain visible but disabled, and only unit types with at least two active
+copies can be queued. Consumed copies disappear from the collection and are
+removed from any saved squad that referenced them.
+
+For development, the Crucible also exposes a clearly labeled debug inventory
+button that grants enough copies to leave at least four active copies of every
+implemented unit without resetting existing levels or merge progress.
+
 The implemented roster contains 82 cards: 45 unpromoted units and 37 standalone promoted forms. Mend restores 3 HP to the most-wounded other ally when its unit is deployed. Plague deals 1 damage to every other unit and Poisons each survivor for two turns, dealing 1 additional damage at the start of its side's turns. Envenom lets the player select an enemy to Poison for two turns, while Poison Strike can apply the same damage-over-time pressure during an attack. Pin Down deals 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilises it for one turn. Demoralize weakens eligible melee enemies in a player-selected lane, Punish weakens the highest-ATK enemy Fighter or Mage, and Sunder Armour damages the highest-HP enemy Fighter or Defender before making it Vulnerable to +1 damage for two turns. Units beyond the starting set are earned as mission rewards and are not included in the starting Reserves unless the reference provides no story-quest source for them.
 
 ## Example Turn

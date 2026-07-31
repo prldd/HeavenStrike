@@ -8,6 +8,7 @@ const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
+const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -18,6 +19,47 @@ func _init() -> void:
 	assert(UnitCatalogScript.class_color("Strider") != UnitCatalogScript.class_color("Duelist"))
 	assert(UnitCatalogScript.class_color("Warden") != UnitCatalogScript.class_color("Lifebinder"))
 	assert(UnitCatalogScript.by_name("Missing").is_empty())
+	assert(KineticCrucibleScript.LEVEL_COSTS == [3, 6, 12, 24])
+	assert(KineticCrucibleScript.apply_points(
+		{"level": 1, "points": 0}, 2
+	) == {"level": 1, "points": 2})
+	assert(KineticCrucibleScript.apply_points(
+		{"level": 1, "points": 2}, 1
+	) == {"level": 2, "points": 0})
+	assert(KineticCrucibleScript.apply_points(
+		{"level": 1, "points": 0}, 45
+	) == {"level": 5, "points": 0})
+	assert(KineticCrucibleScript.merge_value(
+		{"name": "A", "kind": "Warden"}, {"name": "B", "kind": "Strider"}
+	) == 1)
+	assert(KineticCrucibleScript.merge_value(
+		{"name": "A", "kind": "Warden"}, {"name": "B", "kind": "Warden"}
+	) == 2)
+	assert(KineticCrucibleScript.merge_value(
+		{"name": "A", "kind": "Warden"}, {"name": "A", "kind": "Warden"}
+	) == 5)
+	var instance_copies: Array = [
+		{"id": "copy_a", "name": "Trinity Rusher", "level": 3, "points": 1, "consumed": false},
+		{"id": "copy_b", "name": "Trinity Rusher", "level": 1, "points": 0, "consumed": false},
+		{"id": "copy_c", "name": "Pub Bouncer", "level": 2, "points": 0, "consumed": false}
+	]
+	assert(KineticCrucibleScript.active_instances(instance_copies).size() == 3)
+	assert(KineticCrucibleScript.inventory_counts(instance_copies)["Trinity Rusher"] == 2)
+	assert(KineticCrucibleScript.can_merge(
+		instance_copies[0], instance_copies[1], roster, true, instance_copies
+	))
+	assert(not KineticCrucibleScript.can_merge(
+		instance_copies[0], instance_copies[2], roster, true, instance_copies
+	))
+	assert(SquadStoreScript.sanitize_instances(
+		["copy_a", "copy_b", "copy_c"], instance_copies
+	) == ["copy_a", "copy_b", "copy_c"])
+	var instance_deck: Array = SquadStoreScript.build_deck(
+		["copy_a", "copy_b", "copy_c"], roster, instance_copies
+	)
+	assert(instance_deck.size() == 3)
+	assert(instance_deck[0].instance_id == "copy_a")
+	assert(instance_deck[0].level == 3)
 	var simulator := BattleSimulatorScript.new()
 	simulator.reset(4242)
 	assert(simulator.seed_value == 4242)
@@ -187,7 +229,7 @@ func _init() -> void:
 	assert(owned_squad == ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"])
 	assert(CaptainSkillsScript.SKILLS.size() == 8)
 	assert(CampaignStoreScript.SAVE_VERSION == 1)
-	assert(SquadStoreScript.SAVE_VERSION == 1)
+	assert(SquadStoreScript.SAVE_VERSION == 2)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 62)
 	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - Training Day")

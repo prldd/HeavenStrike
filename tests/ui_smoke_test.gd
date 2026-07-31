@@ -3,6 +3,7 @@ extends SceneTree
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
+const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 
 func _init() -> void:
 	call_deferred("_run")
@@ -127,6 +128,27 @@ func _run() -> void:
 	assert(game.reward_new_label.visible)
 	game._show_card_reward("Chain Initiate", false)
 	assert(not game.reward_new_label.visible)
+	game._open_kinetic_crucible()
+	await process_frame
+	var crucible_units: Array = KineticCrucibleScript.active_instances(
+		game.collection_instances
+	)
+	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
+	assert(game.crucible_target_grid.get_child_count() == 1)
+	game.crucible_extras_toggle.button_pressed = false
+	game._select_crucible_unit(crucible_units[0].id)
+	assert(game.crucible_target_id == crucible_units[0].id)
+	assert(game.crucible_target_grid.get_child_count() == 1)
+	game._select_crucible_unit(crucible_units[1].id)
+	game._select_crucible_unit(crucible_units[2].id)
+	assert(game.crucible_donor_ids.size() == 2)
+	assert(game.crucible_donor_grid.get_child_count() == 2)
+	game._remove_crucible_donor(crucible_units[1].id)
+	assert(game.crucible_donor_ids.size() == 1)
+	game._clear_crucible_target()
+	assert(game.crucible_target_id.is_empty())
+	assert(game.crucible_donor_ids.is_empty())
+	game._show_main_menu()
 	game.input_enabled = true
 	game._open_squad_builder()
 	await process_frame

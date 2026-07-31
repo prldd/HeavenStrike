@@ -3,7 +3,7 @@ extends RefCounted
 
 const SQUAD_SIZE := 8
 const SAVE_PATH := "user://player.cfg"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const DEFAULT_CAPTAIN_SKILL := "Rally"
 
 static func default_squad(roster: Array) -> Array:
@@ -62,6 +62,68 @@ static func save_squad(names: Array, roster: Array) -> bool:
 	config.set_value("squad", "units", clean)
 	return config.save(SAVE_PATH) == OK
 
+static func load_instance_squad(roster: Array, instances: Array) -> Array:
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	var saved = config.get_value("squad", "instance_ids", [])
+	if saved is Array and not saved.is_empty():
+		return sanitize_instances(saved, instances)
+	# Migrate the previous name-based formation by assigning distinct active copies.
+	var legacy_names := load_squad(roster)
+	var migrated: Array = []
+	for unit_name in legacy_names:
+		for instance in instances:
+			if (
+				instance.name == unit_name and not instance.get("consumed", false)
+				and instance.id not in migrated
+			):
+				migrated.append(instance.id)
+				break
+	return sanitize_instances(migrated, instances)
+
+static func save_instance_squad(instance_ids: Array, instances: Array) -> bool:
+	var clean := sanitize_instances(instance_ids, instances)
+	if clean.is_empty() or clean.size() > SQUAD_SIZE:
+		return false
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
+	config.set_value("squad", "instance_ids", clean)
+	config.set_value("squad", "units", instance_names(clean, instances))
+	return config.save(SAVE_PATH) == OK
+
+static func sanitize_instances(candidate_ids: Array, instances: Array) -> Array:
+	var result: Array = []
+	var names: Array = []
+	for instance_id in candidate_ids:
+		var instance := _instance_by_id(instances, str(instance_id))
+		if instance.is_empty() or instance.get("consumed", false):
+			continue
+		if instance.id in result or names.count(instance.name) >= 2:
+			continue
+		result.append(instance.id)
+		names.append(instance.name)
+		if result.size() >= SQUAD_SIZE:
+			return result
+	if not result.is_empty():
+		return result
+	for instance in instances:
+		if instance.get("consumed", false) or names.count(instance.name) >= 2:
+			continue
+		result.append(instance.id)
+		names.append(instance.name)
+		if result.size() >= SQUAD_SIZE:
+			break
+	return result
+
+static func instance_names(instance_ids: Array, instances: Array) -> Array:
+	var names: Array = []
+	for instance_id in instance_ids:
+		var instance := _instance_by_id(instances, str(instance_id))
+		if not instance.is_empty():
+			names.append(instance.name)
+	return names
+
 static func load_captain_skill(valid_skills: Array) -> String:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
@@ -78,14 +140,33 @@ static func save_captain_skill(skill_name: String, valid_skills: Array) -> bool:
 	config.set_value("squad", "captain_skill", skill_name)
 	return config.save(SAVE_PATH) == OK
 
-static func build_deck(names: Array, roster: Array) -> Array:
+static func build_deck(names: Array, roster: Array, instances: Array = []) -> Array:
 	var deck: Array = []
-	for unit_name in sanitize(names, roster):
+	var resolved_names := names
+	var clean_ids: Array = []
+	if not instances.is_empty():
+		clean_ids = sanitize_instances(names, instances)
+		resolved_names = instance_names(clean_ids, instances)
+	for index in resolved_names.size():
+		var unit_name = resolved_names[index]
 		for unit in roster:
 			if unit.name == unit_name:
-				deck.append(unit.duplicate(true))
+				var card: Dictionary = unit.duplicate(true)
+				if not instances.is_empty() and index < clean_ids.size():
+					var instance := _instance_by_id(instances, str(clean_ids[index]))
+					if not instance.is_empty():
+						card.instance_id = instance.id
+						card.level = instance.level
+						card.level_points = instance.points
+				deck.append(card)
 				break
 	return deck
+
+static func _instance_by_id(instances: Array, instance_id: String) -> Dictionary:
+	for instance in instances:
+		if instance.id == instance_id:
+			return instance
+	return {}
 
 static func shuffle_for_battle(deck: Array, rng: RandomNumberGenerator = null) -> Array:
 	var shuffled := deck.duplicate(true)

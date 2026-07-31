@@ -61,6 +61,8 @@ assets required by the prototype.
 - Pin Down Warcries that damage and Immobilise the strongest eligible melee enemy
 - Lane-targeted Demoralize Warcries and automatic Punish attack debuffs
 - Poison Strike attacks and Sunder Armour vulnerability setup
+- Persistent per-copy Kinetic Crucible progression with five unit levels, donor merging,
+  collection consumption, and promotion-ready state
 - Official detail-page full-body sprites on the battlefield and official unit-list portraits everywhere else
 - A ready-to-use library of all 1,048 live reference unit portraits, generated from 177 official high-resolution sheets
 - Enemy deployment AI

@@ -14,6 +14,7 @@ const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
+const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
 
@@ -72,6 +73,17 @@ var combat_log_panel: PanelContainer
 var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
+var crucible_overlay: ColorRect
+var crucible_reserve_grid: GridContainer
+var crucible_target_grid: GridContainer
+var crucible_donor_grid: GridContainer
+var crucible_detail_label: Label
+var crucible_merge_button: Button
+var crucible_extras_toggle: CheckButton
+var crucible_target_id := ""
+var crucible_donor_ids: Array = []
+var collection_instances: Array = []
+var crucible_notice := ""
 var mission_list: VBoxContainer
 var campaign_progress_label: Label
 var resume_button: Button
@@ -164,7 +176,8 @@ func _ready() -> void:
 	_load_battle_settings()
 	completed_missions = CampaignStoreScript.load_completed()
 	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
-	squad_names = SquadStoreScript.load_squad(roster)
+	_sync_collection()
+	squad_names = SquadStoreScript.load_instance_squad(roster, collection_instances)
 	player_captain_skill = SquadStoreScript.load_captain_skill(CaptainSkillsScript.SKILLS)
 	_sanitize_squad_unlocks()
 	_start_new_match()
@@ -295,6 +308,7 @@ func _build_interface() -> void:
 	_build_squad_builder()
 	_build_main_menu()
 	_build_mission_select()
+	_build_kinetic_crucible()
 	_build_hover_card()
 	_build_replay_controls()
 	_build_replay_squad_overlay()
@@ -310,6 +324,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		and not replay_mode
 		and not main_menu_overlay.visible
 		and not mission_overlay.visible
+		and not crucible_overlay.visible
 		and not squad_overlay.visible
 		and not tutorial_overlay.visible
 		and not overlay.visible
@@ -929,23 +944,29 @@ func _close_squad_builder() -> void:
 	end_button.visible = not replay_mode and not battle_over
 
 func _reset_squad() -> void:
-	editing_squad_names = SquadStoreScript.sanitize_owned(
-		[], roster, CampaignStoreScript.inventory_counts(roster, earned_reward_units)
-	)
+	_sync_collection()
+	editing_squad_names = SquadStoreScript.sanitize_instances([], collection_instances)
 	_rebuild_squad_grid()
 
 func _select_captain_skill(index: int) -> void:
 	if index >= 0 and index < CaptainSkillsScript.SKILLS.size():
 		editing_captain_skill = CaptainSkillsScript.SKILLS[index]
 
-func _add_squad_unit(unit_name: String) -> void:
-	var inventory := CampaignStoreScript.inventory_counts(roster, earned_reward_units)
-	var copies: int = editing_squad_names.count(unit_name)
+func _add_squad_unit(instance_id: String) -> void:
+	var instance: Dictionary = KineticCrucibleScript.instance_by_id(
+		collection_instances, instance_id
+	)
+	if instance.is_empty() or instance.get("consumed", false):
+		return
+	var selected_names := SquadStoreScript.instance_names(
+		editing_squad_names, collection_instances
+	)
 	if (
-		copies < mini(2, inventory.get(unit_name, 0))
+		instance_id not in editing_squad_names
+		and selected_names.count(instance.name) < 2
 		and editing_squad_names.size() < SquadStoreScript.SQUAD_SIZE
 	):
-		editing_squad_names.append(unit_name)
+		editing_squad_names.append(instance_id)
 	_rebuild_squad_grid()
 
 func _remove_squad_unit_at(index: int) -> void:
@@ -953,17 +974,17 @@ func _remove_squad_unit_at(index: int) -> void:
 		editing_squad_names.remove_at(index)
 	_rebuild_squad_grid()
 
-func _remove_one_squad_unit(unit_name: String) -> void:
-	var index := editing_squad_names.find(unit_name)
+func _remove_one_squad_unit(instance_id: String) -> void:
+	var index := editing_squad_names.find(instance_id)
 	if index >= 0:
 		editing_squad_names.remove_at(index)
 	_rebuild_squad_grid()
 
-func _on_squad_drop(unit_name: String, source: String, destination: String) -> void:
+func _on_squad_drop(instance_id: String, source: String, destination: String) -> void:
 	if destination == "squad" and source == "barracks":
-		_add_squad_unit(unit_name)
+		_add_squad_unit(instance_id)
 	elif destination == "barracks" and source == "squad":
-		_remove_one_squad_unit(unit_name)
+		_remove_one_squad_unit(instance_id)
 
 func _rebuild_squad_grid() -> void:
 	for child in squad_grid.get_children():
@@ -976,55 +997,68 @@ func _rebuild_squad_grid() -> void:
 	reward_carry_label.visible = not recent_reward_name.is_empty()
 	reward_carry_label.text = "★ NEW REWARD ADDED · %s" % recent_reward_name.to_upper()
 
-	var inventory := CampaignStoreScript.inventory_counts(roster, earned_reward_units)
-	for unit in roster:
-		var copies: int = editing_squad_names.count(unit.name)
-		var owned: int = inventory.get(unit.name, 0)
-		if owned <= 0:
+	_sync_collection()
+	var selected_names := SquadStoreScript.instance_names(
+		editing_squad_names, collection_instances
+	)
+	for instance in KineticCrucibleScript.active_instances(collection_instances):
+		var unit: Dictionary = UnitCatalogScript.by_name(instance.name)
+		if unit.is_empty():
 			continue
+		var copies: int = selected_names.count(instance.name)
 		var button: Button = SquadCardScript.new()
-		button.configure(unit.name, "barracks", _unit_icon(unit.icon), -1, unit.kind)
+		button.configure(instance.id, "barracks", _unit_icon(unit.icon), -1, unit.kind)
 		button.custom_minimum_size = Vector2(0, 78)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.icon = _unit_icon(unit.icon)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.disabled = (
-			copies >= mini(2, owned)
+			instance.id in editing_squad_names
+			or copies >= 2
 			or editing_squad_names.size() >= SquadStoreScript.SQUAD_SIZE
 		)
-		button.text = "%s%s\nOWNED %d · IN SQUAD %d" % [
+		button.text = "%s%s · LV %d\n%s" % [
 			"★ NEW REWARD · " if unit.name == recent_reward_name else "",
-			unit.name.to_upper(), owned, copies
+			unit.name.to_upper(), instance.level,
+			"IN FORMATION" if instance.id in editing_squad_names else "AVAILABLE"
 		]
 		if unit.name == recent_reward_name:
 			button.add_theme_color_override("font_color", UIThemeScript.title_color())
 		button.add_theme_font_size_override("font_size", 11)
-		button.pressed.connect(_add_squad_unit.bind(unit.name))
+		button.pressed.connect(_add_squad_unit.bind(instance.id))
 		button.connect("unit_dropped", _on_squad_card_drop)
-		button.mouse_entered.connect(_show_unit_details.bind(unit))
+		button.mouse_entered.connect(
+			_show_unit_details.bind(_unit_with_instance(unit, instance))
+		)
 		button.mouse_exited.connect(_hide_unit_details)
 		squad_grid.add_child(button)
 
 	for index in editing_squad_names.size():
-		var unit: Dictionary = UnitCatalogScript.by_name(editing_squad_names[index])
-		if unit.is_empty():
+		var instance: Dictionary = KineticCrucibleScript.instance_by_id(
+			collection_instances, editing_squad_names[index]
+		)
+		if instance.is_empty():
 			continue
+		var unit: Dictionary = UnitCatalogScript.by_name(instance.name)
 		var card: Button = SquadCardScript.new()
-		card.configure(unit.name, "squad", _unit_icon(unit.icon), index, unit.kind)
+		card.configure(instance.id, "squad", _unit_icon(unit.icon), index, unit.kind)
 		card.custom_minimum_size = Vector2(0, 72)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
 		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		card.text = "%02d · %s%s" % [
+		card.text = "%02d · %s · LV %d%s" % [
 			index + 1,
 			unit.name.to_upper(),
+			instance.level,
 			"\nVANGUARD" if index == 0 else ""
 		]
 		card.add_theme_font_size_override("font_size", 11)
 		card.pressed.connect(_remove_squad_unit_at.bind(index))
 		card.connect("unit_dropped", _on_squad_card_drop)
 		card.gui_input.connect(_on_squad_card_gui_input.bind(index))
-		card.mouse_entered.connect(_show_unit_details.bind(unit))
+		card.mouse_entered.connect(
+			_show_unit_details.bind(_unit_with_instance(unit, instance))
+		)
 		card.mouse_exited.connect(_hide_unit_details)
 		squad_selection_grid.add_child(card)
 
@@ -1071,7 +1105,7 @@ func _refresh_mission_intel() -> void:
 		mission_enemy_preview_row.add_child(portrait)
 
 func _on_squad_card_drop(
-	unit_name: String, source: String, source_index: int, target_index: int
+	instance_id: String, source: String, source_index: int, target_index: int
 ) -> void:
 	if target_index < 0:
 		if source == "squad":
@@ -1081,7 +1115,7 @@ func _on_squad_card_drop(
 		_move_squad_unit(source_index, target_index)
 	elif source == "barracks":
 		var previous_size := editing_squad_names.size()
-		_add_squad_unit(unit_name)
+		_add_squad_unit(instance_id)
 		if editing_squad_names.size() > previous_size:
 			_move_squad_unit(editing_squad_names.size() - 1, target_index)
 
@@ -1092,9 +1126,9 @@ func _move_squad_unit(from_index: int, to_index: int) -> void:
 		or from_index == to_index
 	):
 		return
-	var unit_name: String = editing_squad_names[from_index]
+	var instance_id: String = editing_squad_names[from_index]
 	editing_squad_names.remove_at(from_index)
-	editing_squad_names.insert(to_index, unit_name)
+	editing_squad_names.insert(to_index, instance_id)
 	_rebuild_squad_grid()
 
 func _set_vanguard(index: int) -> void:
@@ -1115,7 +1149,7 @@ func _save_squad() -> void:
 		return
 	squad_names = editing_squad_names.duplicate()
 	player_captain_skill = editing_captain_skill
-	if SquadStoreScript.save_squad(squad_names, roster):
+	if SquadStoreScript.save_instance_squad(squad_names, collection_instances):
 		SquadStoreScript.save_captain_skill(player_captain_skill, CaptainSkillsScript.SKILLS)
 		status_message = "Squad saved. It will be used in the next battle."
 	else:
@@ -1128,7 +1162,7 @@ func _save_and_start_mission() -> void:
 		return
 	squad_names = editing_squad_names.duplicate()
 	player_captain_skill = editing_captain_skill
-	SquadStoreScript.save_squad(squad_names, roster)
+	SquadStoreScript.save_instance_squad(squad_names, collection_instances)
 	SquadStoreScript.save_captain_skill(player_captain_skill, CaptainSkillsScript.SKILLS)
 	var mission_id := pending_mission_id
 	squad_opened_for_mission = false
@@ -1138,11 +1172,13 @@ func _save_and_start_mission() -> void:
 	_begin_mission(mission_id)
 
 func _sanitize_squad_unlocks() -> void:
-	squad_names = SquadStoreScript.sanitize_owned(
-		squad_names,
-		roster,
-		CampaignStoreScript.inventory_counts(roster, earned_reward_units)
+	_sync_collection()
+	var clean_squad: Array = SquadStoreScript.sanitize_instances(
+		squad_names, collection_instances
 	)
+	if clean_squad != squad_names:
+		squad_names = clean_squad
+		SquadStoreScript.save_instance_squad(squad_names, collection_instances)
 
 func _build_main_menu() -> void:
 	main_menu_overlay = ColorRect.new()
@@ -1162,12 +1198,12 @@ func _build_main_menu() -> void:
 	main_menu_overlay.add_child(center)
 
 	var plaque := PanelContainer.new()
-	plaque.custom_minimum_size = Vector2(480, 590)
+	plaque.custom_minimum_size = Vector2(480, 650)
 	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
 	center.add_child(plaque)
 
 	var layout := VBoxContainer.new()
-	layout.custom_minimum_size = Vector2(420, 540)
+	layout.custom_minimum_size = Vector2(420, 600)
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
 	layout.add_theme_constant_override("separation", 16)
 	plaque.add_child(layout)
@@ -1205,6 +1241,10 @@ func _build_main_menu() -> void:
 	var squad := _menu_action("FORMATION COMMAND")
 	squad.pressed.connect(_open_squad_from_menu)
 	layout.add_child(squad)
+
+	var crucible := _menu_action("KINETIC CRUCIBLE")
+	crucible.pressed.connect(_open_kinetic_crucible)
+	layout.add_child(crucible)
 
 	var tutorial := _menu_action("HOW TO PLAY")
 	tutorial.pressed.connect(_open_tutorial_from_menu)
@@ -1390,6 +1430,398 @@ func _build_mission_select() -> void:
 	back.pressed.connect(_show_main_menu)
 	layout.add_child(back)
 
+func _build_kinetic_crucible() -> void:
+	crucible_overlay = ColorRect.new()
+	crucible_overlay.color = Color.TRANSPARENT
+	crucible_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	crucible_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	crucible_overlay.visible = false
+	add_child(crucible_overlay)
+	_add_overlay_background(
+		crucible_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.035, 0.025, 0.02, 0.76)
+	)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 70)
+	margin.add_theme_constant_override("margin_right", 70)
+	margin.add_theme_constant_override("margin_top", 42)
+	margin.add_theme_constant_override("margin_bottom", 42)
+	crucible_overlay.add_child(margin)
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	margin.add_child(layout)
+	var title_row := HBoxContainer.new()
+	layout.add_child(title_row)
+	var title := Label.new()
+	title.text = "KINETIC CRUCIBLE"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
+	title_row.add_child(title)
+	var subtitle := Label.new()
+	subtitle.text = "SELECT A UNIT TO ENHANCE · QUEUE ANY NUMBER OF DONORS · MERGE"
+	subtitle.add_theme_font_size_override("font_size", 12)
+	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	layout.add_child(subtitle)
+	var columns := HBoxContainer.new()
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.add_theme_constant_override("separation", 14)
+	layout.add_child(columns)
+	var reserves_panel := PanelContainer.new()
+	reserves_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reserves_panel.size_flags_stretch_ratio = 1.0
+	columns.add_child(reserves_panel)
+	var reserves_layout := VBoxContainer.new()
+	reserves_layout.add_theme_constant_override("separation", 8)
+	reserves_panel.add_child(reserves_layout)
+	var reserves_header := HBoxContainer.new()
+	reserves_layout.add_child(reserves_header)
+	var reserves_title := Label.new()
+	reserves_title.text = "RESERVES · OWNED UNITS"
+	reserves_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reserves_title.add_theme_font_size_override("font_size", 16)
+	reserves_title.add_theme_color_override("font_color", UIThemeScript.title_color())
+	reserves_header.add_child(reserves_title)
+	crucible_extras_toggle = CheckButton.new()
+	crucible_extras_toggle.text = "EXTRAS ONLY"
+	crucible_extras_toggle.tooltip_text = (
+		"Only allow donors that leave another active copy in the roster."
+	)
+	crucible_extras_toggle.button_pressed = true
+	crucible_extras_toggle.toggled.connect(_toggle_crucible_extras)
+	reserves_header.add_child(crucible_extras_toggle)
+	var reserves_scroll := ScrollContainer.new()
+	reserves_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	reserves_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	reserves_layout.add_child(reserves_scroll)
+	crucible_reserve_grid = GridContainer.new()
+	crucible_reserve_grid.columns = 2
+	crucible_reserve_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crucible_reserve_grid.add_theme_constant_override("h_separation", 8)
+	crucible_reserve_grid.add_theme_constant_override("v_separation", 8)
+	reserves_scroll.add_child(crucible_reserve_grid)
+
+	var crucible_panel := PanelContainer.new()
+	crucible_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crucible_panel.size_flags_stretch_ratio = 1.0
+	columns.add_child(crucible_panel)
+	var crucible_layout := VBoxContainer.new()
+	crucible_layout.add_theme_constant_override("separation", 8)
+	crucible_panel.add_child(crucible_layout)
+	var target_title := Label.new()
+	target_title.text = "ENHANCEMENT TARGET · CLICK TO CLEAR"
+	target_title.add_theme_font_size_override("font_size", 16)
+	target_title.add_theme_color_override("font_color", UIThemeScript.title_color())
+	crucible_layout.add_child(target_title)
+	crucible_target_grid = GridContainer.new()
+	crucible_target_grid.columns = 1
+	crucible_target_grid.custom_minimum_size.y = 78
+	crucible_layout.add_child(crucible_target_grid)
+	var donor_title := Label.new()
+	donor_title.text = "CRUCIBLE QUEUE · CLICK TO REMOVE · UNITS WILL BE CONSUMED"
+	donor_title.add_theme_font_size_override("font_size", 14)
+	donor_title.add_theme_color_override("font_color", Color("#e8b4a2"))
+	crucible_layout.add_child(donor_title)
+	var donor_scroll := ScrollContainer.new()
+	donor_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	donor_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	crucible_layout.add_child(donor_scroll)
+	crucible_donor_grid = GridContainer.new()
+	crucible_donor_grid.columns = 2
+	crucible_donor_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crucible_donor_grid.add_theme_constant_override("h_separation", 8)
+	crucible_donor_grid.add_theme_constant_override("v_separation", 8)
+	donor_scroll.add_child(crucible_donor_grid)
+	crucible_detail_label = Label.new()
+	crucible_detail_label.custom_minimum_size = Vector2(0, 72)
+	crucible_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	crucible_detail_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	crucible_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	crucible_detail_label.add_theme_font_size_override("font_size", 14)
+	crucible_layout.add_child(crucible_detail_label)
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation", 12)
+	layout.add_child(actions)
+	var back := Button.new()
+	back.text = "BACK TO MENU"
+	back.custom_minimum_size = Vector2(180, 46)
+	back.pressed.connect(_show_main_menu)
+	actions.add_child(back)
+	var debug_copies := Button.new()
+	debug_copies.text = "DEBUG · 4 OF EACH"
+	debug_copies.tooltip_text = (
+		"Grant enough copies to hold at least four active copies of every unit."
+	)
+	debug_copies.custom_minimum_size = Vector2(180, 46)
+	debug_copies.pressed.connect(_debug_grant_four_of_each)
+	actions.add_child(debug_copies)
+	crucible_merge_button = Button.new()
+	crucible_merge_button.text = "MERGE QUEUE"
+	crucible_merge_button.custom_minimum_size = Vector2(200, 46)
+	crucible_merge_button.pressed.connect(_merge_crucible_units)
+	actions.add_child(crucible_merge_button)
+
+func _open_kinetic_crucible() -> void:
+	main_menu_overlay.visible = false
+	crucible_overlay.visible = true
+	crucible_target_id = ""
+	crucible_donor_ids.clear()
+	crucible_notice = ""
+	_rebuild_crucible()
+
+func _toggle_crucible_extras(_enabled: bool) -> void:
+	crucible_notice = ""
+	_rebuild_crucible()
+
+func _select_crucible_unit(instance_id: String) -> void:
+	if crucible_target_id.is_empty():
+		crucible_target_id = instance_id
+		crucible_notice = ""
+	elif instance_id != crucible_target_id and instance_id not in crucible_donor_ids:
+		var donor := KineticCrucibleScript.instance_by_id(
+			collection_instances, instance_id
+		)
+		if _crucible_donor_allowed(donor):
+			crucible_donor_ids.append(instance_id)
+			crucible_notice = ""
+	_rebuild_crucible()
+
+func _clear_crucible_target() -> void:
+	crucible_target_id = ""
+	crucible_donor_ids.clear()
+	crucible_notice = ""
+	_rebuild_crucible()
+
+func _remove_crucible_donor(instance_id: String) -> void:
+	crucible_donor_ids.erase(instance_id)
+	crucible_notice = ""
+	_rebuild_crucible()
+
+func _debug_grant_four_of_each() -> void:
+	_sync_collection()
+	var before := KineticCrucibleScript.inventory_counts(collection_instances)
+	var granted := 0
+	for unit in roster:
+		granted += maxi(0, 4 - int(before.get(unit.name, 0)))
+	earned_reward_units = CampaignStoreScript.debug_grant_minimum_copies(
+		roster, earned_reward_units, before, 4
+	)
+	_sync_collection()
+	crucible_notice = (
+		"Debug inventory ready · granted %d copies · every unit now has at least 4 active copies."
+		% granted
+	)
+	_rebuild_crucible()
+
+func _rebuild_crucible() -> void:
+	_sync_collection()
+	var active := KineticCrucibleScript.active_instances(collection_instances)
+	if not active.any(func(instance): return instance.id == crucible_target_id):
+		crucible_target_id = ""
+		crucible_donor_ids.clear()
+	crucible_donor_ids = crucible_donor_ids.filter(
+		func(instance_id): return active.any(
+			func(instance): return instance.id == instance_id
+		)
+	)
+	for grid in [crucible_reserve_grid, crucible_target_grid, crucible_donor_grid]:
+		for child in grid.get_children():
+			grid.remove_child(child)
+			child.queue_free()
+	for instance in active:
+		var unit: Dictionary = UnitCatalogScript.by_name(instance.name)
+		var card: Button = SquadCardScript.new()
+		card.configure(
+			instance.id, "crucible_reserve", _unit_icon(unit.icon), -1, unit.kind
+		)
+		card.custom_minimum_size = Vector2(0, 78)
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.icon = _unit_icon(unit.icon)
+		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var state := "SELECT TO ENHANCE"
+		if not crucible_target_id.is_empty():
+			if instance.id == crucible_target_id:
+				state = "ENHANCEMENT TARGET"
+				card.disabled = true
+			elif instance.id in crucible_donor_ids:
+				state = "QUEUED FOR MERGE"
+				card.disabled = true
+			elif _crucible_donor_allowed(instance):
+				state = "+%d POINTS · CLICK TO QUEUE" % KineticCrucibleScript.merge_value(
+					_crucible_target(), instance, roster
+				)
+			else:
+				state = "RETAINED · NEEDS AN EXTRA COPY"
+				card.disabled = true
+		card.text = "%s · LV %d\n%s" % [
+			unit.name.to_upper(), instance.level, state
+		]
+		card.add_theme_font_size_override("font_size", 10)
+		card.pressed.connect(_select_crucible_unit.bind(instance.id))
+		card.mouse_entered.connect(
+			_show_unit_details.bind(_unit_with_instance(unit, instance))
+		)
+		card.mouse_exited.connect(_hide_unit_details)
+		crucible_reserve_grid.add_child(card)
+	_build_crucible_selection_cards()
+	_refresh_crucible_detail()
+
+func _build_crucible_selection_cards() -> void:
+	var target := _crucible_target()
+	if target.is_empty():
+		var empty_target := Label.new()
+		empty_target.text = "Select any owned unit from Reserves."
+		empty_target.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		empty_target.add_theme_color_override("font_color", UIThemeScript.muted_color())
+		crucible_target_grid.add_child(empty_target)
+		return
+	var target_unit := UnitCatalogScript.by_name(target.name)
+	var target_card := SquadCardScript.new()
+	target_card.configure(
+		target.id, "crucible_target", _unit_icon(target_unit.icon), -1, target_unit.kind
+	)
+	target_card.custom_minimum_size = Vector2(0, 72)
+	target_card.icon = _unit_icon(target_unit.icon)
+	target_card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	target_card.text = "%s · LV %d\nENHANCEMENT TARGET" % [
+		target.name.to_upper(), target.level
+	]
+	target_card.pressed.connect(_clear_crucible_target)
+	target_card.mouse_entered.connect(
+		_show_unit_details.bind(_unit_with_instance(target_unit, target))
+	)
+	target_card.mouse_exited.connect(_hide_unit_details)
+	crucible_target_grid.add_child(target_card)
+	for donor_id in crucible_donor_ids:
+		var donor := KineticCrucibleScript.instance_by_id(
+			collection_instances, donor_id
+		)
+		if donor.is_empty():
+			continue
+		var unit := UnitCatalogScript.by_name(donor.name)
+		var card := SquadCardScript.new()
+		card.configure(donor.id, "crucible_queue", _unit_icon(unit.icon), -1, unit.kind)
+		card.custom_minimum_size = Vector2(0, 72)
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.icon = _unit_icon(unit.icon)
+		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		card.text = "%s · LV %d\nCONSUME · +%d POINTS" % [
+			donor.name.to_upper(),
+			donor.level,
+			KineticCrucibleScript.merge_value(target, donor, roster)
+		]
+		card.pressed.connect(_remove_crucible_donor.bind(donor.id))
+		card.mouse_entered.connect(
+			_show_unit_details.bind(_unit_with_instance(unit, donor))
+		)
+		card.mouse_exited.connect(_hide_unit_details)
+		crucible_donor_grid.add_child(card)
+
+func _crucible_target() -> Dictionary:
+	return KineticCrucibleScript.instance_by_id(
+		collection_instances, crucible_target_id
+	)
+
+func _crucible_donor_allowed(donor: Dictionary) -> bool:
+	var target := _crucible_target()
+	if not KineticCrucibleScript.can_merge(target, donor, roster):
+		return false
+	if not crucible_extras_toggle.button_pressed:
+		return true
+	var active := KineticCrucibleScript.active_instances(collection_instances)
+	var active_count := active.filter(
+		func(instance): return instance.name == donor.name
+	).size()
+	var queued_count := crucible_donor_ids.filter(
+		func(instance_id):
+			var queued := KineticCrucibleScript.instance_by_id(
+				collection_instances, instance_id
+			)
+			return queued.get("name", "") == donor.name
+	).size()
+	return active_count - queued_count >= 2
+
+func _refresh_crucible_detail() -> void:
+	var target := _crucible_target()
+	if target.is_empty():
+		crucible_detail_label.text = "Choose the individual unit you want to enhance."
+		crucible_merge_button.disabled = true
+		return
+	var promotion_available := roster.any(
+		func(unit): return unit.get("promotion_of", "") == target.name
+	)
+	var progression := (
+		"LEVEL 5 · MAXIMUM%s" % (
+			" · PROMOTION READY" if promotion_available else ""
+		)
+		if target.level >= KineticCrucibleScript.MAX_LEVEL
+		else "LEVEL %d · %d / %d POINTS · %d TO NEXT LEVEL" % [
+			target.level,
+			target.points,
+			KineticCrucibleScript.LEVEL_COSTS[target.level - 1],
+			KineticCrucibleScript.points_to_next(target)
+		]
+	)
+	var total_points := 0
+	for donor_id in crucible_donor_ids:
+		var donor := KineticCrucibleScript.instance_by_id(
+			collection_instances, donor_id
+		)
+		total_points += KineticCrucibleScript.merge_value(target, donor, roster)
+	var merge_text := "Select one or more donor units from Reserves."
+	if target.level >= KineticCrucibleScript.MAX_LEVEL:
+		merge_text = (
+			"Promotion conversion will unlock once its cost is defined."
+			if promotion_available
+			else "This unit has reached its final form."
+		)
+	elif not crucible_donor_ids.is_empty():
+		var projected := KineticCrucibleScript.apply_points(target, total_points)
+		merge_text = "%d queued · +%d points · result: Level %d, %d points." % [
+			crucible_donor_ids.size(), total_points, projected.level, projected.points
+		]
+	crucible_detail_label.text = "%s\n%s%s" % [
+		progression,
+		merge_text,
+		"\n" + crucible_notice if not crucible_notice.is_empty() else ""
+	]
+	crucible_merge_button.disabled = (
+		crucible_donor_ids.is_empty()
+		or target.level >= KineticCrucibleScript.MAX_LEVEL
+	)
+
+func _merge_crucible_units() -> void:
+	var result: Dictionary = KineticCrucibleScript.record_merge_batch(
+		crucible_target_id,
+		crucible_donor_ids,
+		roster,
+		CampaignStoreScript.inventory_counts(roster, earned_reward_units)
+	)
+	crucible_notice = result.get("message", "Merge failed.")
+	crucible_donor_ids.clear()
+	_sanitize_squad_unlocks()
+	_rebuild_crucible()
+
+func _inventory_counts() -> Dictionary:
+	_sync_collection()
+	return KineticCrucibleScript.inventory_counts(collection_instances)
+
+func _sync_collection() -> void:
+	collection_instances = KineticCrucibleScript.sync_instances(
+		roster,
+		CampaignStoreScript.inventory_counts(roster, earned_reward_units)
+	)
+
+func _unit_with_instance(unit: Dictionary, instance: Dictionary) -> Dictionary:
+	var result := unit.duplicate(true)
+	result.instance_id = instance.get("id", "")
+	result.level = instance.get("level", 1)
+	result.level_points = instance.get("points", 0)
+	return result
+
 func _menu_action(label: String) -> Button:
 	var button := Button.new()
 	button.text = label
@@ -1435,6 +1867,7 @@ func _show_main_menu() -> void:
 	pending_mission_id = -1
 	main_menu_overlay.visible = true
 	mission_overlay.visible = false
+	crucible_overlay.visible = false
 	squad_overlay.visible = false
 	tutorial_overlay.visible = false
 	overlay.visible = false
@@ -1677,9 +2110,7 @@ func _rebuild_mission_list() -> void:
 		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE%s"
 		% [act_one_complete, act_two_complete, run_text]
 	)
-	var inventory: Dictionary = CampaignStoreScript.inventory_counts(
-		roster, earned_reward_units
-	)
+	var inventory: Dictionary = _inventory_counts()
 	for mission in CampaignStoreScript.MISSIONS:
 		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
 		var complete: bool = mission.id in completed_missions
@@ -1917,7 +2348,9 @@ func _show_unit_details(unit: Dictionary) -> void:
 		definition.name.to_upper(),
 		UnitCatalogScript.display_class(definition.kind)
 	]
-	hover_stats_label.text = "%d MANA · %s\n%d ATK    %s    %d MOV    %d RANGE" % [
+	var unit_level: int = unit.get("level", 1)
+	hover_stats_label.text = "LEVEL %d · %d MANA · %s\n%d ATK    %s    %d MOV    %d RANGE" % [
+		unit_level,
 		definition.cost,
 		"★".repeat(definition.get("stars", 1)),
 		unit.get("atk", definition.atk),
@@ -1991,7 +2424,9 @@ func _start_new_match() -> void:
 	battle_seed = int(Time.get_unix_time_from_system() * 1000.0) ^ int(Time.get_ticks_usec())
 	battle_simulator.reset(battle_seed)
 	battle_deck = SquadStoreScript.shuffle_for_battle(
-		SquadStoreScript.build_deck(squad_names, roster), battle_simulator.rng
+		SquadStoreScript.build_deck(
+			squad_names, roster, collection_instances
+		), battle_simulator.rng
 	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
 	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(
@@ -2027,7 +2462,9 @@ func _start_new_match() -> void:
 		"encounter_index": current_encounter_index,
 		"player_hp": player_hp,
 		"enemy_hp": enemy_hp,
-		"player_squad": squad_names.duplicate(),
+		"player_squad": SquadStoreScript.instance_names(
+			squad_names, collection_instances
+		),
 		"enemy_squad": enemy_squad_names.duplicate(),
 		"player_skill": player_captain_skill,
 		"enemy_skill": enemy_captain_skill
@@ -2336,6 +2773,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"move": card.move,
 		"range": card.range,
 		"skill": card.get("skill", {}).duplicate(true),
+		"instance_id": card.get("instance_id", ""),
+		"level": card.get("level", 1),
+		"level_points": card.get("level_points", 0),
 		# Deployment is part of the turn: newly placed units move and attack
 		# when that side resolves immediately afterward.
 		"ready": true,
