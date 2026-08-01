@@ -1,10 +1,10 @@
-# Aether Engine Tactics — Agent Guide
+# War of Resonance — Agent Guide
 
 This guide is written for AI coding agents. It describes the project layout, build and test workflows, code conventions, and architectural boundaries so an agent can make safe, useful changes without guessing.
 
 ## Project overview
 
-Aether Engine Tactics is a Godot 4 prototype of a lane-based, turn-based tactical RPG. The player builds a squad of up to eight units, deploys them onto a 3×7 board, and resolves battles automatically. The project contains a playable campaign, practice mode, squad builder, Kinetic Crucible progression, enemy AI, deterministic replay history, and synthesized battle audio.
+War of Resonance (formerly "Aether Engine Tactics") is a Godot 4 prototype of a lane-based, turn-based tactical RPG. The player builds a squad of up to eight units, deploys them onto a 3×7 board, and resolves battles automatically. The project contains a playable campaign, practice mode, squad builder, Kinetic Crucible progression, enemy AI, deterministic replay history, and synthesized battle audio.
 
 The prototype is intentionally a single-player, desktop-first Godot project. All game logic is written in GDScript. There is no server, no network code, and no external package manager.
 

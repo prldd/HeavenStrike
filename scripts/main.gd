@@ -216,7 +216,7 @@ func _build_interface() -> void:
 	root.add_child(header)
 
 	var brand := Label.new()
-	brand.text = "AETHER ENGINE\nTACTICS"
+	brand.text = "WAR OF\nRESONANCE"
 	brand.add_theme_font_size_override("font_size", 17)
 	brand.add_theme_color_override("font_color", UIThemeScript.title_color())
 	brand.custom_minimum_size.x = 170
@@ -1313,7 +1313,7 @@ func _build_main_menu() -> void:
 	plaque.add_child(layout)
 
 	var title := Label.new()
-	title.text = "AETHER ENGINE\nTACTICS"
+	title.text = "WAR OF\nRESONANCE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())

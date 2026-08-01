@@ -1,4 +1,4 @@
-# Aether Engine Tactics
+# War of Resonance
 
 A playable Godot 4 prototype of the original lane-based strategy RPG described in [PROJECT.md](PROJECT.md).
 
