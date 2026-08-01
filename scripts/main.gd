@@ -1034,7 +1034,7 @@ func _make_reserve_class_option() -> OptionButton:
 
 func _make_reserve_search_edit(on_text_changed: Callable) -> LineEdit:
 	var edit := LineEdit.new()
-	edit.placeholder_text = "SEARCH UNITS"
+	edit.placeholder_text = "SEARCH UNITS OR SKILLS"
 	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	edit.text_changed.connect(on_text_changed)
 	return edit
@@ -1042,8 +1042,12 @@ func _make_reserve_search_edit(on_text_changed: Callable) -> LineEdit:
 func _reserve_visible(unit: UnitData, filter_class: String, filter_text: String) -> bool:
 	if not filter_class.is_empty() and unit.kind != filter_class:
 		return false
-	if not filter_text.is_empty() and unit.name.to_lower().find(filter_text.to_lower()) == -1:
-		return false
+	if not filter_text.is_empty():
+		var query := filter_text.to_lower()
+		var matches_name := unit.name.to_lower().find(query) != -1
+		var matches_skill := unit.skill != null and unit.skill.name.to_lower().find(query) != -1
+		if not matches_name and not matches_skill:
+			return false
 	return true
 
 func _rebuild_squad_grid() -> void:
