@@ -49,7 +49,17 @@ const ADDITIONAL_DROPS := {
 	"Macabre Embalmer": [27, 29, 37, 41, 45],
 	"Macabre Undertaker": [27, 29, 37, 41, 45],
 	"Devout Mage": [21, 22, 24, 56],
-	"Devout Warlock": [21, 22, 24, 56]
+	"Devout Warlock": [21, 22, 24, 56],
+	"Commune Defender": [38],
+	"Commune Captain": [38],
+	"LDF Constable": [10, 34, 50, 56, 62],
+	"LDF Sergeant": [19, 34, 50, 56, 62],
+	"Joe Wonder": [20, 44, 49],
+	"Pompous Joe Wonder": [44, 49],
+	"Raging Dragon": [36],
+	"Blazing Dragon": [36],
+	"Royal Yeoman": [16, 33, 55, 58],
+	"Royal Beefeater": [33, 55, 58]
 }
 
 const QUESTS := [

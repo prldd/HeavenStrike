@@ -12,7 +12,7 @@ const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 88, "The playable roster must contain 88 units.")
+	assert(roster.size() == 113, "The playable roster must contain 113 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
@@ -107,25 +107,25 @@ func _init() -> void:
 	assert(captain_hit.shield_absorbed == 2)
 	assert(captain_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 93
+		func(icon_id): return icon_id >= 1 and icon_id <= 118
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 12)
-	assert(roster.filter(func(unit): return unit.stars == 2).size() == 15)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 28)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 21)
-	assert(roster.filter(func(unit): return unit.stars == 5).size() == 12)
+	assert(roster.filter(func(unit): return unit.stars == 2).size() == 16)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 33)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 32)
+	assert(roster.filter(func(unit): return unit.stars == 5).size() == 20)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	var unique_icon_ids: Array = []
 	for icon_id in icon_ids:
 		if icon_id not in unique_icon_ids:
 			unique_icon_ids.append(icon_id)
 	assert(icon_ids.size() == unique_icon_ids.size())
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 17)
-	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 15)
-	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 6)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 20)
-	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 18)
-	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 12)
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 19)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 21)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 15)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 22)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 22)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 14)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
 	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
@@ -175,6 +175,30 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Macabre Undertaker").promotion_of == "Macabre Embalmer")
 	assert(UnitCatalogScript.by_name("Devout Mage").skill.name == "Meteor Barrage")
 	assert(UnitCatalogScript.by_name("Devout Warlock").promotion_of == "Devout Mage")
+	assert(UnitCatalogScript.by_name("Bartok Loco").skill.name == "Sundering Smash")
+	assert(UnitCatalogScript.by_name("Bartok Loco").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Derailed Bartok").promotion_of == "Bartok Loco")
+	assert(UnitCatalogScript.by_name("Geartron Prototype").kind == "Warden")
+	assert(UnitCatalogScript.by_name("Geartron-5000").promotion_of == "Geartron Prototype")
+	assert(UnitCatalogScript.by_name("Bethany").skill.name == "Hopping Mad")
+	assert(UnitCatalogScript.by_name("Bethany").skill.type == "Reaction")
+	assert(UnitCatalogScript.by_name("Bunnybot Bethany").promotion_of == "Bethany")
+	assert(UnitCatalogScript.by_name("Final Empress").skill.name == "Moonlight")
+	assert(UnitCatalogScript.by_name("Final Empress").skill.type == "Aura")
+	assert(UnitCatalogScript.by_name("Awoken Final Empress").promotion_of == "Final Empress")
+	assert(UnitCatalogScript.by_name("Opelle").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Glowing Opelle").promotion_of == "Opelle")
+	assert(UnitCatalogScript.by_name("Commune Defender").skill.name == "Shield Wall")
+	assert(UnitCatalogScript.by_name("Commune Defender").skill.type == "Reaction")
+	assert(UnitCatalogScript.by_name("Commune Captain").promotion_of == "Commune Defender")
+	assert(UnitCatalogScript.by_name("Commune Commander").promotion_of == "Commune Captain")
+	assert(UnitCatalogScript.by_name("Commune Commander").stars == 5)
+	assert(UnitCatalogScript.by_name("Frost-Kid Kokori").skill.name == "Freeze!")
+	assert(UnitCatalogScript.by_name("Frost-Kid Kokori").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Ice-Prince Kokori").promotion_of == "Frost-Kid Kokori")
+	assert(UnitCatalogScript.by_name("Mata Swiftblade").skill.name == "Weakening Strike")
+	assert(UnitCatalogScript.by_name("Mata Swiftblade").skill.type == "Strike")
+	assert(UnitCatalogScript.by_name("Swiftblade Heroine").promotion_of == "Mata Swiftblade")
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Mend"
 	).size() == 4)
@@ -208,6 +232,37 @@ func _init() -> void:
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Meteor Barrage"
 	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Sundering Smash"
+	).size() == 4)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Hopping Mad"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Moonlight"
+	).size() == 4)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Shield Wall"
+	).size() == 3)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Freeze!"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Weakening Strike"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Protect"
+	).size() == 4)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Fireball"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Warrior's Vigour"
+	).size() == 2)
+	assert(UnitCatalogScript.by_name("LDF Sergeant").promotion_of == "LDF Constable")
+	assert(UnitCatalogScript.by_name("Pompous Joe Wonder").promotion_of == "Joe Wonder")
+	assert(UnitCatalogScript.by_name("Blazing Dragon").promotion_of == "Raging Dragon")
+	assert(UnitCatalogScript.by_name("Royal Beefeater").promotion_of == "Royal Yeoman")
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
 	assert(UnitCatalogScript.art_id(27) == 83)
@@ -223,6 +278,20 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(91) == 94)
 	assert(UnitCatalogScript.art_id(92) == 81)
 	assert(UnitCatalogScript.art_id(93) == 82)
+	assert(UnitCatalogScript.art_id(94) == 195)
+	assert(UnitCatalogScript.art_id(97) == 290)
+	assert(UnitCatalogScript.art_id(98) == 787)
+	assert(UnitCatalogScript.art_id(100) == 887)
+	assert(UnitCatalogScript.art_id(102) == 1191)
+	assert(UnitCatalogScript.art_id(103) == 1192)
+	assert(UnitCatalogScript.art_id(104) == 73)
+	assert(UnitCatalogScript.art_id(106) == 607)
+	assert(UnitCatalogScript.art_id(108) == 142)
+	assert(UnitCatalogScript.art_id(110) == 150)
+	assert(UnitCatalogScript.art_id(111) == 37)
+	assert(UnitCatalogScript.art_id(113) == 97)
+	assert(UnitCatalogScript.art_id(115) == 105)
+	assert(UnitCatalogScript.art_id(117) == 87)
 	for unit in roster:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		assert(FileAccess.file_exists(
@@ -231,7 +300,7 @@ func _init() -> void:
 		assert(FileAccess.file_exists(
 			"res://assets/units/full/%03d.png" % art_id
 		))
-	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 40)
+	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 53)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -285,12 +354,12 @@ func _init() -> void:
 	assert(CampaignStoreScript.is_available(1, [0]))
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
-	assert(starting_unlocks.size() == 30)
+	assert(starting_unlocks.size() == 45)
 	assert("Chain Initiate" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
 		roster, ["Chain Initiate", "LDF Medic"]
 	)
-	assert(earned_unlocks.size() == 32)
+	assert(earned_unlocks.size() == 47)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
 	assert(CampaignStoreScript.reward_summary(2) == "Random: Street Nurse, Rage Brute")
@@ -323,6 +392,17 @@ func _init() -> void:
 	assert("Macabre Undertaker" in CampaignStoreScript.MISSIONS[28].reward_pool)
 	assert("Devout Mage" in CampaignStoreScript.MISSIONS[20].reward_pool)
 	assert("Devout Warlock" in CampaignStoreScript.MISSIONS[55].reward_pool)
+	assert("Commune Defender" in CampaignStoreScript.MISSIONS[37].reward_pool)
+	assert("Commune Captain" in CampaignStoreScript.MISSIONS[37].reward_pool)
+	assert("LDF Constable" in CampaignStoreScript.MISSIONS[9].reward_pool)
+	assert("LDF Constable" in CampaignStoreScript.MISSIONS[61].reward_pool)
+	assert("LDF Sergeant" in CampaignStoreScript.MISSIONS[18].reward_pool)
+	assert("Joe Wonder" in CampaignStoreScript.MISSIONS[19].reward_pool)
+	assert("Pompous Joe Wonder" in CampaignStoreScript.MISSIONS[43].reward_pool)
+	assert("Raging Dragon" in CampaignStoreScript.MISSIONS[35].reward_pool)
+	assert("Blazing Dragon" in CampaignStoreScript.MISSIONS[35].reward_pool)
+	assert("Royal Yeoman" in CampaignStoreScript.MISSIONS[15].reward_pool)
+	assert("Royal Beefeater" in CampaignStoreScript.MISSIONS[32].reward_pool)
 	for mission in CampaignStoreScript.MISSIONS:
 		assert("Farsight Naruku" not in mission.reward_pool)
 		assert("Macewielder Ragnr" not in mission.reward_pool)
@@ -350,6 +430,21 @@ func _init() -> void:
 		assert("Prison Guv'nor" not in mission.reward_pool)
 		assert("Shakespeare" not in mission.reward_pool)
 		assert("The Bard" not in mission.reward_pool)
+		assert("Bartok Loco" not in mission.reward_pool)
+		assert("Derailed Bartok" not in mission.reward_pool)
+		assert("Geartron Prototype" not in mission.reward_pool)
+		assert("Geartron-5000" not in mission.reward_pool)
+		assert("Bethany" not in mission.reward_pool)
+		assert("Bunnybot Bethany" not in mission.reward_pool)
+		assert("Final Empress" not in mission.reward_pool)
+		assert("Awoken Final Empress" not in mission.reward_pool)
+		assert("Opelle" not in mission.reward_pool)
+		assert("Glowing Opelle" not in mission.reward_pool)
+		assert("Commune Commander" not in mission.reward_pool)
+		assert("Frost-Kid Kokori" not in mission.reward_pool)
+		assert("Ice-Prince Kokori" not in mission.reward_pool)
+		assert("Mata Swiftblade" not in mission.reward_pool)
+		assert("Swiftblade Heroine" not in mission.reward_pool)
 	var rarity_candidates := [
 		{"name": "One Star", "stars": 1},
 		{"name": "Five Star", "stars": 5}
@@ -792,6 +887,330 @@ func _init() -> void:
 	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.59).message.is_empty())
 	warcry_enemy.immobilized_turns = 0
 	assert(UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.60).message.is_empty())
+
+	# Chant: Sundering Smash hits every enemy in the chanter's lane at the
+	# start of the chanter's turn and makes survivors Vulnerable.
+	var bartok := {
+		"id": 105, "side": 0, "name": "Bartok Loco", "kind": "Duelist",
+		"row": 1, "atk": 5, "hp": 8, "max_hp": 8, "effects": [],
+		"skill": {"name": "Sundering Smash", "type": "Chant"}
+	}
+	var chant_lane_foe := {
+		"id": 106, "side": 1, "name": "Lane Foe", "kind": "Warden",
+		"row": 1, "atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var chant_other_lane := {
+		"id": 107, "side": 1, "name": "Other Lane Foe", "kind": "Strider",
+		"row": 2, "atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var chant_units := [bartok, chant_lane_foe, chant_other_lane]
+	var chant_results := UnitSkillsScript.resolve_chants(0, chant_units)
+	assert(chant_results.size() == 1)
+	assert(chant_results[0].affected == [106])
+	assert(chant_lane_foe.hp == 5 and chant_lane_foe.vulnerable_turns == 2)
+	assert(chant_lane_foe.vulnerable_stacks == 1)
+	assert(chant_other_lane.hp == 6 and not chant_other_lane.has("vulnerable_turns"))
+	assert(UnitSkillsScript.resolve_chants(1, chant_units).is_empty())
+	# Re-applying Vulnerable stacks, mirroring Sunder Armour, and last turn's
+	# Vulnerable amplifies this turn's chant damage (1 + 1 stack).
+	UnitSkillsScript.resolve_chants(0, chant_units)
+	assert(chant_lane_foe.hp == 3 and chant_lane_foe.vulnerable_stacks == 2)
+	# Level scaling: a level-5 chanter hits for 3 damage over 4 turns.
+	var veteran_geartron := {
+		"id": 114, "side": 0, "name": "Geartron-5000", "kind": "Warden",
+		"row": 0, "atk": 3, "hp": 13, "max_hp": 13, "effects": [], "level": 5,
+		"skill": UnitCatalogScript.by_name("Geartron-5000").skill.to_dict()
+	}
+	var veteran_lane_foe := {
+		"id": 115, "side": 1, "name": "Veteran Lane Foe", "kind": "Duelist",
+		"row": 0, "atk": 4, "hp": 9, "max_hp": 9, "effects": []
+	}
+	var veteran_chants := UnitSkillsScript.resolve_chants(
+		0, [veteran_geartron, veteran_lane_foe]
+	)
+	assert(veteran_chants.size() == 1)
+	assert(veteran_lane_foe.hp == 6 and veteran_lane_foe.vulnerable_turns == 4)
+
+	# Reaction: Hopping Mad counters the attacker for fixed damage, but only
+	# while the defender survives the attack.
+	var bethany := {
+		"id": 108, "side": 1, "name": "Bethany", "kind": "Artillerist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Hopping Mad", "type": "Reaction"}
+	}
+	var reaction_attacker := {
+		"id": 109, "side": 0, "name": "Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 7, "max_hp": 7, "effects": []
+	}
+	var reaction_result := UnitSkillsScript.resolve_reaction(
+		bethany, reaction_attacker, [bethany, reaction_attacker]
+	)
+	assert(reaction_result.affected == [109])
+	assert(reaction_attacker.hp == 4)
+	assert("attacks back" in reaction_result.message)
+	assert(UnitSkillsScript.resolve_reaction(
+		reaction_attacker, bethany, [bethany, reaction_attacker]
+	).message.is_empty())
+	bethany.hp = 0
+	assert(UnitSkillsScript.resolve_reaction(
+		bethany, reaction_attacker, [bethany, reaction_attacker]
+	).message.is_empty())
+	assert(reaction_attacker.hp == 4)
+
+	# Reaction: Shield Wall has a level-based chance to grant the defender
+	# Protect, which blocks all damage until it expires.
+	var shield_waller := {
+		"id": 116, "side": 1, "name": "Commune Defender", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
+		"skill": {
+			"name": "Shield Wall", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Shield Wall"]
+		}
+	}
+	var wall_attacker := {
+		"id": 117, "side": 0, "name": "Wall Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 7, "max_hp": 7, "effects": []
+	}
+	var wall_result := UnitSkillsScript.resolve_reaction(
+		shield_waller, wall_attacker, [shield_waller, wall_attacker], 0.39
+	)
+	assert(wall_result.affected == [116])
+	assert(shield_waller.protect_turns == 2)
+	assert("Protect" in wall_result.message)
+	assert(UnitSkillsScript.resolve_reaction(
+		shield_waller, wall_attacker, [shield_waller, wall_attacker], 0.40
+	).message.is_empty())
+	var blocked_hit := BattleSimulatorScript.apply_unit_damage(shield_waller, 3)
+	assert(blocked_hit.damage == 0 and blocked_hit.protected)
+	assert(shield_waller.hp == 8)
+	UnitSkillsScript.expire_statuses([shield_waller], 1)
+	assert(shield_waller.protect_turns == 1)
+	UnitSkillsScript.expire_statuses([shield_waller], 1)
+	assert(shield_waller.protect_turns == 0)
+	assert(BattleSimulatorScript.apply_unit_damage(shield_waller, 3).damage == 3)
+	assert(shield_waller.hp == 5)
+
+	# Warcry: Freeze! damages and Immobilises enemy Scouts and Fighters in the
+	# target lane; other classes and lanes are untouched.
+	var frost_mage := {
+		"id": 118, "side": 0, "name": "Frost-Kid Kokori", "kind": "Channeler",
+		"row": 0, "atk": 3, "hp": 7, "max_hp": 7, "effects": [],
+		"skill": {
+			"name": "Freeze!", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Freeze!"]
+		}
+	}
+	var frost_scout := {
+		"id": 119, "side": 1, "name": "Frost Scout", "kind": "Strider",
+		"row": 2, "atk": 3, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var frost_fighter := {
+		"id": 120, "side": 1, "name": "Frost Fighter", "kind": "Duelist",
+		"row": 2, "atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var frost_warden := {
+		"id": 121, "side": 1, "name": "Frost Warden", "kind": "Warden",
+		"row": 2, "atk": 2, "hp": 9, "max_hp": 9, "effects": []
+	}
+	var frost_other_lane := {
+		"id": 122, "side": 1, "name": "Other Lane Scout", "kind": "Strider",
+		"row": 1, "atk": 3, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var frost_units := [
+		frost_mage, frost_scout, frost_fighter, frost_warden, frost_other_lane
+	]
+	var frost_result := UnitSkillsScript.resolve_warcry(
+		frost_mage, frost_units, -1, null, 2
+	)
+	assert(frost_result.affected == [119, 120])
+	assert(frost_scout.hp == 3 and frost_scout.immobilized_turns == 1)
+	assert(frost_fighter.hp == 5 and frost_fighter.immobilized_turns == 1)
+	assert(frost_warden.hp == 9 and not frost_warden.has("immobilized_turns"))
+	assert(frost_other_lane.hp == 4)
+	# Without a chosen lane the AI fallback picks the lane with eligible enemies.
+	frost_scout.immobilized_turns = 0
+	frost_fighter.immobilized_turns = 0
+	var frost_fallback := UnitSkillsScript.resolve_warcry(frost_mage, frost_units)
+	assert(frost_fallback.affected == [119, 120])
+	assert(frost_scout.hp == 2 and frost_fighter.hp == 4)
+	# An enemy that dies to the damage is not Immobilised.
+	frost_scout.hp = 1
+	frost_scout.immobilized_turns = 0
+	UnitSkillsScript.resolve_warcry(frost_mage, frost_units, -1, null, 2)
+	assert(frost_scout.hp == 0 and frost_scout.immobilized_turns == 0)
+
+	# Strike: Weakening Strike has a level-based chance to cut the attacked
+	# enemy's ATK for a few turns.
+	var swiftblade := {
+		"id": 123, "side": 0, "name": "Mata Swiftblade", "kind": "Strider",
+		"atk": 3, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {
+			"name": "Weakening Strike", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Weakening Strike"]
+		}
+	}
+	var weaken_target := {
+		"id": 124, "side": 1, "name": "Weaken Target", "kind": "Duelist",
+		"atk": 5, "hp": 6, "max_hp": 6, "effects": []
+	}
+	assert(not UnitSkillsScript.resolve_strike(
+		swiftblade, weaken_target, [], 0.59
+	).message.is_empty())
+	assert(weaken_target.atk == 4)
+	assert(UnitSkillsScript.resolve_strike(
+		swiftblade, weaken_target, [], 0.60
+	).message.is_empty())
+	assert(weaken_target.atk == 4)
+	CaptainSkillsScript.expire_effects([weaken_target], 1)
+	CaptainSkillsScript.expire_effects([weaken_target], 1)
+	assert(weaken_target.atk == 5)
+
+	# Warcry: Protect grants a chosen allied unit Protect for a level-scaled
+	# duration; without a chosen target the AI fallback shields the lowest-HP
+	# ally, and Protect blocks all damage while it lasts.
+	var protector := {
+		"id": 130, "side": 0, "name": "LDF Constable", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
+		"skill": {
+			"name": "Protect", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Protect"]
+		}
+	}
+	var protect_ally := {
+		"id": 131, "side": 0, "name": "Frail Ally", "kind": "Channeler",
+		"atk": 3, "hp": 3, "max_hp": 6, "effects": []
+	}
+	var protect_other := {
+		"id": 132, "side": 0, "name": "Sturdy Ally", "kind": "Duelist",
+		"atk": 3, "hp": 7, "max_hp": 7, "effects": []
+	}
+	var protect_units := [protector, protect_ally, protect_other]
+	var protect_result := UnitSkillsScript.resolve_warcry(protector, protect_units, 132)
+	assert(protect_result.affected == [132])
+	assert(protect_other.protect_turns == 2)
+	assert("Protect" in protect_result.message)
+	var protect_fallback := UnitSkillsScript.resolve_warcry(protector, protect_units)
+	assert(protect_fallback.affected == [131])
+	assert(protect_ally.protect_turns == 2)
+	assert(BattleSimulatorScript.apply_unit_damage(protect_ally, 4).protected)
+	assert(protect_ally.hp == 3)
+	UnitSkillsScript.expire_statuses(protect_units, 0)
+	assert(protect_ally.protect_turns == 1)
+
+	# Warcry: Fireball damages a chosen enemy and splashes orthogonally
+	# adjacent enemies; the AI fallback hits the highest-HP enemy.
+	var dragon := {
+		"id": 133, "side": 0, "name": "Raging Dragon", "kind": "Channeler",
+		"row": 0, "col": 0, "atk": 5, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {
+			"name": "Fireball", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Fireball"]
+		}
+	}
+	var fire_target := {
+		"id": 134, "side": 1, "name": "Burned Enemy", "kind": "Warden",
+		"row": 1, "col": 3, "atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var fire_adjacent := {
+		"id": 135, "side": 1, "name": "Splashed Enemy", "kind": "Duelist",
+		"row": 1, "col": 4, "atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var fire_diagonal := {
+		"id": 136, "side": 1, "name": "Diagonal Enemy", "kind": "Strider",
+		"row": 2, "col": 4, "atk": 3, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var fire_units := [dragon, fire_target, fire_adjacent, fire_diagonal]
+	var fire_result := UnitSkillsScript.resolve_warcry(dragon, fire_units, 134)
+	assert(fire_result.affected == [134, 135])
+	assert(fire_target.hp == 7)
+	assert(fire_adjacent.hp == 4)
+	assert(fire_diagonal.hp == 4)
+	var fire_fallback := UnitSkillsScript.resolve_warcry(dragon, fire_units)
+	assert(fire_fallback.affected[0] == 134)
+	assert(fire_target.hp == 6)
+
+	# Warcry: Warrior's Vigour buffs the lowest-HP allied Defender or Fighter;
+	# other classes are ignored and the buff expires with its timer.
+	var yeoman := {
+		"id": 137, "side": 0, "name": "Royal Yeoman", "kind": "Duelist",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {
+			"name": "Warrior's Vigour", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Warrior's Vigour"]
+		}
+	}
+	var vigour_warden := {
+		"id": 138, "side": 0, "name": "Hurt Warden", "kind": "Warden",
+		"atk": 2, "hp": 3, "max_hp": 6, "effects": []
+	}
+	var vigour_mage := {
+		"id": 139, "side": 0, "name": "Hurt Mage", "kind": "Channeler",
+		"atk": 3, "hp": 1, "max_hp": 5, "effects": []
+	}
+	var vigour_result := UnitSkillsScript.resolve_warcry(
+		yeoman, [yeoman, vigour_warden, vigour_mage]
+	)
+	assert(vigour_result.affected == [138])
+	assert(vigour_warden.hp == 5 and vigour_warden.max_hp == 8)
+	assert(vigour_warden.atk == 3)
+	assert(vigour_mage.hp == 1 and vigour_mage.atk == 3)
+	CaptainSkillsScript.expire_effects([vigour_warden], 0)
+	CaptainSkillsScript.expire_effects([vigour_warden], 0)
+	assert(vigour_warden.atk == 2)
+	assert(vigour_warden.max_hp == 6 and vigour_warden.hp == 5)
+	# With no eligible Defender or Fighter ally the Warcry does nothing.
+	assert(UnitSkillsScript.resolve_warcry(
+		yeoman, [yeoman, vigour_mage]
+	).message.is_empty())
+
+	# Aura: Moonlight raises allied current and max HP while the source lives.
+	var empress := {
+		"id": 110, "side": 0, "name": "Final Empress", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Moonlight", "type": "Aura"}
+	}
+	var moonlit_ally := {
+		"id": 111, "side": 0, "name": "Moonlit Ally", "kind": "Warden",
+		"atk": 2, "hp": 4, "max_hp": 8, "effects": []
+	}
+	var moonlit_foe := {
+		"id": 112, "side": 1, "name": "Foe", "kind": "Strider",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var aura_units := [empress, moonlit_ally, moonlit_foe]
+	var aura_events: Array = []
+	UnitSkillsScript.refresh_auras(aura_units, aura_events)
+	assert(aura_events.size() == 1)
+	assert(aura_events[0].unit_id == 111 and aura_events[0].delta == 4)
+	assert(aura_events[0].label == "Moonlight")
+	assert(moonlit_ally.hp == 8 and moonlit_ally.max_hp == 12)
+	assert(empress.hp == 6 and empress.max_hp == 6)
+	assert(moonlit_foe.hp == 5 and moonlit_foe.max_hp == 5)
+	# Refreshing while the source lives is idempotent and reports no changes.
+	aura_events.clear()
+	UnitSkillsScript.refresh_auras(aura_units, aura_events)
+	assert(aura_events.is_empty())
+	assert(moonlit_ally.hp == 8 and moonlit_ally.max_hp == 12)
+	# The buff disappears when the source leaves the board.
+	UnitSkillsScript.refresh_auras([moonlit_ally, moonlit_foe], aura_events)
+	assert(aura_events.size() == 1)
+	assert(aura_events[0].unit_id == 111 and aura_events[0].delta == -4)
+	assert(aura_events[0].label == "Moonlight")
+	assert(moonlit_ally.hp == 4 and moonlit_ally.max_hp == 8)
+	# Losing the aura never kills: HP bottoms out at 1.
+	UnitSkillsScript.refresh_auras(aura_units)
+	moonlit_ally.hp = 2
+	UnitSkillsScript.refresh_auras([moonlit_ally, moonlit_foe])
+	assert(moonlit_ally.hp == 1 and moonlit_ally.max_hp == 8)
+	# Two sources stack, aura units buff each other, and level scales the aura.
+	var opelle := {
+		"id": 113, "side": 0, "name": "Opelle", "kind": "Lifebinder",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [], "level": 2,
+		"skill": UnitCatalogScript.by_name("Opelle").skill.to_dict()
+	}
+	UnitSkillsScript.refresh_auras(aura_units + [opelle])
+	assert(moonlit_ally.hp == 10 and moonlit_ally.max_hp == 17)
+	assert(empress.max_hp == 11 and opelle.max_hp == 9)
 
 	var preview_unit := {"id": 6, "side": 0, "kind": "Strider", "row": 1, "col": 1, "move": 3, "range": 1}
 	assert(BattleRulesScript.attack_cells(preview_unit) == [Vector2i(2, 1)])

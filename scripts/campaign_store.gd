@@ -24,7 +24,10 @@ const REWARD_UNITS := [
 	"Claw Chopper", "Claw Cleaver", "LDF Bowgunner", "LDF Bolt Slinger",
 	"LDF Swordwielder", "LDF Greatsword",
 	"Haven Trapper", "Haven Huntsman", "Macabre Embalmer", "Macabre Undertaker",
-	"Devout Mage", "Devout Warlock"
+	"Devout Mage", "Devout Warlock",
+	"Commune Defender", "Commune Captain",
+	"LDF Constable", "LDF Sergeant", "Joe Wonder", "Pompous Joe Wonder",
+	"Raging Dragon", "Blazing Dragon", "Royal Yeoman", "Royal Beefeater"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

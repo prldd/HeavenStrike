@@ -81,7 +81,32 @@ const ICON_ART_IDS := {
 	90: 93, # Macabre Embalmer
 	91: 94, # Macabre Undertaker
 	92: 81, # Devout Mage
-	93: 82 # Devout Warlock
+	93: 82, # Devout Warlock
+	94: 195, # Bartok Loco
+	95: 196, # Derailed Bartok
+	96: 289, # Geartron Prototype
+	97: 290, # Geartron-5000
+	98: 787, # Bethany
+	99: 788, # Bunnybot Bethany
+	100: 887, # Final Empress
+	101: 888, # Awoken Final Empress
+	102: 1191, # Opelle
+	103: 1192, # Glowing Opelle
+	104: 73, # Commune Defender
+	105: 74, # Commune Captain
+	106: 607, # Commune Commander
+	107: 141, # Frost-Kid Kokori
+	108: 142, # Ice-Prince Kokori
+	109: 149, # Mata Swiftblade
+	110: 150, # Swiftblade Heroine
+	111: 37, # LDF Constable
+	112: 38, # LDF Sergeant
+	113: 97, # Joe Wonder
+	114: 98, # Pompous Joe Wonder
+	115: 105, # Raging Dragon
+	116: 106, # Blazing Dragon
+	117: 87, # Royal Yeoman
+	118: 88 # Royal Beefeater
 }
 
 static var _units: Array[UnitData] = []
@@ -107,7 +132,16 @@ const RANK_VALUES := {
 	"Poison Strike": [["50% chance", "2 turns"], ["60% chance", "2 turns"], ["70% chance", "2 turns"], ["80% chance", "3 turns"], ["90% chance", "3 turns"]],
 	"Big Game Hunter": [["1 damage", "2 turns"], ["2 damage", "2 turns"], ["2 damage", "3 turns"], ["3 damage", "3 turns"], ["3 damage", "4 turns"]],
 	"Contagion": [["1 damage", "2 turns"], ["2 damage", "2 turns"], ["2 damage", "3 turns"], ["2 damage", "4 turns"], ["3 damage", "4 turns"]],
-	"Meteor Barrage": [["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"], ["4 damage"]]
+	"Meteor Barrage": [["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"], ["4 damage"]],
+	"Sundering Smash": [["1 damage", "2 turns"], ["2 damage", "2 turns"], ["2 damage", "3 turns"], ["3 damage", "3 turns"], ["3 damage", "4 turns"]],
+	"Hopping Mad": [["3 damage"], ["5 damage"], ["6 damage"], ["7 damage"], ["9 damage"]],
+	"Moonlight": [["4 HP"], ["5 HP"], ["6 HP"], ["7 HP"], ["8 HP"]],
+	"Shield Wall": [["40% chance", "2 turns"], ["42% chance", "2 turns"], ["45% chance", "2 turns"], ["47% chance", "3 turns"], ["50% chance", "3 turns"]],
+	"Freeze!": [["1 damage", "1 turn"], ["2 damage", "1 turn"], ["3 damage", "1 turn"], ["3 damage", "2 turns"], ["4 damage", "2 turns"]],
+	"Weakening Strike": [["60% chance", "1 ATK", "2 turns"], ["70% chance", "2 ATK", "2 turns"], ["80% chance", "3 ATK", "2 turns"], ["90% chance", "3 ATK", "3 turns"], ["100% chance", "4 ATK", "3 turns"]],
+	"Protect": [["2 turns"], ["3 turns"], ["4 turns"], ["5 turns"], ["6 turns"]],
+	"Fireball": [["1 damage", "1 damage"], ["2 damage", "1 damage"], ["2 damage", "2 damage"], ["3 damage", "2 damage"], ["3 damage", "3 damage"]],
+	"Warrior's Vigour": [["2 HP", "1 ATK", "2 turns"], ["2 HP", "1 ATK", "3 turns"], ["2 HP", "2 ATK", "3 turns"], ["2 HP", "2 ATK", "4 turns"], ["3 HP", "2 ATK", "4 turns"]]
 }
 
 static func _skill(name: String, type: String, chance: float, text: String) -> SkillData:
@@ -239,7 +273,32 @@ static func _build() -> void:
 		_unit('Macabre Embalmer', 90, 3, 'Channeler', 3, 3, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Contagion', 'Warcry', -1.0, 'Deal {0} to all enemy Mages and Priests and Poison them for {1}.')),
 		_unit('Macabre Undertaker', 91, 4, 'Channeler', 3, 4, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Macabre Embalmer', _skill('Contagion', 'Warcry', -1.0, 'Deal {0} to all enemy Mages and Priests and Poison them for {1}.')),
 		_unit('Devout Mage', 92, 3, 'Channeler', 4, 5, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Meteor Barrage', 'Warcry', -1.0, 'Deal {0} to enemy units in target lane.')),
-		_unit('Devout Warlock', 93, 4, 'Channeler', 4, 6, 8, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Devout Mage', _skill('Meteor Barrage', 'Warcry', -1.0, 'Deal {0} to enemy units in target lane.'))
+		_unit('Devout Warlock', 93, 4, 'Channeler', 4, 6, 8, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Devout Mage', _skill('Meteor Barrage', 'Warcry', -1.0, 'Deal {0} to enemy units in target lane.')),
+		_unit('Bartok Loco', 94, 4, 'Duelist', 4, 5, 8, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Sundering Smash', 'Chant', -1.0, "At the start of your turn, deal {0} to all enemies in this unit's lane and make them Vulnerable for {1}.")),
+		_unit('Derailed Bartok', 95, 5, 'Duelist', 4, 6, 9, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Bartok Loco', _skill('Sundering Smash', 'Chant', -1.0, "At the start of your turn, deal {0} to all enemies in this unit's lane and make them Vulnerable for {1}.")),
+		_unit('Geartron Prototype', 96, 4, 'Warden', 3, 2, 11, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Sundering Smash', 'Chant', -1.0, "At the start of your turn, deal {0} to all enemies in this unit's lane and make them Vulnerable for {1}.")),
+		_unit('Geartron-5000', 97, 5, 'Warden', 3, 3, 13, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Geartron Prototype', _skill('Sundering Smash', 'Chant', -1.0, "At the start of your turn, deal {0} to all enemies in this unit's lane and make them Vulnerable for {1}.")),
+		_unit('Bethany', 98, 4, 'Artillerist', 3, 4, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Hopping Mad', 'Reaction', -1.0, 'After attacked, this unit will attack back for {0}.')),
+		_unit('Bunnybot Bethany', 99, 5, 'Artillerist', 3, 5, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Bethany', _skill('Hopping Mad', 'Reaction', -1.0, 'After attacked, this unit will attack back for {0}.')),
+		_unit('Final Empress', 100, 4, 'Duelist', 2, 3, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Moonlight', 'Aura', -1.0, 'Other allied units gain {0}.')),
+		_unit('Awoken Final Empress', 101, 5, 'Duelist', 2, 4, 7, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Final Empress', _skill('Moonlight', 'Aura', -1.0, 'Other allied units gain {0}.')),
+		_unit('Opelle', 102, 4, 'Lifebinder', 2, 3, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Moonlight', 'Aura', -1.0, 'Other allied units gain {0}.')),
+		_unit('Glowing Opelle', 103, 5, 'Lifebinder', 2, 3, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Opelle', _skill('Moonlight', 'Aura', -1.0, 'Other allied units gain {0}.')),
+		_unit('Commune Defender', 104, 3, 'Warden', 4, 3, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
+		_unit('Commune Captain', 105, 4, 'Warden', 4, 4, 12, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Commune Defender', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
+		_unit('Commune Commander', 106, 5, 'Warden', 3, 4, 13, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Commune Captain', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
+		_unit('Frost-Kid Kokori', 107, 4, 'Channeler', 3, 3, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Freeze!', 'Warcry', -1.0, 'Deal {0} to all enemy Scout and Fighter units in target lane and Immobilise them for {1}.')),
+		_unit('Ice-Prince Kokori', 108, 5, 'Channeler', 3, 4, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Frost-Kid Kokori', _skill('Freeze!', 'Warcry', -1.0, 'Deal {0} to all enemy Scout and Fighter units in target lane and Immobilise them for {1}.')),
+		_unit('Mata Swiftblade', 109, 4, 'Strider', 4, 3, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Weakening Strike', 'Strike', -1.0, "{0} to reduce attacked enemy unit's ATK by {1} for {2}.")),
+		_unit('Swiftblade Heroine', 110, 5, 'Strider', 4, 4, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Mata Swiftblade', _skill('Weakening Strike', 'Strike', -1.0, "{0} to reduce attacked enemy unit's ATK by {1} for {2}.")),
+		_unit('LDF Constable', 111, 2, 'Warden', 2, 2, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Protect', 'Warcry', -1.0, 'Grant target allied unit Protect for {0}.')),
+		_unit('LDF Sergeant', 112, 3, 'Warden', 2, 3, 9, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'LDF Constable', _skill('Protect', 'Warcry', -1.0, 'Grant target allied unit Protect for {0}.')),
+		_unit('Joe Wonder', 113, 3, 'Warden', 2, 2, 4, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Protect', 'Warcry', -1.0, 'Grant target allied unit Protect for {0}.')),
+		_unit('Pompous Joe Wonder', 114, 4, 'Warden', 2, 3, 5, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Joe Wonder', _skill('Protect', 'Warcry', -1.0, 'Grant target allied unit Protect for {0}.')),
+		_unit('Raging Dragon', 115, 3, 'Channeler', 4, 5, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Fireball', 'Warcry', -1.0, 'Deal {0} to target enemy unit. Adjacent enemy units take {1}.')),
+		_unit('Blazing Dragon', 116, 4, 'Channeler', 4, 6, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Raging Dragon', _skill('Fireball', 'Warcry', -1.0, 'Deal {0} to target enemy unit. Adjacent enemy units take {1}.')),
+		_unit('Royal Yeoman', 117, 3, 'Duelist', 2, 2, 4, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill("Warrior's Vigour", 'Warcry', -1.0, 'Other allied Defender or Fighter with the lowest HP gains {0} and {1} for {2}.')),
+		_unit('Royal Beefeater', 118, 4, 'Duelist', 2, 3, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Royal Yeoman', _skill("Warrior's Vigour", 'Warcry', -1.0, 'Other allied Defender or Fighter with the lowest HP gains {0} and {1} for {2}.'))
 	]
 
 static func all_units() -> Array[UnitData]:

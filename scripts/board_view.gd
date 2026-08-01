@@ -43,11 +43,13 @@ var hover_row := -1
 var hover_col := -1
 var hover_unit_id := -1
 var event_text := "Choose a unit, then choose a lane."
-var effect_unit_id := -1
-var effect_label := ""
-var effect_color := Color.WHITE
-var effect_strength := 0.0
+var unit_effects: Dictionary = {}
+var unit_effect_tweens: Dictionary = {}
 var commander_effect_side := -1
+var commander_effect_label := ""
+var commander_effect_color := Color.WHITE
+var commander_effect_strength := 0.0
+var commander_effect_tween: Tween
 var unit_visual_offsets: Dictionary = {}
 var unit_flash_strength: Dictionary = {}
 var unit_defeat_strength: Dictionary = {}
@@ -118,24 +120,28 @@ func set_state(
 	queue_redraw()
 
 func play_unit_effect(unit_id: int, label: String, color: Color) -> void:
-	commander_effect_side = -1
-	effect_unit_id = unit_id
-	effect_label = label
-	effect_color = color
-	effect_strength = 1.0
+	if unit_effect_tweens.has(unit_id):
+		var old_tween: Tween = unit_effect_tweens[unit_id]
+		if is_instance_valid(old_tween):
+			old_tween.kill()
+	unit_effects[unit_id] = {"label": label, "color": color, "strength": 1.0}
 	var tween := create_tween()
-	tween.tween_method(_set_effect_strength, 1.0, 0.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(_clear_effect)
+	unit_effect_tweens[unit_id] = tween
+	tween.tween_method(_set_unit_effect_strength.bind(unit_id), 1.0, 0.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_clear_unit_effect.bind(unit_id))
+	queue_redraw()
 
 func play_commander_effect(side: int, label: String, color: Color) -> void:
 	commander_effect_side = side
-	effect_unit_id = -1
-	effect_label = label
-	effect_color = color
-	effect_strength = 1.0
-	var tween := create_tween()
-	tween.tween_method(_set_effect_strength, 1.0, 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(_clear_effect)
+	commander_effect_label = label
+	commander_effect_color = color
+	commander_effect_strength = 1.0
+	if is_instance_valid(commander_effect_tween):
+		commander_effect_tween.kill()
+	commander_effect_tween = create_tween()
+	commander_effect_tween.tween_method(_set_commander_effect_strength, 1.0, 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	commander_effect_tween.tween_callback(_clear_commander_effect)
+	queue_redraw()
 
 func animate_unit_move(
 	unit_id: int, from_row: int, from_col: int, duration: float = 0.28
@@ -306,14 +312,23 @@ func _set_unit_visual_offset(value: Vector2, unit_id: int) -> void:
 	unit_visual_offsets[unit_id] = value
 	queue_redraw()
 
-func _set_effect_strength(value: float) -> void:
-	effect_strength = value
+func _set_unit_effect_strength(value: float, unit_id: int) -> void:
+	if unit_effects.has(unit_id):
+		unit_effects[unit_id].strength = value
 	queue_redraw()
 
-func _clear_effect() -> void:
-	effect_unit_id = -1
+func _clear_unit_effect(unit_id: int) -> void:
+	unit_effects.erase(unit_id)
+	unit_effect_tweens.erase(unit_id)
+	queue_redraw()
+
+func _set_commander_effect_strength(value: float) -> void:
+	commander_effect_strength = value
+	queue_redraw()
+
+func _clear_commander_effect() -> void:
 	commander_effect_side = -1
-	effect_label = ""
+	commander_effect_label = ""
 	queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
@@ -418,11 +433,11 @@ func _draw() -> void:
 	)
 	draw_string(
 		get_theme_default_font(),
-		event_rect.position + Vector2(0, 19),
+		event_rect.position + Vector2(0, 18),
 		event_text,
 		HORIZONTAL_ALIGNMENT_CENTER,
 		event_rect.size.x,
-		14,
+		12,
 		Color("#f4e6c7")
 	)
 
@@ -468,7 +483,7 @@ func _draw() -> void:
 			_draw_selection(unit)
 		if unit.id in targetable_unit_ids:
 			_draw_targetable(unit)
-		if unit.id == effect_unit_id:
+		if unit.id in unit_effects:
 			_draw_effect(unit)
 	_draw_projectile()
 
@@ -637,6 +652,7 @@ func _draw_unit(unit: Dictionary) -> void:
 		12,
 		Color.WHITE
 	)
+	_draw_protect_aura(unit, rect)
 	_draw_status_badges(unit, rect)
 
 	if not unit.ready:
@@ -682,6 +698,18 @@ func _draw_projectile() -> void:
 	draw_circle(position, radius, Color(color, 0.88))
 	draw_arc(position, radius + 3, 0, TAU, 18, color, 2)
 
+## Bluish ring around a Protected unit so the status reads at a glance,
+## complementing the S-badge in _draw_status_badges.
+func _draw_protect_aura(unit: Dictionary, rect: Rect2) -> void:
+	if unit.get("protect_turns", 0) <= 0:
+		return
+	var center := rect.get_center()
+	var radius := maxf(rect.size.x, rect.size.y) * 0.58
+	var color := Color("#71e6f5")
+	draw_circle(center, radius, Color(color, 0.10))
+	draw_arc(center, radius, 0, TAU, 36, Color(color, 0.62), 2.5)
+	draw_arc(center, radius - 5, 0, TAU, 36, Color(color, 0.28), 1.5)
+
 func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	var badges: Array = []
 	if unit.get("taunt_turns", 0) > 0:
@@ -698,6 +726,8 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 			"label": vulnerable_label,
 			"color": Color("#ef8b72")
 		})
+	if unit.get("protect_turns", 0) > 0:
+		badges.append({"label": "S%d" % unit.protect_turns, "color": Color("#71e6f5")})
 	if unit.get("fury_stacks", 0) > 0:
 		badges.append({"label": "F%d" % unit.fury_stacks, "color": Color("#ffd166")})
 	for effect in unit.get("effects", []):
@@ -834,32 +864,39 @@ func _full_unit_content_rect(icon_id: int, texture: Texture2D) -> Rect2:
 	return content
 
 func _draw_effect(unit: Dictionary) -> void:
+	var effect: Dictionary = unit_effects.get(unit.id, {})
+	if effect.is_empty():
+		return
+	var strength: float = effect.strength
+	var color: Color = effect.color
 	var rect := _cell_rect(unit.row, unit.col).grow(-5.0)
 	var center := rect.get_center()
-	var radius := minf(rect.size.x, rect.size.y) * (0.35 + (1.0 - effect_strength) * 0.18)
-	draw_circle(center, radius, Color(effect_color, effect_strength * 0.22), false, 4)
-	draw_arc(center, radius, 0, TAU, 32, Color(effect_color, effect_strength), 4)
+	var radius := minf(rect.size.x, rect.size.y) * (0.35 + (1.0 - strength) * 0.18)
+	draw_circle(center, radius, Color(color, strength * 0.22), false, 4)
+	draw_arc(center, radius, 0, TAU, 32, Color(color, strength), 4)
 	draw_string(
 		get_theme_default_font(),
-		Vector2(rect.position.x, rect.position.y - 4 - (1.0 - effect_strength) * 18),
-		effect_label,
+		Vector2(rect.position.x, rect.position.y - 4 - (1.0 - strength) * 18),
+		effect.label,
 		HORIZONTAL_ALIGNMENT_CENTER,
 		rect.size.x,
 		14,
-		Color(effect_color, effect_strength)
+		Color(color, strength)
 	)
 
 func _draw_commander_effect(center: Vector2) -> void:
-	var radius := 42.0 + (1.0 - effect_strength) * 14.0
-	draw_arc(center, radius, 0, TAU, 32, Color(effect_color, effect_strength), 4)
+	var strength := commander_effect_strength
+	var color := commander_effect_color
+	var radius := 42.0 + (1.0 - strength) * 14.0
+	draw_arc(center, radius, 0, TAU, 32, Color(color, strength), 4)
 	draw_string(
 		get_theme_default_font(),
-		center + Vector2(-58, -50 - (1.0 - effect_strength) * 18),
-		effect_label,
+		center + Vector2(-58, -50 - (1.0 - strength) * 18),
+		commander_effect_label,
 		HORIZONTAL_ALIGNMENT_CENTER,
 		116,
 		15,
-		Color(effect_color, effect_strength)
+		Color(color, strength)
 	)
 
 func _draw_selection(unit: Dictionary) -> void:

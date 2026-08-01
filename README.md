@@ -42,7 +42,7 @@ assets required by the prototype.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 88 units across six distinct classes
+- 98 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 62 sequential story missions across two acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition

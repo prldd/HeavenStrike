@@ -53,7 +53,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
-| `unit_catalog.gd` | Authoritative unit roster: 88 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative unit roster: 113 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
@@ -159,7 +159,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (88 units, 12/15/28/21/12 star distribution, 40 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (113 units, 12/16/33/32/20 star distribution, 53 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
 
 ## Save files and persistence
 
@@ -256,8 +256,10 @@ story quests are starting-Reserve cards instead of reward cards.
 
 1. `RANK_VALUES` entry + `_skill(...)` on each unit in `UnitCatalog._build()`.
 2. A resolution branch in `scripts/unit_skills.gd` (`resolve_warcry`,
-   `resolve_strike`; `resolve_chants`, `resolve_reaction`, and
-   `refresh_auras` are still stub hooks). The `target_id = -1` /
+   `resolve_strike`, `resolve_chants`, `resolve_reaction`, `refresh_auras` —
+   all five timing hooks are live; auras are recomputed from living sources
+   on every call, stripping each unit's `aura_hp` and re-applying, so a buff
+   disappears when its source dies). The `target_id = -1` /
    `target_lane = -1` fallbacks are what the enemy AI uses — `BattleAI` itself
    only scores by class and usually needs no per-skill changes.
 3. If the player chooses a target, wire `main.gd`: ally-target follows the

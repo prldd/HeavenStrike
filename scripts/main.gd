@@ -432,6 +432,7 @@ func _build_combat_log() -> void:
 	combat_log_label.bbcode_enabled = false
 	combat_log_label.scroll_following = true
 	combat_log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	combat_log_label.add_theme_font_size_override("normal_font_size", 12)
 	layout.add_child(combat_log_label)
 
 func _toggle_combat_log() -> void:
@@ -2816,7 +2817,9 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			pending_empower_actor_id = -1
 			status_message = await _resolve_warcry(actor, clicked.id)
 		else:
-			status_message = "Choose another allied unit as Empower's target."
+			status_message = "Choose another allied unit as %s's target." % (
+				actor.get("skill", {}).get("name", "the Warcry") if actor != null else "the Warcry"
+			)
 		_refresh()
 		return
 	if pending_envenom_actor_id >= 0:
@@ -2825,7 +2828,9 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			pending_envenom_actor_id = -1
 			status_message = await _resolve_warcry(actor, clicked.id)
 		else:
-			status_message = "Choose a highlighted enemy unit as Envenom's target."
+			status_message = "Choose a highlighted enemy unit as %s's target." % (
+				actor.get("skill", {}).get("name", "the Warcry") if actor != null else "the Warcry"
+			)
 		_refresh()
 		return
 	if pending_lane_actor_id >= 0:
@@ -2958,12 +2963,13 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"poison_damage": 0,
 		"vulnerable_turns": 0,
 		"vulnerable_stacks": 0,
+		"protect_turns": 0,
 		"fury_stacks": 0,
 		"effects": []
 	}
 	units.append(spawned)
 	next_unit_id += 1
-	UnitSkillsScript.refresh_auras(units)
+	_refresh_auras()
 	return spawned
 
 func _resolve_warcry(
@@ -2974,22 +2980,22 @@ func _resolve_warcry(
 		func(unit): return unit.side == PLAYER and unit.id != actor.id
 	)
 	if (
-		actor.side == PLAYER and skill.get("name", "") == "Empower"
+		actor.side == PLAYER and skill.get("name", "") in ["Empower", "Protect"]
 		and target_id < 0
 		and has_other_ally
 	):
 		pending_empower_actor_id = actor.id
-		return "Choose another allied unit as Empower's target."
+		return "Choose another allied unit as %s's target." % skill.get("name", "")
 	if (
-		actor.side == PLAYER and skill.get("name", "") == "Envenom"
+		actor.side == PLAYER and skill.get("name", "") in ["Envenom", "Fireball"]
 		and target_id < 0 and units.any(func(unit): return unit.side == ENEMY)
 	):
 		pending_envenom_actor_id = actor.id
-		return "Choose a highlighted enemy unit as Envenom's target."
+		return "Choose a highlighted enemy unit as %s's target." % skill.get("name", "")
 	var lane_kinds: Array = _lane_target_kinds(skill.get("name", ""))
 	if (
 		actor.side == PLAYER
-		and skill.get("name", "") in ["Demoralize", "Meteor Barrage"]
+		and skill.get("name", "") in ["Demoralize", "Meteor Barrage", "Freeze!"]
 		and target_lane < 0 and units.any(
 			func(unit): return (
 				unit.side == ENEMY
@@ -3010,14 +3016,14 @@ func _resolve_warcry(
 			)
 			if skill.get("name", "") in [
 				"Bolt", "Heaven's Wrath", "Plague", "Pin Down", "Sunder Armour",
-				"Big Game Hunter", "Contagion", "Meteor Barrage"
+				"Big Game Hunter", "Contagion", "Meteor Barrage", "Freeze!", "Fireball"
 			]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
-			elif skill.get("name", "") in ["Fortify", "Empower", "Mend"]:
+			elif skill.get("name", "") in ["Fortify", "Empower", "Mend", "Protect", "Warrior's Vigour"]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
-			elif skill.get("name", "") in ["Envenom", "Demoralize", "Punish"]:
+			elif skill.get("name", "") in ["Envenom", "Demoralize", "Punish", "Misfortune"]:
 				battle_audio.play("status")
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
@@ -3025,7 +3031,7 @@ func _resolve_warcry(
 		])
 	await _animate_defeated_units()
 	_remove_defeated()
-	UnitSkillsScript.refresh_auras(units)
+	_refresh_auras()
 	return result.message
 
 ## Eligible enemy classes for lane-targeted Warcries. An empty list means any
@@ -3033,6 +3039,8 @@ func _resolve_warcry(
 func _lane_target_kinds(skill_name: String) -> Array:
 	if skill_name == "Demoralize":
 		return ["Duelist", "Strider", "Warden"]
+	if skill_name == "Freeze!":
+		return ["Strider", "Duelist"]
 	return []
 
 func _use_player_power() -> void:
@@ -3075,7 +3083,7 @@ func _enemy_turn() -> void:
 		if unit.side == ENEMY:
 			unit.ready = true
 			unit.repositioned = false
-	_resolve_chants(ENEMY)
+	await _resolve_chants(ENEMY)
 	if round_number > 1:
 		enemy_max_energy = mini(10, enemy_max_energy + 2)
 	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
@@ -3143,7 +3151,7 @@ func _enemy_turn() -> void:
 		if unit.side == PLAYER:
 			unit.ready = true
 			unit.repositioned = false
-	_resolve_chants(PLAYER)
+	await _resolve_chants(PLAYER)
 	input_enabled = true
 	status_message = "Select a card or resolve the board as it stands."
 	_refresh()
@@ -3222,14 +3230,10 @@ func _resolution_preview(side: int) -> String:
 		entries.append("+%d more (see LOG)" % preview.remaining)
 	return "UPCOMING · " + "  |  ".join(entries)
 
+## Battle status and log lines identify units by name only; class and skill
+## brackets made the messages too long to read at a glance.
 func _actor_tag(actor: Dictionary) -> String:
-	var unit_class: String = UnitCatalogScript.display_class(actor.kind)
-	var skill: Dictionary = actor.get("skill", {})
-	if skill.is_empty():
-		return "%s [%s]" % [actor.name, unit_class]
-	return "%s [%s · %s %s]" % [
-		actor.name, unit_class, skill.get("type", "Skill"), skill.get("name", "Unknown")
-	]
+	return actor.name
 
 func _activate_unit(actor: Dictionary) -> void:
 	if actor.kind == "Lifebinder":
@@ -3278,18 +3282,27 @@ func _activate_unit(actor: Dictionary) -> void:
 				target, actor.atk
 			)
 			var damage_dealt: int = damage_result.damage
+			var was_protected: bool = damage_result.get("protected", false)
 			battle_simulator.record("attack", {
 				"actor_id": actor.id,
 				"target_id": target.id,
 				"damage": damage_dealt,
 				"target_hp": target.hp
 			})
-			status_message = "%s hits %s for %d." % [
-				_actor_tag(actor), target.name, damage_dealt
-			]
+			if was_protected:
+				status_message = "%s's attack on %s is blocked by Protect." % [
+					_actor_tag(actor), target.name
+				]
+			else:
+				status_message = "%s hits %s for %d." % [
+					_actor_tag(actor), target.name, damage_dealt
+				]
 			var impact_label := "-%d" % damage_dealt
 			var impact_color := Color("#ff668f")
-			if actor.kind == "Channeler":
+			if was_protected:
+				impact_label = "PROTECTED"
+				impact_color = Color("#71e6f5")
+			elif actor.kind == "Channeler":
 				impact_label += " BLAST"
 				impact_color = Color("#c99cff")
 			elif actor.kind == "Artillerist":
@@ -3306,25 +3319,49 @@ func _activate_unit(actor: Dictionary) -> void:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Taunting Strike locks %s for 2 turns." % target.name
 				battle_audio.play("status")
-				board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
+				if not was_protected:
+					board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
 			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(
 				actor, target, units, battle_simulator.rng.randf()
 			)
 			if not strike_result.message.is_empty():
 				status_message += " " + strike_result.message
 				battle_audio.play("status")
-				var strike_label := (
-					"POISONED" if actor.get("skill", {}).get("name", "") == "Poison Strike"
-					else "IMMOBILISED"
-				)
-				var strike_color := (
-					Color("#8ee36b") if strike_label == "POISONED"
-					else Color("#ffd166")
-				)
-				board.play_unit_effect(target.id, strike_label, strike_color)
-			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(target, actor, units)
+				var strike_name: String = actor.get("skill", {}).get("name", "")
+				var strike_label := "IMMOBILISED"
+				var strike_color := Color("#ffd166")
+				if strike_name == "Poison Strike":
+					strike_label = "POISONED"
+					strike_color = Color("#8ee36b")
+				elif strike_name == "Weakening Strike":
+					strike_label = "-ATK"
+					strike_color = Color("#ff9d66")
+				if not was_protected:
+					board.play_unit_effect(target.id, strike_label, strike_color)
+			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(
+				target, actor, units, battle_simulator.rng.randf()
+			)
 			if not reaction_result.message.is_empty():
 				status_message += " " + reaction_result.message
+				var is_shield_wall: bool = (
+					target.get("skill", {}).get("name", "") == "Shield Wall"
+				)
+				battle_audio.play("status" if is_shield_wall else "hit")
+				for reaction_id in reaction_result.affected:
+					var reaction_target = _unit_by_id(reaction_id)
+					if reaction_target != null:
+						if is_shield_wall:
+							if not was_protected:
+								board.play_unit_effect(
+									reaction_target.id, "PROTECT", Color("#71e6f5")
+								)
+						else:
+							board.play_unit_effect(
+								reaction_target.id, "COUNTER", Color("#ff8b9f")
+							)
+							await board.animate_hit(
+								reaction_target.id, _animation_duration(0.14)
+							)
 			await _animate_defeated_units()
 			_remove_defeated()
 			_refresh()
@@ -3379,9 +3416,12 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 		var blast_cells: Array = BattleRulesScript.blast_cells(target)
 		for other in units:
 			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
-				BattleSimulatorScript.apply_unit_damage(other, splash_damage)
+				var blast_result: Dictionary = BattleSimulatorScript.apply_unit_damage(other, splash_damage)
 				affected_ids.append(other.id)
-				board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
+				if blast_result.get("protected", false):
+					board.play_unit_effect(other.id, "PROTECTED", Color("#71e6f5"))
+				else:
+					board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
 		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
 	elif actor.kind == "Artillerist":
 		var direction := 1 if actor.side == PLAYER else -1
@@ -3391,10 +3431,13 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 				continue
 			var distance: int = (other.col - actor.col) * direction
 			if distance > 0 and distance <= actor.range:
-				BattleSimulatorScript.apply_unit_damage(other, actor.atk)
-				pierced.append(other.name)
+				var pierce_result: Dictionary = BattleSimulatorScript.apply_unit_damage(other, actor.atk)
+				if pierce_result.get("protected", false):
+					board.play_unit_effect(other.id, "PROTECTED", Color("#71e6f5"))
+				else:
+					pierced.append(other.name)
+					board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
 				affected_ids.append(other.id)
-				board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
 		if not pierced.is_empty():
 			status_message += " Piercing Shot also hits %s." % ", ".join(pierced)
 	return affected_ids
@@ -3444,6 +3487,22 @@ func _remove_defeated() -> void:
 	units = units.filter(func(unit): return unit.hp > 0)
 	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
 	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
+	_refresh_auras()
+
+## Recomputes aura buffs and logs every gain and loss so aura swings show up
+## in the combat log and are recorded into replays.
+func _refresh_auras() -> void:
+	var events: Array = []
+	UnitSkillsScript.refresh_auras(units, events)
+	for event in events:
+		var unit = _unit_by_id(event.unit_id)
+		if unit == null:
+			continue
+		var delta: int = event.delta
+		if delta > 0:
+			_log_action("%s gains +%d HP from %s." % [unit.name, delta, event.label])
+		else:
+			_log_action("%s loses %d HP as %s fades." % [unit.name, -delta, event.label])
 
 func _apply_captain_skill(side: int, skill_name: String) -> bool:
 	var captain_hp: int = player_hp if side == PLAYER else enemy_hp
@@ -3513,12 +3572,16 @@ func _resolve_chants(side: int) -> void:
 		if not result.get("message", "").is_empty():
 			status_message = result.message
 			_log_action("[%s CHANT] %s" % ["ALLY" if side == PLAYER else "ENEMY", result.message])
+		var sound: String = result.get("sound", "")
+		if not sound.is_empty():
+			battle_audio.play(sound)
 		for unit_id in result.get("affected", []):
 			var target = _unit_by_id(unit_id)
 			if target != null:
 				board.play_unit_effect(target.id, "CHANT", Color("#ffd166"))
+	await _animate_defeated_units()
 	_remove_defeated()
-	UnitSkillsScript.refresh_auras(units)
+	_refresh_auras()
 
 func _damage_captain(side: int, damage: int) -> int:
 	var state := {

@@ -245,11 +245,125 @@ static func resolve_warcry(
 				result.message = "Meteor Barrage deals %d damage to %d enem%s in lane %d." % [
 					damage, target_count, "y" if target_count == 1 else "ies", lane + 1
 				]
+		"Freeze!":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_enemy_lane(actor, units, ["Strider", "Duelist"])
+			var damage := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 1)
+			var target_count := 0
+			for target in units:
+				if (
+					target.side == actor.side or target.row != lane
+					or target.kind not in ["Strider", "Duelist"]
+				):
+					continue
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				if target.hp > 0:
+					target.immobilized_turns = maxi(
+						target.get("immobilized_turns", 0), turns
+					)
+				result.affected.append(target.id)
+				target_count += 1
+			if target_count > 0:
+				result.message = "Freeze! deals %d damage to %d enem%s in lane %d and Immobilises them for %s." % [
+					damage, target_count, "y" if target_count == 1 else "ies",
+					lane + 1, _turn_label(turns)
+				]
+		"Protect":
+			var target = _ally_by_id(actor, units, target_id)
+			if target == null:
+				target = _lowest_health_ally(actor, units)
+			if target != null:
+				var turns := rank_value(skill, level, 0, 2)
+				target.protect_turns = maxi(target.get("protect_turns", 0), turns)
+				result.message = "Protect grants %s Protect for %s." % [
+					target.name, _turn_label(turns)
+				]
+				result.affected.append(target.id)
+		"Fireball":
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				target = _highest_health_enemy(actor, units)
+			if target != null:
+				var damage := rank_value(skill, level, 0, 1)
+				var splash := rank_value(skill, level, 1, 1)
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				result.affected.append(target.id)
+				var adjacent: Array = []
+				for other in _enemies(actor, units):
+					if other.id == target.id:
+						continue
+					var gap: int = absi(other.row - target.row) + absi(other.col - target.col)
+					if gap != 1:
+						continue
+					BattleSimulatorScript.apply_unit_damage(other, splash)
+					result.affected.append(other.id)
+					adjacent.append(other.name)
+				result.message = "Fireball deals %d damage to %s." % [damage, target.name]
+				if not adjacent.is_empty():
+					result.message += " Adjacent %s take%s %d damage." % [
+						", ".join(adjacent), "s" if adjacent.size() == 1 else "", splash
+					]
+		"Warrior's Vigour":
+			var candidates := _other_allies(actor, units).filter(
+				func(unit): return unit.kind in ["Warden", "Duelist"]
+			)
+			candidates.sort_custom(func(a, b):
+				if a.hp == b.hp:
+					return a.id < b.id
+				return a.hp < b.hp
+			)
+			if not candidates.is_empty():
+				var target = candidates[0]
+				var health := rank_value(skill, level, 0, 2)
+				var attack := rank_value(skill, level, 1, 1)
+				var turns := rank_value(skill, level, 2, 2)
+				target.hp += health
+				target.max_hp += health
+				target.atk += attack
+				_add_effect(target, "Warrior's Vigour", turns, attack, health)
+				result.message = "Warrior's Vigour gives %s +%d HP and +%d ATK for %s." % [
+					target.name, health, attack, _turn_label(turns)
+				]
+				result.affected.append(target.id)
 	return result
 
-static func resolve_chants(_side: int, _units: Array) -> Array:
-	# Timing hook for later Chant units.
-	return []
+static func resolve_chants(side: int, units: Array) -> Array:
+	var results: Array = []
+	for unit in units:
+		if unit.side != side or unit.get("hp", 0) <= 0:
+			continue
+		var skill: Dictionary = unit.get("skill", {})
+		if skill.get("type", "").to_lower() != "chant":
+			continue
+		var level := int(unit.get("level", 1))
+		match skill.get("name", ""):
+			"Sundering Smash":
+				var damage := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				var result := {"message": "", "affected": [], "sound": "mage"}
+				for target in units:
+					if target.side == side or target.row != unit.row or target.hp <= 0:
+						continue
+					BattleSimulatorScript.apply_unit_damage(target, damage)
+					if target.hp > 0:
+						if target.get("vulnerable_turns", 0) > 0:
+							target.vulnerable_stacks = target.get("vulnerable_stacks", 1) + 1
+						else:
+							target.vulnerable_stacks = 1
+						target.vulnerable_turns = maxi(
+							target.get("vulnerable_turns", 0), turns
+						)
+					result.affected.append(target.id)
+				if not result.affected.is_empty():
+					result.message = "Sundering Smash deals %d damage to %d enem%s in lane %d and makes them Vulnerable for %s." % [
+						damage, result.affected.size(),
+						"y" if result.affected.size() == 1 else "ies",
+						unit.row + 1, _turn_label(turns)
+					]
+					results.append(result)
+	return results
 
 static func resolve_start_statuses(side: int, units: Array) -> Array:
 	var results: Array = []
@@ -298,17 +412,93 @@ static func resolve_strike(
 				target.name, _turn_label(turns)
 			]
 			result.affected.append(target.id)
+	elif skill_name == "Weakening Strike":
+		var weaken_chance := rank_value(skill, level, 0, 60) / 100.0
+		var amount := rank_value(skill, level, 1, 1)
+		var turns := rank_value(skill, level, 2, 2)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < weaken_chance and target.hp > 0:
+			target.atk = maxi(0, target.get("atk", 0) - amount)
+			_add_effect(target, "Weakening Strike", turns, -amount, 0)
+			result.message = "Weakening Strike gives %s -%d ATK for %s." % [
+				target.name, amount, _turn_label(turns)
+			]
+			result.affected.append(target.id)
 	return result
 
 static func resolve_reaction(
-	_target: Dictionary, _attacker: Dictionary, _units: Array
+	target: Dictionary, attacker: Dictionary, _units: Array, roll: float = -1.0
 ) -> Dictionary:
-	# Timing hook for later Reaction units.
-	return {"message": "", "affected": []}
+	var result := {"message": "", "affected": []}
+	var skill: Dictionary = target.get("skill", {})
+	if skill.get("type", "").to_lower() != "reaction":
+		return result
+	if target.get("hp", 0) <= 0 or attacker.get("hp", 0) <= 0:
+		return result
+	var level := int(target.get("level", 1))
+	match skill.get("name", ""):
+		"Hopping Mad":
+			var damage := rank_value(skill, level, 0, 3)
+			BattleSimulatorScript.apply_unit_damage(attacker, damage)
+			result.message = "Hopping Mad: %s attacks back for %d damage." % [
+				target.name, damage
+			]
+			result.affected.append(attacker.id)
+		"Shield Wall":
+			var wall_chance := rank_value(skill, level, 0, 40) / 100.0
+			var turns := rank_value(skill, level, 1, 2)
+			var chance_roll := randf() if roll < 0.0 else roll
+			if chance_roll < wall_chance:
+				target.protect_turns = maxi(target.get("protect_turns", 0), turns)
+				result.message = "Shield Wall grants %s Protect for %s." % [
+					target.name, _turn_label(turns)
+				]
+				result.affected.append(target.id)
+	return result
 
-static func refresh_auras(_units: Array) -> void:
-	# Timing hook for later Aura units.
-	pass
+## Recomputes aura buffs from living sources. Each call strips the bonus a
+## unit currently carries (`aura_hp`) and re-applies what surviving aura
+## units grant, so a buff disappears as soon as its source leaves the board.
+## Every change is appended to `events` as {"unit_id", "delta", "label"} so
+## callers can log aura gains and losses.
+static func refresh_auras(units: Array, events: Array = []) -> void:
+	var desired := {}
+	var desired_labels := {}
+	for source in units:
+		if source.get("hp", 1) <= 0:
+			continue
+		var skill: Dictionary = source.get("skill", {})
+		if skill.get("type", "").to_lower() != "aura":
+			continue
+		var level := int(source.get("level", 1))
+		match skill.get("name", ""):
+			"Moonlight":
+				var amount := rank_value(skill, level, 0, 4)
+				for unit in units:
+					if unit.side == source.side and unit.id != source.id:
+						desired[unit.id] = int(desired.get(unit.id, 0)) + amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Moonlight" not in labels:
+							labels.append("Moonlight")
+						desired_labels[unit.id] = labels
+	for unit in units:
+		if unit.get("hp", 0) <= 0:
+			continue
+		var applied := int(unit.get("aura_hp", 0))
+		var want := int(desired.get(unit.id, 0))
+		if applied == want:
+			continue
+		var label := " + ".join(desired_labels.get(unit.id, []))
+		if label.is_empty():
+			label = unit.get("aura_label", "the aura")
+		events.append({"unit_id": unit.id, "delta": want - applied, "label": label})
+		unit.max_hp += want - applied
+		unit.hp = clampi(unit.hp + want - applied, 1, unit.max_hp)
+		unit.aura_hp = want
+		if want > 0:
+			unit.aura_label = label
+		else:
+			unit.erase("aura_label")
 
 static func expire_statuses(units: Array, side: int) -> void:
 	for unit in units:
@@ -318,6 +508,8 @@ static func expire_statuses(units: Array, side: int) -> void:
 			unit.vulnerable_turns -= 1
 			if unit.vulnerable_turns <= 0:
 				unit.vulnerable_stacks = 0
+		if unit.side == side and unit.get("protect_turns", 0) > 0:
+			unit.protect_turns -= 1
 
 static func timing_tooltip(skill_type: String) -> String:
 	match skill_type.to_lower():
