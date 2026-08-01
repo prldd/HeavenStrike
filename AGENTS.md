@@ -53,7 +53,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
-| `unit_catalog.gd` | Authoritative unit roster: 113 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative unit roster: 166 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
@@ -159,7 +159,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (113 units, 12/16/33/32/20 star distribution, 53 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (166 units, 14/16/36/45/42/13 six-bucket star distribution, 80 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
 
 ## Save files and persistence
 
@@ -220,7 +220,11 @@ placeholders), and `values` (five per-level rank rows). Drop sources are split
 into `storyQuests`, `events`, `raids`, `arenas`, and `gatcha` — **only
 `storyQuests` matter for campaign rewards** (`Act N Mission M - Title`, where M
 is the global 1–62 mission number used in `ADDITIONAL_DROPS`). Units with zero
-story quests are starting-Reserve cards instead of reward cards.
+story quests are starting-Reserve cards instead of reward cards — with one
+documented exception: the 53-unit Regen-skills batch (icons 119–171) was added
+to `REWARD_UNITS` even though only Rescue Corps / Rescue Paramedic have story
+drops, by explicit owner decision; its units are reward-pool-only, not
+starting Reserves.
 
 ### Art assets
 
@@ -262,6 +266,18 @@ story quests are starting-Reserve cards instead of reward cards.
    disappears when its source dies). The `target_id = -1` /
    `target_lane = -1` fallbacks are what the enemy AI uses — `BattleAI` itself
    only scores by class and usually needs no per-skill changes.
+   `resolve_chants(side, units, phase, ...)` runs twice per side turn:
+   `phase = "start"` for start-of-turn chants (and the Regen/Poison tick lives
+   in `resolve_start_statuses`), `phase = "end"` for skills in
+   `END_TURN_CHANTS` (Impairing Joust, Galatine's Ground) and the Sun Festival
+   buff countdown. Status mechanics ported from the reference: Regen (heal at
+   side-turn start, mirrors Poison), Stun (`stun_turns` blocks activation,
+   traversal, and repositioning — see `BattleRules.is_stunned` and the
+   `activation_order` filter), Haste (+1 move in `traversal_cells`), and doom
+   (`doom_turns` countdown that sets HP to 0 when it expires, ticking on the
+   opposing side's expiry pass). Knockback (Caber Toss, Tag-Team) shifts the
+   target one cell away from the attacker along its column, stopping at the
+   board edge or an occupied cell, and is reported via `result.moved`.
 3. If the player chooses a target, wire `main.gd`: ally-target follows the
    `pending_empower_actor_id` pattern, enemy-target the
    `pending_envenom_actor_id` pattern, and lane-target the

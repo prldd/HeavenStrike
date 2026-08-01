@@ -59,7 +59,9 @@ const ADDITIONAL_DROPS := {
 	"Raging Dragon": [36],
 	"Blazing Dragon": [36],
 	"Royal Yeoman": [16, 33, 55, 58],
-	"Royal Beefeater": [33, 55, 58]
+	"Royal Beefeater": [33, 55, 58],
+	"Rescue Corps": [42, 54],
+	"Rescue Paramedic": [42, 54]
 }
 
 const QUESTS := [

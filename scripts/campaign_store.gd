@@ -27,7 +27,23 @@ const REWARD_UNITS := [
 	"Devout Mage", "Devout Warlock",
 	"Commune Defender", "Commune Captain",
 	"LDF Constable", "LDF Sergeant", "Joe Wonder", "Pompous Joe Wonder",
-	"Raging Dragon", "Blazing Dragon", "Royal Yeoman", "Royal Beefeater"
+	"Raging Dragon", "Blazing Dragon", "Royal Yeoman", "Royal Beefeater",
+	"Pub Barman", "Pub Landlord", "The Archaeologist", "The Castaway",
+	"The Botanist", "The Ecologist", "The Biologist",
+	"Rescue Corps", "Rescue Paramedic", "Fabulous Bors", "Sir Bors",
+	"Selina the Stylist", "Selina Twinblade",
+	"The Witch Doctor", "The Earth Whisperer",
+	"Hamish Highlander", "Hamish Lochmaster", "The Rook", "Sterling Knight",
+	"Deep Sea Barney", "Bulkhead Barney", "Crewman Basilic", "Captain Basilic",
+	"Oro the Pilgrim", "Oro the Enlightened", "Cara Pace", "Clawing Cara",
+	"Clair", "Awoken Clair", "White Mage", "White Wizard",
+	"Steph Lopod", "Steph the Tentacled", "Ant Lantis", "Swelling Ant",
+	"Ki", "Hammering Ki", "Gawain the Just", "Sir Gawain",
+	"Sakura", "Blossom Sakura", "Inti Chihuan", "Shining Inti",
+	"Van Hohenheim", "The Sorcerer's Stone", "José", "José Decomposé",
+	"Furia Rojo", "Campeon Rojo",
+	"Sakuya (Fantail Pigeon)", "Sakuya Le Bel Shirogane",
+	"Yuuya (Fantail Pigeon)", "Yuuya Sakazaki"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

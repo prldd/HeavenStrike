@@ -728,6 +728,14 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 		})
 	if unit.get("protect_turns", 0) > 0:
 		badges.append({"label": "S%d" % unit.protect_turns, "color": Color("#71e6f5")})
+	if unit.get("regen_turns", 0) > 0:
+		badges.append({"label": "R%d" % unit.regen_turns, "color": Color("#8ee36b")})
+	if unit.get("stun_turns", 0) > 0:
+		badges.append({"label": "ST", "color": Color("#ffd166")})
+	if unit.get("haste_turns", 0) > 0:
+		badges.append({"label": "H", "color": Color("#f2c44f")})
+	if unit.get("doom_turns", 0) > 0:
+		badges.append({"label": "D%d" % unit.doom_turns, "color": Color("#ff668f")})
 	if unit.get("fury_stacks", 0) > 0:
 		badges.append({"label": "F%d" % unit.fury_stacks, "color": Color("#ffd166")})
 	for effect in unit.get("effects", []):

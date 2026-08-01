@@ -149,6 +149,14 @@ static func effect_summary(unit: Dictionary) -> String:
 				maxi(1, unit.get("vulnerable_stacks", 1)), unit.vulnerable_turns
 			]
 		)
+	if unit.get("regen_turns", 0) > 0:
+		labels.append("Regen (%d turns)" % unit.regen_turns)
+	if unit.get("stun_turns", 0) > 0:
+		labels.append("Stunned (%d turns)" % unit.stun_turns)
+	if unit.get("haste_turns", 0) > 0:
+		labels.append("Haste (%d turns)" % unit.haste_turns)
+	if unit.get("doom_turns", 0) > 0:
+		labels.append("Doom (%d turns)" % unit.doom_turns)
 	return ", ".join(labels)
 
 static func _add_attack_effect(unit: Dictionary, effect_name: String, amount: int, turns: int) -> void:

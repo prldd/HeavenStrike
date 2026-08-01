@@ -20,7 +20,8 @@ func reset(next_seed: int) -> void:
 
 func activation_order(side: int, units: Array) -> Array:
 	var ordered := units.filter(func(unit):
-		return unit.side == side and unit.get("ready", false)
+		return unit.side == side and unit.get("ready", false) \
+			and unit.get("stun_turns", 0) <= 0
 	)
 	ordered.sort_custom(func(a, b):
 		if a.col == b.col:

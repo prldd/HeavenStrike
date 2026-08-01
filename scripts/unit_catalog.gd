@@ -106,7 +106,60 @@ const ICON_ART_IDS := {
 	115: 105, # Raging Dragon
 	116: 106, # Blazing Dragon
 	117: 87, # Royal Yeoman
-	118: 88 # Royal Beefeater
+	118: 88, # Royal Beefeater
+	119: 61, # Pub Barman
+	120: 62, # Pub Landlord
+	121: 521, # The Archaeologist
+	122: 522, # The Castaway
+	123: 71, # The Botanist
+	124: 72, # The Ecologist
+	125: 605, # The Biologist
+	126: 95, # Rescue Corps
+	127: 96, # Rescue Paramedic
+	128: 715, # Fabulous Bors
+	129: 716, # Sir Bors
+	130: 137, # Selina the Stylist
+	131: 138, # Selina Twinblade
+	132: 203, # The Witch Doctor
+	133: 204, # The Earth Whisperer
+	134: 231, # Hamish Highlander
+	135: 232, # Hamish Lochmaster
+	136: 241, # The Rook
+	137: 242, # Sterling Knight
+	138: 253, # Deep Sea Barney
+	139: 254, # Bulkhead Barney
+	140: 259, # Crewman Basilic
+	141: 260, # Captain Basilic
+	142: 275, # Oro the Pilgrim
+	143: 276, # Oro the Enlightened
+	144: 363, # Cara Pace
+	145: 364, # Clawing Cara
+	146: 429, # Clair
+	147: 430, # Awoken Clair
+	148: 435, # White Mage
+	149: 436, # White Wizard
+	150: 462, # Steph Lopod
+	151: 463, # Steph the Tentacled
+	152: 643, # Ant Lantis
+	153: 644, # Swelling Ant
+	154: 651, # Ki
+	155: 652, # Hammering Ki
+	156: 707, # Gawain the Just
+	157: 708, # Sir Gawain
+	158: 791, # Sakura
+	159: 792, # Blossom Sakura
+	160: 825, # Inti Chihuan
+	161: 826, # Shining Inti
+	162: 865, # Van Hohenheim
+	163: 866, # The Sorcerer's Stone
+	164: 1199, # José
+	165: 1200, # José Decomposé
+	166: 947, # Furia Rojo
+	167: 948, # Campeon Rojo
+	168: 1025, # Sakuya (Fantail Pigeon)
+	169: 1026, # Sakuya Le Bel Shirogane
+	170: 1027, # Yuuya (Fantail Pigeon)
+	171: 1028 # Yuuya Sakazaki
 }
 
 static var _units: Array[UnitData] = []
@@ -141,7 +194,30 @@ const RANK_VALUES := {
 	"Weakening Strike": [["60% chance", "1 ATK", "2 turns"], ["70% chance", "2 ATK", "2 turns"], ["80% chance", "3 ATK", "2 turns"], ["90% chance", "3 ATK", "3 turns"], ["100% chance", "4 ATK", "3 turns"]],
 	"Protect": [["2 turns"], ["3 turns"], ["4 turns"], ["5 turns"], ["6 turns"]],
 	"Fireball": [["1 damage", "1 damage"], ["2 damage", "1 damage"], ["2 damage", "2 damage"], ["3 damage", "2 damage"], ["3 damage", "3 damage"]],
-	"Warrior's Vigour": [["2 HP", "1 ATK", "2 turns"], ["2 HP", "1 ATK", "3 turns"], ["2 HP", "2 ATK", "3 turns"], ["2 HP", "2 ATK", "4 turns"], ["3 HP", "2 ATK", "4 turns"]]
+	"Warrior's Vigour": [["2 HP", "1 ATK", "2 turns"], ["2 HP", "1 ATK", "3 turns"], ["2 HP", "2 ATK", "3 turns"], ["2 HP", "2 ATK", "4 turns"], ["3 HP", "2 ATK", "4 turns"]],
+	"Grit": [["40% chance", "2 turns"], ["42% chance", "2 turns"], ["45% chance", "2 turns"], ["47% chance", "3 turns"], ["50% chance", "3 turns"]],
+	"Prune": [["2 turns"], ["3 turns"], ["4 turns"], ["5 turns"], ["6 turns"]],
+	"Medic!": [["2 turns"], ["3 turns"], ["4 turns"], ["5 turns"], ["6 turns"]],
+	"New Look": [["2 turns"], ["3 turns"], ["4 turns"], ["5 turns"], ["6 turns"]],
+	"Lifestream": [["2 turns", "1 random"], ["3 turns", "2 random"], ["4 turns", "3 random"], ["5 turns", "3 random"], ["6 turns", "4 random"]],
+	"Caber Toss": [["2", "30% chance"], ["2", "35% chance"], ["2", "40% chance"], ["3", "45% chance"], ["3", "50% chance"]],
+	"Impairing Joust": [["1 turn", "30% chance", "3 turns"], ["1 turn", "35% chance", "3 turns"], ["2 turns", "40% chance", "3 turns"], ["2 turns", "45% chance", "3 turns"], ["2 turns", "50% chance", "3 turns"]],
+	"Ambient Pressure": [["60% chance", "1 ATK"], ["70% chance", "1 ATK"], ["80% chance", "1 ATK"], ["90% chance", "2 ATK"], ["100% chance", "2 ATK"]],
+	"Cannon Barrage": [["2 damage", "40% chance"], ["3 damage", "55% chance"], ["3 damage", "70% chance"], ["4 damage", "85% chance"], ["4 damage", "100% chance"]],
+	"Guard": [["40% chance"], ["55% chance"], ["70% chance"], ["85% chance"], ["100% chance"]],
+	"Pincer Drain": [["1 ATK", "30% chance"], ["2 ATK", "32% chance"], ["2 ATK", "35% chance"], ["3 ATK", "37% chance"], ["3 ATK", "40% chance"]],
+	"Slash Speed": [["2", "1 random", "40% chance"], ["2", "2 random", "60% chance"], ["3", "2 random", "60% chance"], ["3", "2 random", "80% chance"], ["4", "2 random", "100% chance"]],
+	"Mighty Guard": [["1"], ["2"], ["3"], ["4"], ["5"]],
+	"Ocean's Reclaim": [["1 random", "2 turns"], ["1 random", "3 turns"], ["2 random", "4 turns"], ["2 random", "5 turns"], ["2 random", "6 turns"]],
+	"Tide Turn": [["1 turns", "20% chance"], ["1 turns", "40% chance"], ["2 turns", "60% chance"], ["2 turns", "80% chance"], ["2 turns", "100% chance"]],
+	"Yield!": [["2", "30% chance"], ["2", "35% chance"], ["3", "40% chance"], ["3", "45% chance"], ["4", "50% chance"]],
+	"Galatine's Ground": [["1 turns", "30% chance"], ["1 turns", "35% chance"], ["2 turns", "40% chance"], ["2 turns", "45% chance"], ["2 turns", "50% chance"]],
+	"Blossom's Bloom": [["1 ATK"], ["2 ATK"], ["3 ATK"], ["4 ATK"], ["5 ATK"]],
+	"Sun Festival": [["2", "1 ATK", "2 HP"], ["3", "2 ATK", "3 HP"], ["4", "2 ATK", "4 HP"], ["4", "3 ATK", "4 HP"], ["4", "3 ATK", "5 HP"]],
+	"Trisha's Prospect": [["2"], ["3"], ["4"], ["5"], ["6"]],
+	"Tag-Team": [["20% chance"], ["40% chance"], ["60% chance"], ["80% chance"], ["100% chance"]],
+	"Heartful Brother": [["1 ATK", "2", "2"], ["2 ATK", "2", "2"], ["2 ATK", "3", "3"], ["3 ATK", "3", "3"], ["3 ATK", "4", "4"]],
+	"Hurtful Brother": [["1 HP", "2", "2"], ["1 HP", "3", "3"], ["2 HP", "3", "3"], ["2 HP", "4", "4"], ["3 HP", "4", "4"]]
 }
 
 static func _skill(name: String, type: String, chance: float, text: String) -> SkillData:
@@ -298,7 +374,60 @@ static func _build() -> void:
 		_unit('Raging Dragon', 115, 3, 'Channeler', 4, 5, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Fireball', 'Warcry', -1.0, 'Deal {0} to target enemy unit. Adjacent enemy units take {1}.')),
 		_unit('Blazing Dragon', 116, 4, 'Channeler', 4, 6, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Raging Dragon', _skill('Fireball', 'Warcry', -1.0, 'Deal {0} to target enemy unit. Adjacent enemy units take {1}.')),
 		_unit('Royal Yeoman', 117, 3, 'Duelist', 2, 2, 4, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill("Warrior's Vigour", 'Warcry', -1.0, 'Other allied Defender or Fighter with the lowest HP gains {0} and {1} for {2}.')),
-		_unit('Royal Beefeater', 118, 4, 'Duelist', 2, 3, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Royal Yeoman', _skill("Warrior's Vigour", 'Warcry', -1.0, 'Other allied Defender or Fighter with the lowest HP gains {0} and {1} for {2}.'))
+		_unit('Royal Beefeater', 118, 4, 'Duelist', 2, 3, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Royal Yeoman', _skill("Warrior's Vigour", 'Warcry', -1.0, 'Other allied Defender or Fighter with the lowest HP gains {0} and {1} for {2}.')),
+		_unit('Pub Barman', 119, 3, 'Warden', 2, 2, 7, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Grit', 'Reaction', -1.0, '{0} to gain Regen for {1} after being attacked.')),
+		_unit('Pub Landlord', 120, 4, 'Warden', 2, 3, 9, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Pub Barman', _skill('Grit', 'Reaction', -1.0, '{0} to gain Regen for {1} after being attacked.')),
+		_unit('The Archaeologist', 121, 4, 'Duelist', 2, 4, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Grit', 'Reaction', -1.0, '{0} to gain Regen for {1} after being attacked.')),
+		_unit('The Castaway', 122, 5, 'Duelist', 2, 5, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'The Archaeologist', _skill('Grit', 'Reaction', -1.0, '{0} to gain Regen for {1} after being attacked.')),
+		_unit('The Botanist', 123, 3, 'Lifebinder', 2, 2, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Prune', 'Warcry', -1.0, 'Immobilise is removed from target Priest or Mage. Target unit also gains Regen for {0}.')),
+		_unit('The Ecologist', 124, 4, 'Lifebinder', 2, 3, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'The Botanist', _skill('Prune', 'Warcry', -1.0, 'Immobilise is removed from target Priest or Mage. Target unit also gains Regen for {0}.')),
+		_unit('The Biologist', 125, 5, 'Lifebinder', 2, 4, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'The Ecologist', _skill('Prune', 'Warcry', -1.0, 'Immobilise is removed from target Priest or Mage. Target unit also gains Regen for {0}.')),
+		_unit('Rescue Corps', 126, 3, 'Lifebinder', 2, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Medic!', 'Warcry', -1.0, 'Immobilise is removed from target Fighter or Defender. Target unit also gains Regen for {0}.')),
+		_unit('Rescue Paramedic', 127, 4, 'Lifebinder', 2, 4, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Rescue Corps', _skill('Medic!', 'Warcry', -1.0, 'Immobilise is removed from target Fighter or Defender. Target unit also gains Regen for {0}.')),
+		_unit('Fabulous Bors', 128, 4, 'Warden', 2, 2, 6, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Medic!', 'Warcry', -1.0, 'Immobilise is removed from target Fighter or Defender. Target unit also gains Regen for {0}.')),
+		_unit('Sir Bors', 129, 5, 'Warden', 2, 3, 7, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Fabulous Bors', _skill('Medic!', 'Warcry', -1.0, 'Immobilise is removed from target Fighter or Defender. Target unit also gains Regen for {0}.')),
+		_unit('Selina the Stylist', 130, 4, 'Strider', 2, 2, 4, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('New Look', 'Warcry', -1.0, 'Immobilise is removed from target Scout or Gunner. Target unit gains Regen for {0}.')),
+		_unit('Selina Twinblade', 131, 5, 'Strider', 2, 2, 5, 3, 1, 'Double Strike — Attacks twice each action.', 'Selina the Stylist', _skill('New Look', 'Warcry', -1.0, 'Immobilise is removed from target Scout or Gunner. Target unit gains Regen for {0}.')),
+		_unit('The Witch Doctor', 132, 5, 'Lifebinder', 2, 2, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Lifestream', 'Chant', -1.0, 'At the start of your turn, grant all allied units Regen for {0} and {1} allied units with Immobilise have it removed.')),
+		_unit('The Earth Whisperer', 133, 6, 'Lifebinder', 2, 2, 8, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'The Witch Doctor', _skill('Lifestream', 'Chant', -1.0, 'At the start of your turn, grant all allied units Regen for {0} and {1} allied units with Immobilise have it removed.')),
+		_unit('Hamish Highlander', 134, 4, 'Warden', 2, 1, 7, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Caber Toss', 'Strike', -1.0, 'On attack, Knocks Back enemy unit by {0} spaces. Additional {1} to gain Regen for 1 turn.')),
+		_unit('Hamish Lochmaster', 135, 5, 'Warden', 2, 1, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Hamish Highlander', _skill('Caber Toss', 'Strike', -1.0, 'On attack, Knocks Back enemy unit by {0} spaces. Additional {1} to gain Regen for 1 turn.')),
+		_unit('The Rook', 136, 5, 'Warden', 2, 2, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Impairing Joust', 'Chant', -1.0, 'At the end of your turn, all enemy Taunted units become Immobilised for {0}. {1} for this unit to gain Regen for {2}.')),
+		_unit('Sterling Knight', 137, 6, 'Warden', 2, 3, 9, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'The Rook', _skill('Impairing Joust', 'Chant', -1.0, 'At the end of your turn, all enemy Taunted units become Immobilised for {0}. {1} for this unit to gain Regen for {2}.')),
+		_unit('Deep Sea Barney', 138, 4, 'Warden', 2, 0, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Ambient Pressure', 'Reaction', -1.0, 'After attacked, {0} to gain {1}. This unit then has {0} to gain Regen for 1 player turn.')),
+		_unit('Bulkhead Barney', 139, 5, 'Warden', 2, 0, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Deep Sea Barney', _skill('Ambient Pressure', 'Reaction', -1.0, 'After attacked, {0} to gain {1}. This unit then has {0} to gain Regen for 1 player turn.')),
+		_unit('Crewman Basilic', 140, 4, 'Artillerist', 4, 4, 9, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Cannon Barrage', 'Strike', -1.0, "After attack, deals {0} to all enemy units not in this unit's lane. {1} to also grant this unit Regen for 2 player turns.")),
+		_unit('Captain Basilic', 141, 5, 'Artillerist', 4, 5, 11, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Crewman Basilic', _skill('Cannon Barrage', 'Strike', -1.0, "After attack, deals {0} to all enemy units not in this unit's lane. {1} to also grant this unit Regen for 2 player turns.")),
+		_unit('Oro the Pilgrim', 142, 5, 'Lifebinder', 2, 1, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Guard', 'Warcry', -1.0, 'All allied units gain Protect for 3 enemy turns. {0} to also grant them Regen for 2 player turns.')),
+		_unit('Oro the Enlightened', 143, 6, 'Lifebinder', 2, 2, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Oro the Pilgrim', _skill('Guard', 'Warcry', -1.0, 'All allied units gain Protect for 3 enemy turns. {0} to also grant them Regen for 2 player turns.')),
+		_unit('Cara Pace', 144, 4, 'Strider', 2, 0, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Pincer Drain', 'Strike', -1.0, 'On every Attack to an Immobilised Enemy Unit, gains {0}. {1} to gain Regen for 1 turn.')),
+		_unit('Clawing Cara', 145, 5, 'Strider', 2, 0, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Cara Pace', _skill('Pincer Drain', 'Strike', -1.0, 'On every Attack to an Immobilised Enemy Unit, gains {0}. {1} to gain Regen for 1 turn.')),
+		_unit('Clair', 146, 5, 'Duelist', 2, 4, 5, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Slash Speed', 'Strike', -1.0, 'After attack, Knocks Back enemy {0} spaces and {1} other enemies with highest ATK by same number of spaces. {2} gains Regen for 1 player turn.')),
+		_unit('Awoken Clair', 147, 6, 'Duelist', 2, 6, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Clair', _skill('Slash Speed', 'Strike', -1.0, 'After attack, Knocks Back enemy {0} spaces and {1} other enemies with highest ATK by same number of spaces. {2} gains Regen for 1 player turn.')),
+		_unit('White Mage', 148, 5, 'Lifebinder', 3, 2, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Mighty Guard', 'Chant', -1.0, 'For {0} player turns all allied units gain Protect and Regen for 2 player turns. After {0} enemy turns, this unit is Defeated.')),
+		_unit('White Wizard', 149, 6, 'Lifebinder', 3, 3, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'White Mage', _skill('Mighty Guard', 'Chant', -1.0, 'For {0} player turns all allied units gain Protect and Regen for 2 player turns. After {0} enemy turns, this unit is Defeated.')),
+		_unit('Steph Lopod', 150, 5, 'Channeler', 2, 3, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill("Ocean's Reclaim", 'Chant', -1.0, 'At the start of every turn, removes Immobilise and Stun from {0} other allied units and awards Regen for {1}.')),
+		_unit('Steph the Tentacled', 151, 6, 'Channeler', 2, 5, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Steph Lopod', _skill("Ocean's Reclaim", 'Chant', -1.0, 'At the start of every turn, removes Immobilise and Stun from {0} other allied units and awards Regen for {1}.')),
+		_unit('Ant Lantis', 152, 4, 'Warden', 2, 1, 6, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Tide Turn', 'Reaction', -1.0, 'Before attacked this unit will Taunt the attacker for {0}. {1} to gain Regen for 1 turn.')),
+		_unit('Swelling Ant', 153, 5, 'Warden', 2, 2, 7, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Ant Lantis', _skill('Tide Turn', 'Reaction', -1.0, 'Before attacked this unit will Taunt the attacker for {0}. {1} to gain Regen for 1 turn.')),
+		_unit('Ki', 154, 4, 'Warden', 2, 2, 7, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Yield!', 'Reaction', -1.0, 'After attacked, attacker is Knocked Back {0} spaces and Immobilised for 2 enemy turns. {1} to gain Regen for 1 player turn.')),
+		_unit('Hammering Ki', 155, 5, 'Warden', 2, 3, 9, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Ki', _skill('Yield!', 'Reaction', -1.0, 'After attacked, attacker is Knocked Back {0} spaces and Immobilised for 2 enemy turns. {1} to gain Regen for 1 player turn.')),
+		_unit('Gawain the Just', 156, 5, 'Duelist', 2, 2, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill("Galatine's Ground", 'Chant', -1.0, 'At the end of your turn, all enemy Immobilised units become Stunned for {0}. {1} for this unit to gain Regen for 3 turns.')),
+		_unit('Sir Gawain', 157, 6, 'Duelist', 2, 3, 7, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Gawain the Just', _skill("Galatine's Ground", 'Chant', -1.0, 'At the end of your turn, all enemy Immobilised units become Stunned for {0}. {1} for this unit to gain Regen for 3 turns.')),
+		_unit('Sakura', 158, 5, 'Channeler', 3, 2, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill("Blossom's Bloom", 'Chant', -1.0, 'At the start of the player turn, other allied units with Regen gain {0} for 1 player turn.')),
+		_unit('Blossom Sakura', 159, 6, 'Channeler', 3, 3, 8, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Sakura', _skill("Blossom's Bloom", 'Chant', -1.0, 'At the start of the player turn, other allied units with Regen gain {0} for 1 player turn.')),
+		_unit('Inti Chihuan', 160, 5, 'Lifebinder', 2, 1, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Sun Festival', 'Warcry', -1.0, 'At the end of {0} player turns, all allies with Regen gain {1} and Haste. All allies restore {2}.')),
+		_unit('Shining Inti', 161, 6, 'Lifebinder', 2, 2, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Inti Chihuan', _skill('Sun Festival', 'Warcry', -1.0, 'At the end of {0} player turns, all allies with Regen gain {1} and Haste. All allies restore {2}.')),
+		_unit('Van Hohenheim', 162, 5, 'Lifebinder', 2, 1, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill("Trisha's Prospect", 'Strike', -1.0, 'After attacking an enemy with Protect, removes Protect from all enemies and gives it to all allies for {0} enemy turns. All allies gain Regen for 2 player turns.')),
+		_unit("The Sorcerer's Stone", 163, 6, 'Lifebinder', 2, 2, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Van Hohenheim', _skill("Trisha's Prospect", 'Strike', -1.0, 'After attacking an enemy with Protect, removes Protect from all enemies and gives it to all allies for {0} enemy turns. All allies gain Regen for 2 player turns.')),
+		_unit('José', 164, 5, 'Duelist', 2, 2, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill("Trisha's Prospect", 'Strike', -1.0, 'After attacking an enemy with Protect, removes Protect from all enemies and gives it to all allies for {0} enemy turns. All allies gain Regen for 2 player turns.')),
+		_unit('José Decomposé', 165, 6, 'Duelist', 2, 3, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'José', _skill("Trisha's Prospect", 'Strike', -1.0, 'After attacking an enemy with Protect, removes Protect from all enemies and gives it to all allies for {0} enemy turns. All allies gain Regen for 2 player turns.')),
+		_unit('Furia Rojo', 166, 4, 'Warden', 2, 2, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Tag-Team', 'Reaction', -1.0, 'After an allied Tag-Team unit is attacked, target other allied unit gains 1 ATK and this unit has {0} to gain Regen for 1 player turn.')),
+		_unit('Campeon Rojo', 167, 5, 'Warden', 2, 2, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Furia Rojo', _skill('Tag-Team', 'Reaction', -1.0, 'After an allied Tag-Team unit is attacked, target other allied unit gains 1 ATK and this unit has {0} to gain Regen for 1 player turn.')),
+		_unit('Sakuya (Fantail Pigeon)', 168, 1, 'Channeler', 2, 1, 1, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', null),
+		_unit('Sakuya Le Bel Shirogane', 169, 6, 'Channeler', 2, 4, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Sakuya (Fantail Pigeon)', _skill('Heartful Brother', 'Strike', -1.0, 'After attack all enemies lose {0} for {1} enemy turns, and if Yuuya is on the board, also become Vulnerable for {2} player turns.')),
+		_unit('Yuuya (Fantail Pigeon)', 170, 1, 'Artillerist', 2, 1, 1, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', null),
+		_unit('Yuuya Sakazaki', 171, 6, 'Artillerist', 2, 3, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Yuuya (Fantail Pigeon)', _skill('Hurtful Brother', 'Strike', -1.0, 'After attack all allies gain {0} for {1} player turns, and if Sakuya is on the board, also gain Regen for {2} player turns.'))
 	]
 
 static func all_units() -> Array[UnitData]:

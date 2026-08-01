@@ -2682,8 +2682,15 @@ func _refresh() -> void:
 		selected = player_hand[selected_hand_index]
 	var targetable_ids: Array = []
 	if pending_empower_actor_id >= 0:
+		var pending_actor = _unit_by_id(pending_empower_actor_id)
+		var ally_kinds: Array = _ally_target_kinds(
+			pending_actor.get("skill", {}).get("name", "") if pending_actor != null else ""
+		)
 		targetable_ids = units.filter(
-			func(unit): return unit.side == PLAYER and unit.id != pending_empower_actor_id
+			func(unit): return (
+				unit.side == PLAYER and unit.id != pending_empower_actor_id
+				and (ally_kinds.is_empty() or unit.kind in ally_kinds)
+			)
 		).map(func(unit): return unit.id)
 	elif pending_envenom_actor_id >= 0:
 		targetable_ids = units.filter(
@@ -2810,9 +2817,13 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 	var clicked = _unit_at(row, col)
 	if pending_empower_actor_id >= 0:
 		var actor = _unit_by_id(pending_empower_actor_id)
+		var ally_kinds: Array = _ally_target_kinds(
+			actor.get("skill", {}).get("name", "") if actor != null else ""
+		)
 		if (
 			actor != null and clicked != null
 			and clicked.side == PLAYER and clicked.id != actor.id
+			and (ally_kinds.is_empty() or clicked.kind in ally_kinds)
 		):
 			pending_empower_actor_id = -1
 			status_message = await _resolve_warcry(actor, clicked.id)
@@ -2964,6 +2975,11 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"vulnerable_turns": 0,
 		"vulnerable_stacks": 0,
 		"protect_turns": 0,
+		"regen_turns": 0,
+		"stun_turns": 0,
+		"haste_turns": 0,
+		"doom_turns": 0,
+		"festival_turns": 0,
 		"fury_stacks": 0,
 		"effects": []
 	}
@@ -2976,11 +2992,16 @@ func _resolve_warcry(
 	actor: Dictionary, target_id: int = -1, target_lane: int = -1
 ) -> String:
 	var skill: Dictionary = actor.get("skill", {})
+	var ally_kinds: Array = _ally_target_kinds(skill.get("name", ""))
 	var has_other_ally := units.any(
-		func(unit): return unit.side == PLAYER and unit.id != actor.id
+		func(unit): return (
+			unit.side == PLAYER and unit.id != actor.id
+			and (ally_kinds.is_empty() or unit.kind in ally_kinds)
+		)
 	)
 	if (
-		actor.side == PLAYER and skill.get("name", "") in ["Empower", "Protect"]
+		actor.side == PLAYER
+		and skill.get("name", "") in ["Empower", "Protect", "Prune", "New Look", "Medic!"]
 		and target_id < 0
 		and has_other_ally
 	):
@@ -3020,7 +3041,10 @@ func _resolve_warcry(
 			]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
-			elif skill.get("name", "") in ["Fortify", "Empower", "Mend", "Protect", "Warrior's Vigour"]:
+			elif skill.get("name", "") in [
+				"Fortify", "Empower", "Mend", "Protect", "Warrior's Vigour",
+				"Prune", "New Look", "Medic!", "Guard", "Sun Festival"
+			]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
 			elif skill.get("name", "") in ["Envenom", "Demoralize", "Punish", "Misfortune"]:
@@ -3033,6 +3057,18 @@ func _resolve_warcry(
 	_remove_defeated()
 	_refresh_auras()
 	return result.message
+
+## Eligible allied classes for unit-targeted Warcries. An empty list means any
+## other allied unit is a valid target.
+func _ally_target_kinds(skill_name: String) -> Array:
+	match skill_name:
+		"Prune":
+			return ["Lifebinder", "Channeler"]
+		"New Look":
+			return ["Strider", "Artillerist"]
+		"Medic!":
+			return ["Duelist", "Warden"]
+	return []
 
 ## Eligible enemy classes for lane-targeted Warcries. An empty list means any
 ## enemy unit makes its lane a valid target.
@@ -3072,6 +3108,7 @@ func _end_player_turn() -> void:
 	status_message = "Your units advance."
 	_refresh()
 	await _resolve_side(PLAYER)
+	await _resolve_chants(PLAYER, "end")
 	_expire_side_effects(PLAYER)
 	if _check_game_over():
 		return
@@ -3139,6 +3176,7 @@ func _enemy_turn() -> void:
 	status_message = "Enemy units advance."
 	_refresh()
 	await _resolve_side(ENEMY)
+	await _resolve_chants(ENEMY, "end")
 	_expire_side_effects(ENEMY)
 	if _check_game_over():
 		return
@@ -3330,38 +3368,76 @@ func _activate_unit(actor: Dictionary) -> void:
 				var strike_name: String = actor.get("skill", {}).get("name", "")
 				var strike_label := "IMMOBILISED"
 				var strike_color := Color("#ffd166")
-				if strike_name == "Poison Strike":
-					strike_label = "POISONED"
-					strike_color = Color("#8ee36b")
-				elif strike_name == "Weakening Strike":
-					strike_label = "-ATK"
-					strike_color = Color("#ff9d66")
+				match strike_name:
+					"Poison Strike":
+						strike_label = "POISONED"
+						strike_color = Color("#8ee36b")
+					"Weakening Strike", "Heartful Brother":
+						strike_label = "-ATK"
+						strike_color = Color("#ff9d66")
+					"Caber Toss", "Slash Speed":
+						strike_label = "KNOCKBACK"
+					"Cannon Barrage":
+						strike_label = "BARRAGE"
+					"Pincer Drain":
+						strike_label = "DRAIN"
+					"Trisha's Prospect":
+						strike_label = "PROTECT"
+						strike_color = Color("#71e6f5")
+					"Hurtful Brother":
+						strike_label = "+HP"
+						strike_color = Color("#8ee36b")
 				if not was_protected:
 					board.play_unit_effect(target.id, strike_label, strike_color)
+			for moved in strike_result.get("moved", []):
+				await board.animate_unit_move(
+					moved.id, moved.row, moved.from_col, _animation_duration(0.2)
+				)
 			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(
 				target, actor, units, battle_simulator.rng.randf()
 			)
 			if not reaction_result.message.is_empty():
 				status_message += " " + reaction_result.message
-				var is_shield_wall: bool = (
-					target.get("skill", {}).get("name", "") == "Shield Wall"
-				)
-				battle_audio.play("status" if is_shield_wall else "hit")
+				var reaction_name: String = target.get("skill", {}).get("name", "")
+				var buff_reactions := [
+					"Shield Wall", "Grit", "Ambient Pressure", "Tide Turn", "Yield!", "Tag-Team"
+				]
+				battle_audio.play("status" if reaction_name in buff_reactions else "hit")
+				var reaction_label := "COUNTER"
+				var reaction_color := Color("#ff8b9f")
+				match reaction_name:
+					"Shield Wall":
+						reaction_label = "PROTECT"
+						reaction_color = Color("#71e6f5")
+					"Grit":
+						reaction_label = "REGEN"
+						reaction_color = Color("#8ee36b")
+					"Ambient Pressure", "Tag-Team":
+						reaction_label = "+ATK"
+						reaction_color = Color("#ffd166")
+					"Tide Turn":
+						reaction_label = "TAUNT"
+						reaction_color = Color("#ff9d66")
+					"Yield!":
+						reaction_label = "KNOCKBACK"
+						reaction_color = Color("#ffd166")
 				for reaction_id in reaction_result.affected:
 					var reaction_target = _unit_by_id(reaction_id)
-					if reaction_target != null:
-						if is_shield_wall:
-							if not was_protected:
-								board.play_unit_effect(
-									reaction_target.id, "PROTECT", Color("#71e6f5")
-								)
-						else:
-							board.play_unit_effect(
-								reaction_target.id, "COUNTER", Color("#ff8b9f")
-							)
-							await board.animate_hit(
-								reaction_target.id, _animation_duration(0.14)
-							)
+					if reaction_target == null:
+						continue
+					if reaction_name == "Shield Wall" and was_protected:
+						continue
+					board.play_unit_effect(
+						reaction_target.id, reaction_label, reaction_color
+					)
+					if reaction_name not in buff_reactions:
+						await board.animate_hit(
+							reaction_target.id, _animation_duration(0.14)
+						)
+			for moved in reaction_result.get("moved", []):
+				await board.animate_unit_move(
+					moved.id, moved.row, moved.from_col, _animation_duration(0.2)
+				)
 			await _animate_defeated_units()
 			_remove_defeated()
 			_refresh()
@@ -3557,18 +3633,21 @@ func _expire_side_effects(side: int) -> void:
 		if enemy_shield_turns == 0:
 			enemy_shield = 0
 
-func _resolve_chants(side: int) -> void:
-	for result in UnitSkillsScript.resolve_start_statuses(side, units):
-		if not result.get("message", "").is_empty():
-			status_message = result.message
-			_log_action("[%s STATUS] %s" % [
-				"ALLY" if side == PLAYER else "ENEMY", result.message
-			])
-		for unit_id in result.get("affected", []):
-			var target = _unit_by_id(unit_id)
-			if target != null:
-				board.play_unit_effect(target.id, "POISON", Color("#8ee36b"))
-	for result in UnitSkillsScript.resolve_chants(side, units):
+func _resolve_chants(side: int, phase: String = "start") -> void:
+	if phase == "start":
+		for result in UnitSkillsScript.resolve_start_statuses(side, units):
+			if not result.get("message", "").is_empty():
+				status_message = result.message
+				_log_action("[%s STATUS] %s" % [
+					"ALLY" if side == PLAYER else "ENEMY", result.message
+				])
+			for unit_id in result.get("affected", []):
+				var target = _unit_by_id(unit_id)
+				if target != null:
+					board.play_unit_effect(
+						target.id, result.get("label", "POISON"), Color("#8ee36b")
+					)
+	for result in UnitSkillsScript.resolve_chants(side, units, phase, battle_simulator.rng):
 		if not result.get("message", "").is_empty():
 			status_message = result.message
 			_log_action("[%s CHANT] %s" % ["ALLY" if side == PLAYER else "ENEMY", result.message])
