@@ -43,7 +43,8 @@ const REWARD_UNITS := [
 	"Van Hohenheim", "The Sorcerer's Stone", "José", "José Decomposé",
 	"Furia Rojo", "Campeon Rojo",
 	"Sakuya (Fantail Pigeon)", "Sakuya Le Bel Shirogane",
-	"Yuuya (Fantail Pigeon)", "Yuuya Sakazaki"
+	"Yuuya (Fantail Pigeon)", "Yuuya Sakazaki",
+	"Claw Minstrel", "Claw Rocker", "Flame Warden", "Flame Dissident"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

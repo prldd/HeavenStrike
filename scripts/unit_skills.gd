@@ -323,6 +323,44 @@ static func resolve_warcry(
 					target_count, "y" if target_count == 1 else "ies", lane + 1,
 					_turn_label(turns)
 				]
+		"Woolen Blanket":
+			var target = _ally_by_id(actor, units, target_id)
+			if target == null:
+				target = _lowest_health_ally(actor, units)
+			if target != null:
+				var amount := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 2)
+				BattleSimulatorScript.apply_unit_healing(target, amount, true)
+				target.protect_turns = maxi(target.get("protect_turns", 0), turns)
+				result.message = "Woolen Blanket gives %s +%d HP and Protect for %s." % [
+					target.name, amount, _turn_label(turns)
+				]
+				result.affected.append(target.id)
+		"Shadowbind":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_enemy_lane(actor, units, [])
+			var amount := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
+			var target_count := 0
+			for target in units:
+				if (
+					target.side == actor.side or target.row != lane
+					or target.get("hp", 0) <= 0
+				):
+					continue
+				target.atk = maxi(0, target.atk - amount)
+				_add_effect(target, "Shadowbind", turns, -amount, 0)
+				target.immobilized_turns = maxi(
+					target.get("immobilized_turns", 0), turns
+				)
+				result.affected.append(target.id)
+				target_count += 1
+			if target_count > 0:
+				result.message = "Shadowbind gives %d enem%s in lane %d -%d ATK and Immobilises them for %s." % [
+					target_count, "y" if target_count == 1 else "ies", lane + 1,
+					amount, _turn_label(turns)
+				]
 		"Fireball":
 			var target = _enemy_by_id(actor, units, target_id)
 			if target == null:
@@ -437,6 +475,13 @@ static func resolve_warcry(
 				_turn_label(turns)
 			]
 			result.affected.append(actor.id)
+		"Summon Forth":
+			var turns := rank_value(skill, level, 0, 1)
+			actor.summon_forth_turns = maxi(actor.get("summon_forth_turns", 0), turns)
+			result.message = "Summon Forth shields %s for %s." % [
+				actor.name, _turn_label(turns)
+			]
+			result.affected.append(actor.id)
 	return result
 
 ## Resolves the chant skills of every living unit on `side`. `phase` is
@@ -454,6 +499,7 @@ static func resolve_chants(
 	var results: Array = []
 	if phase == "start":
 		_append_roguish_snare(side, units, last_placed_id, rng, roll, results)
+		_append_quiet(side, units, rng, results)
 	for unit in units:
 		if unit.side != side or unit.get("hp", 0) <= 0:
 			continue
@@ -560,6 +606,58 @@ static func resolve_chants(
 							amount, _turn_label(debuff_turns)
 						])
 					result.message = "Wrangle %s." % " and ".join(clauses)
+					results.append(result)
+			"Stone Gaze":
+				# Part 1 Poisons one random living non-Poisoned enemy for {0}
+				# enemy turns; part 2 Stuns up to {1} Poisoned enemies standing
+				# in front of the chanter (the Wrangle column rule: closer to
+				# the enemy edge than the chanter, across all lanes) for 1 enemy
+				# turn. An enemy Poisoned by part 1 counts toward part 2 when it
+				# stands in front. Either part no-ops without a valid target.
+				var poison_turns := rank_value(skill, level, 0, 1)
+				var stun_count := rank_value(skill, level, 1, 1)
+				var forward := 1 if side == 0 else -1
+				var result := {"message": "", "affected": [], "sound": "status"}
+				var poison_candidates: Array = units.filter(
+					func(target): return (
+						target.side != side and target.get("hp", 0) > 0
+						and target.get("poison_turns", 0) <= 0
+					)
+				)
+				var poisoned = _pick_random(poison_candidates, rng)
+				if poisoned != null:
+					poisoned.poison_turns = maxi(
+						poisoned.get("poison_turns", 0), poison_turns
+					)
+					poisoned.poison_damage = maxi(poisoned.get("poison_damage", 0), 1)
+					result.affected.append(poisoned.id)
+				var stunned_count := 0
+				for target in units:
+					if stunned_count >= stun_count:
+						break
+					if (
+						target.side == side or target.get("hp", 0) <= 0
+						or target.get("poison_turns", 0) <= 0
+					):
+						continue
+					var offset: int = (target.col - unit.col) * forward
+					if offset <= 0:
+						continue
+					target.stun_turns = maxi(target.get("stun_turns", 0), 1)
+					if target.id not in result.affected:
+						result.affected.append(target.id)
+					stunned_count += 1
+				if not result.affected.is_empty():
+					var clauses: Array = []
+					if poisoned != null:
+						clauses.append("Poisons %s for %s" % [
+							poisoned.name, _turn_label(poison_turns)
+						])
+					if stunned_count > 0:
+						clauses.append("Stuns %d Poisoned enem%s in front of it for 1 enemy turn" % [
+							stunned_count, "y" if stunned_count == 1 else "ies"
+						])
+					result.message = "Stone Gaze %s." % " and ".join(clauses)
 					results.append(result)
 			"Lifestream":
 				var turns := rank_value(skill, level, 0, 2)
@@ -784,6 +882,77 @@ static func _append_roguish_snare(
 			"sound": "status"
 		})
 		return
+
+## Quiet! is a countdown chant: when the turn of the side OPPOSITE the
+## carrier starts, the {1} living enemies with the highest ATK are Silenced
+## for {2} enemy turns. Each carrier fires exactly {0} times after
+## deployment (`quiet_triggers_left`, set in main.gd:_spawn_unit). The
+## trigger is a chant, so a Silenced carrier skips it WITHOUT spending a
+## charge; the 0-damage passive lives in BattleSimulator.apply_unit_damage
+## and is not a trigger, so it works even while the carrier is Silenced.
+static func _append_quiet(
+	side: int, units: Array, rng: RandomNumberGenerator, results: Array
+) -> void:
+	for carrier in units:
+		if carrier.side == side or carrier.get("hp", 0) <= 0:
+			continue
+		if is_silenced(carrier):
+			continue
+		var skill: Dictionary = carrier.get("skill", {})
+		if skill.get("name", "") != "Quiet!":
+			continue
+		if skill.get("type", "").to_lower() != "chant":
+			continue
+		if int(carrier.get("quiet_triggers_left", 0)) <= 0:
+			continue
+		carrier.quiet_triggers_left -= 1
+		var level := int(carrier.get("level", 1))
+		var count := rank_value(skill, level, 1, 1)
+		var turns := rank_value(skill, level, 2, 1)
+		var targets := _highest_attack_enemies(carrier, units, count, rng)
+		for target in targets:
+			target.silenced_turns = maxi(target.get("silenced_turns", 0), turns)
+		if targets.is_empty():
+			continue
+		results.append({
+			"message": "Quiet! Silences %s for %s." % [
+				", ".join(targets.map(func(target): return target.name)),
+				_turn_label(turns)
+			],
+			"affected": targets.map(func(target): return target.id),
+			"sound": "status"
+		})
+
+## Summon Forth retaliation: when an attack against the carrier is reduced to
+## 0 by its Summon Forth immunity (see BattleSimulator.apply_unit_damage),
+## {2} random living enemies with the highest ATK take {1}% of the attacking
+## unit's ATK (minimum 1, rounded down). main.gd fires this once per blocked
+## attack hit; a dead carrier never retaliates.
+static func resolve_summon_forth(
+	defender: Dictionary,
+	attacker: Dictionary,
+	units: Array,
+	rng: RandomNumberGenerator = null
+) -> Dictionary:
+	var result := {"message": "", "affected": []}
+	if defender.get("hp", 0) <= 0 or int(defender.get("summon_forth_turns", 0)) <= 0:
+		return result
+	var skill: Dictionary = defender.get("skill", {})
+	if skill.get("name", "") != "Summon Forth":
+		return result
+	var level := int(defender.get("level", 1))
+	var percent := rank_value(skill, level, 1, 50)
+	var count := rank_value(skill, level, 2, 1)
+	var damage := maxi(1, attacker.get("atk", 0) * percent / 100)
+	var targets := _highest_attack_enemies(defender, units, count, rng)
+	for target in targets:
+		BattleSimulatorScript.apply_unit_damage(target, damage)
+		result.affected.append(target.id)
+	if not targets.is_empty():
+		result.message = "Summon Forth deals %d damage back to %s." % [
+			damage, ", ".join(targets.map(func(target): return target.name))
+		]
+	return result
 
 ## Counts down Sun Festival timers at the end of the owner's turn; when one
 ## reaches zero, all allies heal and allies carrying Regen gain ATK and Haste.
@@ -1118,15 +1287,16 @@ static func resolve_reaction(
 					result.affected.append(target.id)
 	return result
 
-## Recomputes aura buffs from living sources. Each call strips the bonus a
-## unit currently carries (`aura_hp`) and re-applies what surviving aura
-## units grant, so a buff disappears as soon as its source leaves the board.
-## Silenced sources contribute nothing, so the buff drops while the source is
-## Silenced and returns when the Silence expires. Every change is appended to
-## `events` as {"unit_id", "delta", "label"} so callers can log aura gains and
-## losses.
+## Recomputes aura buffs from living sources. Each call strips the bonuses a
+## unit currently carries (`aura_hp`, `aura_atk`) and re-applies what surviving
+## aura units grant, so a buff disappears as soon as its source leaves the
+## board. Silenced sources contribute nothing, so the buff drops while the
+## source is Silenced and returns when the Silence expires. Every change is
+## appended to `events` as {"unit_id", "delta", "label", "stat"} so callers can
+## log aura gains and losses.
 static func refresh_auras(units: Array, events: Array = []) -> void:
 	var desired := {}
+	var desired_atk := {}
 	var desired_labels := {}
 	for source in units:
 		if source.get("hp", 1) <= 0:
@@ -1147,21 +1317,44 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 						if "Moonlight" not in labels:
 							labels.append("Moonlight")
 						desired_labels[unit.id] = labels
+			"Inspire Lambkin":
+				var hp_amount := rank_value(skill, level, 0, 1)
+				var atk_amount := rank_value(skill, level, 1, 1)
+				for unit in units:
+					if (
+						unit.side == source.side and unit.id != source.id
+						and unit.get("race", "human") == "lambkin"
+					):
+						desired[unit.id] = int(desired.get(unit.id, 0)) + hp_amount
+						desired_atk[unit.id] = int(desired_atk.get(unit.id, 0)) + atk_amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Inspire Lambkin" not in labels:
+							labels.append("Inspire Lambkin")
+						desired_labels[unit.id] = labels
 	for unit in units:
 		if unit.get("hp", 0) <= 0:
-			continue
-		var applied := int(unit.get("aura_hp", 0))
-		var want := int(desired.get(unit.id, 0))
-		if applied == want:
 			continue
 		var label := " + ".join(desired_labels.get(unit.id, []))
 		if label.is_empty():
 			label = unit.get("aura_label", "the aura")
-		events.append({"unit_id": unit.id, "delta": want - applied, "label": label})
-		unit.max_hp += want - applied
-		unit.hp = clampi(unit.hp + want - applied, 1, unit.max_hp)
-		unit.aura_hp = want
-		if want > 0:
+		var applied := int(unit.get("aura_hp", 0))
+		var want := int(desired.get(unit.id, 0))
+		if applied != want:
+			events.append({
+				"unit_id": unit.id, "delta": want - applied, "label": label, "stat": "HP"
+			})
+			unit.max_hp += want - applied
+			unit.hp = clampi(unit.hp + want - applied, 1, unit.max_hp)
+			unit.aura_hp = want
+		var applied_atk := int(unit.get("aura_atk", 0))
+		var want_atk := int(desired_atk.get(unit.id, 0))
+		if applied_atk != want_atk:
+			events.append({
+				"unit_id": unit.id, "delta": want_atk - applied_atk, "label": label, "stat": "ATK"
+			})
+			unit.atk = maxi(0, unit.atk + want_atk - applied_atk)
+			unit.aura_atk = want_atk
+		if want > 0 or want_atk > 0:
 			unit.aura_label = label
 		else:
 			unit.erase("aura_label")
@@ -1188,6 +1381,11 @@ static func expire_statuses(units: Array, side: int) -> void:
 			unit.doom_turns -= 1
 			if unit.doom_turns <= 0:
 				unit.hp = 0
+		# Summon Forth immunity also counts the opposing side's turns (the
+		# "enemy turns" of the reference text), so N covers exactly the next
+		# N opposing-side turns.
+		if unit.side != side and unit.get("summon_forth_turns", 0) > 0:
+			unit.summon_forth_turns -= 1
 
 ## A Silenced unit's secondary skill does not trigger while the counter
 ## holds: it skips its Warcry, Strike, Chants, and Reaction, and stops
@@ -1383,6 +1581,38 @@ static func _highest_attack_enemy_classes(
 		return a.atk > b.atk
 	)
 	return null if candidates.is_empty() else candidates[0]
+
+## Up to `count` living enemies of `actor` with the highest ATK, the "random
+## enemies with the highest ATK" of the Summon Forth and Quiet! reference
+## text: whole ATK tiers are taken until a tier would overfill the remaining
+## slots, which are then filled by seeded random picks from that tier.
+static func _highest_attack_enemies(
+	actor: Dictionary, units: Array, count: int, rng: RandomNumberGenerator
+) -> Array:
+	var candidates: Array = _enemies(actor, units).filter(
+		func(unit): return unit.get("hp", 0) > 0
+	)
+	candidates.sort_custom(func(a, b):
+		if a.atk == b.atk:
+			return a.id < b.id
+		return a.atk > b.atk
+	)
+	var picked: Array = []
+	var index := 0
+	while index < candidates.size() and picked.size() < count:
+		var tier_atk: int = candidates[index].atk
+		var tier: Array = []
+		while index < candidates.size() and candidates[index].atk == tier_atk:
+			tier.append(candidates[index])
+			index += 1
+		if picked.size() + tier.size() <= count:
+			picked.append_array(tier)
+		else:
+			for slot in count - picked.size():
+				var choice = _pick_random(tier, rng)
+				tier.erase(choice)
+				picked.append(choice)
+	return picked
 
 static func _best_enemy_lane(actor: Dictionary, units: Array, kinds: Array) -> int:
 	var best_lane := -1

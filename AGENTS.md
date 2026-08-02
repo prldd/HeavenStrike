@@ -53,7 +53,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
-| `unit_catalog.gd` | Authoritative unit roster: 182 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative unit roster: 210 units as `UnitData` Resources with stats, class, race, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
@@ -159,7 +159,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (182 units, 14/16/36/47/50/19 six-bucket star distribution, 88 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (210 units, 15/17/39/52/61/26 six-bucket star distribution, 103 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
 
 ## Save files and persistence
 
@@ -255,6 +255,16 @@ starting Reserves.
   entries).
 - Secondary skill description text is the reference description verbatim; the
   five `values` rows go into `UnitCatalog.RANK_VALUES` keyed by skill name.
+- Race is ported from the reference `race` key (human/ogur/lambkin/felyne):
+  `UnitCatalog.UNIT_RACES` maps project icon → race for NON-human units only
+  and `_unit(...)` defaults the rest to `"human"` (via `UnitData.race`, which
+  `to_dict()` and `main.gd:_spawn_unit` carry onto card and runtime unit
+  Dictionaries). Race currently has no UI; it gates the Inspire Lambkin aura.
+- Promotions are declared pairwise via `promotion_of`, but chains can be three
+  tiers deep (Conjuring Clown → Harlequin → Jester, Flame Warden → Dissident →
+  Schematic). `KineticCrucible.record_promotion` promotes one step at a time
+  and `_promotion_root` walks the full chain with a guard loop, so no special
+  handling is needed beyond declaring each link.
 
 ### Skill implementation checklist
 
@@ -262,8 +272,12 @@ starting Reserves.
 2. A resolution branch in `scripts/unit_skills.gd` (`resolve_warcry`,
    `resolve_strike`, `resolve_chants`, `resolve_reaction`, `refresh_auras` —
    all five timing hooks are live; auras are recomputed from living sources
-   on every call, stripping each unit's `aura_hp` and re-applying, so a buff
-   disappears when its source dies). The `target_id = -1` /
+   on every call, stripping each unit's `aura_hp`/`aura_atk` and re-applying,
+   so a buff disappears when its source dies). Auras so far: Moonlight (HP
+   only) and Inspire Lambkin (HP + ATK, gated on the target's
+   `race == "lambkin"`, source excluded); multiple sources of the same aura
+   stack additively, and each change event carries a `stat` field ("HP"/"ATK")
+   so `main.gd:_refresh_auras` can log it. The `target_id = -1` /
    `target_lane = -1` fallbacks are what the enemy AI uses — `BattleAI` itself
    only scores by class and usually needs no per-skill changes.
    `resolve_chants(side, units, phase, ...)` runs twice per side turn:
@@ -308,6 +322,28 @@ starting Reserves.
    (gain Protect) and enemies on columns closer to it are "in front"
    (lose ATK via the `effects` debuff mechanism); units in the chanter's
    own column are neither.
+   Summon Forth and Quiet! share the damage-immunity core in
+   `BattleSimulator.apply_unit_damage(unit, amount, source)`: attack damage
+   (the direct hit in `main.gd:_activate_unit` and its Blast/Pierce riders in
+   `_apply_special_damage`) passes the attacking unit as `source`, while
+   secondary-skill and Captain damage passes no source and bypasses both
+   immunities. Summon Forth is a Warcry that sets `summon_forth_turns`
+   (ticking on the opposing side's expiry pass, like `doom_turns`, so N
+   covers exactly the next N enemy turns); while it holds, attack damage
+   against the carrier is 0 and `main.gd` fires
+   `UnitSkills.resolve_summon_forth` once per blocked hit — {2} highest-ATK
+   living enemies take {1}% of the attacker's ATK (minimum 1, rounded down),
+   with ATK-tier ties at the cutoff broken by seeded RNG
+   (`_highest_attack_enemies`). The result's `immunity` field names the
+   immunity that zeroed the hit so the presentation layer can show IMMUNE
+   and trigger the retaliation. Quiet! is a countdown chant: `_spawn_unit`
+   initializes `quiet_triggers_left` from rank {0}, and the `_append_quiet`
+   pre-pass in `resolve_chants` phase `"start"` (same opposing-side pattern
+   as Roguish Snare) fires when the opposing side's turn begins, Silencing
+   the {1} highest-ATK living enemies for {2} turns (`silenced_turns`, max
+   not stack). A Silenced carrier's trigger does not fire and does not
+   spend a charge; its passive (0 attack damage from Silenced attackers,
+   checked in the same damage gate) is not a trigger and keeps working.
 3. If the player chooses a target, wire `main.gd`: ally-target follows the
    `pending_empower_actor_id` pattern, enemy-target the
    `pending_envenom_actor_id` pattern, and lane-target the
@@ -317,6 +353,10 @@ starting Reserves.
    `scripts/story_quest_catalog.gd` (missions from the reference `storyQuests`)
    and to `REWARD_UNITS` in `scripts/campaign_store.gd`. Never edit
    `MISSION_ENEMY_SQUADS` for this — those decks are deliberately authored.
+   Live example: the Inspire Lambkin batch (icons 208–215) — Claw Minstrel,
+   Claw Rocker, Flame Warden, and Flame Dissident are reward units with
+   `ADDITIONAL_DROPS` entries; the other four carriers have no story drops
+   and are starting Reserves.
 
 ### Updating the tests
 

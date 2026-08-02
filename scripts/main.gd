@@ -2972,6 +2972,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"max_hp": KineticCrucibleScript.scaled_stat(card.hp, unit_level),
 		"move": card.move,
 		"range": card.range,
+		"race": card.get("race", "human"),
 		"skill": card.get("skill", {}).duplicate(true),
 		"instance_id": card.get("instance_id", ""),
 		"level": card.get("level", 1),
@@ -2993,9 +2994,17 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"haste_turns": 0,
 		"doom_turns": 0,
 		"festival_turns": 0,
+		"summon_forth_turns": 0,
+		"quiet_triggers_left": 0,
 		"fury_stacks": 0,
 		"effects": []
 	}
+	# Quiet! fires its Silence trigger at the start of the next {0} enemy
+	# turns after deployment.
+	if spawned.skill.get("name", "") == "Quiet!":
+		spawned.quiet_triggers_left = UnitSkillsScript.rank_value(
+			spawned.skill, unit_level, 0, 1
+		)
 	units.append(spawned)
 	next_unit_id += 1
 	last_deployed_unit_id[side] = spawned.id
@@ -3015,7 +3024,7 @@ func _resolve_warcry(
 	)
 	if (
 		actor.side == PLAYER
-		and skill.get("name", "") in ["Empower", "Protect", "Prune", "New Look", "Medic!"]
+		and skill.get("name", "") in ["Empower", "Protect", "Prune", "New Look", "Medic!", "Woolen Blanket"]
 		and target_id < 0
 		and has_other_ally
 	):
@@ -3031,7 +3040,7 @@ func _resolve_warcry(
 	var lane_side := _lane_target_side(skill.get("name", ""))
 	if (
 		actor.side == PLAYER
-		and skill.get("name", "") in ["Demoralize", "Meteor Barrage", "Freeze!", "Royal Flush"]
+		and skill.get("name", "") in ["Demoralize", "Meteor Barrage", "Freeze!", "Royal Flush", "Shadowbind"]
 		and target_lane < 0 and units.any(
 			func(unit): return (
 				unit.side == lane_side
@@ -3058,12 +3067,14 @@ func _resolve_warcry(
 				await board.animate_hit(target.id, _animation_duration(0.16))
 			elif skill.get("name", "") in [
 				"Fortify", "Empower", "Mend", "Protect", "Warrior's Vigour",
-				"Prune", "New Look", "Medic!", "Guard", "Sun Festival", "Royal Flush"
+				"Prune", "New Look", "Medic!", "Guard", "Sun Festival", "Royal Flush",
+				"Summon Forth", "Woolen Blanket"
 			]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
 			elif skill.get("name", "") in [
-				"Envenom", "Demoralize", "Punish", "Misfortune", "Divine Silence"
+				"Envenom", "Demoralize", "Punish", "Misfortune", "Divine Silence",
+				"Shadowbind"
 			]:
 				battle_audio.play("status")
 	if not result.message.is_empty():
@@ -3339,10 +3350,11 @@ func _activate_unit(actor: Dictionary) -> void:
 			_play_attack_sound(actor.kind)
 			await board.animate_attack(actor.id, target.id, actor.kind, _animation_duration(0.24))
 			var damage_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
-				target, actor.atk
+				target, actor.atk, actor
 			)
 			var damage_dealt: int = damage_result.damage
 			var was_protected: bool = damage_result.get("protected", false)
+			var immunity: String = damage_result.get("immunity", "")
 			battle_simulator.record("attack", {
 				"actor_id": actor.id,
 				"target_id": target.id,
@@ -3353,6 +3365,11 @@ func _activate_unit(actor: Dictionary) -> void:
 				status_message = "%s's attack on %s is blocked by Protect." % [
 					_actor_tag(actor), target.name
 				]
+			elif not immunity.is_empty():
+				status_message = "%s's attack on %s is blocked by %s." % [
+					_actor_tag(actor), target.name,
+					"Summon Forth" if immunity == "summon_forth" else "Quiet!"
+				]
 			else:
 				status_message = "%s hits %s for %d." % [
 					_actor_tag(actor), target.name, damage_dealt
@@ -3362,6 +3379,9 @@ func _activate_unit(actor: Dictionary) -> void:
 			if was_protected:
 				impact_label = "PROTECTED"
 				impact_color = Color("#71e6f5")
+			elif not immunity.is_empty():
+				impact_label = "IMMUNE"
+				impact_color = Color("#a8b8ff")
 			elif actor.kind == "Channeler":
 				impact_label += " BLAST"
 				impact_color = Color("#c99cff")
@@ -3460,6 +3480,25 @@ func _activate_unit(actor: Dictionary) -> void:
 				await board.animate_unit_move(
 					moved.id, moved.row, moved.from_col, _animation_duration(0.2)
 				)
+			# A Summon Forth-immune defender retaliates once per blocked hit,
+			# animated like Hopping Mad's counter.
+			if immunity == "summon_forth":
+				var summon_result: Dictionary = UnitSkillsScript.resolve_summon_forth(
+					target, actor, units, battle_simulator.rng
+				)
+				if not summon_result.message.is_empty():
+					status_message += " " + summon_result.message
+					for summon_id in summon_result.affected:
+						var summon_target = _unit_by_id(summon_id)
+						if summon_target == null:
+							continue
+						battle_audio.play("hit")
+						board.play_unit_effect(
+							summon_target.id, "COUNTER", Color("#ff8b9f")
+						)
+						await board.animate_hit(
+							summon_target.id, _animation_duration(0.14)
+						)
 			await _animate_defeated_units()
 			_remove_defeated()
 			_refresh()
@@ -3514,10 +3553,14 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 		var blast_cells: Array = BattleRulesScript.blast_cells(target)
 		for other in units:
 			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
-				var blast_result: Dictionary = BattleSimulatorScript.apply_unit_damage(other, splash_damage)
+				var blast_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
+					other, splash_damage, actor
+				)
 				affected_ids.append(other.id)
 				if blast_result.get("protected", false):
 					board.play_unit_effect(other.id, "PROTECTED", Color("#71e6f5"))
+				elif not String(blast_result.get("immunity", "")).is_empty():
+					board.play_unit_effect(other.id, "IMMUNE", Color("#a8b8ff"))
 				else:
 					board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
 		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
@@ -3529,9 +3572,13 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 				continue
 			var distance: int = (other.col - actor.col) * direction
 			if distance > 0 and distance <= actor.range:
-				var pierce_result: Dictionary = BattleSimulatorScript.apply_unit_damage(other, actor.atk)
+				var pierce_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
+					other, actor.atk, actor
+				)
 				if pierce_result.get("protected", false):
 					board.play_unit_effect(other.id, "PROTECTED", Color("#71e6f5"))
+				elif not String(pierce_result.get("immunity", "")).is_empty():
+					board.play_unit_effect(other.id, "IMMUNE", Color("#a8b8ff"))
 				else:
 					pierced.append(other.name)
 					board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
@@ -3597,10 +3644,11 @@ func _refresh_auras() -> void:
 		if unit == null:
 			continue
 		var delta: int = event.delta
+		var stat: String = event.get("stat", "HP")
 		if delta > 0:
-			_log_action("%s gains +%d HP from %s." % [unit.name, delta, event.label])
+			_log_action("%s gains +%d %s from %s." % [unit.name, delta, stat, event.label])
 		else:
-			_log_action("%s loses %d HP as %s fades." % [unit.name, -delta, event.label])
+			_log_action("%s loses %d %s as %s fades." % [unit.name, -delta, stat, event.label])
 
 func _apply_captain_skill(side: int, skill_name: String) -> bool:
 	var captain_hp: int = player_hp if side == PLAYER else enemy_hp

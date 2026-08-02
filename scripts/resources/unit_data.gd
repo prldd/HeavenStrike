@@ -10,6 +10,7 @@ extends Resource
 @export var hp: int = 0
 @export var move: int = 0
 @export var range: int = 0
+@export var race: String = "human"
 @export var description: String = ""
 @export var promotion_of: String = ""
 @export var skill: SkillData = null
@@ -27,6 +28,7 @@ func to_dict() -> Dictionary:
 		"hp": hp,
 		"move": move,
 		"range": range,
+		"race": race,
 		"text": description,
 	}
 	if promotion_of != "":

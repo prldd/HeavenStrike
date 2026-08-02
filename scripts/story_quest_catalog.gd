@@ -61,7 +61,11 @@ const ADDITIONAL_DROPS := {
 	"Royal Yeoman": [16, 33, 55, 58],
 	"Royal Beefeater": [33, 55, 58],
 	"Rescue Corps": [42, 54],
-	"Rescue Paramedic": [42, 54]
+	"Rescue Paramedic": [42, 54],
+	"Claw Minstrel": [8, 9, 12, 13, 26, 30, 31, 36, 43, 45],
+	"Claw Rocker": [8, 12, 26, 30, 31, 36, 43, 45, 48],
+	"Flame Warden": [11, 47],
+	"Flame Dissident": [47]
 }
 
 const QUESTS := [

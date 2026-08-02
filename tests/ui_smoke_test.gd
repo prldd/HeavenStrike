@@ -118,6 +118,16 @@ func _run() -> void:
 	assert(preview_unit.silenced_turns == 0)
 	preview_unit.silenced_turns = 2
 	assert(preview_unit.silenced_turns == 2)
+	assert(preview_unit.summon_forth_turns == 0)
+	assert(preview_unit.quiet_triggers_left == 0)
+	# Deployment initializes the Quiet! trigger countdown from the rank table.
+	var quiet_card: Dictionary = UnitCatalogScript.by_name("Nageki Fujishiro").to_dict()
+	var quiet_unit: Dictionary = game._spawn_unit(quiet_card, 0, 1, 0)
+	assert(quiet_unit.quiet_triggers_left == 1)
+	assert(quiet_unit.summon_forth_turns == 0)
+	var summon_card: Dictionary = UnitCatalogScript.by_name("Booth").to_dict()
+	var summon_unit: Dictionary = game._spawn_unit(summon_card, 0, 2, 0)
+	assert(summon_unit.quiet_triggers_left == 0)
 	game.units.clear()
 	game._open_mission_select()
 	await process_frame

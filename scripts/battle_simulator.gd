@@ -193,13 +193,33 @@ static func estimate_squad_power(cards: Array) -> float:
 		)
 	return score
 
-static func apply_unit_damage(unit: Dictionary, amount: int) -> Dictionary:
+## The single damage gate. Attack damage (a normal attack hit and its
+## Blast/Pierce riders) passes the attacking unit as `source`; secondary-skill
+## and Captain damage passes no source and therefore bypasses both damage
+## immunities: Summon Forth (0 damage when attacked while its counter holds)
+## and Quiet! (0 damage from Silenced attackers while the carrier lives).
+## The returned `immunity` names the immunity that zeroed the hit ("" when
+## none) so callers can message it and fire the Summon Forth retaliation.
+static func apply_unit_damage(
+	unit: Dictionary, amount: int, source: Dictionary = {}
+) -> Dictionary:
 	var before: int = unit.get("hp", 0)
 	var adjusted_amount := maxi(0, amount)
 	var protected: bool = unit.get("protect_turns", 0) > 0
+	var immunity := ""
 	if protected:
 		adjusted_amount = 0
-	elif adjusted_amount > 0 and unit.get("vulnerable_turns", 0) > 0:
+	elif not source.is_empty():
+		if unit.get("summon_forth_turns", 0) > 0:
+			immunity = "summon_forth"
+		elif (
+			unit.get("skill", {}).get("name", "") == "Quiet!"
+			and source.get("silenced_turns", 0) > 0
+		):
+			immunity = "quiet"
+		if not immunity.is_empty():
+			adjusted_amount = 0
+	if adjusted_amount > 0 and unit.get("vulnerable_turns", 0) > 0:
 		adjusted_amount += maxi(1, unit.get("vulnerable_stacks", 1))
 	var dealt := mini(before, adjusted_amount)
 	unit.hp = before - adjusted_amount
@@ -209,7 +229,8 @@ static func apply_unit_damage(unit: Dictionary, amount: int) -> Dictionary:
 		"damage": dealt,
 		"after": unit.hp,
 		"defeated": unit.hp <= 0,
-		"protected": protected
+		"protected": protected,
+		"immunity": immunity
 	}
 
 static func apply_unit_healing(

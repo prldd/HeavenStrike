@@ -175,7 +175,138 @@ const ICON_ART_IDS := {
 	184: 215, # Lunnain Oracle
 	185: 216, # Lunnain Divine
 	186: 1011, # Ra
-	187: 1012 # Ra, Creator
+	187: 1012, # Ra, Creator
+	188: 697, # Rydia of Mist
+	189: 698, # Summoner Rydia
+	190: 1123, # Booth
+	191: 1124, # Booth Kavar
+	192: 747, # Medusa
+	193: 748, # Gorgon Medusa
+	194: 1019, # Nageki (Mourning Dove)
+	195: 1020, # Nageki Fujishiro
+	196: 263, # Jimimi the Shepherd
+	197: 264, # Jimimi the Herder
+	198: 321, # Hookie
+	199: 322, # Beautifly Hookie
+	200: 567, # Winter Harding
+	201: 568, # Happy Elf Harding
+	202: 693, # Edge
+	203: 694, # Ninja Edge
+	204: 1053, # Explorer Gatling
+	205: 1054, # Raider Gatling
+	206: 1153, # Belladonna
+	207: 1154, # The Twilight Queen
+	208: 35, # Claw Minstrel
+	209: 36, # Claw Rocker
+	210: 69, # Conjuring Clown
+	211: 70, # Conjuring Harlequin
+	212: 603, # Conjuring Jester
+	213: 107, # Flame Warden
+	214: 108, # Flame Dissident
+	215: 633 # Flame Schematic
+}
+
+## Non-human races from the unit reference (chainguardians.com), keyed by
+## project icon. Units missing from this table are human; `_unit` applies the
+## default. The four races are human, ogur, lambkin, and felyne.
+const UNIT_RACES := {
+	9: "felyne", # Claw Slicer
+	2: "ogur", # Pub Bouncer
+	11: "lambkin", # Rage Spellslinger
+	6: "lambkin", # Chain Initiate
+	13: "ogur", # Apprentice Builder
+	15: "ogur", # Rage Brute
+	21: "lambkin", # Order Pupil
+	25: "felyne", # Order Apostle
+	26: "lambkin", # Trinity Messenger
+	28: "lambkin", # Naruku the Lookout
+	29: "ogur", # Whirling Ragnr
+	14: "ogur", # Master Builder
+	16: "ogur", # Rage Bruiser
+	22: "lambkin", # Order Scholar
+	31: "felyne", # Order Missionary
+	32: "lambkin", # Trinity Herald
+	34: "lambkin", # Farsight Naruku
+	35: "ogur", # Macewielder Ragnr
+	37: "felyne", # Talon Scratcher
+	38: "felyne", # Talon Slasher
+	41: "felyne", # Talon Slicer
+	57: "felyne", # Dart Shooter
+	58: "felyne", # Dart Sharpshooter
+	59: "lambkin", # Frog-Hopper Keru
+	60: "lambkin", # Lizard-Licker Keru
+	66: "felyne", # Precision Shooter
+	67: "felyne", # Precision Sniper
+	68: "felyne", # Precision Trigger
+	77: "felyne", # Prison Warden
+	78: "felyne", # Prison Guv'nor
+	83: "felyne", # LDF Bowgunner
+	84: "felyne", # LDF Bolt Slinger
+	94: "ogur", # Bartok Loco
+	95: "ogur", # Derailed Bartok
+	96: "lambkin", # Geartron Prototype
+	97: "lambkin", # Geartron-5000
+	102: "lambkin", # Opelle
+	103: "lambkin", # Glowing Opelle
+	104: "ogur", # Commune Defender
+	105: "ogur", # Commune Captain
+	106: "ogur", # Commune Commander
+	107: "lambkin", # Frost-Kid Kokori
+	108: "lambkin", # Ice-Prince Kokori
+	119: "ogur", # Pub Barman
+	120: "ogur", # Pub Landlord
+	121: "ogur", # The Archaeologist
+	122: "ogur", # The Castaway
+	123: "lambkin", # The Botanist
+	124: "lambkin", # The Ecologist
+	125: "lambkin", # The Biologist
+	128: "ogur", # Fabulous Bors
+	129: "ogur", # Sir Bors
+	132: "lambkin", # The Witch Doctor
+	133: "lambkin", # The Earth Whisperer
+	134: "ogur", # Hamish Highlander
+	135: "ogur", # Hamish Lochmaster
+	142: "lambkin", # Oro the Pilgrim
+	143: "lambkin", # Oro the Enlightened
+	144: "felyne", # Cara Pace
+	145: "felyne", # Clawing Cara
+	148: "felyne", # White Mage
+	149: "felyne", # White Wizard
+	150: "felyne", # Steph Lopod
+	151: "felyne", # Steph the Tentacled
+	152: "ogur", # Ant Lantis
+	153: "ogur", # Swelling Ant
+	154: "ogur", # Ki
+	155: "ogur", # Hammering Ki
+	156: "ogur", # Gawain the Just
+	157: "ogur", # Sir Gawain
+	158: "lambkin", # Sakura
+	160: "lambkin", # Inti Chihuan
+	161: "lambkin", # Shining Inti
+	166: "ogur", # Furia Rojo
+	167: "ogur", # Campeon Rojo
+	172: "ogur", # Three of Hearts
+	173: "ogur", # Ace of Hearts
+	178: "felyne", # Thief
+	179: "felyne", # Cutpurse
+	182: "lambkin", # Frontier Rider
+	183: "lambkin", # Frontier Protector
+	196: "lambkin", # Jimimi the Shepherd
+	197: "lambkin", # Jimimi the Herder
+	198: "lambkin", # Hookie
+	199: "lambkin", # Beautifly Hookie
+	204: "felyne", # Explorer Gatling
+	205: "felyne", # Raider Gatling
+	206: "felyne", # Belladonna
+	207: "felyne", # The Twilight Queen
+	208: "lambkin", # Claw Minstrel
+	209: "lambkin", # Claw Rocker
+	210: "lambkin", # Conjuring Clown
+	211: "lambkin", # Conjuring Harlequin
+	212: "lambkin", # Conjuring Jester
+	213: "lambkin", # Flame Warden
+	214: "lambkin", # Flame Dissident
+	215: "lambkin" # Flame Schematic
 }
 
 static var _units: Array[UnitData] = []
@@ -239,7 +370,13 @@ const RANK_VALUES := {
 	"Roguish Snare": [["20% chance"], ["40% chance"], ["60% chance"], ["80% chance"], ["100% chance"]],
 	"Wrangle": [["1 turn", "1 ATK", "1 turn"], ["1 turn", "2 ATK", "1 turn"], ["2 turns", "2 ATK", "1 turn"], ["2 turns", "2 ATK", "2 turns"], ["2 turns", "3 ATK", "2 turns"]],
 	"Cattle of Ra": [["1", "1 ATK"], ["2", "1 ATK"], ["2", "2 ATK"], ["3", "2 ATK"], ["3", "3 ATK"]],
-	"Divine Silence": [["1"], ["2"], ["3"], ["4"], ["5"]]
+	"Divine Silence": [["1"], ["2"], ["3"], ["4"], ["5"]],
+	"Stone Gaze": [["1", "1"], ["1", "2"], ["2", "2"], ["3", "2"], ["3", "3"]],
+	"Summon Forth": [["1", "50%", "1"], ["2", "50%", "2"], ["2", "100%", "2"], ["2", "100%", "3"], ["3", "100%", "3"]],
+	"Quiet!": [["1", "1 random", "1"], ["1", "2 random", "2"], ["2", "2 random", "2"], ["3", "2 random", "2"], ["3", "3 random", "3"]],
+	"Woolen Blanket": [["1 HP", "2 turns"], ["2 HP", "2 turns"], ["3 HP", "2 turns"], ["3 HP", "3 turns"], ["4 HP", "3 turns"]],
+	"Shadowbind": [["1 ATK", "2 turns"], ["2 ATK", "2 turns"], ["3 ATK", "2 turns"], ["3 ATK", "3 turns"], ["4 ATK", "3 turns"]],
+	"Inspire Lambkin": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "2 ATK"], ["3 HP", "2 ATK"], ["4 HP", "2 ATK"]]
 }
 
 static func _skill(name: String, type: String, chance: float, text: String) -> SkillData:
@@ -275,6 +412,7 @@ static func _unit(
 	u.hp = hp
 	u.move = move
 	u.range = range
+	u.race = UNIT_RACES.get(icon, "human")
 	u.description = text
 	u.promotion_of = promotion_of
 	u.skill = skill
@@ -465,7 +603,35 @@ static func _build() -> void:
 		_unit('Lunnain Oracle', 184, 5, 'Lifebinder', 2, 2, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Divine Silence', 'Warcry', -1.0, 'Target enemy unit is Silenced for {0} enemy turns.')),
 		_unit('Lunnain Divine', 185, 6, 'Lifebinder', 2, 3, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Lunnain Oracle', _skill('Divine Silence', 'Warcry', -1.0, 'Target enemy unit is Silenced for {0} enemy turns.')),
 		_unit('Ra', 186, 5, 'Warden', 4, 2, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Cattle of Ra', 'Chant', -1.0, 'At the end of the player turn, all Taunted enemy units are knocked back {0} spaces, are Immobilised and lose {1} for 1 enemy turn.')),
-		_unit('Ra, Creator', 187, 6, 'Warden', 4, 3, 11, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Ra', _skill('Cattle of Ra', 'Chant', -1.0, 'At the end of the player turn, all Taunted enemy units are knocked back {0} spaces, are Immobilised and lose {1} for 1 enemy turn.'))
+		_unit('Ra, Creator', 187, 6, 'Warden', 4, 3, 11, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Ra', _skill('Cattle of Ra', 'Chant', -1.0, 'At the end of the player turn, all Taunted enemy units are knocked back {0} spaces, are Immobilised and lose {1} for 1 enemy turn.')),
+		_unit('Rydia of Mist', 188, 5, 'Channeler', 3, 3, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Summon Forth', 'Warcry', -1.0, 'For {0} enemy turns, this Unit takes 0 damage when attacked and deals {1} damage back to {2} random enemy units with the highest ATK.')),
+		_unit('Summoner Rydia', 189, 6, 'Channeler', 3, 4, 8, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Rydia of Mist', _skill('Summon Forth', 'Warcry', -1.0, 'For {0} enemy turns, this Unit takes 0 damage when attacked and deals {1} damage back to {2} random enemy units with the highest ATK.')),
+		_unit('Booth', 190, 5, 'Artillerist', 3, 4, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Summon Forth', 'Warcry', -1.0, 'For {0} enemy turns, this Unit takes 0 damage when attacked and deals {1} damage back to {2} random enemy units with the highest ATK.')),
+		_unit('Booth Kavar', 191, 6, 'Artillerist', 3, 5, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Booth', _skill('Summon Forth', 'Warcry', -1.0, 'For {0} enemy turns, this Unit takes 0 damage when attacked and deals {1} damage back to {2} random enemy units with the highest ATK.')),
+		_unit('Medusa', 192, 5, 'Channeler', 4, 3, 9, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Stone Gaze', 'Chant', -1.0, 'At start of player turn, 1 random non-Poisoned enemy is Poisoned for {0} enemy turns. {1} Poisoned enemies in front of this unit are Stunned for 1 enemy turn.')),
+		_unit('Gorgon Medusa', 193, 6, 'Channeler', 4, 4, 10, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Medusa', _skill('Stone Gaze', 'Chant', -1.0, 'At start of player turn, 1 random non-Poisoned enemy is Poisoned for {0} enemy turns. {1} Poisoned enemies in front of this unit are Stunned for 1 enemy turn.')),
+		_unit('Nageki (Mourning Dove)', 194, 1, 'Lifebinder', 2, 1, 1, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', null),
+		_unit('Nageki Fujishiro', 195, 6, 'Lifebinder', 3, 2, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Nageki (Mourning Dove)', _skill('Quiet!', 'Chant', -1.0, 'At the start of {0} enemy turns, {1} enemies with the highest ATK are Silenced for {2} enemy turns. This unit takes 0 damage from all Silenced enemies.')),
+		_unit('Jimimi the Shepherd', 196, 4, 'Lifebinder', 3, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Woolen Blanket', 'Warcry', -1.0, 'Target ally unit gains {0} and Protect for {1}.')),
+		_unit('Jimimi the Herder', 197, 5, 'Lifebinder', 3, 4, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Jimimi the Shepherd', _skill('Woolen Blanket', 'Warcry', -1.0, 'Target ally unit gains {0} and Protect for {1}.')),
+		_unit('Hookie', 198, 4, 'Channeler', 3, 3, 3, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Woolen Blanket', 'Warcry', -1.0, 'Target ally unit gains {0} and Protect for {1}.')),
+		_unit('Beautifly Hookie', 199, 5, 'Channeler', 3, 4, 4, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Hookie', _skill('Woolen Blanket', 'Warcry', -1.0, 'Target ally unit gains {0} and Protect for {1}.')),
+		_unit('Winter Harding', 200, 4, 'Warden', 3, 2, 9, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Woolen Blanket', 'Warcry', -1.0, 'Target ally unit gains {0} and Protect for {1}.')),
+		_unit('Happy Elf Harding', 201, 5, 'Warden', 3, 3, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Winter Harding', _skill('Woolen Blanket', 'Warcry', -1.0, 'Target ally unit gains {0} and Protect for {1}.')),
+		_unit('Edge', 202, 5, 'Strider', 3, 2, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Shadowbind', 'Warcry', -1.0, 'Reduce {0} of all enemy units in target lane and Immobilise them for {1}.')),
+		_unit('Ninja Edge', 203, 6, 'Strider', 3, 3, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Edge', _skill('Shadowbind', 'Warcry', -1.0, 'Reduce {0} of all enemy units in target lane and Immobilise them for {1}.')),
+		_unit('Explorer Gatling', 204, 5, 'Strider', 3, 2, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Shadowbind', 'Warcry', -1.0, 'Reduce {0} of all enemy units in target lane and Immobilise them for {1}.')),
+		_unit('Raider Gatling', 205, 6, 'Strider', 3, 3, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Explorer Gatling', _skill('Shadowbind', 'Warcry', -1.0, 'Reduce {0} of all enemy units in target lane and Immobilise them for {1}.')),
+		_unit('Belladonna', 206, 5, 'Channeler', 3, 4, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Shadowbind', 'Warcry', -1.0, 'Reduce {0} of all enemy units in target lane and Immobilise them for {1}.')),
+		_unit('The Twilight Queen', 207, 6, 'Channeler', 3, 6, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Belladonna', _skill('Shadowbind', 'Warcry', -1.0, 'Reduce {0} of all enemy units in target lane and Immobilise them for {1}.')),
+		_unit('Claw Minstrel', 208, 2, 'Lifebinder', 3, 2, 3, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Claw Rocker', 209, 3, 'Lifebinder', 3, 3, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Claw Minstrel', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Conjuring Clown', 210, 3, 'Channeler', 3, 4, 2, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Conjuring Harlequin', 211, 4, 'Channeler', 3, 5, 4, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Conjuring Clown', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Conjuring Jester', 212, 5, 'Channeler', 3, 6, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Conjuring Harlequin', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Flame Warden', 213, 3, 'Lifebinder', 2, 2, 3, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Flame Dissident', 214, 4, 'Lifebinder', 2, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Flame Warden', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.')),
+		_unit('Flame Schematic', 215, 5, 'Lifebinder', 2, 4, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Flame Dissident', _skill('Inspire Lambkin', 'Aura', -1.0, 'Other allied Lambkin gain {0} and {1}.'))
 	]
 
 static func all_units() -> Array[UnitData]:
