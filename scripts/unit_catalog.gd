@@ -159,7 +159,23 @@ const ICON_ART_IDS := {
 	168: 1025, # Sakuya (Fantail Pigeon)
 	169: 1026, # Sakuya Le Bel Shirogane
 	170: 1027, # Yuuya (Fantail Pigeon)
-	171: 1028 # Yuuya Sakazaki
+	171: 1028, # Yuuya Sakazaki
+	172: 325, # Three of Hearts
+	173: 326, # Ace of Hearts
+	174: 979, # Philippa Trot
+	175: 980, # Galloping Philippa
+	176: 127, # The Aquanaut
+	177: 128, # The Hydronaut
+	178: 597, # Thief
+	179: 598, # Cutpurse
+	180: 965, # Present Verdandi
+	181: 966, # Verdandi Norn
+	182: 295, # Frontier Rider
+	183: 296, # Frontier Protector
+	184: 215, # Lunnain Oracle
+	185: 216, # Lunnain Divine
+	186: 1011, # Ra
+	187: 1012 # Ra, Creator
 }
 
 static var _units: Array[UnitData] = []
@@ -217,7 +233,13 @@ const RANK_VALUES := {
 	"Trisha's Prospect": [["2"], ["3"], ["4"], ["5"], ["6"]],
 	"Tag-Team": [["20% chance"], ["40% chance"], ["60% chance"], ["80% chance"], ["100% chance"]],
 	"Heartful Brother": [["1 ATK", "2", "2"], ["2 ATK", "2", "2"], ["2 ATK", "3", "3"], ["3 ATK", "3", "3"], ["3 ATK", "4", "4"]],
-	"Hurtful Brother": [["1 HP", "2", "2"], ["1 HP", "3", "3"], ["2 HP", "3", "3"], ["2 HP", "4", "4"], ["3 HP", "4", "4"]]
+	"Hurtful Brother": [["1 HP", "2", "2"], ["1 HP", "3", "3"], ["2 HP", "3", "3"], ["2 HP", "4", "4"], ["3 HP", "4", "4"]],
+	"Royal Flush": [["2 turns"], ["3 turns"], ["4 turns"], ["5 turns"], ["6 turns"]],
+	"Hydroblast": [["1 ATK", "1"], ["2 ATK", "1"], ["2 ATK", "2"], ["3 ATK", "2"], ["3 ATK", "3"]],
+	"Roguish Snare": [["20% chance"], ["40% chance"], ["60% chance"], ["80% chance"], ["100% chance"]],
+	"Wrangle": [["1 turn", "1 ATK", "1 turn"], ["1 turn", "2 ATK", "1 turn"], ["2 turns", "2 ATK", "1 turn"], ["2 turns", "2 ATK", "2 turns"], ["2 turns", "3 ATK", "2 turns"]],
+	"Cattle of Ra": [["1", "1 ATK"], ["2", "1 ATK"], ["2", "2 ATK"], ["3", "2 ATK"], ["3", "3 ATK"]],
+	"Divine Silence": [["1"], ["2"], ["3"], ["4"], ["5"]]
 }
 
 static func _skill(name: String, type: String, chance: float, text: String) -> SkillData:
@@ -427,7 +449,23 @@ static func _build() -> void:
 		_unit('Sakuya (Fantail Pigeon)', 168, 1, 'Channeler', 2, 1, 1, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', null),
 		_unit('Sakuya Le Bel Shirogane', 169, 6, 'Channeler', 2, 4, 6, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Sakuya (Fantail Pigeon)', _skill('Heartful Brother', 'Strike', -1.0, 'After attack all enemies lose {0} for {1} enemy turns, and if Yuuya is on the board, also become Vulnerable for {2} player turns.')),
 		_unit('Yuuya (Fantail Pigeon)', 170, 1, 'Artillerist', 2, 1, 1, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', null),
-		_unit('Yuuya Sakazaki', 171, 6, 'Artillerist', 2, 3, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Yuuya (Fantail Pigeon)', _skill('Hurtful Brother', 'Strike', -1.0, 'After attack all allies gain {0} for {1} player turns, and if Sakuya is on the board, also gain Regen for {2} player turns.'))
+		_unit('Yuuya Sakazaki', 171, 6, 'Artillerist', 2, 3, 6, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Yuuya (Fantail Pigeon)', _skill('Hurtful Brother', 'Strike', -1.0, 'After attack all allies gain {0} for {1} player turns, and if Sakuya is on the board, also gain Regen for {2} player turns.')),
+		_unit('Three of Hearts', 172, 4, 'Warden', 3, 1, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Royal Flush', 'Warcry', -1.0, 'All allied units in target lane gain Protect for {0}.')),
+		_unit('Ace of Hearts', 173, 5, 'Warden', 3, 2, 11, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Three of Hearts', _skill('Royal Flush', 'Warcry', -1.0, 'All allied units in target lane gain Protect for {0}.')),
+		_unit('Philippa Trot', 174, 4, 'Duelist', 3, 3, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', '', _skill('Royal Flush', 'Warcry', -1.0, 'All allied units in target lane gain Protect for {0}.')),
+		_unit('Galloping Philippa', 175, 5, 'Duelist', 3, 4, 6, 2, 1, 'Fury — Permanently gains +1 ATK after attacking.', 'Philippa Trot', _skill('Royal Flush', 'Warcry', -1.0, 'All allied units in target lane gain Protect for {0}.')),
+		_unit('The Aquanaut', 176, 5, 'Artillerist', 3, 3, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Hydroblast', 'Chant', -1.0, 'At the start of your turn, all enemy units in same lane as this unit lose {0} and are Knocked Back by {1} spaces.')),
+		_unit('The Hydronaut', 177, 6, 'Artillerist', 3, 4, 7, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'The Aquanaut', _skill('Hydroblast', 'Chant', -1.0, 'At the start of your turn, all enemy units in same lane as this unit lose {0} and are Knocked Back by {1} spaces.')),
+		_unit('Thief', 178, 5, 'Strider', 3, 2, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Roguish Snare', 'Chant', -1.0, 'At the start of your opponents turn, the last unit they place on the board will be Stunned for 2 turns with {0} to become permanently Poisoned.')),
+		_unit('Cutpurse', 179, 6, 'Strider', 3, 2, 6, 3, 1, 'Double Strike — Attacks twice each action.', 'Thief', _skill('Roguish Snare', 'Chant', -1.0, 'At the start of your opponents turn, the last unit they place on the board will be Stunned for 2 turns with {0} to become permanently Poisoned.')),
+		_unit('Present Verdandi', 180, 5, 'Lifebinder', 4, 2, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Roguish Snare', 'Chant', -1.0, 'At the start of your opponents turn, the last unit they place on the board will be Stunned for 2 turns with {0} to become permanently Poisoned.')),
+		_unit('Verdandi Norn', 181, 6, 'Lifebinder', 4, 2, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Present Verdandi', _skill('Roguish Snare', 'Chant', -1.0, 'At the start of your opponents turn, the last unit they place on the board will be Stunned for 2 turns with {0} to become permanently Poisoned.')),
+		_unit('Frontier Rider', 182, 5, 'Artillerist', 2, 2, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Wrangle', 'Chant', -1.0, 'At the start of your turn, all allied units behind this unit gain Protect for {0}. All enemy units in front of this unit lose {1} for {2}. (Affects all lanes).')),
+		_unit('Frontier Protector', 183, 6, 'Artillerist', 2, 3, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Frontier Rider', _skill('Wrangle', 'Chant', -1.0, 'At the start of your turn, all allied units behind this unit gain Protect for {0}. All enemy units in front of this unit lose {1} for {2}. (Affects all lanes).')),
+		_unit('Lunnain Oracle', 184, 5, 'Lifebinder', 2, 2, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Divine Silence', 'Warcry', -1.0, 'Target enemy unit is Silenced for {0} enemy turns.')),
+		_unit('Lunnain Divine', 185, 6, 'Lifebinder', 2, 3, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Lunnain Oracle', _skill('Divine Silence', 'Warcry', -1.0, 'Target enemy unit is Silenced for {0} enemy turns.')),
+		_unit('Ra', 186, 5, 'Warden', 4, 2, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Cattle of Ra', 'Chant', -1.0, 'At the end of the player turn, all Taunted enemy units are knocked back {0} spaces, are Immobilised and lose {1} for 1 enemy turn.')),
+		_unit('Ra, Creator', 187, 6, 'Warden', 4, 3, 11, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Ra', _skill('Cattle of Ra', 'Chant', -1.0, 'At the end of the player turn, all Taunted enemy units are knocked back {0} spaces, are Immobilised and lose {1} for 1 enemy turn.'))
 	]
 
 static func all_units() -> Array[UnitData]:

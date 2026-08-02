@@ -142,6 +142,9 @@ var pending_empower_actor_id := -1
 var pending_envenom_actor_id := -1
 var pending_lane_actor_id := -1
 var next_unit_id := 1
+## Most recently deployed unit id per side; Roguish Snare targets it when the
+## deploying side's next turn starts. Reset by _start_new_match.
+var last_deployed_unit_id := {PLAYER: -1, ENEMY: -1}
 var round_number := 1
 var player_hp := STARTING_HP
 var enemy_hp := STARTING_HP
@@ -2610,6 +2613,7 @@ func _start_new_match() -> void:
 	pending_envenom_actor_id = -1
 	pending_lane_actor_id = -1
 	next_unit_id = 1
+	last_deployed_unit_id = {PLAYER: -1, ENEMY: -1}
 	round_number = 1
 	player_hp = mission_run_captain_hp if campaign_battle else STARTING_HP
 	enemy_hp = STARTING_HP if not campaign_battle else encounter.enemy_hp
@@ -2705,13 +2709,15 @@ func _refresh() -> void:
 	var targetable_rows: Array = []
 	if pending_lane_actor_id >= 0:
 		var lane_actor = _unit_by_id(pending_lane_actor_id)
-		var lane_kinds: Array = _lane_target_kinds(
+		var lane_skill_name: String = (
 			lane_actor.get("skill", {}).get("name", "") if lane_actor != null else ""
 		)
+		var lane_kinds: Array = _lane_target_kinds(lane_skill_name)
+		var lane_side := _lane_target_side(lane_skill_name)
 		for row in ROWS:
 			if units.any(
 				func(unit): return (
-					unit.side == ENEMY and unit.row == row
+					unit.side == lane_side and unit.row == row
 					and (lane_kinds.is_empty() or unit.kind in lane_kinds)
 				)
 			):
@@ -2850,12 +2856,14 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 		return
 	if pending_lane_actor_id >= 0:
 		var actor = _unit_by_id(pending_lane_actor_id)
-		var lane_kinds: Array = _lane_target_kinds(
+		var lane_skill_name: String = (
 			actor.get("skill", {}).get("name", "") if actor != null else ""
 		)
+		var lane_kinds: Array = _lane_target_kinds(lane_skill_name)
+		var lane_side := _lane_target_side(lane_skill_name)
 		if actor != null and units.any(
 			func(unit): return (
-				unit.side == ENEMY and unit.row == row
+				unit.side == lane_side and unit.row == row
 				and (lane_kinds.is_empty() or unit.kind in lane_kinds)
 			)
 		):
@@ -2981,6 +2989,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"protect_turns": 0,
 		"regen_turns": 0,
 		"stun_turns": 0,
+		"silenced_turns": 0,
 		"haste_turns": 0,
 		"doom_turns": 0,
 		"festival_turns": 0,
@@ -2989,6 +2998,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 	}
 	units.append(spawned)
 	next_unit_id += 1
+	last_deployed_unit_id[side] = spawned.id
 	_refresh_auras()
 	return spawned
 
@@ -3012,18 +3022,19 @@ func _resolve_warcry(
 		pending_empower_actor_id = actor.id
 		return "Choose another allied unit as %s's target." % skill.get("name", "")
 	if (
-		actor.side == PLAYER and skill.get("name", "") in ["Envenom", "Fireball"]
+		actor.side == PLAYER and skill.get("name", "") in ["Envenom", "Fireball", "Divine Silence"]
 		and target_id < 0 and units.any(func(unit): return unit.side == ENEMY)
 	):
 		pending_envenom_actor_id = actor.id
 		return "Choose a highlighted enemy unit as %s's target." % skill.get("name", "")
 	var lane_kinds: Array = _lane_target_kinds(skill.get("name", ""))
+	var lane_side := _lane_target_side(skill.get("name", ""))
 	if (
 		actor.side == PLAYER
-		and skill.get("name", "") in ["Demoralize", "Meteor Barrage", "Freeze!"]
+		and skill.get("name", "") in ["Demoralize", "Meteor Barrage", "Freeze!", "Royal Flush"]
 		and target_lane < 0 and units.any(
 			func(unit): return (
-				unit.side == ENEMY
+				unit.side == lane_side
 				and (lane_kinds.is_empty() or unit.kind in lane_kinds)
 			)
 		)
@@ -3047,11 +3058,13 @@ func _resolve_warcry(
 				await board.animate_hit(target.id, _animation_duration(0.16))
 			elif skill.get("name", "") in [
 				"Fortify", "Empower", "Mend", "Protect", "Warrior's Vigour",
-				"Prune", "New Look", "Medic!", "Guard", "Sun Festival"
+				"Prune", "New Look", "Medic!", "Guard", "Sun Festival", "Royal Flush"
 			]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
-			elif skill.get("name", "") in ["Envenom", "Demoralize", "Punish", "Misfortune"]:
+			elif skill.get("name", "") in [
+				"Envenom", "Demoralize", "Punish", "Misfortune", "Divine Silence"
+			]:
 				battle_audio.play("status")
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
@@ -3082,6 +3095,11 @@ func _lane_target_kinds(skill_name: String) -> Array:
 	if skill_name == "Freeze!":
 		return ["Strider", "Duelist"]
 	return []
+
+## Side whose units make a lane a valid target for a lane-targeted Warcry.
+## Royal Flush buffs allies; the other lane Warcries target enemies.
+func _lane_target_side(skill_name: String) -> int:
+	return PLAYER if skill_name == "Royal Flush" else ENEMY
 
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
@@ -3651,7 +3669,10 @@ func _resolve_chants(side: int, phase: String = "start") -> void:
 					board.play_unit_effect(
 						target.id, result.get("label", "POISON"), Color("#8ee36b")
 					)
-	for result in UnitSkillsScript.resolve_chants(side, units, phase, battle_simulator.rng):
+	for result in UnitSkillsScript.resolve_chants(
+		side, units, phase, battle_simulator.rng, -1.0,
+		int(last_deployed_unit_id.get(side, -1))
+	):
 		if not result.get("message", "").is_empty():
 			status_message = result.message
 			_log_action("[%s CHANT] %s" % ["ALLY" if side == PLAYER else "ENEMY", result.message])
@@ -3662,6 +3683,10 @@ func _resolve_chants(side: int, phase: String = "start") -> void:
 			var target = _unit_by_id(unit_id)
 			if target != null:
 				board.play_unit_effect(target.id, "CHANT", Color("#ffd166"))
+		for moved in result.get("moved", []):
+			await board.animate_unit_move(
+				moved.id, moved.row, moved.from_col, _animation_duration(0.2)
+			)
 	await _animate_defeated_units()
 	_remove_defeated()
 	_refresh_auras()

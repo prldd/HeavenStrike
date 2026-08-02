@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://np2t1bcxd2fd"
-path="res://.godot/imported/crest.png-2af692c357e90f2e75e52cee685be9e7.ctex"
+uid="uid://bndf1s67tkt3c"
+path="res://.godot/imported/216.png-9c0d744a14e215a30d6979613324c4ab.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/crest.png"
-dest_files=["res://.godot/imported/crest.png-2af692c357e90f2e75e52cee685be9e7.ctex"]
+source_file="res://assets/units/full/216.png"
+dest_files=["res://.godot/imported/216.png-9c0d744a14e215a30d6979613324c4ab.ctex"]
 
 [params]
 

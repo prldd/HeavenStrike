@@ -1,6 +1,8 @@
 class_name CaptainSkills
 extends RefCounted
 
+const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
+
 const SKILLS := [
 	"Rally",
 	"Bloodlust",
@@ -142,7 +144,10 @@ static func effect_summary(unit: Dictionary) -> String:
 	if unit.get("immobilized_turns", 0) > 0:
 		labels.append("Immobilised (%d turns)" % unit.immobilized_turns)
 	if unit.get("poison_turns", 0) > 0:
-		labels.append("Poisoned (%d turns)" % unit.poison_turns)
+		if unit.poison_turns >= UnitSkillsScript.PERMANENT_POISON_TURNS:
+			labels.append("Poisoned (permanent)")
+		else:
+			labels.append("Poisoned (%d turns)" % unit.poison_turns)
 	if unit.get("vulnerable_turns", 0) > 0:
 		labels.append(
 			"Vulnerable (+%d damage, %d turns)" % [
@@ -153,6 +158,8 @@ static func effect_summary(unit: Dictionary) -> String:
 		labels.append("Regen (%d turns)" % unit.regen_turns)
 	if unit.get("stun_turns", 0) > 0:
 		labels.append("Stunned (%d turns)" % unit.stun_turns)
+	if unit.get("silenced_turns", 0) > 0:
+		labels.append("Silenced (%d turns)" % unit.silenced_turns)
 	if unit.get("haste_turns", 0) > 0:
 		labels.append("Haste (%d turns)" % unit.haste_turns)
 	if unit.get("doom_turns", 0) > 0:

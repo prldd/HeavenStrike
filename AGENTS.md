@@ -53,7 +53,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
-| `unit_catalog.gd` | Authoritative unit roster: 166 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative unit roster: 182 units as `UnitData` Resources with stats, class, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
@@ -159,7 +159,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (166 units, 14/16/36/45/42/13 six-bucket star distribution, 80 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (182 units, 14/16/36/47/50/19 six-bucket star distribution, 88 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
 
 ## Save files and persistence
 
@@ -269,15 +269,45 @@ starting Reserves.
    `resolve_chants(side, units, phase, ...)` runs twice per side turn:
    `phase = "start"` for start-of-turn chants (and the Regen/Poison tick lives
    in `resolve_start_statuses`), `phase = "end"` for skills in
-   `END_TURN_CHANTS` (Impairing Joust, Galatine's Ground) and the Sun Festival
+   `END_TURN_CHANTS` (Impairing Joust, Galatine's Ground, Cattle of Ra) and the Sun Festival
    buff countdown. Status mechanics ported from the reference: Regen (heal at
    side-turn start, mirrors Poison), Stun (`stun_turns` blocks activation,
    traversal, and repositioning — see `BattleRules.is_stunned` and the
    `activation_order` filter), Haste (+1 move in `traversal_cells`), and doom
    (`doom_turns` countdown that sets HP to 0 when it expires, ticking on the
-   opposing side's expiry pass). Knockback (Caber Toss, Tag-Team) shifts the
+   opposing side's expiry pass). Silence (`silenced_turns`, applied by the
+   Divine Silence Warcry) is the game's skill-locking status: while the
+   counter holds, `UnitSkills.is_silenced` gates all five timing hooks, so
+   the unit's own Warcry, Strike, Chants (both phases, including the Roguish
+   Snare pre-pass), and Reaction do not trigger, and it stops contributing
+   its Aura in `refresh_auras` (the buff drops while Silenced and returns on
+   expiry). It ticks down in the same `expire_statuses` pass as
+   `immobilized_turns` — at the end of the silenced unit's own side turns —
+   so the rank value N lasts N of the silenced unit's turns (the "enemy
+   turns" of the reference text, from the caster's perspective). Silence
+   never blocks movement, attacks, or Captain skills, and class abilities
+   are flavor text with no mechanics, so "Class Skills are silenced" from
+   the reference is a no-op here. The Divine Silence AI fallback
+   (`_skilled_enemy`) picks the highest-ATK enemy carrying a secondary
+   skill; skill-less enemies are never Silenced. Knockback (Caber Toss,
+   Tag-Team) shifts the
    target one cell away from the attacker along its column, stopping at the
    board edge or an occupied cell, and is reported via `result.moved`.
+   Roguish Snare is a deployment-reactive trigger family: it fires at the
+   start of the OPPOSING side's turn from that side's living carriers, so
+   `resolve_chants` takes a `last_placed_id` argument — the deploying side's
+   most recently placed unit, tracked in `main.gd:last_deployed_unit_id`
+   (updated by `_spawn_unit`, reset by `_start_new_match`) — and the
+   `_append_roguish_snare` pre-pass Stuns it for 2 turns with a rank-scaled
+   chance of permanent Poison (`PERMANENT_POISON_TURNS = 999`, which
+   `resolve_start_statuses` never ticks down; `BoardView` and
+   `CaptainSkills.effect_summary` special-case it for display).
+   Wrangle is column-relative and cross-lane ("Affects all lanes"): side 0
+   advances toward higher columns and side 1 toward lower ones, so allies
+   on columns further from the enemy edge than the chanter are "behind"
+   (gain Protect) and enemies on columns closer to it are "in front"
+   (lose ATK via the `effects` debuff mechanism); units in the chanter's
+   own column are neither.
 3. If the player chooses a target, wire `main.gd`: ally-target follows the
    `pending_empower_actor_id` pattern, enemy-target the
    `pending_envenom_actor_id` pattern, and lane-target the

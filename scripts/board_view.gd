@@ -3,6 +3,7 @@ extends Control
 
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
 const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
 const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
@@ -717,7 +718,11 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	if unit.get("immobilized_turns", 0) > 0:
 		badges.append({"label": "I%d" % unit.immobilized_turns, "color": Color("#c99cff")})
 	if unit.get("poison_turns", 0) > 0:
-		badges.append({"label": "P%d" % unit.poison_turns, "color": Color("#8ee36b")})
+		# Permanent Poison (Roguish Snare) shows no countdown, like ST/H.
+		var poison_label := "P%d" % unit.poison_turns
+		if unit.poison_turns >= UnitSkillsScript.PERMANENT_POISON_TURNS:
+			poison_label = "P"
+		badges.append({"label": poison_label, "color": Color("#8ee36b")})
 	if unit.get("vulnerable_turns", 0) > 0:
 		var vulnerable_label := "V%d" % unit.vulnerable_turns
 		if unit.get("vulnerable_stacks", 1) > 1:
@@ -732,6 +737,8 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 		badges.append({"label": "R%d" % unit.regen_turns, "color": Color("#8ee36b")})
 	if unit.get("stun_turns", 0) > 0:
 		badges.append({"label": "ST", "color": Color("#ffd166")})
+	if unit.get("silenced_turns", 0) > 0:
+		badges.append({"label": "SI%d" % unit.silenced_turns, "color": Color("#a8b8ff")})
 	if unit.get("haste_turns", 0) > 0:
 		badges.append({"label": "H", "color": Color("#f2c44f")})
 	if unit.get("doom_turns", 0) > 0:

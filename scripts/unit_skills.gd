@@ -5,7 +5,11 @@ const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 
 ## Chants that resolve at the end of their side's turn instead of the start.
-const END_TURN_CHANTS := ["Impairing Joust", "Galatine's Ground"]
+const END_TURN_CHANTS := ["Impairing Joust", "Galatine's Ground", "Cattle of Ra"]
+
+## Sentinel poison duration applied by Roguish Snare: resolve_start_statuses
+## never ticks a counter this large down, so the Poison is permanent.
+const PERMANENT_POISON_TURNS := 999
 
 static func resolve_warcry(
 	actor: Dictionary,
@@ -17,6 +21,9 @@ static func resolve_warcry(
 	var result := {"message": "", "affected": []}
 	var skill: Dictionary = actor.get("skill", {})
 	if skill.get("type", "").to_lower() != "warcry":
+		return result
+	# A Silenced unit's secondary skill does not trigger.
+	if is_silenced(actor):
 		return result
 	var level := int(actor.get("level", 1))
 	match skill.get("name", ""):
@@ -119,6 +126,17 @@ static func resolve_warcry(
 				target.poison_turns = maxi(target.get("poison_turns", 0), turns)
 				target.poison_damage = maxi(target.get("poison_damage", 0), 1)
 				result.message = "Envenom Poisons %s for %s." % [
+					target.name, _turn_label(turns)
+				]
+				result.affected.append(target.id)
+		"Divine Silence":
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				target = _skilled_enemy(actor, units)
+			if target != null:
+				var turns := rank_value(skill, level, 0, 1)
+				target.silenced_turns = maxi(target.get("silenced_turns", 0), turns)
+				result.message = "Divine Silence Silences %s for %s." % [
 					target.name, _turn_label(turns)
 				]
 				result.affected.append(target.id)
@@ -285,6 +303,26 @@ static func resolve_warcry(
 					target.name, _turn_label(turns)
 				]
 				result.affected.append(target.id)
+		"Royal Flush":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_ally_lane(actor, units)
+			var turns := rank_value(skill, level, 0, 2)
+			var target_count := 0
+			for target in units:
+				if (
+					target.side != actor.side or target.row != lane
+					or target.get("hp", 0) <= 0
+				):
+					continue
+				target.protect_turns = maxi(target.get("protect_turns", 0), turns)
+				result.affected.append(target.id)
+				target_count += 1
+			if target_count > 0:
+				result.message = "Royal Flush grants %d all%s in lane %d Protect for %s." % [
+					target_count, "y" if target_count == 1 else "ies", lane + 1,
+					_turn_label(turns)
+				]
 		"Fireball":
 			var target = _enemy_by_id(actor, units, target_id)
 			if target == null:
@@ -401,16 +439,25 @@ static func resolve_warcry(
 			result.affected.append(actor.id)
 	return result
 
+## Resolves the chant skills of every living unit on `side`. `phase` is
+## "start" or "end" of that side's turn. `last_placed_id` is the id of the
+## most recent unit `side` deployed (or -1 when it has placed nothing yet);
+## Roguish Snare carriers on the OPPOSING side use it at turn start.
 static func resolve_chants(
 	side: int,
 	units: Array,
 	phase: String = "start",
 	rng: RandomNumberGenerator = null,
-	roll: float = -1.0
+	roll: float = -1.0,
+	last_placed_id: int = -1
 ) -> Array:
 	var results: Array = []
+	if phase == "start":
+		_append_roguish_snare(side, units, last_placed_id, rng, roll, results)
 	for unit in units:
 		if unit.side != side or unit.get("hp", 0) <= 0:
+			continue
+		if is_silenced(unit):
 			continue
 		var skill: Dictionary = unit.get("skill", {})
 		if skill.get("type", "").to_lower() != "chant":
@@ -443,6 +490,76 @@ static func resolve_chants(
 						"y" if result.affected.size() == 1 else "ies",
 						unit.row + 1, _turn_label(turns)
 					]
+					results.append(result)
+			"Hydroblast":
+				# The ATK debuff carries one turn, so it lasts until the end of
+				# the enemy's next turn; the reference text gives no duration.
+				var amount := rank_value(skill, level, 0, 1)
+				var spaces := rank_value(skill, level, 1, 1)
+				var result := {
+					"message": "", "affected": [], "moved": [], "sound": "status"
+				}
+				for target in units:
+					if (
+						target.side == side or target.row != unit.row
+						or target.get("hp", 0) <= 0
+					):
+						continue
+					target.atk = maxi(0, target.get("atk", 0) - amount)
+					_add_effect(target, "Hydroblast", 1, -amount, 0)
+					_knockback(unit, target, spaces, units, result)
+					result.affected.append(target.id)
+				if not result.affected.is_empty():
+					result.message = "Hydroblast gives %d enem%s in lane %d -%d ATK and Knocks them Back %d space%s." % [
+						result.affected.size(),
+						"y" if result.affected.size() == 1 else "ies",
+						unit.row + 1, amount, spaces, "" if spaces == 1 else "s"
+					]
+					results.append(result)
+			"Wrangle":
+				# "Behind"/"in front of" are column-relative and cross-lane:
+				# side 0 advances toward higher columns and side 1 toward
+				# lower ones, so an ally is behind the chanter when its
+				# column is further from the enemy edge and an enemy is in
+				# front when its column is closer to it. Units in the
+				# chanter's own column are neither.
+				var protect_turns := rank_value(skill, level, 0, 1)
+				var amount := rank_value(skill, level, 1, 1)
+				var debuff_turns := rank_value(skill, level, 2, 1)
+				var forward := 1 if side == 0 else -1
+				var result := {"message": "", "affected": [], "sound": "status"}
+				var protected_count := 0
+				var debuffed_count := 0
+				for target in units:
+					if target.id == unit.id or target.get("hp", 0) <= 0:
+						continue
+					var offset: int = (target.col - unit.col) * forward
+					if target.side == side and offset < 0:
+						target.protect_turns = maxi(
+							target.get("protect_turns", 0), protect_turns
+						)
+						result.affected.append(target.id)
+						protected_count += 1
+					elif target.side != side and offset > 0:
+						target.atk = maxi(0, target.get("atk", 0) - amount)
+						_add_effect(target, "Wrangle", debuff_turns, -amount, 0)
+						result.affected.append(target.id)
+						debuffed_count += 1
+				if not result.affected.is_empty():
+					var clauses: Array = []
+					if protected_count > 0:
+						clauses.append("grants %d all%s behind it Protect for %s" % [
+							protected_count,
+							"y" if protected_count == 1 else "ies",
+							_turn_label(protect_turns)
+						])
+					if debuffed_count > 0:
+						clauses.append("gives %d enem%s in front of it -%d ATK for %s" % [
+							debuffed_count,
+							"y" if debuffed_count == 1 else "ies",
+							amount, _turn_label(debuff_turns)
+						])
+					result.message = "Wrangle %s." % " and ".join(clauses)
 					results.append(result)
 			"Lifestream":
 				var turns := rank_value(skill, level, 0, 2)
@@ -585,9 +702,88 @@ static func resolve_chants(
 						],
 						"affected": affected, "sound": "status"
 					})
+			"Cattle of Ra":
+				# Runs at the end of the CHANTER's side turn (the "player turn"
+				# of the reference text, matching Impairing Joust). The ATK
+				# debuff and the Immobilise each carry one turn, so both last
+				# until the end of the enemy's next turn, mirroring Hydroblast.
+				var spaces := rank_value(skill, level, 0, 1)
+				var amount := rank_value(skill, level, 1, 1)
+				var result := {
+					"message": "", "affected": [], "moved": [], "sound": "status"
+				}
+				for enemy in units:
+					if (
+						enemy.side == side or enemy.get("hp", 0) <= 0
+						or enemy.get("taunt_turns", 0) <= 0
+					):
+						continue
+					_knockback(unit, enemy, spaces, units, result)
+					enemy.immobilized_turns = maxi(
+						enemy.get("immobilized_turns", 0), 1
+					)
+					enemy.atk = maxi(0, enemy.get("atk", 0) - amount)
+					_add_effect(enemy, "Cattle of Ra", 1, -amount, 0)
+					result.affected.append(enemy.id)
+				if not result.affected.is_empty():
+					result.message = "Cattle of Ra Knocks Back %d Taunted enem%s %d space%s; they are Immobilised and lose %d ATK for 1 enemy turn." % [
+						result.affected.size(),
+						"y" if result.affected.size() == 1 else "ies",
+						spaces, "" if spaces == 1 else "s", amount
+					]
+					results.append(result)
 	if phase == "end":
 		_append_sun_festival(side, units, results)
 	return results
+
+## Roguish Snare is a deployment trap: when the turn of the side OPPOSITE the
+## carrier starts, that side's most recently deployed unit (`last_placed_id`)
+## is Stunned for 2 turns and, at a rank-scaled chance, permanently Poisoned.
+## Only the first living carrier in deployment order triggers, so multiple
+## carriers never stack. Nothing happens while the opponent has placed no
+## unit yet or every carrier is dead.
+static func _append_roguish_snare(
+	side: int,
+	units: Array,
+	last_placed_id: int,
+	rng: RandomNumberGenerator,
+	roll: float,
+	results: Array
+) -> void:
+	if last_placed_id < 0:
+		return
+	var victim = BattleSimulatorScript.unit_by_id(units, last_placed_id)
+	if victim == null or victim.side != side or victim.get("hp", 0) <= 0:
+		return
+	for carrier in units:
+		if carrier.side == side or carrier.get("hp", 0) <= 0:
+			continue
+		if is_silenced(carrier):
+			continue
+		var skill: Dictionary = carrier.get("skill", {})
+		if skill.get("name", "") != "Roguish Snare":
+			continue
+		if skill.get("type", "").to_lower() != "chant":
+			continue
+		var level := int(carrier.get("level", 1))
+		victim.stun_turns = maxi(victim.get("stun_turns", 0), 2)
+		var message := "Roguish Snare Stuns %s for 2 turns." % victim.name
+		var poison_chance := rank_value(skill, level, 0, 20) / 100.0
+		var chance_roll: float = roll if roll >= 0.0 else (
+			rng.randf() if rng != null else randf()
+		)
+		if chance_roll < poison_chance:
+			victim.poison_turns = maxi(
+				victim.get("poison_turns", 0), PERMANENT_POISON_TURNS
+			)
+			victim.poison_damage = maxi(victim.get("poison_damage", 0), 1)
+			message += " It is permanently Poisoned."
+		results.append({
+			"message": message,
+			"affected": [victim.id],
+			"sound": "status"
+		})
+		return
 
 ## Counts down Sun Festival timers at the end of the owner's turn; when one
 ## reaches zero, all allies heal and allies carrying Regen gain ATK and Haste.
@@ -629,7 +825,9 @@ static func resolve_start_statuses(side: int, units: Array) -> Array:
 			continue
 		var damage: int = maxi(1, unit.get("poison_damage", 1))
 		BattleSimulatorScript.apply_unit_damage(unit, damage)
-		unit.poison_turns -= 1
+		# Permanent Poison (Roguish Snare) deals damage but never counts down.
+		if unit.poison_turns < PERMANENT_POISON_TURNS:
+			unit.poison_turns -= 1
 		results.append({
 			"message": "Poison deals %d damage to %s." % [damage, unit.name],
 			"affected": [unit.id],
@@ -655,6 +853,8 @@ static func resolve_strike(
 	var result := {"message": "", "affected": [], "moved": []}
 	var skill: Dictionary = actor.get("skill", {})
 	if skill.get("type", "").to_lower() != "strike":
+		return result
+	if is_silenced(actor):
 		return result
 	var skill_name: String = skill.get("name", "")
 	var level := int(actor.get("level", 1))
@@ -828,6 +1028,8 @@ static func resolve_reaction(
 	var skill: Dictionary = target.get("skill", {})
 	if skill.get("type", "").to_lower() != "reaction":
 		return result
+	if is_silenced(target):
+		return result
 	if target.get("hp", 0) <= 0 or attacker.get("hp", 0) <= 0:
 		return result
 	var level := int(target.get("level", 1))
@@ -919,13 +1121,17 @@ static func resolve_reaction(
 ## Recomputes aura buffs from living sources. Each call strips the bonus a
 ## unit currently carries (`aura_hp`) and re-applies what surviving aura
 ## units grant, so a buff disappears as soon as its source leaves the board.
-## Every change is appended to `events` as {"unit_id", "delta", "label"} so
-## callers can log aura gains and losses.
+## Silenced sources contribute nothing, so the buff drops while the source is
+## Silenced and returns when the Silence expires. Every change is appended to
+## `events` as {"unit_id", "delta", "label"} so callers can log aura gains and
+## losses.
 static func refresh_auras(units: Array, events: Array = []) -> void:
 	var desired := {}
 	var desired_labels := {}
 	for source in units:
 		if source.get("hp", 1) <= 0:
+			continue
+		if is_silenced(source):
 			continue
 		var skill: Dictionary = source.get("skill", {})
 		if skill.get("type", "").to_lower() != "aura":
@@ -972,6 +1178,8 @@ static func expire_statuses(units: Array, side: int) -> void:
 			unit.protect_turns -= 1
 		if unit.side == side and unit.get("stun_turns", 0) > 0:
 			unit.stun_turns -= 1
+		if unit.side == side and unit.get("silenced_turns", 0) > 0:
+			unit.silenced_turns -= 1
 		if unit.side == side and unit.get("haste_turns", 0) > 0:
 			unit.haste_turns -= 1
 		# Doom timers (Mighty Guard) count the opposing side's turns; when one
@@ -980,6 +1188,12 @@ static func expire_statuses(units: Array, side: int) -> void:
 			unit.doom_turns -= 1
 			if unit.doom_turns <= 0:
 				unit.hp = 0
+
+## A Silenced unit's secondary skill does not trigger while the counter
+## holds: it skips its Warcry, Strike, Chants, and Reaction, and stops
+## contributing its Aura. Movement, attacks, and Captain skills are unaffected.
+static func is_silenced(unit: Dictionary) -> bool:
+	return unit.get("silenced_turns", 0) > 0
 
 static func timing_tooltip(skill_type: String) -> String:
 	match skill_type.to_lower():
@@ -1130,6 +1344,20 @@ static func _highest_health_enemy(actor: Dictionary, units: Array):
 	)
 	return null if candidates.is_empty() else candidates[0]
 
+## Highest-ATK enemy carrying a secondary skill; the Divine Silence AI
+## fallback. Enemies without a skill are never picked, since Silencing them
+## would do nothing.
+static func _skilled_enemy(actor: Dictionary, units: Array):
+	var candidates := _enemies(actor, units).filter(
+		func(unit): return not unit.get("skill", {}).is_empty()
+	)
+	candidates.sort_custom(func(a, b):
+		if a.atk == b.atk:
+			return a.id < b.id
+		return a.atk > b.atk
+	)
+	return null if candidates.is_empty() else candidates[0]
+
 static func _highest_health_enemy_classes(
 	actor: Dictionary, units: Array, kinds: Array
 ):
@@ -1167,4 +1395,21 @@ static func _best_enemy_lane(actor: Dictionary, units: Array, kinds: Array) -> i
 		if score > best_score:
 			best_lane = lane
 			best_score = score
+	return best_lane
+
+## Lane with the most living allied units; the Royal Flush AI fallback.
+static func _best_ally_lane(actor: Dictionary, units: Array) -> int:
+	var best_lane := -1
+	var best_count := -1
+	for lane in 3:
+		var count := 0
+		for unit in units:
+			if (
+				unit.side == actor.side and unit.row == lane
+				and unit.get("hp", 0) > 0
+			):
+				count += 1
+		if count > best_count:
+			best_lane = lane
+			best_count = count
 	return best_lane

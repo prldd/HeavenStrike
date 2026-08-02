@@ -12,7 +12,7 @@ const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 166, "The playable roster must contain 166 units.")
+	assert(roster.size() == 182, "The playable roster must contain 182 units.")
 	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
@@ -107,26 +107,26 @@ func _init() -> void:
 	assert(captain_hit.shield_absorbed == 2)
 	assert(captain_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 171
+		func(icon_id): return icon_id >= 1 and icon_id <= 187
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 14)
 	assert(roster.filter(func(unit): return unit.stars == 2).size() == 16)
 	assert(roster.filter(func(unit): return unit.stars == 3).size() == 36)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 45)
-	assert(roster.filter(func(unit): return unit.stars == 5).size() == 42)
-	assert(roster.filter(func(unit): return unit.stars == 6).size() == 13)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 47)
+	assert(roster.filter(func(unit): return unit.stars == 5).size() == 50)
+	assert(roster.filter(func(unit): return unit.stars == 6).size() == 19)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	var unique_icon_ids: Array = []
 	for icon_id in icon_ids:
 		if icon_id not in unique_icon_ids:
 			unique_icon_ids.append(icon_id)
 	assert(icon_ids.size() == unique_icon_ids.size())
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 23)
-	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 29)
-	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 31)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 26)
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 25)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 31)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 35)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 30)
 	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 28)
-	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 29)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 33)
 	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
 	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
 	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
@@ -329,6 +329,24 @@ func _init() -> void:
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Heartful Brother"
 	).size() == 1)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Royal Flush"
+	).size() == 4)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Hydroblast"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Roguish Snare"
+	).size() == 4)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Wrangle"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Cattle of Ra"
+	).size() == 2)
+	assert(roster.filter(
+		func(unit): return unit.skill != null and unit.skill.name == "Divine Silence"
+	).size() == 2)
 	assert(UnitCatalogScript.by_name("LDF Sergeant").promotion_of == "LDF Constable")
 	assert(UnitCatalogScript.by_name("Pompous Joe Wonder").promotion_of == "Joe Wonder")
 	assert(UnitCatalogScript.by_name("Blazing Dragon").promotion_of == "Raging Dragon")
@@ -340,6 +358,36 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Sakuya Le Bel Shirogane").promotion_of == "Sakuya (Fantail Pigeon)")
 	assert(UnitCatalogScript.by_name("Yuuya Sakazaki").promotion_of == "Yuuya (Fantail Pigeon)")
 	assert(UnitCatalogScript.by_name("José Decomposé").promotion_of == "José")
+	assert(UnitCatalogScript.by_name("Three of Hearts").skill.name == "Royal Flush")
+	assert(UnitCatalogScript.by_name("Three of Hearts").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Ace of Hearts").promotion_of == "Three of Hearts")
+	assert(UnitCatalogScript.by_name("Ace of Hearts").stars == 5)
+	assert(UnitCatalogScript.by_name("Philippa Trot").kind == "Duelist")
+	assert(UnitCatalogScript.by_name("Galloping Philippa").promotion_of == "Philippa Trot")
+	assert(UnitCatalogScript.by_name("The Aquanaut").skill.name == "Hydroblast")
+	assert(UnitCatalogScript.by_name("The Aquanaut").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("The Hydronaut").promotion_of == "The Aquanaut")
+	assert(UnitCatalogScript.by_name("The Hydronaut").stars == 6)
+	assert(UnitCatalogScript.by_name("Thief").skill.name == "Roguish Snare")
+	assert(UnitCatalogScript.by_name("Thief").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Cutpurse").promotion_of == "Thief")
+	assert(UnitCatalogScript.by_name("Present Verdandi").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Verdandi Norn").promotion_of == "Present Verdandi")
+	assert(UnitCatalogScript.by_name("Frontier Rider").skill.name == "Wrangle")
+	assert(UnitCatalogScript.by_name("Frontier Rider").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Frontier Rider").kind == "Artillerist")
+	assert(UnitCatalogScript.by_name("Frontier Protector").promotion_of == "Frontier Rider")
+	assert(UnitCatalogScript.by_name("Frontier Protector").stars == 6)
+	assert(UnitCatalogScript.by_name("Lunnain Oracle").skill.name == "Divine Silence")
+	assert(UnitCatalogScript.by_name("Lunnain Oracle").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Lunnain Oracle").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Lunnain Divine").promotion_of == "Lunnain Oracle")
+	assert(UnitCatalogScript.by_name("Lunnain Divine").stars == 6)
+	assert(UnitCatalogScript.by_name("Ra").skill.name == "Cattle of Ra")
+	assert(UnitCatalogScript.by_name("Ra").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Ra").kind == "Warden")
+	assert(UnitCatalogScript.by_name("Ra, Creator").promotion_of == "Ra")
+	assert(UnitCatalogScript.by_name("Ra, Creator").stars == 6)
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
 	assert(UnitCatalogScript.art_id(27) == 83)
@@ -375,6 +423,22 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(165) == 1200)
 	assert(UnitCatalogScript.art_id(169) == 1026)
 	assert(UnitCatalogScript.art_id(171) == 1028)
+	assert(UnitCatalogScript.art_id(172) == 325)
+	assert(UnitCatalogScript.art_id(173) == 326)
+	assert(UnitCatalogScript.art_id(174) == 979)
+	assert(UnitCatalogScript.art_id(175) == 980)
+	assert(UnitCatalogScript.art_id(176) == 127)
+	assert(UnitCatalogScript.art_id(177) == 128)
+	assert(UnitCatalogScript.art_id(178) == 597)
+	assert(UnitCatalogScript.art_id(179) == 598)
+	assert(UnitCatalogScript.art_id(180) == 965)
+	assert(UnitCatalogScript.art_id(181) == 966)
+	assert(UnitCatalogScript.art_id(182) == 295)
+	assert(UnitCatalogScript.art_id(183) == 296)
+	assert(UnitCatalogScript.art_id(184) == 215)
+	assert(UnitCatalogScript.art_id(185) == 216)
+	assert(UnitCatalogScript.art_id(186) == 1011)
+	assert(UnitCatalogScript.art_id(187) == 1012)
 	for unit in roster:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		assert(FileAccess.file_exists(
@@ -383,7 +447,7 @@ func _init() -> void:
 		assert(FileAccess.file_exists(
 			"res://assets/units/full/%03d.png" % art_id
 		))
-	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 80)
+	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 88)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -437,12 +501,12 @@ func _init() -> void:
 	assert(CampaignStoreScript.is_available(1, [0]))
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
-	assert(starting_unlocks.size() == 45)
+	assert(starting_unlocks.size() == 61)
 	assert("Chain Initiate" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
 		roster, ["Chain Initiate", "LDF Medic"]
 	)
-	assert(earned_unlocks.size() == 47)
+	assert(earned_unlocks.size() == 63)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
 	assert(CampaignStoreScript.reward_summary(2) == "Random: Street Nurse, Rage Brute")
@@ -1018,6 +1082,457 @@ func _init() -> void:
 	assert(veteran_chants.size() == 1)
 	assert(veteran_lane_foe.hp == 6 and veteran_lane_foe.vulnerable_turns == 4)
 
+	# Chant: Hydroblast debuffs the ATK of every enemy in the chanter's lane
+	# until the end of the enemy's next turn and Knocks them Back away from
+	# the chanter, stopping at the board edge or an occupied cell.
+	var aquanaut := {
+		"id": 404, "side": 0, "name": "The Aquanaut", "kind": "Artillerist",
+		"row": 1, "col": 2, "atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {
+			"name": "Hydroblast", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Hydroblast"]
+		}
+	}
+	var hydro_foe := {
+		"id": 405, "side": 1, "name": "Hydro Foe", "kind": "Warden",
+		"row": 1, "col": 4, "atk": 4, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var hydro_blocker := {
+		"id": 406, "side": 1, "name": "Hydro Blocker", "kind": "Duelist",
+		"row": 1, "col": 5, "atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var hydro_other_lane := {
+		"id": 407, "side": 1, "name": "Other Lane Hydro Foe", "kind": "Strider",
+		"row": 2, "col": 4, "atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var hydro_units := [aquanaut, hydro_foe, hydro_blocker, hydro_other_lane]
+	var hydro_results := UnitSkillsScript.resolve_chants(0, hydro_units)
+	assert(hydro_results.size() == 1)
+	assert(hydro_results[0].affected == [405, 406])
+	assert(hydro_foe.atk == 3 and hydro_blocker.atk == 2)
+	# The foe is blocked by the blocker and stays; the blocker slides to col 6.
+	assert(hydro_foe.col == 4 and hydro_blocker.col == 6)
+	assert(hydro_results[0].moved.size() == 2)
+	assert(hydro_other_lane.atk == 3 and hydro_other_lane.col == 4)
+	assert(not hydro_other_lane.has("effects") or hydro_other_lane.effects.is_empty())
+	assert(UnitSkillsScript.resolve_chants(1, hydro_units).is_empty())
+	# The debuff lifts at the end of the enemy's next turn.
+	CaptainSkillsScript.expire_effects(hydro_units, 1)
+	assert(hydro_foe.atk == 4 and hydro_blocker.atk == 3)
+	# Level scaling: a level-5 chanter debuffs 3 ATK and Knocks Back 3 spaces.
+	var hydronaut := {
+		"id": 408, "side": 0, "name": "The Hydronaut", "kind": "Artillerist",
+		"row": 0, "col": 0, "atk": 4, "hp": 7, "max_hp": 7, "effects": [], "level": 5,
+		"skill": UnitCatalogScript.by_name("The Hydronaut").skill.to_dict()
+	}
+	var hydro_veteran_foe := {
+		"id": 409, "side": 1, "name": "Veteran Hydro Foe", "kind": "Warden",
+		"row": 0, "col": 3, "atk": 5, "hp": 9, "max_hp": 9, "effects": []
+	}
+	var hydro_veteran_results := UnitSkillsScript.resolve_chants(
+		0, [hydronaut, hydro_veteran_foe]
+	)
+	assert(hydro_veteran_results.size() == 1)
+	assert(hydro_veteran_foe.atk == 2 and hydro_veteran_foe.col == 6)
+
+	# Chant: Roguish Snare is a deployment trap that fires at the start of
+	# the OPPOSING side's turn, Stunning that side's most recently deployed
+	# unit (the `last_placed_id` argument) for 2 turns with a rank-scaled
+	# chance of permanent Poison. Only the first living carrier triggers.
+	var thief := {
+		"id": 410, "side": 0, "name": "Thief", "kind": "Strider",
+		"row": 0, "col": 1, "atk": 2, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {
+			"name": "Roguish Snare", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Roguish Snare"]
+		}
+	}
+	var cutpurse := {
+		"id": 411, "side": 0, "name": "Cutpurse", "kind": "Strider",
+		"row": 1, "col": 1, "atk": 2, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {
+			"name": "Roguish Snare", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Roguish Snare"]
+		}
+	}
+	var snare_fresh := {
+		"id": 412, "side": 1, "name": "Fresh Recruit", "kind": "Warden",
+		"row": 0, "col": 5, "atk": 3, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var snare_veteran := {
+		"id": 413, "side": 1, "name": "Old Guard", "kind": "Duelist",
+		"row": 1, "col": 4, "atk": 4, "hp": 7, "max_hp": 7, "effects": []
+	}
+	var snare_units := [thief, cutpurse, snare_fresh, snare_veteran]
+	# Nothing fires on the snare owner's own turn, when the opponent has
+	# placed nothing yet, or when the id names a unit of the wrong side.
+	assert(UnitSkillsScript.resolve_chants(0, snare_units, "start", null, -1.0, 412).is_empty())
+	assert(UnitSkillsScript.resolve_chants(1, snare_units, "start", null, -1.0, -1).is_empty())
+	assert(UnitSkillsScript.resolve_chants(1, snare_units, "start", null, -1.0, 410).is_empty())
+	# At the start of side 1's turn the trap springs on its most recent
+	# deployment (412), not the earlier one (413). Roll 0.0 beats the 20%
+	# level-1 chance, so the Poison lands and never expires.
+	var snare_results := UnitSkillsScript.resolve_chants(
+		1, snare_units, "start", null, 0.0, 412
+	)
+	assert(snare_results.size() == 1, "Two carriers must not stack two snares.")
+	assert(snare_results[0].affected == [412])
+	assert("Stuns" in snare_results[0].message)
+	assert(snare_fresh.stun_turns == 2 and BattleRulesScript.is_stunned(snare_fresh))
+	assert(snare_fresh.poison_turns == UnitSkillsScript.PERMANENT_POISON_TURNS)
+	assert(snare_fresh.poison_damage == 1)
+	assert(snare_veteran.get("stun_turns", 0) == 0)
+	# The permanent Poison ticks damage but never counts down.
+	var snare_status := UnitSkillsScript.resolve_start_statuses(1, snare_units)
+	assert(snare_status.size() == 1 and snare_fresh.hp == 7)
+	assert(snare_fresh.poison_turns == UnitSkillsScript.PERMANENT_POISON_TURNS)
+	# The Stun lasts two of the victim's side turns.
+	UnitSkillsScript.expire_statuses(snare_units, 1)
+	assert(snare_fresh.stun_turns == 1 and BattleRulesScript.is_stunned(snare_fresh))
+	UnitSkillsScript.expire_statuses(snare_units, 1)
+	assert(snare_fresh.stun_turns == 0 and not BattleRulesScript.is_stunned(snare_fresh))
+	# A roll above the chance still Stuns but does not Poison.
+	var snare_miss := UnitSkillsScript.resolve_chants(
+		1, snare_units, "start", null, 0.99, 413
+	)
+	assert(snare_miss.size() == 1 and snare_miss[0].affected == [413])
+	assert(snare_veteran.stun_turns == 2 and snare_veteran.get("poison_turns", 0) == 0)
+	# With the first carrier dead, the next living one springs the trap; the
+	# level-5 rank row is a 100% chance, so even a 0.99 roll Poisons.
+	thief.hp = 0
+	cutpurse.level = 5
+	var snare_max := UnitSkillsScript.resolve_chants(
+		1, snare_units, "start", null, 0.99, 413
+	)
+	assert(snare_max.size() == 1)
+	assert(snare_veteran.poison_turns == UnitSkillsScript.PERMANENT_POISON_TURNS)
+	# With every carrier dead the trap cannot fire.
+	cutpurse.hp = 0
+	assert(UnitSkillsScript.resolve_chants(
+		1, snare_units, "start", null, 0.0, 412
+	).is_empty())
+
+	# Chant: Wrangle grants Protect to every ally behind the chanter and
+	# debuffs the ATK of every enemy in front of it, across all lanes.
+	# "Behind"/"in front" are column-relative: side 0 advances toward
+	# higher columns, so behind = lower column, in front = higher column;
+	# units in the chanter's own column are neither.
+	var frontier_rider := {
+		"id": 420, "side": 0, "name": "Frontier Rider", "kind": "Artillerist",
+		"row": 1, "col": 3, "atk": 2, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {
+			"name": "Wrangle", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Wrangle"]
+		}
+	}
+	var wrangle_ally_behind := {
+		"id": 421, "side": 0, "name": "Rear Ally", "kind": "Warden",
+		"row": 2, "col": 1, "atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var wrangle_ally_ahead := {
+		"id": 422, "side": 0, "name": "Front Ally", "kind": "Duelist",
+		"row": 1, "col": 5, "atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var wrangle_ally_beside := {
+		"id": 423, "side": 0, "name": "Flank Ally", "kind": "Strider",
+		"row": 0, "col": 3, "atk": 2, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var wrangle_foe_front := {
+		"id": 424, "side": 1, "name": "Front Foe", "kind": "Warden",
+		"row": 0, "col": 4, "atk": 4, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var wrangle_foe_behind := {
+		"id": 425, "side": 1, "name": "Rear Foe", "kind": "Strider",
+		"row": 1, "col": 2, "atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var wrangle_units := [
+		frontier_rider, wrangle_ally_behind, wrangle_ally_ahead,
+		wrangle_ally_beside, wrangle_foe_front, wrangle_foe_behind
+	]
+	var wrangle_results := UnitSkillsScript.resolve_chants(0, wrangle_units)
+	assert(wrangle_results.size() == 1)
+	# Cross-lane: the rear ally is in lane 3, the front foe in lane 1.
+	assert(wrangle_results[0].affected == [421, 424])
+	assert(wrangle_ally_behind.protect_turns == 1)
+	assert(wrangle_ally_ahead.get("protect_turns", 0) == 0)
+	assert(wrangle_ally_beside.get("protect_turns", 0) == 0)
+	assert(frontier_rider.get("protect_turns", 0) == 0)
+	assert(wrangle_foe_front.atk == 3 and wrangle_foe_front.effects.size() == 1)
+	assert(wrangle_foe_behind.atk == 3 and wrangle_foe_behind.effects.is_empty())
+	assert(UnitSkillsScript.resolve_chants(1, wrangle_units).is_empty())
+	assert(UnitSkillsScript.resolve_chants(0, wrangle_units, "end").is_empty())
+	# The level-1 debuff lasts one enemy turn, mirroring Hydroblast.
+	CaptainSkillsScript.expire_effects(wrangle_units, 1)
+	assert(wrangle_foe_front.atk == 4 and wrangle_foe_front.effects.is_empty())
+	# Level scaling: the level-5 rank row is 2-turn Protect, -3 ATK, 2 turns.
+	var frontier_protector := {
+		"id": 426, "side": 0, "name": "Frontier Protector", "kind": "Artillerist",
+		"row": 0, "col": 2, "atk": 3, "hp": 5, "max_hp": 5, "effects": [], "level": 5,
+		"skill": UnitCatalogScript.by_name("Frontier Protector").skill.to_dict()
+	}
+	var wrangle_veteran_ally := {
+		"id": 427, "side": 0, "name": "Veteran Rear Ally", "kind": "Warden",
+		"row": 0, "col": 1, "atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var wrangle_veteran_foe := {
+		"id": 428, "side": 1, "name": "Veteran Front Foe", "kind": "Duelist",
+		"row": 2, "col": 5, "atk": 5, "hp": 7, "max_hp": 7, "effects": []
+	}
+	var wrangle_veteran_units := [
+		frontier_protector, wrangle_veteran_ally, wrangle_veteran_foe
+	]
+	var wrangle_veteran_results := UnitSkillsScript.resolve_chants(
+		0, wrangle_veteran_units
+	)
+	assert(wrangle_veteran_results.size() == 1)
+	assert(wrangle_veteran_results[0].affected == [427, 428])
+	assert(wrangle_veteran_ally.protect_turns == 2)
+	assert(wrangle_veteran_foe.atk == 2)
+	# The 2-turn debuff survives the first enemy expiry and lifts at the second.
+	CaptainSkillsScript.expire_effects(wrangle_veteran_units, 1)
+	assert(wrangle_veteran_foe.atk == 2 and wrangle_veteran_foe.effects.size() == 1)
+	CaptainSkillsScript.expire_effects(wrangle_veteran_units, 1)
+	assert(wrangle_veteran_foe.atk == 5 and wrangle_veteran_foe.effects.is_empty())
+	# A dead chanter resolves nothing.
+	frontier_protector.hp = 0
+	assert(UnitSkillsScript.resolve_chants(0, wrangle_veteran_units).is_empty())
+
+	# Warcry: Divine Silence locks a target enemy's secondary skill for a
+	# rank-scaled number of that unit's side turns (the "enemy turns" of the
+	# reference text, counted from the caster's perspective). While Silenced,
+	# none of the unit's skill timing hooks fire; movement, attacks, and
+	# Captain skills are unaffected.
+	var lunnain_oracle := {
+		"id": 440, "side": 0, "name": "Lunnain Oracle", "kind": "Lifebinder",
+		"row": 1, "col": 0, "atk": 2, "hp": 5, "max_hp": 5, "effects": [], "level": 3,
+		"skill": {
+			"name": "Divine Silence", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Divine Silence"]
+		}
+	}
+	var silenced_chanter := {
+		"id": 441, "side": 1, "name": "Silenced Chanter", "kind": "Channeler",
+		"row": 0, "col": 5, "atk": 2, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {
+			"name": "Sundering Smash", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Sundering Smash"]
+		}
+	}
+	var silence_smash_target := {
+		"id": 442, "side": 0, "name": "Smash Target", "kind": "Duelist",
+		"row": 0, "col": 2, "atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var silence_plain_foe := {
+		"id": 443, "side": 1, "name": "Skill-less Foe", "kind": "Warden",
+		"row": 2, "col": 5, "atk": 5, "hp": 9, "max_hp": 9, "effects": []
+	}
+	var silence_units := [
+		lunnain_oracle, silenced_chanter, silence_smash_target, silence_plain_foe
+	]
+	assert(UnitSkillsScript.rank_value(
+		UnitCatalogScript.by_name("Lunnain Oracle").skill.to_dict(), 1, 0, 1
+	) == 1)
+	assert(UnitSkillsScript.rank_value(
+		UnitCatalogScript.by_name("Lunnain Oracle").skill.to_dict(), 5, 0, 1
+	) == 5)
+	# Level 3 reads the third rank row: 3 turns.
+	var silence_result := UnitSkillsScript.resolve_warcry(
+		lunnain_oracle, silence_units, 441
+	)
+	assert(silence_result.affected == [441])
+	assert(silenced_chanter.silenced_turns == 3)
+	assert(UnitSkillsScript.is_silenced(silenced_chanter))
+	assert("Silenced (3 turns)" in CaptainSkillsScript.effect_summary(silenced_chanter))
+	# A unit without a secondary skill is never Silenced.
+	assert(not silence_plain_foe.has("silenced_turns"))
+	# The AI fallback picks the skill-bearing enemy over the higher-ATK
+	# skill-less one, and picks nobody when no enemy carries a skill.
+	var silence_fallback := UnitSkillsScript.resolve_warcry(lunnain_oracle, silence_units)
+	assert(silence_fallback.affected == [441])
+	assert(silenced_chanter.silenced_turns == 3)
+	assert(UnitSkillsScript.resolve_warcry(
+		lunnain_oracle, [lunnain_oracle, silence_plain_foe]
+	).affected.is_empty())
+	assert(silence_plain_foe.get("silenced_turns", 0) == 0)
+	# Chants do not fire while the chanter is Silenced.
+	assert(UnitSkillsScript.resolve_chants(1, silence_units).is_empty())
+	# Silence ticks down in the same expiry pass as Immobilise, at the end of
+	# the silenced unit's own side turns, so it lasts exactly N of them.
+	UnitSkillsScript.expire_statuses(silence_units, 0)
+	assert(silenced_chanter.silenced_turns == 3)
+	UnitSkillsScript.expire_statuses(silence_units, 1)
+	assert(silenced_chanter.silenced_turns == 2)
+	UnitSkillsScript.expire_statuses(silence_units, 1)
+	UnitSkillsScript.expire_statuses(silence_units, 1)
+	assert(silenced_chanter.silenced_turns == 0)
+	assert(not UnitSkillsScript.is_silenced(silenced_chanter))
+	# The chant fires again once the Silence expires.
+	var silence_chant_results := UnitSkillsScript.resolve_chants(1, silence_units)
+	assert(silence_chant_results.size() == 1)
+	assert(silence_smash_target.hp == 5)
+	# Strike and Reaction are gated the same way and recover on expiry.
+	var silenced_striker := {
+		"id": 444, "side": 1, "name": "Silenced Striker", "kind": "Strider",
+		"atk": 3, "hp": 4, "max_hp": 4, "effects": [], "silenced_turns": 1,
+		"skill": {"name": "Poison Strike", "type": "Strike"}
+	}
+	assert(UnitSkillsScript.resolve_strike(
+		silenced_striker, silence_smash_target, silence_units, 0.0
+	).message.is_empty())
+	assert(silence_smash_target.get("poison_turns", 0) == 0)
+	silenced_striker.silenced_turns = 0
+	assert(not UnitSkillsScript.resolve_strike(
+		silenced_striker, silence_smash_target, silence_units, 0.0
+	).message.is_empty())
+	assert(silence_smash_target.poison_turns == 2)
+	var silenced_reactor := {
+		"id": 445, "side": 1, "name": "Silenced Reactor", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "silenced_turns": 1,
+		"skill": {"name": "Shield Wall", "type": "Reaction"}
+	}
+	var silence_attacker := {
+		"id": 446, "side": 0, "name": "Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	assert(UnitSkillsScript.resolve_reaction(
+		silenced_reactor, silence_attacker, silence_units, 0.0
+	).message.is_empty())
+	assert(silenced_reactor.get("protect_turns", 0) == 0)
+	silenced_reactor.silenced_turns = 0
+	assert(not UnitSkillsScript.resolve_reaction(
+		silenced_reactor, silence_attacker, silence_units, 0.0
+	).message.is_empty())
+	assert(silenced_reactor.protect_turns == 2)
+	# A Silenced Warcry carrier does not trigger its skill.
+	var silenced_medic := {
+		"id": 447, "side": 1, "name": "Silenced Medic", "kind": "Lifebinder",
+		"atk": 1, "hp": 3, "max_hp": 3, "effects": [], "silenced_turns": 1,
+		"skill": {"name": "Mend", "type": "Warcry"}
+	}
+	assert(UnitSkillsScript.resolve_warcry(
+		silenced_medic, silence_units + [silenced_medic]
+	).message.is_empty())
+	# A Silenced aura source stops contributing: the buff drops while the
+	# Silence holds and returns when it expires.
+	var silenced_empress := {
+		"id": 448, "side": 0, "name": "Silenced Empress", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Moonlight", "type": "Aura"}
+	}
+	var silence_aura_ally := {
+		"id": 449, "side": 0, "name": "Aura Ally", "kind": "Warden",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var silence_aura_units := [silenced_empress, silence_aura_ally]
+	var silence_aura_events: Array = []
+	UnitSkillsScript.refresh_auras(silence_aura_units, silence_aura_events)
+	assert(silence_aura_ally.max_hp == 8)
+	silenced_empress.silenced_turns = 1
+	UnitSkillsScript.refresh_auras(silence_aura_units, silence_aura_events)
+	assert(silence_aura_ally.max_hp == 4)
+	assert(silence_aura_events[-1].unit_id == 449 and silence_aura_events[-1].delta == -4)
+	silenced_empress.silenced_turns = 0
+	UnitSkillsScript.refresh_auras(silence_aura_units, silence_aura_events)
+	assert(silence_aura_ally.max_hp == 8)
+	# A Silenced Roguish Snare carrier does not spring the trap.
+	var silenced_thief := {
+		"id": 450, "side": 1, "name": "Silenced Thief", "kind": "Strider",
+		"row": 0, "col": 4, "atk": 2, "hp": 5, "max_hp": 5, "effects": [],
+		"silenced_turns": 1,
+		"skill": {
+			"name": "Roguish Snare", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Roguish Snare"]
+		}
+	}
+	var snare_silence_victim := {
+		"id": 451, "side": 0, "name": "Snare Victim", "kind": "Warden",
+		"row": 0, "col": 1, "atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var snare_silence_units := [silenced_thief, snare_silence_victim]
+	assert(UnitSkillsScript.resolve_chants(
+		0, snare_silence_units, "start", null, 0.0, 451
+	).is_empty())
+	assert(snare_silence_victim.get("stun_turns", 0) == 0)
+	silenced_thief.silenced_turns = 0
+	assert(UnitSkillsScript.resolve_chants(
+		0, snare_silence_units, "start", null, 0.0, 451
+	).size() == 1)
+	assert(snare_silence_victim.stun_turns == 2)
+
+	# Chant (end): Cattle of Ra Knocks Back every Taunted enemy, Immobilises
+	# it and debuffs its ATK for 1 enemy turn; non-Taunted and allied units
+	# are ignored.
+	var ra := {
+		"id": 430, "side": 0, "name": "Ra", "kind": "Warden",
+		"row": 0, "col": 3, "atk": 2, "hp": 10, "max_hp": 10, "effects": [],
+		"skill": {
+			"name": "Cattle of Ra", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Cattle of Ra"]
+		}
+	}
+	var cattle_taunted_foe := {
+		"id": 431, "side": 1, "name": "Taunted Foe", "kind": "Duelist",
+		"row": 0, "col": 5, "atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"taunt_turns": 2
+	}
+	var cattle_plain_foe := {
+		"id": 432, "side": 1, "name": "Plain Foe", "kind": "Strider",
+		"row": 1, "col": 5, "atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var cattle_taunted_ally := {
+		"id": 433, "side": 0, "name": "Taunted Ally", "kind": "Warden",
+		"row": 2, "col": 4, "atk": 2, "hp": 8, "max_hp": 8, "effects": [],
+		"taunt_turns": 2
+	}
+	var cattle_units := [
+		ra, cattle_taunted_foe, cattle_plain_foe, cattle_taunted_ally
+	]
+	# It is an end-of-turn chant: the start phase and the opposing side's own
+	# end phase resolve nothing.
+	assert(UnitSkillsScript.resolve_chants(0, cattle_units, "start").is_empty())
+	assert(UnitSkillsScript.resolve_chants(1, cattle_units, "end").is_empty())
+	var cattle_results := UnitSkillsScript.resolve_chants(0, cattle_units, "end")
+	assert(cattle_results.size() == 1)
+	assert(cattle_results[0].affected == [431])
+	assert(cattle_results[0].moved.size() == 1)
+	# The Taunted enemy slides one space away from the chanter and is
+	# Immobilised and debuffed for 1 enemy turn; everyone else is untouched.
+	assert(cattle_taunted_foe.col == 6)
+	assert(cattle_taunted_foe.immobilized_turns == 1)
+	assert(cattle_taunted_foe.atk == 3 and cattle_taunted_foe.effects.size() == 1)
+	assert(cattle_plain_foe.col == 5 and cattle_plain_foe.atk == 3)
+	assert(cattle_plain_foe.get("immobilized_turns", 0) == 0)
+	assert(cattle_taunted_ally.col == 4 and cattle_taunted_ally.atk == 2)
+	assert(cattle_taunted_ally.get("immobilized_turns", 0) == 0)
+	# Both the debuff and the Immobilise lift at the end of the enemy's turn.
+	CaptainSkillsScript.expire_effects(cattle_units, 1)
+	UnitSkillsScript.expire_statuses(cattle_units, 1)
+	assert(cattle_taunted_foe.atk == 4 and cattle_taunted_foe.effects.is_empty())
+	assert(cattle_taunted_foe.immobilized_turns == 0)
+	# A dead chanter resolves nothing.
+	ra.hp = 0
+	assert(UnitSkillsScript.resolve_chants(0, cattle_units, "end").is_empty())
+	# Level scaling: the level-5 rank row Knocks Back 3 spaces and debuffs
+	# 3 ATK.
+	var ra_creator := {
+		"id": 434, "side": 0, "name": "Ra, Creator", "kind": "Warden",
+		"row": 0, "col": 2, "atk": 3, "hp": 11, "max_hp": 11, "effects": [],
+		"level": 5,
+		"skill": UnitCatalogScript.by_name("Ra, Creator").skill.to_dict()
+	}
+	var cattle_veteran_foe := {
+		"id": 435, "side": 1, "name": "Veteran Taunted Foe", "kind": "Warden",
+		"row": 0, "col": 3, "atk": 5, "hp": 9, "max_hp": 9, "effects": [],
+		"taunt_turns": 1
+	}
+	var cattle_veteran_results := UnitSkillsScript.resolve_chants(
+		0, [ra_creator, cattle_veteran_foe], "end"
+	)
+	assert(cattle_veteran_results.size() == 1)
+	assert(cattle_veteran_foe.col == 6)
+	assert(cattle_veteran_foe.atk == 2)
+	assert(cattle_veteran_foe.immobilized_turns == 1)
+
 	# Reaction: Hopping Mad counters the attacker for fixed damage, but only
 	# while the defender survives the attack.
 	var bethany := {
@@ -1183,6 +1698,43 @@ func _init() -> void:
 	assert(protect_ally.hp == 3)
 	UnitSkillsScript.expire_statuses(protect_units, 0)
 	assert(protect_ally.protect_turns == 1)
+
+	# Warcry: Royal Flush grants every allied unit in the chosen lane Protect
+	# for a level-scaled duration; the AI fallback picks the lane holding the
+	# most living allies, and enemies in the lane are ignored.
+	var hearts := {
+		"id": 400, "side": 0, "name": "Three of Hearts", "kind": "Warden",
+		"row": 0, "atk": 1, "hp": 8, "max_hp": 8, "effects": [], "level": 5,
+		"skill": {
+			"name": "Royal Flush", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Royal Flush"]
+		}
+	}
+	var flush_mate := {
+		"id": 401, "side": 0, "name": "Lane Ally", "kind": "Duelist",
+		"row": 1, "atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var flush_second := {
+		"id": 402, "side": 0, "name": "Second Lane Ally", "kind": "Strider",
+		"row": 1, "atk": 2, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var flush_enemy := {
+		"id": 403, "side": 1, "name": "Lane Enemy", "kind": "Warden",
+		"row": 1, "atk": 3, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var flush_units := [hearts, flush_mate, flush_second, flush_enemy]
+	var flush_result := UnitSkillsScript.resolve_warcry(
+		hearts, flush_units, -1, null, 0
+	)
+	assert(flush_result.affected == [400])
+	assert(hearts.protect_turns == 6)
+	assert(not flush_mate.has("protect_turns"))
+	var flush_fallback := UnitSkillsScript.resolve_warcry(hearts, flush_units)
+	assert(flush_fallback.affected == [401, 402])
+	assert(flush_mate.protect_turns == 6 and flush_second.protect_turns == 6)
+	assert(not flush_enemy.has("protect_turns"))
+	assert(BattleSimulatorScript.apply_unit_damage(flush_mate, 3).protected)
+	assert(flush_mate.hp == 6)
 
 	# Warcry: Fireball damages a chosen enemy and splashes orthogonally
 	# adjacent enemies; the AI fallback hits the highest-HP enemy.

@@ -106,6 +106,7 @@ func _run() -> void:
 	assert(not game.board.practice_mode)
 	assert(game._resolution_preview(0) == "UPCOMING · No ready units.")
 	var preview_unit: Dictionary = game._spawn_unit(game.roster[0].to_dict(), 0, 0, 0)
+	assert(game.last_deployed_unit_id[0] == preview_unit.id)
 	var preview_text: String = game._resolution_preview(0)
 	assert(preview_text.begins_with("UPCOMING · 1 %s" % preview_unit.name))
 	preview_unit.taunt_turns = 2
@@ -114,6 +115,9 @@ func _run() -> void:
 	assert(preview_unit.taunt_turns == 2)
 	assert(preview_unit.immobilized_turns == 1)
 	assert(preview_unit.fury_stacks == 3)
+	assert(preview_unit.silenced_turns == 0)
+	preview_unit.silenced_turns = 2
+	assert(preview_unit.silenced_turns == 2)
 	game.units.clear()
 	game._open_mission_select()
 	await process_frame
