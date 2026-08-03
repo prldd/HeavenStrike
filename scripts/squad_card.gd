@@ -24,6 +24,13 @@ func configure(
 	drag_source = source_value
 	drag_texture = texture
 	slot_index = index_value
+	if OS.has_feature("mobile") and source_value != "squad":
+		# Let touch press/drag events bubble up to the parent ScrollContainer so
+		# card-dense lists scroll even when the gesture starts on a card. Taps
+		# still reach the card (buttons only activate when the release lands on
+		# them, which a scroll gesture never does). Squad cards keep STOP: they
+		# keep drag-and-drop for reordering on mobile and must not also scroll.
+		mouse_filter = Control.MOUSE_FILTER_PASS
 	_apply_class_style(UnitCatalogScript.class_color(unit_kind))
 
 func _apply_class_style(color: Color) -> void:
@@ -37,6 +44,12 @@ func _card_style(color: Color, tint: float, border_alpha: float, glow: int) -> S
 
 func _get_drag_data(_position: Vector2):
 	if unit_name.is_empty() or disabled:
+		return null
+	# On touch devices, dragging a card inside a scrollable list is the scroll
+	# gesture; starting drag-and-drop there makes the list impossible to scroll.
+	# Taps already cover add/remove/select on those lists, so only squad cards
+	# (reorder, which has no tap equivalent) keep drag-and-drop on mobile.
+	if OS.has_feature("mobile") and drag_source != "squad":
 		return null
 	var preview := TextureRect.new()
 	preview.custom_minimum_size = Vector2(56, 56)

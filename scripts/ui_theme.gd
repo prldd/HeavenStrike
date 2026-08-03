@@ -51,6 +51,12 @@ static func create() -> Theme:
 	theme.set_stylebox("grabber", "VScrollBar", _flat(BRASS_DARK, 4))
 	theme.set_stylebox("grabber_highlight", "VScrollBar", _flat(BRASS, 4))
 	theme.set_stylebox("grabber_pressed", "VScrollBar", _flat(BRASS_LIGHT, 4))
+	if OS.has_feature("mobile"):
+		# Default ~12px scrollbars are too thin to grab on a touchscreen.
+		for stylebox_name in ["scroll", "grabber", "grabber_highlight", "grabber_pressed"]:
+			var bar_style: StyleBoxFlat = theme.get_stylebox(stylebox_name, "VScrollBar")
+			bar_style.content_margin_left = 8
+			bar_style.content_margin_right = 8
 	theme.set_color("separator", "HSeparator", Color(BRASS_DARK, 0.85))
 	theme.set_color("separator", "VSeparator", Color(BRASS_DARK, 0.85))
 	theme.set_constant("separation", "HSeparator", 2)

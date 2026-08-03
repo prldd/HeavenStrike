@@ -133,6 +133,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 ## Development conventions
 
 - **Single main scene:** `main.tscn` is the only committed scene. The rest of the UI is built in code inside `main.gd`. Add new UI elements inside `main.gd` unless there is a strong reason to introduce a scene file.
+- **Mobile touch scrolling:** on Android/iOS (`OS.has_feature("mobile")`), interactive children of `ScrollContainer`s must use `MOUSE_FILTER_PASS` (see `SquadCard.configure` and the mission-list buttons in `main.gd`), otherwise a touch drag that starts on them never reaches the container and the list cannot scroll. Only skip this when the child keeps drag-and-drop on mobile (squad-formation cards). Card drag-and-drop itself is disabled on mobile for list cards (`SquadCard._get_drag_data`) so drags scroll instead of starting a drag; `ui_theme.gd` also widens scrollbars on mobile.
 - **Simulation vs. presentation:** keep deterministic combat rules in `BattleSimulator`, `BattleRules`, `BattleAI`, `UnitSkills`, and `CaptainSkills`. Keep drawing, animation, audio, and input in `BoardView` and `main.gd`. Do not add combat logic to `BoardView`.
 - **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards (applying `KineticCrucible.scaled_stat` for the card's level). Secondary skills scale with unit level: `UnitCatalog.RANK_VALUES` holds the five per-level rows ported from the unit reference, `SkillData` carries them as `rank_values` with `{0}`/`{1}` placeholder descriptions, and `UnitSkills.rank_value` reads the magnitudes at resolution time. Any new secondary skill needs a rank table (or flat fallback), a matching resolution branch in `UnitSkills`, and an AI consideration in `BattleAI` if relevant.
 - **Deterministic replays:** the simulator records events. Replays are saved to `user://last_replay.json` and archived newest-first to `user://replay_history.json` (limit 10). Keep replay serialization backward-compatible where possible; the tests already assert version 1 format.
@@ -177,6 +178,20 @@ All persisted structures include a `version` field. Legacy unversioned data is l
 ## Deployment
 
 There is no automated deployment or CI pipeline in the repository. Exporting is done through the Godot editor or the `godot --export` command after installing export templates.
+
+### Android
+
+The `Android` export preset in `export_presets.cfg` is configured and verified (arm64-v8a, debug signing). Prerequisites:
+
+- Export templates for 4.7.1.stable installed under `%APPDATA%/Godot/export_templates/4.7.1.stable/` (only the `android_*.apk` files are needed for non-gradle exports).
+- JDK 17 — a portable Temurin build lives at `.tools/jdk/` (referenced from `export/android/java_sdk_path` in the Godot editor settings); the Android SDK path is also configured there, and debug signing uses `C:/Users/<user>/.android/debug.keystore` (alias `androiddebugkey`, pass `android`).
+- `textures/vram_compression/import_etc2_astc=true` in `project.godot` (required for Android export; already set).
+
+Headless debug build (output goes to the gitignored `exports/`):
+
+```bash
+"/e/Tools/Godot/Godot.exe" --headless --path . --export-debug "Android" "exports/war-of-resonance-debug.apk"
+```
 
 Gitignore excludes:
 

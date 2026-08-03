@@ -2292,6 +2292,11 @@ func _rebuild_mission_list() -> void:
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 		button.disabled = not available
+		if OS.has_feature("mobile"):
+			# Let touch drags bubble up to the ScrollContainer so the list
+			# scrolls even when the gesture starts on a mission row (same
+			# treatment as SquadCard).
+			button.mouse_filter = Control.MOUSE_FILTER_PASS
 		button.text = "%s  ACT %d · MISSION %02d  ·  %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s" % [
 			"✓" if complete else ("◆" if available else "🔒"),
 			mission.act,
