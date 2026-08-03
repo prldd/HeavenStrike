@@ -830,7 +830,7 @@ func _build_squad_builder() -> void:
 	barracks_zone.add_child(barracks_layout)
 	var barracks_title := Label.new()
 	barracks_title.text = "RESERVES · OWNED UNITS"
-	barracks_title.add_theme_font_size_override("font_size", 16)
+	barracks_title.add_theme_font_size_override("font_size", 13)
 	barracks_title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	barracks_layout.add_child(barracks_title)
 	reward_carry_label = Label.new()
@@ -876,7 +876,7 @@ func _build_squad_builder() -> void:
 	selection_zone.add_child(selection_layout)
 	var selection_title := Label.new()
 	selection_title.text = "ACTIVE FORMATION · CLICK TO REMOVE"
-	selection_title.add_theme_font_size_override("font_size", 16)
+	selection_title.add_theme_font_size_override("font_size", 13)
 	selection_title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	selection_layout.add_child(selection_title)
 	var selection_scroll := ScrollContainer.new()
@@ -1100,7 +1100,7 @@ func _rebuild_squad_grid() -> void:
 		var copies: int = selected_names.count(instance.name)
 		var button: Button = SquadCardScript.new()
 		button.configure(instance.id, "barracks", _unit_icon(unit.icon), -1, unit.kind)
-		button.custom_minimum_size = Vector2(0, 78)
+		button.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.icon = _unit_icon(unit.icon)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1131,7 +1131,7 @@ func _rebuild_squad_grid() -> void:
 		var unit := UnitCatalogScript.by_name(instance.name)
 		var card: Button = SquadCardScript.new()
 		card.configure(instance.id, "squad", _unit_icon(unit.icon), index, unit.kind)
-		card.custom_minimum_size = Vector2(0, 72)
+		card.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
 		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1800,7 +1800,7 @@ func _rebuild_crucible() -> void:
 		card.configure(
 			instance.id, "crucible_reserve", _unit_icon(unit.icon), -1, unit.kind
 		)
-		card.custom_minimum_size = Vector2(0, 78)
+		card.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
 		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1843,7 +1843,7 @@ func _build_crucible_selection_cards() -> void:
 	target_card.configure(
 		target.id, "crucible_target", _unit_icon(target_unit.icon), -1, target_unit.kind
 	)
-	target_card.custom_minimum_size = Vector2(0, 72)
+	target_card.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
 	target_card.icon = _unit_icon(target_unit.icon)
 	target_card.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	target_card.text = "%s · LV %d\nENHANCEMENT TARGET" % [
@@ -1861,7 +1861,7 @@ func _build_crucible_selection_cards() -> void:
 		var unit := UnitCatalogScript.by_name(donor.name)
 		var card := SquadCardScript.new()
 		card.configure(donor.id, "crucible_queue", _unit_icon(unit.icon), -1, unit.kind)
-		card.custom_minimum_size = Vector2(0, 72)
+		card.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
 		card.alignment = HORIZONTAL_ALIGNMENT_LEFT

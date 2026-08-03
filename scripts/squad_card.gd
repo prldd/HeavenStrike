@@ -13,6 +13,11 @@ signal long_press_released
 const LONG_PRESS_DELAY := 0.45
 const LONG_PRESS_CANCEL_DISTANCE := 10.0
 
+# Shared card height: exactly fits the 48px icon plus the card style's 7px
+# top/bottom content margins, so eight cards fit the Formation Command
+# selection column without scrolling.
+const CARD_HEIGHT := 62
+
 var unit_name := ""
 var drag_source := ""
 var drag_texture: Texture2D
