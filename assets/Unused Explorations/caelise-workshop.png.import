@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://xxonshl11154"
-path="res://.godot/imported/board-steampunk-courtyard.png-562256f1ec67c817684f035ea6f5feac.ctex"
+uid="uid://dhalx70fq0abq"
+path="res://.godot/imported/caelise-workshop.png-dc45e1810f6092aceb01144f7f378b24.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/board-steampunk-courtyard.png"
-dest_files=["res://.godot/imported/board-steampunk-courtyard.png-562256f1ec67c817684f035ea6f5feac.ctex"]
+source_file="res://assets/Unused Explorations/caelise-workshop.png"
+dest_files=["res://.godot/imported/caelise-workshop.png-dc45e1810f6092aceb01144f7f378b24.ctex"]
 
 [params]
 

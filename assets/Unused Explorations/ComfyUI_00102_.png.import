@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://xxonshl11154"
-path="res://.godot/imported/board-steampunk-courtyard.png-562256f1ec67c817684f035ea6f5feac.ctex"
+uid="uid://lxi66f30jt83"
+path="res://.godot/imported/ComfyUI_00102_.png-ca3dfc9ce52d57794bdd7c449ef341b6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/board-steampunk-courtyard.png"
-dest_files=["res://.godot/imported/board-steampunk-courtyard.png-562256f1ec67c817684f035ea6f5feac.ctex"]
+source_file="res://assets/Unused Explorations/ComfyUI_00102_.png"
+dest_files=["res://.godot/imported/ComfyUI_00102_.png-ca3dfc9ce52d57794bdd7c449ef341b6.ctex"]
 
 [params]
 

@@ -60,7 +60,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `captain_skills.gd` | Static resolution of the eight Commander powers and effect expiration. |
 | `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Captain-skill storage. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
-| `story_quest_catalog.gd` | Builds the 62-mission campaign from reference quest data, reward pools, authored enemy decks, and Captain configurations. |
+| `story_quest_catalog.gd` | Builds the 62-mission campaign from reference quest data, reward pools, authored enemy decks, and Captain configurations. `MISSION_STORIES` holds authored per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number; uncovered missions get generated placeholder text. |
 | `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Captain HP). |
 | `kinetic_crucible.gd` | Per-copy unit progression: levels 1–5, merge point values, donor rules, level-based stat growth (`scaled_stat`), promotion conversion (`record_promotion`), inventory sync, and migration from older name-based saves. |
 | `battle_settings.gd` | Player settings persistence (resolution speed, audio volume, reduced motion, animation skip). |
@@ -399,7 +399,7 @@ Gotchas when running the Windows binary headless:
 - **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, update `smoke_test.gd` counts if intentional, and run the three tests. For reference-sourced units follow the full workflow in "Porting units and skills from the reference" above.
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
 - **Add a Captain skill:** edit `scripts/captain_skills.gd`, add the name to `CaptainSkills.SKILLS`, and update the description.
-- **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`.
+- **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`. New missions must be appended at the end of `QUESTS` — never inserted mid-list — because `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`, and the balance test all key off mission index. Add story text to `MISSION_STORIES` following `documentation/Resonance_War_Campaign_Narrative.md` (the narrative plan) and `documentation/Resonance_War_Narrative_Foundation.md` (the world rules).
 - **Change UI theme:** edit `scripts/ui_theme.gd`; the theme is generated programmatically and applied to the root control in `main.gd`.
 - **Change audio:** edit `scripts/battle_audio.gd`; the sounds are generated from wave functions.
 

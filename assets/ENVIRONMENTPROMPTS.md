@@ -251,6 +251,24 @@ Do not use large orbiting rings.
 Do not use excessive circuitry.
 Do not use photorealistic sci-fi micro-detail.
 
+### Caelis
+
+Environment read: the hidden ancient capital of the fallen Empire, impossibly advanced, preserved rather than ruined.
+Use monumental imperial architecture: vast tiered plazas, grand civic halls, colonnades, and elevated causeways built at a scale beyond any modern faction.
+Use pale ivory, weathered marble-white, and muted silver-gold as the dominant surfaces, aged but intact.
+Use ancient integrated technology that hints at every modern faction without belonging to any: dormant photovoltaic inlays beside sealed pressure pipes, cold furnace grates beside dark circuit seams, still turbines beside buried conduit lines.
+Use one unified glow color: a soft white-violet resonance light, seeping from deep seams, dormant conduits, and sealed apertures.
+Use faint luminous conduit lines running through floors and walls toward the city's center, as if all infrastructure leads to the Source beneath.
+Use relay spires, buried transit channels, and autonomous machines standing dormant at their posts.
+Keep the city eerily preserved: no battle damage, no looting scars, no nature reclaiming the stone — only dust, age, and stillness.
+Use a hushed, reverent atmosphere: thin haze, long shadows, and a pale sky that feels cut off from the outside world.
+Use a sense of withheld power: the machinery is dormant, not dead, and could wake at any moment.
+Do not use any modern faction glow color: no amber, furnace-orange, pale blue, or neon-green.
+Do not use active fire, steam, smoke, or spinning machinery — everything is dormant.
+Do not use rubble, collapse, or ruin — Caelis is intact, not destroyed.
+Do not use modern faction symbols, banners, or heraldry.
+Do not make the technology read as one modern faction's style scaled up.
+
 ### Neutral
 
 Environment read: a faction-free shared space, usable by any side.

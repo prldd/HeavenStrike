@@ -138,6 +138,129 @@ const SKILLS := [
 	"Lightning Burst", "Healing Wave", "Firestorm", "Last Stand"
 ]
 
+# Authored story text per mission number (1-based), following
+# documentation/Resonance_War_Campaign_Narrative.md. Missions without an entry
+# fall back to the generated placeholder text below. Briefings state the
+# practical problem (the player's frame); debriefings state the political
+# consequence (Cassian's frame). Season One covers missions 1-22.
+const MISSION_STORIES := {
+	# Chapter 1 — The Salvage
+	1: {
+		"chapter": "The Salvage",
+		"briefing": "The expedition's first recovered automatons are powered and responsive. Run a field exercise at the relay site perimeter and confirm they can hold a formation.",
+		"debriefing": "The machines performed better than their salvage tags suggested. Cassian logs the result and quietly orders the site sealed to non-expedition personnel."
+	},
+	2: {
+		"chapter": "The Salvage",
+		"briefing": "Two more reclaimed units have come online. Run a second exercise and test your command link under pressure before tomorrow's power-up test.",
+		"debriefing": "The link held. Cassian notes your name in the margin of his ledger, next to a word neither of you has said aloud yet: Conductor."
+	},
+	3: {
+		"chapter": "The Salvage",
+		"briefing": "The relay synchronized on its own during the power-up test and the gallery is coming down. Fight through the waking security routines and get the crew out.",
+		"debriefing": "Officially: an industrial accident, no survivors' statements required. Unofficially, you should be dead — and the machines now move when you think."
+	},
+	4: {
+		"chapter": "The Salvage",
+		"briefing": "Fire is spreading through the lower galleries and Cassian is trapped behind the security line. Cut through and bring him back.",
+		"debriefing": "Cassian owes you his life and knows exactly what such debts are worth. The expedition's patrons declare the site closed and the incident concluded. It is neither."
+	},
+	# Chapter 2 — The Aftermath
+	5: {
+		"chapter": "The Aftermath",
+		"briefing": "A salvage-rights assessor named Adele Voss is on site when looters breach the perimeter. Protect the assessment crew and the recovered stock.",
+		"debriefing": "Adele watched you conduct and wrote it down. Her report is accurate, unflattering to the patrons, and suddenly very popular in five capitals."
+	},
+	6: {
+		"chapter": "The Aftermath",
+		"briefing": "The patrons want a demonstration of 'perfectly safe reclaimed machinery' for the press. Keep the crowd safe when the demonstration inevitably goes wrong.",
+		"debriefing": "The photographs were supposed to bury the accident. Instead they made you famous. Cassian starts receiving invitations addressed to 'the Conductor's people'."
+	},
+	7: {
+		"chapter": "The Aftermath",
+		"briefing": "A stranger corners you after the demonstration: the relay activation was arranged, and the arrangers will want their property back. Then armed crews arrive to discuss it.",
+		"debriefing": "The stranger vanished before the questions started. Whoever sent those crews knew the site's security routines — and knew you survived."
+	},
+	8: {
+		"chapter": "The Aftermath",
+		"briefing": "A scavenger consortium has produced paperwork contesting the expedition's salvage claim, and muscle to enforce it. Hold the stockyard.",
+		"debriefing": "Their paperwork was forged well enough to be expensive. Someone is paying professionals to separate you from what you dug up."
+	},
+	9: {
+		"chapter": "The Aftermath",
+		"briefing": "Raiders are shadowing the convoy moving the reclaimed tech to the new depot. See it through.",
+		"debriefing": "The convoy arrived intact. Cassian negotiates passage rights with the very clans suspected of the raid — the first time you watch him spend a victory."
+	},
+	# Chapter 3 — Claims
+	10: {
+		"chapter": "Claims",
+		"briefing": "Registration law requires a certified evaluation of new Conductors. The examiners have brought 'calibration opposition'. Pass their test without breaking anything expensive.",
+		"debriefing": "You are now a registered strategic asset in five government ledgers. The examiners' scores reached their patrons before you left the room."
+	},
+	11: {
+		"chapter": "Claims",
+		"briefing": "Armed investigators have decided the depot itself is evidence and brought an escort to collect it. Defend the base.",
+		"debriefing": "You won, and the inquiry transcript now describes a 'dangerous armed compound resisting lawful inspection'. Cassian starts keeping two sets of records."
+	},
+	12: {
+		"chapter": "Claims",
+		"briefing": "A supply run is hit by raiders who fight like regulars. Break the ambush and bring back something that identifies them.",
+		"debriefing": "Contractor gear, serials burned. Cassian locks the evidence in his personal strongbox — your first lesson in the difference between truth and leverage."
+	},
+	13: {
+		"chapter": "Claims",
+		"briefing": "Three envoys, three offers, three refusals. The fourth answer arrives as a 'safety inspection' with an armed escort.",
+		"debriefing": "You declined them all. Cassian sends each envoy a courteous note, keeping open every door you just closed. Meanwhile the oldest machines have begun keeping their own routines."
+	},
+	14: {
+		"chapter": "Claims",
+		"briefing": "Adele's informant will talk if her crew can extract him from under his handlers' noses. Cover the extraction.",
+		"debriefing": "His testimony proves the ambush was staged — and is legally worthless. Adele is furious. Cassian files it under 'useful, later'."
+	},
+	# Chapter 4 — The Proving
+	15: {
+		"chapter": "The Proving",
+		"briefing": "The old transit bridge is failing under evacuation load. Hold the crossing against the debris field and panicked security drones until the last civilian is across.",
+		"debriefing": "Hundreds walked away because your squad stood where the bridge was weakest. For the first time, the crowds know your name for the right reason."
+	},
+	16: {
+		"chapter": "The Proving",
+		"briefing": "A guild champion has challenged the 'salvage Conductor' to a public bout, intending to end your reputation. Accept, and win.",
+		"debriefing": "You humiliated a proud house in front of its peers. Cassian sells the footage to three networks and books the grudge as an asset, not a liability."
+	},
+	17: {
+		"chapter": "The Proving",
+		"briefing": "Hearings into the bridge and the bout have drawn agitators into the streets around the inquiry hall. Keep the proceedings from turning into a riot.",
+		"debriefing": "Your testimony was entered, edited, and read aloud by people who were not there. The record now says what the record needed to say."
+	},
+	18: {
+		"chapter": "The Proving",
+		"briefing": "A formal evaluation of Conductor limits, run by an officer famous for fairness. Demonstrate your squad's full capability — then survive the demonstration.",
+		"debriefing": "The evaluator's report is the first honest document about you in any government file. It also lists, clinically, what conducting is doing to your body."
+	},
+	19: {
+		"chapter": "The Proving",
+		"briefing": "Conductor-less automatons running on old habits are menacing a township. Protect the people — even if it means destroying machines you would rather save.",
+		"debriefing": "You chose the township over the salvage. One of the ferals refused to leave afterward; Cassian pretends not to notice the extra mouth at the depot."
+	},
+	20: {
+		"chapter": "The Proving",
+		"briefing": "The displaced township is camped by the depot, and someone is using the refugees as cover for a probe at your stock. Defend the camp.",
+		"debriefing": "The refugees have a folk hero and the depot has a neighborhood. Cassian begins drafting something he calls a charter."
+	},
+	# Chapter 5 — Sanctuary
+	21: {
+		"chapter": "Sanctuary",
+		"briefing": "The stranger's coordinates lead to a pre-collapse sanctuary installation. Order archivists hold the perimeter and grant access to no one. Persuade them.",
+		"debriefing": "The Order's scholars agreed to share the site — after you demonstrated you could have taken it. The archivist in charge has not stopped watching your machines."
+	},
+	22: {
+		"chapter": "Sanctuary",
+		"briefing": "The sanctuary's inner vault is guarded by custodial routines older than any living nation. Reach the records.",
+		"debriefing": "The maintenance logs run centuries past the Empire's 'fall'. The Empire did not collapse — it dismantled itself. And one unredacted manifest lists a destination: Caelis."
+	}
+}
+
 # Authored eight-card decks, indexed by mission. Multi-battle missions keep
 # their mission's identity while Captain HP and skill change per encounter.
 # These are deliberately explicit: reward pools do not silently alter enemies.
@@ -223,6 +346,7 @@ static func build_missions() -> Array:
 		var short_title: String = quest[0].split(" - ", true, 1)[-1]
 		var act := 1 if index < 22 else 2
 		var act_mission := index + 1 if act == 1 else index - 21
+		var story: Dictionary = MISSION_STORIES.get(index + 1, {})
 		for battle_index in battle_count:
 			var hp := maxi(8, enemy_hp - (battle_count - battle_index - 1) * 2)
 			encounters.append({
@@ -237,34 +361,31 @@ static func build_missions() -> Array:
 			"act_mission": act_mission,
 			"title": quest[0],
 			"short_title": short_title,
-			"briefing": _mission_briefing(index, short_title),
-			"debriefing": _mission_debriefing(index, short_title),
+			"chapter": story.get("chapter", ""),
+			"briefing": story.get("briefing", _mission_briefing(index, short_title)),
+			"debriefing": story.get("debriefing", _mission_debriefing(index, short_title)),
 			"enemy_hp": enemy_hp,
 			"encounters": encounters,
 			"reward_pool": reward_pool
 		})
 	return missions
 
+# Placeholder generator for missions not yet covered by MISSION_STORIES.
 static func _mission_briefing(index: int, title: String) -> String:
 	var objectives := [
-		"Secure the approach before the rival Captain can reinforce it.",
-		"Break the opposing formation and keep the skyway open.",
+		"Secure the approach before the opposing captain can reinforce it.",
+		"Break the opposing formation and keep the route open.",
 		"Read the enemy lanes carefully; their squad is prepared for an ambush.",
 		"Protect the expedition while pushing through the hostile line."
 	]
-	var chapter := (
-		"Command has traced the first Tempest Engine signals"
-		if index < 22
-		else "The pursuit of the Tempest Engine has reached the outer skyways"
-	)
-	return "%s near %s. %s" % [chapter, title, objectives[index % objectives.size()]]
+	return "Operation %s. %s" % [title, objectives[index % objectives.size()]]
 
 static func _mission_debriefing(index: int, title: String) -> String:
 	var outcomes := [
 		"The route is secure and the expedition can advance.",
 		"Enemy resistance has broken; new intelligence points farther ahead.",
-		"The captured position reveals another fragment of the Engine's trail.",
-		"Your squad holds the field while Command prepares the next operation."
+		"The captured position reveals another piece of the larger picture.",
+		"Your squad holds the field while the coalition prepares the next operation."
 	]
 	return "%s complete. %s" % [title, outcomes[index % outcomes.size()]]
 

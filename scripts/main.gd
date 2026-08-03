@@ -1167,10 +1167,14 @@ func _refresh_mission_intel() -> void:
 		return
 	var mission: Dictionary = CampaignStoreScript.MISSIONS[pending_mission_id]
 	var encounter: Dictionary = mission.encounters[0]
+	var chapter_label := ""
+	if mission.get("chapter", "") != "":
+		chapter_label = " · %s" % String(mission.chapter).to_upper()
 	mission_intel_label.text = (
-		"UPCOMING · ACT %d / MISSION %d\n%s · %d HP · CAPTAIN: %s"
+		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CAPTAIN: %s"
 		% [
-			mission.act, mission.act_mission, mission.short_title.to_upper(),
+			mission.act, mission.act_mission, chapter_label,
+			mission.short_title.to_upper(),
 			encounter.enemy_hp, encounter.skill.to_upper()
 		]
 	)
