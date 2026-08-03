@@ -130,7 +130,11 @@ func _run() -> void:
 	assert(summon_unit.quiet_triggers_left == 0)
 	game.units.clear()
 	game._open_mission_select()
-	await process_frame
+	# The mission list builds progressively over several frames on open.
+	var wait_frames := 0
+	while game.mission_list.get_child_count() < 62 and wait_frames < 120:
+		await process_frame
+		wait_frames += 1
 	assert(game.mission_list.get_child_count() == 62)
 	assert(game.campaign_progress_label.text.contains("ACT 1"))
 	assert(game.campaign_progress_label.text.contains("ACT 2"))

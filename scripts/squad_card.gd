@@ -7,11 +7,50 @@ const UIThemeScript = preload("res://scripts/ui_theme.gd")
 signal unit_dropped(
 	dropped_unit_name: String, source: String, source_index: int, target_index: int
 )
+signal long_pressed
+signal long_press_released
+
+const LONG_PRESS_DELAY := 0.45
+const LONG_PRESS_CANCEL_DISTANCE := 10.0
 
 var unit_name := ""
 var drag_source := ""
 var drag_texture: Texture2D
 var slot_index := -1
+
+var _touch_held := false
+var _touch_press_pos := Vector2.ZERO
+var _details_shown := false
+
+func _ready() -> void:
+	# Touch has no hover: details are shown via long-press instead of
+	# mouse_entered (which on touch fires on every tap and scroll attempt).
+	if OS.has_feature("mobile"):
+		gui_input.connect(_on_touch_details_input)
+
+func _on_touch_details_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		_touch_held = event.pressed
+		if event.pressed:
+			_touch_press_pos = event.position
+			_arm_long_press()
+	elif event is InputEventScreenDrag and _touch_held:
+		# Any deliberate movement is a scroll/drag gesture, not a long-press.
+		if event.position.distance_to(_touch_press_pos) > LONG_PRESS_CANCEL_DISTANCE:
+			_touch_held = false
+
+func _arm_long_press() -> void:
+	await get_tree().create_timer(LONG_PRESS_DELAY).timeout
+	if not _touch_held or _details_shown:
+		return
+	_details_shown = true
+	_touch_held = false
+	long_pressed.emit()
+
+func _input(event: InputEvent) -> void:
+	if _details_shown and event is InputEventScreenTouch and not event.pressed:
+		_details_shown = false
+		long_press_released.emit()
 
 func configure(
 	name_value: String,

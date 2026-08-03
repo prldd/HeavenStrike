@@ -95,6 +95,8 @@ var crucible_donor_ids: Array = []
 var collection_instances: Array = []
 var crucible_notice := ""
 var mission_list: VBoxContainer
+var mission_list_build_token := 0
+var _touch_details_active := false
 var campaign_progress_label: Label
 var resume_button: Button
 var replay_button: Button
@@ -195,6 +197,19 @@ func _ready() -> void:
 	_sanitize_squad_unlocks()
 	_start_new_match()
 	_show_main_menu()
+	_prewarm_icons()
+
+func _prewarm_icons() -> void:
+	# Decode every portrait into the icon cache a few per frame while the main
+	# menu sits idle. Without this, the first opening of the mission list,
+	# squad builder, or crucible in a session decodes them all synchronously,
+	# which is a noticeable freeze on mobile storage.
+	var count := 0
+	for unit in roster:
+		_unit_icon(unit.icon)
+		count += 1
+		if count % 8 == 0:
+			await get_tree().process_frame
 
 func _build_interface() -> void:
 	var background := ColorRect.new()
@@ -919,6 +934,9 @@ func _open_squad_builder() -> void:
 	captain_skill_option.select(CaptainSkillsScript.SKILLS.find(editing_captain_skill))
 	end_button.visible = false
 	squad_overlay.visible = true
+	# Let the overlay render before the (potentially heavy) grid rebuild so the
+	# tap shows the new page immediately instead of freezing on the old one.
+	await get_tree().process_frame
 	_rebuild_squad_grid()
 
 func _open_replay_squads() -> void:
@@ -993,6 +1011,8 @@ func _select_captain_skill(index: int) -> void:
 		editing_captain_skill = CaptainSkillsScript.SKILLS[index]
 
 func _add_squad_unit(instance_id: String) -> void:
+	if _touch_details_active:
+		return
 	var instance: Dictionary = KineticCrucibleScript.instance_by_id(
 		collection_instances, instance_id
 	)
@@ -1010,6 +1030,8 @@ func _add_squad_unit(instance_id: String) -> void:
 	_rebuild_squad_grid()
 
 func _remove_squad_unit_at(index: int) -> void:
+	if _touch_details_active:
+		return
 	if index >= 0 and index < editing_squad_names.size():
 		editing_squad_names.remove_at(index)
 	_rebuild_squad_grid()
@@ -1097,10 +1119,7 @@ func _rebuild_squad_grid() -> void:
 		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(_add_squad_unit.bind(instance.id))
 		button.connect("unit_dropped", _on_squad_card_drop)
-		button.mouse_entered.connect(
-			_show_unit_details.bind(_unit_with_instance(unit, instance))
-		)
-		button.mouse_exited.connect(_hide_unit_details)
+		_connect_card_details(button, _unit_with_instance(unit, instance))
 		squad_grid.add_child(button)
 
 	for index in editing_squad_names.size():
@@ -1126,10 +1145,7 @@ func _rebuild_squad_grid() -> void:
 		card.pressed.connect(_remove_squad_unit_at.bind(index))
 		card.connect("unit_dropped", _on_squad_card_drop)
 		card.gui_input.connect(_on_squad_card_gui_input.bind(index))
-		card.mouse_entered.connect(
-			_show_unit_details.bind(_unit_with_instance(unit, instance))
-		)
-		card.mouse_exited.connect(_hide_unit_details)
+		_connect_card_details(card, _unit_with_instance(unit, instance))
 		squad_selection_grid.add_child(card)
 
 	squad_count_label.text = "%d / %d SELECTED" % [editing_squad_names.size(), SquadStoreScript.SQUAD_SIZE]
@@ -1705,6 +1721,7 @@ func _open_kinetic_crucible() -> void:
 	crucible_target_id = ""
 	crucible_donor_ids.clear()
 	crucible_notice = ""
+	await get_tree().process_frame
 	_rebuild_crucible()
 
 func _toggle_crucible_extras(_enabled: bool) -> void:
@@ -1712,6 +1729,8 @@ func _toggle_crucible_extras(_enabled: bool) -> void:
 	_rebuild_crucible()
 
 func _select_crucible_unit(instance_id: String) -> void:
+	if _touch_details_active:
+		return
 	if crucible_target_id.is_empty():
 		crucible_target_id = instance_id
 		crucible_notice = ""
@@ -1725,12 +1744,16 @@ func _select_crucible_unit(instance_id: String) -> void:
 	_rebuild_crucible()
 
 func _clear_crucible_target() -> void:
+	if _touch_details_active:
+		return
 	crucible_target_id = ""
 	crucible_donor_ids.clear()
 	crucible_notice = ""
 	_rebuild_crucible()
 
 func _remove_crucible_donor(instance_id: String) -> void:
+	if _touch_details_active:
+		return
 	crucible_donor_ids.erase(instance_id)
 	crucible_notice = ""
 	_rebuild_crucible()
@@ -1801,10 +1824,7 @@ func _rebuild_crucible() -> void:
 		]
 		card.add_theme_font_size_override("font_size", 10)
 		card.pressed.connect(_select_crucible_unit.bind(instance.id))
-		card.mouse_entered.connect(
-			_show_unit_details.bind(_unit_with_instance(unit, instance))
-		)
-		card.mouse_exited.connect(_hide_unit_details)
+		_connect_card_details(card, _unit_with_instance(unit, instance))
 		crucible_reserve_grid.add_child(card)
 	_build_crucible_selection_cards()
 	_refresh_crucible_detail()
@@ -1830,10 +1850,7 @@ func _build_crucible_selection_cards() -> void:
 		target.name.to_upper(), target.level
 	]
 	target_card.pressed.connect(_clear_crucible_target)
-	target_card.mouse_entered.connect(
-		_show_unit_details.bind(_unit_with_instance(target_unit, target))
-	)
-	target_card.mouse_exited.connect(_hide_unit_details)
+	_connect_card_details(target_card, _unit_with_instance(target_unit, target))
 	crucible_target_grid.add_child(target_card)
 	for donor_id in crucible_donor_ids:
 		var donor := KineticCrucibleScript.instance_by_id(
@@ -1854,10 +1871,7 @@ func _build_crucible_selection_cards() -> void:
 			KineticCrucibleScript.merge_value(target, donor, roster)
 		]
 		card.pressed.connect(_remove_crucible_donor.bind(donor.id))
-		card.mouse_entered.connect(
-			_show_unit_details.bind(_unit_with_instance(unit, donor))
-		)
-		card.mouse_exited.connect(_hide_unit_details)
+		_connect_card_details(card, _unit_with_instance(unit, donor))
 		crucible_donor_grid.add_child(card)
 
 func _crucible_target() -> Dictionary:
@@ -2054,6 +2068,7 @@ func _show_main_menu() -> void:
 func _open_mission_select() -> void:
 	main_menu_overlay.visible = false
 	mission_overlay.visible = true
+	await get_tree().process_frame
 	_rebuild_mission_list()
 
 func _open_last_replay() -> void:
@@ -2277,7 +2292,16 @@ func _rebuild_mission_list() -> void:
 		% [act_one_complete, act_two_complete, run_text]
 	)
 	var inventory: Dictionary = _inventory_counts()
+	# Build rows progressively: creating ~62 wrapped-text rows takes seconds on
+	# mobile, so yield every few rows to keep the page responsive. The token
+	# aborts this coroutine if a newer rebuild starts or the user navigates
+	# away mid-build.
+	mission_list_build_token += 1
+	var build_token := mission_list_build_token
+	var built := 0
 	for mission in CampaignStoreScript.MISSIONS:
+		if build_token != mission_list_build_token or not mission_overlay.visible:
+			return
 		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
 		var complete: bool = mission.id in completed_missions
 		var entry := VBoxContainer.new()
@@ -2346,10 +2370,13 @@ func _rebuild_mission_list() -> void:
 			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			portrait.mouse_default_cursor_shape = Control.CURSOR_HELP
-			portrait.mouse_entered.connect(
-				_show_reward_details.bind(reward_unit.to_dict(), float(option.chance))
-			)
-			portrait.mouse_exited.connect(_hide_unit_details)
+			if not OS.has_feature("mobile"):
+				# Hover details are desktop-only; on touch they would fire on
+				# every tap/scroll and linger as a stuck popup.
+				portrait.mouse_entered.connect(
+					_show_reward_details.bind(reward_unit.to_dict(), float(option.chance))
+				)
+				portrait.mouse_exited.connect(_hide_unit_details)
 			art_slot.add_child(portrait)
 
 			if is_unobtained:
@@ -2376,6 +2403,11 @@ func _rebuild_mission_list() -> void:
 		var divider := HSeparator.new()
 		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		entry.add_child(divider)
+		built += 1
+		if built % 6 == 0:
+			await get_tree().process_frame
+			if build_token != mission_list_build_token or not mission_overlay.visible:
+				return
 
 func _prepare_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):
@@ -2567,6 +2599,31 @@ func _format_primary_ability(description: String) -> String:
 func _hide_unit_details() -> void:
 	hover_card.visible = false
 
+func _connect_card_details(card: SquadCard, unit_dict: Dictionary) -> void:
+	# Desktop shows details on hover. Touch has no hover — mouse_entered would
+	# fire on every tap and scroll start — so mobile uses long-press instead.
+	if OS.has_feature("mobile"):
+		card.long_pressed.connect(_on_card_long_pressed.bind(unit_dict))
+		card.long_press_released.connect(_on_card_long_press_released)
+	else:
+		card.mouse_entered.connect(_show_unit_details.bind(unit_dict))
+		card.mouse_exited.connect(_hide_unit_details)
+
+func _on_card_long_pressed(unit_dict: Dictionary) -> void:
+	# Suppress the tap action of the release that ends this long-press; card
+	# handlers check _touch_details_active. The Viewport delivers the release
+	# to the pressed button regardless of mouse_filter, so the suppression has
+	# to happen at the action level.
+	_touch_details_active = true
+	_show_unit_details(unit_dict)
+
+func _on_card_long_press_released() -> void:
+	_hide_unit_details()
+	# Clear after this frame so the button activation from the same release
+	# still sees the suppression flag.
+	await get_tree().process_frame
+	_touch_details_active = false
+
 func _process(_delta: float) -> void:
 	if hover_card != null and hover_card.visible:
 		_position_hover_card()
@@ -2576,6 +2633,9 @@ func _position_hover_card() -> void:
 	var card_size := HOVER_CARD_SIZE
 	var viewport_size := get_viewport_rect().size
 	var target := pointer + Vector2(18, 18)
+	if OS.has_feature("mobile"):
+		# Long-press popup: keep it above the finger instead of under it.
+		target = pointer + Vector2(-card_size.x * 0.5, -card_size.y - 48)
 	if target.x + card_size.x > viewport_size.x - 10:
 		target.x = pointer.x - card_size.x - 18
 	if target.y + card_size.y > viewport_size.y - 10:
