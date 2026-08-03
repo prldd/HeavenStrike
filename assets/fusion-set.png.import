@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2hcrvkrouowt"
-path="res://.godot/imported/main-menu-sky-citadel.png-30f7e17f3300d4428c3d0224b178549b.ctex"
+uid="uid://b2eik2seplaps"
+path="res://.godot/imported/fusion-set.png-1a4ec3bcc83654b2a4a8bb4d3fdfecfd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/main-menu-sky-citadel.png"
-dest_files=["res://.godot/imported/main-menu-sky-citadel.png-30f7e17f3300d4428c3d0224b178549b.ctex"]
+source_file="res://assets/fusion-set.png"
+dest_files=["res://.godot/imported/fusion-set.png-1a4ec3bcc83654b2a4a8bb4d3fdfecfd.ctex"]
 
 [params]
 

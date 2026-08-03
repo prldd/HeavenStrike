@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dd5vk0ob8im7n"
-path="res://.godot/imported/main-menu-steampunk-deck.png-090659ff069fe0f71ee9f4544650027e.ctex"
+uid="uid://bj5q8twyvq6s6"
+path="res://.godot/imported/main-menu-steampunk-deck-old.png-65e492bc33bc06bfb478376eb76ca1d2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/main-menu-steampunk-deck.png"
-dest_files=["res://.godot/imported/main-menu-steampunk-deck.png-090659ff069fe0f71ee9f4544650027e.ctex"]
+source_file="res://assets/Unused Explorations/main-menu-steampunk-deck-old.png"
+dest_files=["res://.godot/imported/main-menu-steampunk-deck-old.png-65e492bc33bc06bfb478376eb76ca1d2.ctex"]
 
 [params]
 

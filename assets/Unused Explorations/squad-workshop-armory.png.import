@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://citwe3qvs2cqy"
-path="res://.godot/imported/board-sky-citadel.png-4999b7c61c07ab1358108ed2e824355d.ctex"
+uid="uid://cqrw7yqyo4de5"
+path="res://.godot/imported/squad-workshop-armory.png-5ff9fc72c25e6ee05aaaa02735fd207d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/board-sky-citadel.png"
-dest_files=["res://.godot/imported/board-sky-citadel.png-4999b7c61c07ab1358108ed2e824355d.ctex"]
+source_file="res://assets/Unused Explorations/squad-workshop-armory.png"
+dest_files=["res://.godot/imported/squad-workshop-armory.png-5ff9fc72c25e6ee05aaaa02735fd207d.ctex"]
 
 [params]
 
