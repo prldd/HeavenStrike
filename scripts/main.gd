@@ -835,12 +835,6 @@ func _build_squad_builder() -> void:
 	actions.add_theme_constant_override("separation", 10)
 	layout.add_child(actions)
 
-	var reset := Button.new()
-	reset.text = "RESET"
-	reset.custom_minimum_size = Vector2(110, 44)
-	reset.pressed.connect(_reset_squad)
-	actions.add_child(reset)
-
 	var cancel := Button.new()
 	cancel.text = "CANCEL"
 	cancel.custom_minimum_size = Vector2(110, 44)
@@ -940,11 +934,6 @@ func _close_squad_builder() -> void:
 		_show_main_menu()
 		return
 	end_button.visible = not replay_mode and not battle_over
-
-func _reset_squad() -> void:
-	_sync_collection()
-	editing_squad_names = SquadStoreScript.sanitize_instances([], collection_instances)
-	_rebuild_squad_grid()
 
 func _select_captain_skill(index: int) -> void:
 	if index >= 0 and index < CaptainSkillsScript.SKILLS.size():

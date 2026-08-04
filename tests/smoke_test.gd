@@ -643,6 +643,10 @@ func _init() -> void:
 	assert(opening_interlude.title == "A Useful Kind of Impossible")
 	assert(opening_interlude.lines.size() >= 4)
 	assert(StoryDialogueCatalogScript.scene_for_mission(1).is_empty())
+	assert(StoryDialogueCatalogScript.scene_for_mission(60).title == "The Invitation")
+	assert(StoryDialogueCatalogScript.scene_for_mission(61).title == "At the Threshold")
+	assert(StoryDialogueCatalogScript.scene_for_mission(62).is_empty())
+	assert(StoryDialogueCatalogScript.scene_for_mission(66).title == "Five True Stories")
 	assert(StoryDialogueCatalogScript.scene_for_mission(76).lines.size() == 6)
 	for mission_number in StoryDialogueCatalogScript.INTERLUDES:
 		var interlude: Dictionary = StoryDialogueCatalogScript.INTERLUDES[mission_number]

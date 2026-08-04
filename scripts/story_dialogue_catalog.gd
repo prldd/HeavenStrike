@@ -120,7 +120,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "Who asked it?"},
 			{"speaker": "The Stranger", "text": "People who have waited centuries to learn whether Conductors can return."},
 			{"speaker": "Cassian", "text": "A name would be more useful than a prophecy."},
-			{"speaker": "The Stranger", "text": "Names are why they are coming. Keep yours out of their hands."}
+			{"speaker": "The Stranger", "text": "Names are why they are coming. I left coordinates in the Relay's dead channel; follow them when you have somewhere safe to return to."}
 		]
 	},
 	9: {
@@ -152,7 +152,8 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "But he told the truth to us."},
 			{"speaker": "Cassian", "text": "Truth is what happened. Evidence is what can survive a room full of interested people."},
 			{"speaker": "Adele Voss", "text": "I dislike him when he sounds reasonable."},
-			{"speaker": "Cassian", "text": "Most people do."}
+			{"speaker": "Cassian", "text": "Most people do."},
+			{"speaker": "Adele Voss", "text": "Save the admiration. A township bridge just called for every available machine, and we are the closest team."}
 		]
 	},
 	18: {
@@ -173,7 +174,9 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "The camp needs water lines, clinic power, and a winter roof. In that order."},
 			{"speaker": "Cassian", "text": "It also needs a legal identity before someone decides the land is empty."},
 			{"speaker": "Conductor", "text": "Can a charter stop rain?"},
-			{"speaker": "Cassian", "text": "No. It can make stealing the roof more expensive."}
+			{"speaker": "Cassian", "text": "No. It can make stealing the roof more expensive."},
+			{"speaker": "Adele Voss", "text": "Then finish it tonight. I decoded the Stranger's coordinates, and they point to an Order sanctuary beyond the eastern border."},
+			{"speaker": "Conductor", "text": "If the settlement can stand without us, we leave at dawn."}
 		]
 	},
 	22: {
@@ -184,7 +187,8 @@ const INTERLUDES := {
 			{"speaker": "Adele Voss", "text": "Cargo?"},
 			{"speaker": "Archivist Serin", "text": "People. Records. Conductor equipment. All routed to Caelis."},
 			{"speaker": "Conductor", "text": "Caelis was destroyed."},
-			{"speaker": "Cassian", "text": "No. Caelis was removed from the story."}
+			{"speaker": "Cassian", "text": "No. Caelis was removed from the story."},
+			{"speaker": "Archivist Serin", "text": "The route code is incomplete. My Order keeps the matching ledgers across the border; get my scholars there, and I can reconstruct it."}
 		]
 	},
 	24: {
@@ -195,7 +199,7 @@ const INTERLUDES := {
 			{"speaker": "Adele Voss", "text": "An auction is flattering if nobody tells the lot what the paddles mean."},
 			{"speaker": "Cassian", "text": "Let them bid. Competing claims are the nearest thing we have to independence."},
 			{"speaker": "Conductor", "text": "You enjoy this."},
-			{"speaker": "Cassian", "text": "I enjoy watching powerful people discover they are not alone in the room."}
+			{"speaker": "Cassian", "text": "I enjoy watching powerful people discover they are not alone in the room. Next we enter the Grand Circuit and win a seat none of them can revoke."}
 		]
 	},
 	29: {
@@ -221,14 +225,15 @@ const INTERLUDES := {
 		]
 	},
 	32: {
-		"title": "The Empty Chair",
-		"location": "Ceasefire Hall · East Corridor",
+		"title": "The Hall Is Coming Down",
+		"location": "Ceasefire Hall · Moments After Detonation",
 		"lines": [
-			{"speaker": "Conductor", "text": "The delegates are alive. Their aides were closer to the blast."},
-			{"speaker": "Cassian", "text": "I assigned the seating plan."},
-			{"speaker": "Adele Voss", "text": "The bomber assigned the blame. Don't do that work for them."},
-			{"speaker": "Cassian", "text": "By morning, every hardliner will call this proof that peace is impossible."},
-			{"speaker": "Conductor", "text": "Then tonight we learn their names."}
+			{"speaker": "Adele Voss", "text": "DOWN! Away from the windows—there may be a second charge!"},
+			{"speaker": "Conductor", "text": "The west arch is folding. Rook, brace it! There are people under that gallery."},
+			{"speaker": "Cassian", "text": "The aides were stationed there. I put them at those doors."},
+			{"speaker": "Adele Voss", "text": "Cassian, eyes on me. The delegates are bleeding, the exits may be trapped, and the attackers could still be inside."},
+			{"speaker": "Cassian", "text": "They left the principals alive and murdered the people who made this summit possible. They wanted five witnesses to carry terror home."},
+			{"speaker": "Conductor", "text": "They don't get to choose what survives. We clear the smoke, pull out everyone we can, then find who lit the fuse."}
 		]
 	},
 	36: {
@@ -275,13 +280,13 @@ const INTERLUDES := {
 	},
 	41: {
 		"title": "A Map Made Honest",
-		"location": "Sanctuary · Cartography Chamber",
+		"location": "Coalition Headquarters · Cartography Room",
 		"lines": [
 			{"speaker": "Archivist Serin", "text": "Every founding faction signed the deletion order. Different seals, same ink formula, same day."},
 			{"speaker": "Adele Voss", "text": "Five enemies agreeing to erase one city."},
 			{"speaker": "Cassian", "text": "Which means the lie was once more valuable than their rivalry."},
 			{"speaker": "Conductor", "text": "Put Caelis back on the map."},
-			{"speaker": "Archivist Serin", "text": "First we must learn who is still living there."}
+			{"speaker": "Archivist Serin", "text": "The map just answered. A dormant transit frequency is broadcasting coordinates signed by your Stranger."}
 		]
 	},
 	42: {
@@ -292,7 +297,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "I know these names. I have eaten at their tables."},
 			{"speaker": "Conductor", "text": "Did they know I might die?"},
 			{"speaker": "The Stranger", "text": "They made certain they would never need to ask."},
-			{"speaker": "Cassian", "text": "Then we will ask for them, publicly and one at a time."}
+			{"speaker": "Cassian", "text": "Then we will ask for them publicly—but not while they can hire every scavenger clan between here and the capital. I need Garrett first."}
 		]
 	},
 	44: {
@@ -314,7 +319,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "And now every faction sees a weapon guarded by our troops."},
 			{"speaker": "Adele Voss", "text": "Intent does not show up on an inventory."},
 			{"speaker": "Conductor", "text": "Then the vault needs five locks and five different keys."},
-			{"speaker": "Cassian", "text": "That may be the first political solution you have ever proposed."}
+			{"speaker": "Cassian", "text": "That may be the first political solution you have ever proposed. I will present it at Unity Day, where every faction must answer in front of the public."}
 		]
 	},
 	49: {
@@ -423,7 +428,7 @@ const INTERLUDES := {
 			{"speaker": "Minerva", "text": "Call it a team until you learn to deserve the other word."}
 		]
 	},
-	62: {
+	61: {
 		"title": "The Invitation",
 		"location": "Caelian Transit Terminus · The Far Door",
 		"lines": [
@@ -434,9 +439,9 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "Then the Wardens are about to learn the value of distinctions."}
 		]
 	},
-	63: {
-		"title": "When the Gate Opened",
-		"location": "Caelis · Outer Gate",
+	62: {
+		"title": "At the Threshold",
+		"location": "Caelis · Outer Inspection Court",
 		"lines": [
 			{"speaker": "Warden Ilyra", "text": "No foreign delegation has crossed this threshold in two hundred years."},
 			{"speaker": "Cassian", "text": "Then it is fortunate we came as a coalition rather than a foreign power."},
@@ -455,7 +460,7 @@ const INTERLUDES := {
 			{"speaker": "The Rook", "text": "Correction. Recognition."}
 		]
 	},
-	66: {
+	67: {
 		"title": "Five True Stories",
 		"location": "Imperial Archive · Founding Galleries",
 		"lines": [
@@ -473,7 +478,8 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "Not yet."},
 			{"speaker": "Cassian", "text": "I have spent years arguing that hidden history is a weapon."},
 			{"speaker": "Conductor", "text": "Then trust me when I say this one is still loaded."},
-			{"speaker": "Cassian", "text": "I do. I dislike how much that costs both of us."}
+			{"speaker": "Cassian", "text": "I do. I dislike how much that costs both of us."},
+			{"speaker": "Archivist Serin", "text": "The record names living witnesses in the Conductor Vault. We should hear them before deciding what the world can bear."}
 		]
 	},
 	69: {
@@ -483,7 +489,8 @@ const INTERLUDES := {
 			{"speaker": "First Conductor", "text": "They taught your age that we commanded machines because command is easier to regulate than companionship."},
 			{"speaker": "Conductor", "text": "The Relay is hurting me."},
 			{"speaker": "First Conductor", "text": "Yes. Sharing purpose means sharing weight. The old Empire praised the gift and hid the bill."},
-			{"speaker": "The Rook", "text": "Weight shared. Conductor not alone."}
+			{"speaker": "The Rook", "text": "Weight shared. Conductor not alone."},
+			{"speaker": "First Conductor", "text": "Nor were you chosen by chance. Ask the Warden council why it needed a new Conductor badly enough to gamble with your life."}
 		]
 	},
 	70: {
@@ -492,9 +499,9 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Warden Ilyra", "text": "We authorized the continuity test. The intermediaries were not told its nature."},
 			{"speaker": "Conductor", "text": "I was not told anything."},
-			{"speaker": "Warden Ilyra", "text": "Caelis needed to know whether the Relay line could survive."},
+			{"speaker": "Warden Ilyra", "text": "Caelis needed to know whether Conduction could take hold again."},
 			{"speaker": "Cassian", "text": "You converted a person into a question because you were afraid of the answer."},
-			{"speaker": "Warden Ilyra", "text": "Yes. There is no honorable wording for it."}
+			{"speaker": "Warden Ilyra", "text": "Yes. There is no honorable wording for it. The council will now summon you to the Crown Relay, because survival was the answer it wanted."}
 		]
 	},
 	71: {
@@ -504,7 +511,8 @@ const INTERLUDES := {
 			{"speaker": "Warden Ilyra", "text": "Accept the Vault and Caelis will recognize you as successor. In time, the Source will answer to you."},
 			{"speaker": "Conductor", "text": "That is the problem."},
 			{"speaker": "Cassian", "text": "One good ruler is still a system waiting for one bad heir."},
-			{"speaker": "Conductor", "text": "Open the doors. Let the world help carry what it uses."}
+			{"speaker": "Conductor", "text": "Open the doors. Let the world help carry what it uses."},
+			{"speaker": "Warden Ilyra", "text": "Then Caelis will petition the coalition in the morning. If we cannot name a successor, we will argue for stewardship in the open."}
 		]
 	},
 	72: {
@@ -526,7 +534,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "My name is not in it."},
 			{"speaker": "Cassian", "text": "No."},
 			{"speaker": "Conductor", "text": "Good. If the peace needs me forever, we did not repair anything."},
-			{"speaker": "Cassian", "text": "You finally sound like an institution builder."}
+			{"speaker": "Cassian", "text": "You finally sound like an institution builder. Tomorrow the signatories send one joint repair team into the Source; the Accord lives only if that team works."}
 		]
 	},
 	75: {

@@ -324,6 +324,8 @@ func _run() -> void:
 	game.input_enabled = true
 	game._open_squad_builder()
 	await process_frame
+	for action in game.squad_overlay.find_children("*", "Button", true, false):
+		assert(action.text != "RESET")
 	var inventory: Dictionary = CampaignStoreScript.inventory_counts(
 		game.roster, game.earned_reward_units
 	)
@@ -434,6 +436,8 @@ func _run() -> void:
 	assert(game.squad_overlay.visible)
 	assert(game.squad_opened_for_mission)
 	assert(game.pending_mission_id == 1)
+	for action in game.squad_overlay.find_children("*", "Button", true, false):
+		assert(action.text != "RESET")
 	assert(game.mission_intel_panel.visible)
 	assert(game.mission_enemy_preview_row.get_child_count() == 8)
 	assert(game.mission_intel_label.text.contains("CAPTAIN:"))
