@@ -682,11 +682,6 @@ func _build_squad_builder() -> void:
 	squad_count_label.add_theme_font_size_override("font_size", 18)
 	title_row.add_child(squad_count_label)
 
-	var instruction := Label.new()
-	instruction.text = "Shape an eight-unit plan. Drag to reorder; slot 1 leads the opening hand. Right-click a unit to assign the Vanguard. Maximum 2 copies per unit."
-	instruction.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	layout.add_child(instruction)
-
 	mission_intel_panel = PanelContainer.new()
 	mission_intel_panel.visible = false
 	layout.add_child(mission_intel_panel)
