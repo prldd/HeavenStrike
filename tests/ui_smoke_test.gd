@@ -438,6 +438,22 @@ func _run() -> void:
 	game.squad_overlay.visible = false
 	game.squad_opened_for_mission = false
 	game.pending_mission_id = -1
+	game.completed_missions = []
+	for mission_id in 61:
+		game.completed_missions.append(mission_id)
+	assert(game._latest_campaign_mission_id() == 61)
+	game._open_mission_select()
+	for frame in 16:
+		await process_frame
+	assert(game.mission_scroll.scroll_vertical > 0)
+	var frontier_button: Button = null
+	for candidate in game.mission_list.find_children("*", "Button", true, false):
+		if candidate.text.contains("ACT 2 · MISSION 40"):
+			frontier_button = candidate
+			break
+	assert(frontier_button != null)
+	assert(frontier_button.get_global_rect().intersects(game.mission_scroll.get_global_rect()))
+	game.mission_overlay.visible = false
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://replay_history.json"))
 	var older_replay := BattleSimulatorScript.new()
 	older_replay.reset(555)

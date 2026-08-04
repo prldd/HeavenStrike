@@ -94,6 +94,7 @@ var crucible_donor_ids: Array = []
 var collection_instances: Array = []
 var crucible_notice := ""
 var mission_list: VBoxContainer
+var mission_scroll: ScrollContainer
 var mission_list_build_token := 0
 var _touch_details_active := false
 var campaign_progress_label: Label
@@ -1478,7 +1479,7 @@ func _build_mission_select() -> void:
 	campaign_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(campaign_progress_label)
 
-	var mission_scroll := ScrollContainer.new()
+	mission_scroll = ScrollContainer.new()
 	mission_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mission_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mission_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2141,6 +2142,8 @@ func _finish_interlude() -> void:
 
 func _complete_interlude_return(return_action: String) -> void:
 	match return_action:
+		"continue_campaign":
+			_open_mission_select(current_mission_id + 1)
 		"mission_select":
 			_open_mission_select()
 		_:
@@ -2184,11 +2187,23 @@ func _show_main_menu() -> void:
 		]
 	_refresh()
 
-func _open_mission_select() -> void:
+func _open_mission_select(focus_mission_id: int = -1) -> void:
+	if focus_mission_id < 0:
+		focus_mission_id = _latest_campaign_mission_id()
 	main_menu_overlay.visible = false
 	mission_overlay.visible = true
 	await get_tree().process_frame
-	_rebuild_mission_list()
+	_rebuild_mission_list(focus_mission_id)
+
+func _latest_campaign_mission_id() -> int:
+	var latest_available := 0
+	for mission in CampaignStoreScript.MISSIONS:
+		if not CampaignStoreScript.is_available(mission.id, completed_missions):
+			continue
+		latest_available = mission.id
+		if mission.id not in completed_missions:
+			return mission.id
+	return latest_available
 
 func _open_last_replay() -> void:
 	settings_panel.visible = false
@@ -2389,7 +2404,7 @@ func _update_replay_timeline() -> void:
 	replay_previous_button.disabled = replay_history_index + 1 >= replay_history.size()
 	replay_next_button.disabled = replay_history_index <= 0
 
-func _rebuild_mission_list() -> void:
+func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 	for child in mission_list.get_children():
 		mission_list.remove_child(child)
 		child.queue_free()
@@ -2422,6 +2437,7 @@ func _rebuild_mission_list() -> void:
 	var build_token := mission_list_build_token
 	var built := 0
 	var last_chapter := ""
+	var focus_button: Button = null
 	for mission in CampaignStoreScript.MISSIONS:
 		if build_token != mission_list_build_token or not mission_overlay.visible:
 			return
@@ -2467,6 +2483,8 @@ func _rebuild_mission_list() -> void:
 		]
 		button.pressed.connect(_prepare_mission.bind(mission.id))
 		entry.add_child(button)
+		if mission.id == focus_mission_id:
+			focus_button = button
 
 		var rewards := HBoxContainer.new()
 		rewards.custom_minimum_size.y = 42
@@ -2554,6 +2572,13 @@ func _rebuild_mission_list() -> void:
 			await get_tree().process_frame
 			if build_token != mission_list_build_token or not mission_overlay.visible:
 				return
+	if focus_button != null:
+		# The mission rows are built over several frames on mobile. Wait for the
+		# final container layout before asking the ScrollContainer to reveal the
+		# newly unlocked mission.
+		await get_tree().process_frame
+		if build_token == mission_list_build_token and mission_overlay.visible:
+			mission_scroll.ensure_control_visible(focus_button)
 
 func _prepare_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):
@@ -4006,7 +4031,7 @@ func _continue_campaign() -> void:
 	):
 		return
 	mission_finished = false
-	_leave_completed_mission("mission_select")
+	_leave_completed_mission("continue_campaign")
 
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:
