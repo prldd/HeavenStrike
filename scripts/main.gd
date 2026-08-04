@@ -32,6 +32,7 @@ var hand_row: HBoxContainer
 var end_button: Button
 var power_button: Button
 var menu_button: Button
+var win_button: Button
 var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
@@ -310,6 +311,14 @@ func _build_interface() -> void:
 	menu_button.pressed.connect(_show_main_menu)
 	action_row.add_child(menu_button)
 
+	win_button = Button.new()
+	win_button.text = "WIN"
+	win_button.tooltip_text = "Immediately win this campaign battle."
+	win_button.custom_minimum_size.x = 64
+	win_button.visible = false
+	win_button.pressed.connect(_win_campaign_battle)
+	action_row.add_child(win_button)
+
 	end_button = Button.new()
 	end_button.text = "→"
 	end_button.tooltip_text = "Resolve turn (Enter)"
@@ -552,11 +561,11 @@ func _build_overlay() -> void:
 	overlay.add_child(center)
 
 	var plaque := PanelContainer.new()
-	plaque.custom_minimum_size = Vector2(520, 430)
+	plaque.custom_minimum_size = Vector2(620, 600)
 	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
 	center.add_child(plaque)
 	var panel := VBoxContainer.new()
-	panel.custom_minimum_size = Vector2(460, 370)
+	panel.custom_minimum_size = Vector2(560, 540)
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_theme_constant_override("separation", 14)
 	plaque.add_child(panel)
@@ -566,11 +575,24 @@ func _build_overlay() -> void:
 	overlay_title.add_theme_font_size_override("font_size", 42)
 	panel.add_child(overlay_title)
 
+	var detail_scroll := ScrollContainer.new()
+	detail_scroll.custom_minimum_size = Vector2(530, 130)
+	detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(detail_scroll)
+
 	overlay_detail = Label.new()
+	overlay_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	overlay_detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	overlay_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overlay_detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	overlay_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	overlay_detail.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	overlay_detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay_detail.add_theme_font_size_override("font_size", 17)
 	overlay_detail.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	panel.add_child(overlay_detail)
+	detail_scroll.add_child(overlay_detail)
 
 	reward_reveal = VBoxContainer.new()
 	reward_reveal.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -2765,6 +2787,11 @@ func _refresh() -> void:
 		or pending_lane_actor_id >= 0
 	)
 	menu_button.disabled = not input_enabled or battle_over
+	win_button.visible = (
+		campaign_battle and not replay_mode and not battle_over
+		and not main_menu_overlay.visible and not mission_overlay.visible
+	)
+	win_button.disabled = not input_enabled
 	power_button.disabled = not input_enabled or player_power_used or battle_over
 	power_button.text = "%s USED" % player_captain_skill.to_upper() if player_power_used else player_captain_skill.to_upper()
 	power_button.tooltip_text = CaptainSkillsScript.DESCRIPTIONS[player_captain_skill]
@@ -3205,6 +3232,12 @@ func _use_player_power() -> void:
 		return
 	player_power_used = true
 	_refresh()
+
+func _win_campaign_battle() -> void:
+	if not campaign_battle or replay_mode or battle_over or not input_enabled:
+		return
+	enemy_hp = 0
+	_check_game_over()
 
 func _end_player_turn() -> void:
 	if not input_enabled or battle_over:
@@ -3861,7 +3894,7 @@ func _continue_campaign() -> void:
 	overlay.visible = false
 	result_continue_button.visible = false
 	mission_finished = false
-	_prepare_mission(next_mission_id)
+	_open_mission_select()
 
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:

@@ -56,6 +56,10 @@ func _run() -> void:
 	assert(game.end_button.text == "→")
 	assert(game.end_button.tooltip_text.contains("Enter"))
 	assert(not game.end_button.visible)
+	assert(game.win_button.text == "WIN")
+	assert(game.win_button.tooltip_text.contains("campaign battle"))
+	assert(game.win_button.pressed.is_connected(game._win_campaign_battle))
+	assert(not game.win_button.visible)
 	assert(game.hand_row.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	game._cycle_resolution_speed()
 	assert(game.resolution_speed == 2.0)
@@ -152,6 +156,10 @@ func _run() -> void:
 	assert(first_entry.get_child(1) is HBoxContainer)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
 	assert(result_buttons.size() == 3)
+	assert(game.overlay_detail.get_parent() is ScrollContainer)
+	assert(game.overlay_detail.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART)
+	assert(game.overlay_detail.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING)
+	assert(game.overlay_detail.mouse_filter == Control.MOUSE_FILTER_IGNORE)
 	assert(not game.result_continue_button.visible)
 	assert(not game.result_menu_button.visible)
 	game._show_card_reward("Chain Initiate", true)
@@ -329,14 +337,38 @@ func _run() -> void:
 	assert(game.result_primary_button.text == "PLAY AGAIN")
 	assert(game.result_menu_button.visible)
 	assert(not game.result_continue_button.visible)
+	assert(not game.win_button.visible)
+	game.battle_over = false
+	game.input_enabled = true
+	game.campaign_battle = true
+	game.main_menu_overlay.visible = false
+	game.mission_overlay.visible = false
+	game._refresh()
+	assert(game.win_button.visible)
+	game.campaign_battle = false
+	game._refresh()
+	assert(not game.win_button.visible)
 	game.overlay.visible = false
 	game.current_mission_id = 0
 	game.completed_missions = [0]
 	game.mission_finished = true
 	game.recent_reward_name = "Chain Initiate"
 	game.overlay.visible = true
+	game.squad_overlay.visible = false
 	game._continue_campaign()
 	assert(not game.overlay.visible)
+	assert(game.mission_overlay.visible)
+	assert(not game.squad_overlay.visible)
+	await process_frame
+	var next_mission_button: Button = null
+	for candidate in game.mission_list.find_children("*", "Button", true, false):
+		if candidate.text.contains("MISSION 02"):
+			next_mission_button = candidate
+			break
+	assert(next_mission_button != null)
+	assert(next_mission_button.text.contains(CampaignStoreScript.MISSIONS[1].briefing))
+	next_mission_button.pressed.emit()
+	assert(not game.mission_overlay.visible)
 	assert(game.squad_overlay.visible)
 	assert(game.squad_opened_for_mission)
 	assert(game.pending_mission_id == 1)
