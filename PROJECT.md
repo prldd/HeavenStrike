@@ -552,7 +552,7 @@ Players should finish the game still arguing about:
 The contradictions previously flagged between this canon and existing prototype material are resolved as follows:
 
 - **Conductor is the single term.** The leader each side protects — and its once-per-battle power — is a Conductor, in-fiction and throughout this document (replacing the earlier "Commander"/"Captain" wording). Code and script internals still use the legacy `Commander`/`Captain` naming; renaming internals is a mechanical follow-up with no design impact.
-- **Classes exist in every faction.** All six gameplay classes (Scout, Fighter, Defender, Gunner, Mage, Priest) exist within each of the five energy factions; a faction simply fields some classes more prevalently than others. The player's canon multi-discipline synchronization is expressed through mixed-faction squad building.
+- **Classes and affinity pools.** All six gameplay classes (Scout, Fighter, Defender, Gunner, Mage, Priest) exist within each of the five political factions. Content and sprite production use six 35-unit pools: Universal/Fighter, Steam/Defender, Wind/Scout, Coal/Gunner, Fusion/Mage, and Solar/Priest. Universal is a neutral shared pool, not a sixth political faction. Every pool contains at least two units of every class, while its affinity class is the largest group and retains its strongest promotion lineages. Promotion families never cross pools. The twelve standalone 1-star units are Universal and available to every faction. Runtime faction metadata and faction-restricted NPC squad enforcement remain a follow-up; the current allocation is authoritative in `documentation/Unit_Faction_and_Sprite_Staging.md`.
 - **Story structure is implemented.** The campaign is now 77 missions in three acts matching the structure above: Act 1 "Reclamation" (missions 1–22), Act 2 "The Crisis" (missions 23–62), and Act 3 "Caelis" (missions 63–77, original content). Every mission carries authored briefing/debriefing text (`MISSION_STORIES` in `scripts/story_quest_catalog.gd`) written to `documentation/Resonance_War_Campaign_Narrative.md`, which supersedes the old two-act framing. The older reference-mission titles are retained as cast and beat anchors.
 - **Sky premise de-emphasized.** The earlier sky-island backdrop is legacy atmosphere art only, not setting canon; see the Presentation section.
 
@@ -616,7 +616,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, a race (Human, Ogur, Lambkin, or Felyne), and one or more abilities. Race is a data trait ported from the reference database with no battlefield presence of its own; aura skills such as Inspire Lambkin key off it.
 
-The current prototype roster contains 48 unpromoted units and 40 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
+The current prototype roster contains 210 units: 107 promotion roots or standalone units and 103 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
 
 Campaign missions only award implemented cards listed for that exact story quest in the reference data. Cards listed solely for events, raids, arenas, or gacha are not inserted into campaign pools.
 
@@ -819,6 +819,14 @@ game presented through an ornate, tactile storybook:
   color, contrast, and detail.
 - Portrait sprites appear in menus, rewards, decks, and workshop cards. Full-body
   sprites remain exclusive to the battlefield.
+
+Faction-specific replacement art is staged under
+`assets/units/full_by_class/<Pool>/<Class>/`, using the pool and internal class
+names documented in `documentation/Unit_Faction_and_Sprite_Staging.md`.
+`assets/IMAGEPROMPTS.md` supplies the matching generation blocks. Numeric art-ID
+filenames and whole promotion lineages must remain stable. Until the replacement
+pass is approved, the game continues loading battlefield sprites from
+`assets/units/full/`.
 
 ## Technical Direction
 

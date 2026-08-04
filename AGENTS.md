@@ -31,6 +31,7 @@ The prototype is intentionally a single-player, desktop-first Godot project. All
 ├── scripts/               # All GDScript source (Resource classes live in scripts/resources/)
 ├── tests/                 # Headless Godot test scripts
 ├── tools/                 # Development utilities
+├── documentation/         # Narrative plans and unit faction/sprite assignment reference
 ├── assets/                # Spritesheets, generated portraits, generated full-body sprites, backgrounds
 ├── export_templates/      # Empty in source; Godot export templates live here when installed
 ├── feature_profiles/      # Empty in source
@@ -144,6 +145,7 @@ The project follows `.editorconfig` and `.gitattributes`:
   ./tools/godot-headless.sh --script res://tools/generate_unit_portraits.gd
   ```
   Generated outputs live in `assets/units/portraits/` and `assets/units/full/` and are committed.
+- **Faction sprite staging:** source art for the replacement pass lives under `assets/units/full_by_class/<Pool>/<Class>/`. Pools are Universal, Steam, Wind, Coal, Fusion, and Solar; class folders are Warden, Duelist, Strider, Artillerist, Channeler, and Lifebinder. Every pool contains every class. Promotion families must stay in one pool, filenames must remain their numeric art IDs, and assignments must stay synchronized with `documentation/Unit_Faction_and_Sprite_Staging.md`. Use `assets/IMAGEPROMPTS.md` for the matching pool/class generation blocks. The live game continues to load `assets/units/full/` until replacements are approved.
 
 ## Data and assets
 
@@ -151,7 +153,9 @@ The project follows `.editorconfig` and `.gitattributes`:
 - `assets/units/portrait_sheets/` — high-resolution source sheets for portraits.
 - `assets/units/portraits/` — 160×160 generated portrait PNGs.
 - `assets/units/full/` — generated full-body sprites used on the battlefield.
+- `assets/units/full_by_class/<Pool>/<Class>/` — faction/class-organized source art for generating replacement full-body sprites; not yet loaded by the game.
 - `assets/units/portrait_manifest.tsv` — TSV mapping `art_id`, `sheet_name`, `slot`, `...` used by the generator.
+- `assets/IMAGEPROMPTS.md` — composable general, pool, and class prompts for the replacement-art pass.
 - Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`). Practice battles use `assets/board-steampunk-training-hall.png` instead of the courtyard; `BoardView.set_practice_mode()` switches between them. The training-hall art is generated procedurally — regenerate with `python tools/generate_practice_background.py`.
 
 Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
@@ -249,13 +253,16 @@ starting Reserves.
   `assets/units/portrait_manifest.tsv` columns: art ID (= reference
   `numberId`), portrait sheet, slot, full-body sheet, slot, unit name. The
   960×160 six-slot portrait sheets live in `assets/units/portrait_sheets/`.
-- **Full-body sprites** (`assets/units/full/%03d.png`) exist only for a subset
-  of units, and the full-body sheets are *not* mirrored locally. Download
+- **Current full-body sprites** (`assets/units/full/%03d.png`) are the legacy
+  battlefield sources used until the faction replacement pass is approved.
+  The full-body sheets are *not* mirrored locally. Download
   missing ones from `https://chainguardians.com/img/full/<numberId>.png`
   (a `_hires` variant exists at `img/full_hires/<numberId>.png`). They are
   roughly 415px-wide chibi PNGs. `smoke_test.gd` asserts both files exist for
-  every roster unit; commit the `.import` files Godot generates on the next
-  run.
+  every roster unit. Replacement-generation sources are organized separately
+  under `assets/units/full_by_class/<Pool>/<Class>/`; do not change their
+  numeric filenames or split promotion lineages across pools. Commit the
+  `.import` files Godot generates on the next run.
 
 ### Catalog conventions
 
@@ -396,7 +403,7 @@ Gotchas when running the Windows binary headless:
 
 ## Common tasks
 
-- **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, update `smoke_test.gd` counts if intentional, and run the three tests. For reference-sourced units follow the full workflow in "Porting units and skills from the reference" above.
+- **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, place its replacement-art source under the assigned `assets/units/full_by_class/<Pool>/<Class>/` folder, update `documentation/Unit_Faction_and_Sprite_Staging.md`, update `smoke_test.gd` counts if intentional, and run the three tests. Keep every promotion lineage in one pool. For reference-sourced units follow the full workflow in "Porting units and skills from the reference" above.
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
 - **Add a Captain skill:** edit `scripts/captain_skills.gd`, add the name to `CaptainSkills.SKILLS`, and update the description.
 - **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`. New missions must be appended at the end of `QUESTS` — never inserted mid-list — because `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`, and the balance test all key off mission index. Add story text to `MISSION_STORIES` following `documentation/Resonance_War_Campaign_Narrative.md` (the narrative plan) and `documentation/Resonance_War_Narrative_Foundation.md` (the world rules).

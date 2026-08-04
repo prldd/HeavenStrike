@@ -42,14 +42,14 @@ assets required by the prototype.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 98 units across six distinct classes
+- 210 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 77 sequential story missions across three acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
 - Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
-- 48 unpromoted units plus 40 standalone promotion cards with implemented secondary abilities
+- 107 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
 - Mission squad selection before campaign battles
@@ -63,8 +63,8 @@ assets required by the prototype.
 - Poison Strike attacks and Sunder Armour vulnerability setup
 - Persistent per-copy Kinetic Crucible progression with five unit levels, donor merging,
   collection consumption, level-scaled stats and skills, and promotion into the next form
-- Official detail-page full-body sprites on the battlefield and official unit-list portraits everywhere else
-- A ready-to-use library of all 1,048 live reference unit portraits, generated from 177 official high-resolution sheets
+- Full-body sprites on the battlefield and unit-list portraits throughout menus and progression screens
+- A reference-only library of all 1,048 source portraits used during the original-art replacement pass
 - Enemy deployment AI
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
@@ -91,6 +91,21 @@ assets required by the prototype.
 - Animated damage, healing, movement, and buff feedback
 - Lane-aware AI that counters threats and uses support units contextually
 - Unit definitions separated into a reusable catalog
+
+## Unit Art Production
+
+Replacement full-body art is organized under
+`assets/units/full_by_class/<Pool>/<Class>/`. The six production pools and
+their primary affinities are Universal/Fighter, Steam/Defender, Wind/Scout,
+Coal/Gunner, Fusion/Mage, and Solar/Priest. Universal is neutral rather than a
+sixth political faction. Every pool contains all six classes, and promotion
+lineages remain together.
+
+Use [the faction and sprite staging reference](documentation/Unit_Faction_and_Sprite_Staging.md)
+for exact unit assignments and [the image prompt guide](assets/IMAGEPROMPTS.md)
+for matching pool/class generation instructions. Keep numeric art-ID filenames
+unchanged. The game continues to load `assets/units/full/` until the new sprite
+set is complete and approved.
 
 ## Validation
 
