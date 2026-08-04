@@ -35,6 +35,9 @@ assets required by the prototype.
   most recently completed battles.
 - Select **Squad** during a replay to compare the recorded player and enemy squads side by side.
 - Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
+- In campaign interludes, select **Next** or press **Enter/Space** to advance;
+  **Skip Scene** returns directly to the menu or operations map. Completed
+  missions with an interlude offer **View Scene** on the operations map.
 - Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
 - Defeat the enemy Commander before it reduces your 20 HP to zero.
@@ -72,6 +75,9 @@ assets required by the prototype.
   context-aware deployment, movement, and Captain-skill AI
 - Mission-specific briefings and debriefings, Act completion tracking, active
   run status, and pre-battle enemy squad/Captain intelligence
+- 46 first-completion character interludes with a reusable speaker-driven
+  dialogue presentation and operations-map replay, spanning the campaign's
+  major cast introductions and reveals
 - Continued campaign victories carry the awarded card into Barracks with a
   visible new-reward marker
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log

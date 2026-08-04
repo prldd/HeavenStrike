@@ -16,6 +16,7 @@ const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
+const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
 
 const PLAYER := 0
@@ -107,6 +108,16 @@ var replay_next_button: Button
 var replay_squad_overlay: ColorRect
 var replay_player_squad_grid: GridContainer
 var replay_enemy_squad_grid: GridContainer
+var dialogue_overlay: ColorRect
+var dialogue_scene_title: Label
+var dialogue_location_label: Label
+var dialogue_progress_label: Label
+var dialogue_speaker_badge: PanelContainer
+var dialogue_initials_label: Label
+var dialogue_speaker_label: Label
+var dialogue_role_label: Label
+var dialogue_line_label: Label
+var dialogue_next_button: Button
 
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
@@ -123,6 +134,7 @@ var current_encounter_index := 0
 var mission_run_captain_hp := STARTING_HP
 var awaiting_next_encounter := false
 var mission_finished := false
+var mission_interlude_pending := false
 var campaign_battle := false
 var squad_opened_from_menu := false
 var squad_opened_for_mission := false
@@ -172,6 +184,9 @@ var replay_data: Dictionary = {}
 var replay_event_index := 0
 var replay_history: Array = []
 var replay_history_index := 0
+var dialogue_scene: Dictionary = {}
+var dialogue_line_index := 0
+var dialogue_return_action := ""
 
 const REPLAY_PATH := "user://last_replay.json"
 const REPLAY_HISTORY_PATH := "user://replay_history.json"
@@ -339,12 +354,24 @@ func _build_interface() -> void:
 	_build_squad_builder()
 	_build_main_menu()
 	_build_mission_select()
+	_build_dialogue_overlay()
 	_build_kinetic_crucible()
 	_build_hover_card()
 	_build_replay_controls()
 	_build_replay_squad_overlay()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]
+		and dialogue_overlay != null
+		and dialogue_overlay.visible
+	):
+		get_viewport().set_input_as_handled()
+		_advance_interlude()
+		return
 	if (
 		event is InputEventKey
 		and event.pressed
@@ -1469,6 +1496,120 @@ func _build_mission_select() -> void:
 	back.pressed.connect(_show_main_menu)
 	layout.add_child(back)
 
+func _build_dialogue_overlay() -> void:
+	dialogue_overlay = ColorRect.new()
+	dialogue_overlay.color = Color.TRANSPARENT
+	dialogue_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dialogue_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	dialogue_overlay.z_index = 120
+	dialogue_overlay.visible = false
+	add_child(dialogue_overlay)
+	_add_overlay_background(
+		dialogue_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.025, 0.022, 0.03, 0.84)
+	)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 100)
+	margin.add_theme_constant_override("margin_right", 100)
+	margin.add_theme_constant_override("margin_top", 46)
+	margin.add_theme_constant_override("margin_bottom", 46)
+	dialogue_overlay.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	margin.add_child(layout)
+
+	var scene_kicker := Label.new()
+	scene_kicker.text = "CAMPAIGN INTERLUDE"
+	scene_kicker.add_theme_font_size_override("font_size", 13)
+	scene_kicker.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	layout.add_child(scene_kicker)
+
+	dialogue_scene_title = Label.new()
+	dialogue_scene_title.add_theme_font_size_override("font_size", 30)
+	dialogue_scene_title.add_theme_color_override("font_color", UIThemeScript.title_color())
+	layout.add_child(dialogue_scene_title)
+
+	var scene_meta := HBoxContainer.new()
+	layout.add_child(scene_meta)
+	dialogue_location_label = Label.new()
+	dialogue_location_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialogue_location_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	scene_meta.add_child(dialogue_location_label)
+	dialogue_progress_label = Label.new()
+	dialogue_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	dialogue_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	scene_meta.add_child(dialogue_progress_label)
+
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(spacer)
+
+	var dialogue_plaque := PanelContainer.new()
+	dialogue_plaque.custom_minimum_size = Vector2(0, 285)
+	dialogue_plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
+	layout.add_child(dialogue_plaque)
+
+	var plaque_layout := VBoxContainer.new()
+	plaque_layout.add_theme_constant_override("separation", 14)
+	dialogue_plaque.add_child(plaque_layout)
+
+	var speech_row := HBoxContainer.new()
+	speech_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	speech_row.add_theme_constant_override("separation", 22)
+	plaque_layout.add_child(speech_row)
+
+	dialogue_speaker_badge = PanelContainer.new()
+	dialogue_speaker_badge.custom_minimum_size = Vector2(142, 142)
+	dialogue_speaker_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	speech_row.add_child(dialogue_speaker_badge)
+	dialogue_initials_label = Label.new()
+	dialogue_initials_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dialogue_initials_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	dialogue_initials_label.add_theme_font_size_override("font_size", 42)
+	dialogue_speaker_badge.add_child(dialogue_initials_label)
+
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	words.add_theme_constant_override("separation", 4)
+	speech_row.add_child(words)
+	dialogue_speaker_label = Label.new()
+	dialogue_speaker_label.add_theme_font_size_override("font_size", 25)
+	words.add_child(dialogue_speaker_label)
+	dialogue_role_label = Label.new()
+	dialogue_role_label.add_theme_font_size_override("font_size", 12)
+	dialogue_role_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	words.add_child(dialogue_role_label)
+	var rule := HSeparator.new()
+	words.add_child(rule)
+	dialogue_line_label = Label.new()
+	dialogue_line_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialogue_line_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dialogue_line_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	dialogue_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialogue_line_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	dialogue_line_label.add_theme_font_size_override("font_size", 21)
+	words.add_child(dialogue_line_label)
+
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation", 10)
+	plaque_layout.add_child(actions)
+	var skip := Button.new()
+	skip.text = "SKIP SCENE"
+	skip.custom_minimum_size = Vector2(140, 44)
+	skip.pressed.connect(_finish_interlude)
+	actions.add_child(skip)
+	dialogue_next_button = Button.new()
+	dialogue_next_button.text = "NEXT  →"
+	dialogue_next_button.custom_minimum_size = Vector2(150, 44)
+	dialogue_next_button.pressed.connect(_advance_interlude)
+	actions.add_child(dialogue_next_button)
+
 func _build_kinetic_crucible() -> void:
 	crucible_overlay = ColorRect.new()
 	crucible_overlay.color = Color.TRANSPARENT
@@ -1938,6 +2079,73 @@ func _add_overlay_background(
 	tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	parent.add_child(tint)
 
+func _show_interlude(mission_id: int, return_action: String) -> bool:
+	var scene := StoryDialogueCatalogScript.scene_for_mission(mission_id)
+	if scene.is_empty() or scene.get("lines", []).is_empty():
+		_complete_interlude_return(return_action)
+		return false
+	dialogue_scene = scene
+	dialogue_line_index = 0
+	dialogue_return_action = return_action
+	overlay.visible = false
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	squad_overlay.visible = false
+	crucible_overlay.visible = false
+	dialogue_overlay.visible = true
+	dialogue_scene_title.text = scene.get("title", "Interlude")
+	dialogue_location_label.text = scene.get("location", "")
+	_refresh_interlude_line()
+	dialogue_next_button.grab_focus()
+	return true
+
+func _refresh_interlude_line() -> void:
+	var lines: Array = dialogue_scene.get("lines", [])
+	if dialogue_line_index < 0 or dialogue_line_index >= lines.size():
+		return
+	var line: Dictionary = lines[dialogue_line_index]
+	var speaker: String = line.get("speaker", "")
+	var character := StoryDialogueCatalogScript.character(speaker)
+	var accent := Color(character.get("accent", "#efd38a"))
+	dialogue_progress_label.text = "%d  /  %d" % [dialogue_line_index + 1, lines.size()]
+	dialogue_initials_label.text = character.get("initials", "??")
+	dialogue_initials_label.add_theme_color_override("font_color", accent)
+	dialogue_speaker_label.text = speaker
+	dialogue_speaker_label.add_theme_color_override("font_color", accent)
+	dialogue_role_label.text = character.get("role", "Campaign character")
+	dialogue_line_label.text = line.get("text", "")
+	var badge_style := UIThemeScript.dark_plaque()
+	badge_style.border_color = accent
+	dialogue_speaker_badge.add_theme_stylebox_override("panel", badge_style)
+	dialogue_next_button.text = "CONTINUE  →" if dialogue_line_index == lines.size() - 1 else "NEXT  →"
+
+func _advance_interlude() -> void:
+	if not dialogue_overlay.visible:
+		return
+	var lines: Array = dialogue_scene.get("lines", [])
+	if dialogue_line_index + 1 >= lines.size():
+		_finish_interlude()
+		return
+	dialogue_line_index += 1
+	_refresh_interlude_line()
+
+func _finish_interlude() -> void:
+	if not dialogue_overlay.visible:
+		return
+	var return_action := dialogue_return_action
+	dialogue_overlay.visible = false
+	dialogue_scene = {}
+	dialogue_line_index = 0
+	dialogue_return_action = ""
+	_complete_interlude_return(return_action)
+
+func _complete_interlude_return(return_action: String) -> void:
+	match return_action:
+		"mission_select":
+			_open_mission_select()
+		_:
+			_show_main_menu()
+
 func _show_main_menu() -> void:
 	if get_tree().paused:
 		get_tree().paused = false
@@ -1960,6 +2168,7 @@ func _show_main_menu() -> void:
 	mission_overlay.visible = false
 	crucible_overlay.visible = false
 	squad_overlay.visible = false
+	dialogue_overlay.visible = false
 	overlay.visible = false
 	hover_card.visible = false
 	combat_log_panel.visible = false
@@ -2325,6 +2534,18 @@ func _rebuild_mission_list() -> void:
 			stars.add_theme_color_override("font_color", UIThemeScript.title_color())
 			tile.add_child(stars)
 
+		if complete and StoryDialogueCatalogScript.has_interlude(mission.id):
+			var reward_spacer := Control.new()
+			reward_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			rewards.add_child(reward_spacer)
+			var scene_button := Button.new()
+			scene_button.text = "VIEW SCENE"
+			scene_button.custom_minimum_size = Vector2(120, 36)
+			if OS.has_feature("mobile"):
+				scene_button.mouse_filter = Control.MOUSE_FILTER_PASS
+			scene_button.pressed.connect(_replay_interlude.bind(mission.id))
+			rewards.add_child(scene_button)
+
 		var divider := HSeparator.new()
 		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		entry.add_child(divider)
@@ -2343,6 +2564,11 @@ func _prepare_mission(mission_id: int) -> void:
 	squad_opened_for_mission = true
 	pending_mission_id = mission_id
 	_rebuild_squad_grid()
+
+func _replay_interlude(mission_id: int) -> void:
+	if mission_id not in completed_missions:
+		return
+	_show_interlude(mission_id, "mission_select")
 
 func _begin_practice() -> void:
 	campaign_battle = false
@@ -2620,6 +2846,7 @@ func _start_new_match() -> void:
 	input_enabled = true
 	battle_over = false
 	mission_finished = false
+	mission_interlude_pending = false
 	overlay.visible = false
 	status_message = "Select a unit card, then choose a deployment lane."
 	if campaign_battle:
@@ -3756,9 +3983,18 @@ func _on_result_primary() -> void:
 		current_encounter_index += 1
 		_start_new_match()
 	elif mission_finished:
-		_show_main_menu()
+		_leave_completed_mission("menu")
 	else:
 		_start_new_match()
+
+func _leave_completed_mission(return_action: String) -> void:
+	overlay.visible = false
+	result_continue_button.visible = false
+	if mission_interlude_pending:
+		mission_interlude_pending = false
+		_show_interlude(current_mission_id, return_action)
+	else:
+		_complete_interlude_return(return_action)
 
 func _continue_campaign() -> void:
 	var next_mission_id := current_mission_id + 1
@@ -3769,10 +4005,8 @@ func _continue_campaign() -> void:
 		or not CampaignStoreScript.is_available(next_mission_id, completed_missions)
 	):
 		return
-	overlay.visible = false
-	result_continue_button.visible = false
 	mission_finished = false
-	_open_mission_select()
+	_leave_completed_mission("mission_select")
 
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:
@@ -3812,6 +4046,10 @@ func _check_game_over() -> bool:
 				result_primary_button.text = "CONTINUE MISSION"
 				_refresh()
 				return true
+			mission_interlude_pending = (
+				current_mission_id not in completed_missions
+				and StoryDialogueCatalogScript.has_interlude(current_mission_id)
+			)
 			completed_missions = CampaignStoreScript.complete_mission(current_mission_id, completed_missions)
 			MissionRunStoreScript.clear_run()
 			mission_finished = true

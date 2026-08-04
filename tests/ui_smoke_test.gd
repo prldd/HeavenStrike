@@ -24,6 +24,9 @@ func _run() -> void:
 	assert(game.main_menu_overlay.get_child(0).texture != null)
 	assert(game.squad_overlay.get_child(0) is TextureRect)
 	assert(game.squad_overlay.get_child(0).texture != null)
+	assert(game.dialogue_overlay.get_child(0) is TextureRect)
+	assert(game.dialogue_overlay.get_child(0).texture != null)
+	assert(not game.dialogue_overlay.visible)
 	assert(game.speed_button.text == "SPEED 1×")
 	assert(game.audio_button.text == "SOUND 100%")
 	assert(game.animation_button.text == "ANIM ON")
@@ -382,13 +385,35 @@ func _run() -> void:
 	game.current_mission_id = 0
 	game.completed_missions = [0]
 	game.mission_finished = true
+	game.mission_interlude_pending = true
 	game.recent_reward_name = "Chain Initiate"
 	game.overlay.visible = true
 	game.squad_overlay.visible = false
 	game._continue_campaign()
 	assert(not game.overlay.visible)
+	assert(game.dialogue_overlay.visible)
+	assert(not game.mission_overlay.visible)
+	assert(game.dialogue_scene_title.text == "A Useful Kind of Impossible")
+	assert(game.dialogue_speaker_label.text == "Cassian")
+	assert(game.dialogue_progress_label.text == "1  /  4")
+	game._advance_interlude()
+	assert(game.dialogue_speaker_label.text == "Conductor")
+	game._finish_interlude()
+	assert(not game.dialogue_overlay.visible)
 	assert(game.mission_overlay.visible)
 	assert(not game.squad_overlay.visible)
+	await process_frame
+	var view_scene_button: Button = null
+	for candidate in game.mission_list.find_children("*", "Button", true, false):
+		if candidate.text == "VIEW SCENE":
+			view_scene_button = candidate
+			break
+	assert(view_scene_button != null)
+	view_scene_button.pressed.emit()
+	assert(game.dialogue_overlay.visible)
+	assert(not game.mission_overlay.visible)
+	game._finish_interlude()
+	assert(game.mission_overlay.visible)
 	await process_frame
 	var next_mission_button: Button = null
 	for candidate in game.mission_list.find_children("*", "Button", true, false):

@@ -9,6 +9,7 @@ const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -637,6 +638,21 @@ func _init() -> void:
 	assert(CampaignStoreScript.MISSIONS[76].act_mission == 15)
 	assert(CampaignStoreScript.MISSIONS[62].chapter == "The Outer City")
 	assert(CampaignStoreScript.MISSIONS[77 - 1].chapter == "The Source")
+	assert(StoryDialogueCatalogScript.INTERLUDES.size() == 46)
+	var opening_interlude := StoryDialogueCatalogScript.scene_for_mission(0)
+	assert(opening_interlude.title == "A Useful Kind of Impossible")
+	assert(opening_interlude.lines.size() >= 4)
+	assert(StoryDialogueCatalogScript.scene_for_mission(1).is_empty())
+	assert(StoryDialogueCatalogScript.scene_for_mission(76).lines.size() == 6)
+	for mission_number in StoryDialogueCatalogScript.INTERLUDES:
+		var interlude: Dictionary = StoryDialogueCatalogScript.INTERLUDES[mission_number]
+		assert(mission_number >= 1 and mission_number <= CampaignStoreScript.MISSIONS.size())
+		assert(not interlude.get("title", "").is_empty())
+		assert(not interlude.get("location", "").is_empty())
+		assert(interlude.get("lines", []).size() >= 4)
+		for dialogue_line in interlude.lines:
+			assert(not dialogue_line.get("speaker", "").is_empty())
+			assert(not dialogue_line.get("text", "").is_empty())
 	assert("The Rook" in CampaignStoreScript.MISSIONS[62].reward_pool)
 	assert("Sterling Knight" in CampaignStoreScript.MISSIONS[62].reward_pool)
 	assert("Shining Inti" in CampaignStoreScript.MISSIONS[76].reward_pool)
