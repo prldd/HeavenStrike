@@ -1100,11 +1100,13 @@ func _refresh_mission_intel() -> void:
 	if mission.get("chapter", "") != "":
 		chapter_label = " · %s" % String(mission.chapter).to_upper()
 	mission_intel_label.text = (
-		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CAPTAIN: %s"
+		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CAPTAIN: %s\nOPPONENT: %s · %s"
 		% [
 			mission.act, mission.act_mission, chapter_label,
 			mission.short_title.to_upper(),
-			encounter.enemy_hp, encounter.skill.to_upper()
+			encounter.enemy_hp, encounter.skill.to_upper(),
+			String(encounter.opponent_name).to_upper(),
+			String(encounter.opponent_affiliation).to_upper()
 		]
 	)
 	mission_intel_stats_label.text = _enemy_squad_summary(encounter.enemy_squad)
@@ -2238,6 +2240,12 @@ func _load_replay_at_index() -> void:
 	player_shield = 0
 	enemy_shield = 0
 	status_message = "Replay ready."
+	var metadata: Dictionary = replay_data.get("metadata", {})
+	var replay_encounter := CampaignStoreScript.encounter(
+		int(metadata.get("mission_id", -1)),
+		int(metadata.get("encounter_index", 0))
+	)
+	_set_board_opponent(replay_encounter)
 	var events: Array = replay_data.get("events", [])
 	for event in events:
 		if event.get("type", "") == "battle_started":
@@ -2816,6 +2824,7 @@ func _start_new_match() -> void:
 		), battle_simulator.rng
 	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
+	_set_board_opponent(encounter)
 	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(
 		current_mission_id, current_encounter_index, roster
 	)
@@ -2957,6 +2966,12 @@ func _refresh() -> void:
 		targetable_rows
 	)
 	_rebuild_hand()
+
+func _set_board_opponent(encounter: Dictionary) -> void:
+	board.set_opponent_identity(
+		encounter.get("opponent_name", ""),
+		encounter.get("opponent_affiliation", "")
+	)
 
 func _rebuild_hand() -> void:
 	for child in hand_row.get_children():

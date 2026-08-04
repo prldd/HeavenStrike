@@ -187,7 +187,7 @@ const MISSION_STORIES := {
 	5: {
 		"chapter": "The Aftermath",
 		"briefing": "Cassian's contract challenge brings salvage assessor Adele Voss to the sealed relay site. When looters breach the perimeter during her inspection, protect her crew and keep the recovered machines out of the raiders' hands.",
-		"debriefing": "Adele saw you conduct the machines, and her report says so plainly. The patrons dislike its conclusions, which only makes officials across all five factions more eager to read it."
+		"debriefing": "Adele's crew and the recovered machines survive the raid. Her independent assessment remains open, and the patrons' attempts to contain its findings only draw attention from officials across all five factions."
 	},
 	6: {
 		"chapter": "The Aftermath",
@@ -197,7 +197,7 @@ const MISSION_STORIES := {
 	7: {
 		"chapter": "The Aftermath",
 		"briefing": "A stranger claims the relay activation was deliberate and warns that its architects will come for their property. Moments later, armed crews close on your position. Fight your way clear.",
-		"debriefing": "The stranger disappears after leaving coordinates hidden in the Relay's dead communication channel. The attackers knew the site's security routines and came prepared to find you alive; before you can decode the coordinates, their sponsors make a legal move for the salvage."
+		"debriefing": "The attackers knew the site's security routines and came prepared to take you alive. Their capture fails, but within hours their sponsors make a legal move for the salvage instead."
 	},
 	8: {
 		"chapter": "The Aftermath",
@@ -207,13 +207,13 @@ const MISSION_STORIES := {
 	9: {
 		"chapter": "The Aftermath",
 		"briefing": "Raiders are following the convoy that carries the reclaimed machines to their new depot. Guard the transports and keep the route open.",
-		"debriefing": "The convoy reaches the depot intact. Cassian uses your victory to secure passage rights from the same clans suspected of the attack, but operating the new base legally requires the one thing you do not yet have: a Conductor registration."
+		"debriefing": "The convoy reaches the depot intact. The new base is defensible, but operating it openly requires the one thing you do not yet have: a Conductor registration."
 	},
 	# Chapter 3 — Claims
 	10: {
 		"chapter": "Claims",
 		"briefing": "To keep the new depot from being seized as unlicensed Relay equipment, Cassian takes you to the regional licensing hall. Registration requires a certified field evaluation, and the examiners have supplied live opposition.",
-		"debriefing": "You leave with a valid registration and a new designation in five government ledgers: strategic asset. Copies of your scores reach the examiners' patrons before you leave the grounds."
+		"debriefing": "You leave with a valid registration. Before you are clear of the grounds, the Joint Investigative Office cites the evaluation in an evidence order authorizing seizure of the depot and its machines."
 	},
 	11: {
 		"chapter": "Claims",
@@ -233,7 +233,7 @@ const MISSION_STORIES := {
 	14: {
 		"chapter": "Claims",
 		"briefing": "Adele's informant can identify the contractors behind the supply ambush, but his handlers are watching the safehouse district. Cover her extraction team and bring him out before they relocate him.",
-		"debriefing": "The informant confirms that the ambush was staged, but his testimony cannot be used in court. Before the team can leave Adele's safehouse, a township distress call reports that an old transit bridge is failing beneath an evacuation column."
+		"debriefing": "Adele gets the informant out alive and scatters the handlers watching the safehouse. The contractor trail is finally within reach, though turning it into a case will be harder than winning the extraction."
 	},
 	# Chapter 4 — The Proving
 	15: {
@@ -264,7 +264,7 @@ const MISSION_STORIES := {
 	20: {
 		"chapter": "The Proving",
 		"briefing": "Families displaced from the township have made camp beside the depot. Someone is using the crowded camp as cover to reach your stockpiles, so protect both the refugees and the supplies.",
-		"debriefing": "The refugees choose to remain near the depot, turning a temporary camp into a small neighborhood. Once Cassian's charter gives them enough legal standing to manage without the squad, Adele finishes decoding the coordinates the Stranger left in the Relay."
+		"debriefing": "The refugees choose to remain near the depot, turning a temporary camp into a small neighborhood. With water restored and winter supplies secured, the settlement can stand without the squad."
 	},
 	# Chapter 5 — Sanctuary
 	21: {
@@ -275,7 +275,7 @@ const MISSION_STORIES := {
 	22: {
 		"chapter": "Sanctuary",
 		"briefing": "Ancient custodial machines still guard the sanctuary's inner vault. Disable them without destroying the archive, then reach the records they protect.",
-		"debriefing": "The maintenance logs continue for centuries after the Empire supposedly fell. An unredacted manifest names Caelis, but its route codes are incomplete; Archivist Serin must compare them with Order collections on the far side of a border no government currently patrols."
+		"debriefing": "The archive is secured intact. Its maintenance logs and transport ledgers can now be copied, but reconstructing their incomplete routes will require the Order's cross-border collection."
 	},
 	# Chapter 6 — The Arena
 	23: {
@@ -317,7 +317,7 @@ const MISSION_STORIES := {
 	30: {
 		"chapter": "Fault Lines",
 		"briefing": "Using contacts opened by the Circuit victory, Adele locates the border camp that paid the raiders who attacked the depot. Escort her there and recover proof of who funded the contract.",
-		"debriefing": "The recovered pay chits carry no signatures, but the contracting house used a guild seal Adele recognizes from her former employer. Before she can approach the guild, a Wind city invokes the new charter for help with a Caelian war engine waking beneath its streets."
+		"debriefing": "The contracting house's pay chits and seal records are secured. Before the trail can be followed into the guild, a Wind city invokes the new charter for help with a Caelian war engine waking beneath its streets."
 	},
 	31: {
 		"chapter": "Fault Lines",
@@ -353,7 +353,7 @@ const MISSION_STORIES := {
 	37: {
 		"chapter": "Heroes and Costs",
 		"briefing": "Cassian's repair inspection brings the squad back to the township saved from feral automatons. The residents turn the visit into a public welcome, where an elderly caretaker recognizes one of your oldest machines just before trouble reaches the square.",
-		"debriefing": "The caretaker remembers the machine's first Conductor, dead for sixty years. During the celebration, a messenger arrives from a nearby commune whose residents are about to be removed from their failing territory by force."
+		"debriefing": "The festival square is secured, and the elderly caretaker asks for a private word about the machine she recognized. Before the celebration resumes, a nearby commune sends an urgent messenger."
 	},
 	38: {
 		"chapter": "Heroes and Costs",
@@ -373,12 +373,12 @@ const MISSION_STORIES := {
 	41: {
 		"chapter": "Heroes and Costs",
 		"briefing": "Following Serin's urgent message, meet her convoy outside the Sanctuary and escort her decoded transport records past the groups trying to seize them.",
-		"debriefing": "The records show that all five founding factions erased Caelis from their maps. When Serin restores the missing route on a Caelian chart, its dormant transit frequency activates and broadcasts new meeting coordinates signed by the Stranger."
+		"debriefing": "Serin and the decoded records reach coalition headquarters intact. Protected copies are secured before the groups pursuing her can erase or alter the transport history."
 	},
 	42: {
 		"chapter": "Heroes and Costs",
 		"briefing": "The Stranger's new coordinates lead to an abandoned relay station, where they offer proof that your activation was arranged through patrons inside the coalition. Protect the meeting and secure the evidence before those patrons' agents arrive.",
-		"debriefing": "The evidence names people who welcomed you at their tables after the accident. Cassian cannot expose them while they can hire the scavenger clans as an army, so he asks Garrett to arrange neutrality talks before the coalition makes its accusation."
+		"debriefing": "The Stranger and the evidence escape the relay station. The attackers fail to bury the patron chain, leaving the coalition with proof of an internal conspiracy—and an immediate security crisis."
 	},
 	43: {
 		"chapter": "Heroes and Costs",
@@ -388,13 +388,13 @@ const MISSION_STORIES := {
 	44: {
 		"chapter": "Heroes and Costs",
 		"briefing": "With Garrett's ledgers authenticating the contractor pay chits, Adele can finally confront her former guild. Escort her into the guildhall and keep her safe when its officers refuse to answer.",
-		"debriefing": "The guild produces authorizations that push responsibility higher, then Adele resigns in public. Among the disclosed papers are shipping manifests proving that all five factions are quietly moving Source cores into weapons programs."
+		"debriefing": "The guild is forced to produce authorizations that push responsibility higher. Among the disclosed papers are shipping manifests proving that all five factions are quietly moving Source cores into weapons programs."
 	},
 	# Chapter 9 — Cores
 	45: {
 		"chapter": "Cores",
 		"briefing": "The guild manifests reveal five secret Source-core weapons programs and identify one core being moved with inadequate security. Intercept that shipment before any faction can deploy it.",
-		"debriefing": "The core is secure, but possession makes the coalition a military power in its own right. By keeping the weapon from everyone else, you have also given every faction a reason to come for you."
+		"debriefing": "The shipment is intercepted and the Source core secured before it can enter a weapons program. Within hours, all five factions issue competing demands for its custody."
 	},
 	46: {
 		"chapter": "Cores",
@@ -414,7 +414,7 @@ const MISSION_STORIES := {
 	49: {
 		"chapter": "Cores",
 		"briefing": "Three factions detected the transit line's activation and are converging on the town above its next junction. Hold an evacuation corridor, get the civilians clear, and withdraw before the armies collide.",
-		"debriefing": "The town is empty before the three armies collide, but the wider battle marks the beginning of open war. Cassian makes sure the official record distinguishes the ground you surrendered from the lives you saved."
+		"debriefing": "The evacuation is complete before the three armies collide. The town is lost, but its people are clear as the wider battle marks the beginning of open war."
 	},
 	50: {
 		"chapter": "Cores",
@@ -424,33 +424,33 @@ const MISSION_STORIES := {
 	51: {
 		"chapter": "Cores",
 		"briefing": "After the machines refuse pursuit during the joint patrol, take them to a controlled field deployment. Learn which commands they reject and whether the truce can rely on a squad that chooses its own purpose.",
-		"debriefing": "The machines still defend people and hold their ground, but will not destroy simply because they are told. Their refusal alarms the truce's three signatories, whose emergency negotiation collapses into a staged show of force."
+		"debriefing": "The controlled deployment ends without casualties, but its results alarm all three truce signatories. Their emergency negotiation collapses into a staged show of force."
 	},
 	52: {
 		"chapter": "Cores",
 		"briefing": "The three truce partners have answered the machines' refusal with a negotiation that is becoming a staged battle. Cassian needs you to yield the disputed ground without humiliating any delegation, so control the fight and withdraw on his signal.",
-		"debriefing": "Your withdrawal preserves the talks, but the staged battle's Source draw propagates far beyond the field. Lights fail across the district as dormant machines wake in sequence—and only afterward do you realize Cassian committed your squad without asking."
+		"debriefing": "Your withdrawal preserves the talks, but the staged battle's Source draw propagates far beyond the field. Lights fail across the district as dormant machines wake in sequence."
 	},
 	# Chapter 10 — Breaking Point
 	53: {
 		"chapter": "Breaking Point",
 		"briefing": "The power surge from the staged negotiation has spread into Source fragments across the district, causing blackouts and waking dormant machines. Follow the grid crews outward and protect them while they contain the cascade.",
-		"debriefing": "Order scholars confirm that no faction initiated the synchronization; the Source network is responding to the war as though it has become aware of the strain. The blackout also disables a nearby detention center holding registered Conductors, and security forces mobilize to seal it."
+		"debriefing": "Repair crews contain the first cascade, but the blackout disables a nearby detention center holding registered Conductors. Security forces mobilize to restore its locks before the life-support system fails."
 	},
 	54: {
 		"chapter": "Breaking Point",
 		"briefing": "The Source blackout has opened a detention center for registered Conductors. Reach it before security forces restore the locks, and bring the detainees out before the failing life-support system or the arriving troops kill them.",
-		"debriefing": "The Conductors reach the coalition clinic alive, where Nara asks whether the law considers them assets, prisoners, or people. Before Cassian can answer with a legal status, hardliners brand the rescue an attack on state property and launch an offensive across three fronts."
+		"debriefing": "The detained Conductors reach the coalition clinic alive. Hardliners brand the rescue an attack on state property and use it to launch an offensive across three fronts."
 	},
 	55: {
 		"chapter": "Breaking Point",
 		"briefing": "The detention-center rescue has become the hardliners' excuse for a full offensive across three fronts. The coalition has no other force able to intercept each breakthrough, so keep moving for as long as the Relay can bear the strain.",
-		"debriefing": "The fronts hold, but medical staff refuse to clear you for another deployment. Unable to break the coalition in battle, the offensive's sponsors switch targets and begin hunting its delegates one by one."
+		"debriefing": "The fronts hold at severe cost. Unable to break the coalition in battle, the offensive's sponsors switch targets and begin hunting its delegates one by one."
 	},
 	56: {
 		"chapter": "Breaking Point",
 		"briefing": "After the three-front offensive stalls, its sponsors send assassins after coalition delegates instead. Use Cassian's warnings to move the surviving representatives to a secure chamber and eliminate the teams tracking them.",
-		"debriefing": "The delegates survive because Cassian's hidden network identifies the assassins. Rather than scatter again, the survivors invoke emergency procedure and call a public tribunal to decide who can legitimately govern the Source."
+		"debriefing": "The delegates reach the secure chamber and the assassins are eliminated. Rather than scatter again, the survivors invoke emergency procedure and call a public tribunal to decide who can legitimately govern the Source."
 	},
 	57: {
 		"chapter": "Breaking Point",
@@ -460,7 +460,7 @@ const MISSION_STORIES := {
 	58: {
 		"chapter": "Breaking Point",
 		"briefing": "Following Serin's proposal at the tribunal, the coalition travels to the western entrance of the Caelian conduits. A royalist guard controls the gates under an ancient charter and demands a formal trial before granting passage.",
-		"debriefing": "The gatekeepers accept the result and admit the coalition as the first authority in two centuries to honor their procedure. Their charter bears the seal of Caelis and has never legally expired."
+		"debriefing": "The gatekeepers accept the result and open the western conduit entrance. As the coalition enters, ranging fire from long-range batteries begins walking toward the buried route."
 	},
 	59: {
 		"chapter": "Breaking Point",
@@ -475,7 +475,7 @@ const MISSION_STORIES := {
 	61: {
 		"chapter": "Breaking Point",
 		"briefing": "With Minerva's team holding the junction, follow Serin's completed map down the only maintained route beyond the known network. Secure the passage and reach the source of the live signal at its far terminus.",
-		"debriefing": "The signal belongs to the Stranger, who identifies herself as Warden Ilyra of Caelis and provides the route to the hidden city's gate. Her transmission has been intercepted, however, and five faction armies are already racing you there."
+		"debriefing": "The maintained passage is secured and its unknown signal source is waiting at the far terminus. Intercepted military traffic shows five faction armies converging on the same route."
 	},
 	62: {
 		"chapter": "Breaking Point",
@@ -507,34 +507,34 @@ const MISSION_STORIES := {
 	67: {
 		"chapter": "The Imperial Archive",
 		"briefing": "The central archive index leads to five founding galleries, one for each modern faction. Rival claimants have breached them to destroy evidence that weakens their own histories; reach the rooms before the collection is lost.",
-		"debriefing": "Each faction preserved one real strength of the old system but mistook its fragment for the whole. When the five records are aligned, their missing sections form a cipher pointing to the archive's deepest sealed vault."
+		"debriefing": "The five founding galleries are secured before the claimants can destroy their records. Aligning the recovered sections reveals a cipher pointing to the archive's deepest sealed vault."
 	},
 	68: {
 		"chapter": "The Imperial Archive",
 		"briefing": "The combined founding records reveal both the location and cipher of the archive's deepest vault. Its guardians were designed to resist Conductors, so reach the evidence that caused the Empire to fragment the Source without releasing it beyond the vault.",
-		"debriefing": "The sealed record explains the original crisis and why its full details could still destabilize every faction. It also cross-references living witnesses in the Conductor Vault; Cassian postpones his questions until you can hear what the old Conductors remember."
+		"debriefing": "The deep record is recovered and resealed without escaping the vault. Its guardian network is left dormant and the archive remains intact."
 	},
 	# Chapter 13 — The Conductor Vault
 	69: {
 		"chapter": "The Conductor Vault",
 		"briefing": "The sealed record identifies living witnesses in a nearby Conductor Vault who can explain the human cost behind the Empire's decision. Travel to the hospice and pass its guardians' assessment to speak with them.",
-		"debriefing": "Inside the hospice, the first Conductors explain that their role was to share purpose, not command. They also reveal that the Wardens maintained dormant Relay programs after the Empire withdrew and insist the council answer why yours was activated."
+		"debriefing": "The hospice guardians stand down and admit the delegation. Beyond them, the surviving First Conductors receive you in the Relay ward."
 	},
 	70: {
 		"chapter": "The Conductor Vault",
-		"briefing": "The first Conductors reveal that the Wardens maintained dormant Relay programs and direct you to demand answers from their council. There, the Wardens admit your activation was a continuity test just as hired intermediaries arrive to destroy its records.",
-		"debriefing": "The accident that changed your life was an experiment you never agreed to join. The Wardens accept responsibility, then argue that your survival proves Caelis finally has a viable successor and summon you to the Crown Relay."
+		"briefing": "The First Conductors direct the delegation to the Warden council for answers about your activation. Before the council can testify, hired intermediaries breach its protected chamber to destroy the surviving records.",
+		"debriefing": "The erasure team is stopped and the council records survive. With concealment no longer possible, the Wardens agree to give formal testimony."
 	},
 	71: {
 		"chapter": "The Conductor Vault",
-		"briefing": "Because the continuity test proved a new Conductor can survive, the Warden council summons you to the Crown Relay and offers succession over the Vault and eventually the Source. When you refuse, its honor guard moves to detain you.",
-		"debriefing": "You escape the Crown Relay after rejecting solitary rule. Unable to install a successor, the Wardens agree to bring their claim into the open and petition Cassian's coalition for stewardship through negotiation instead."
+		"briefing": "The Warden council summons you to the Crown Relay and insists the new Conductor remain in Caelis as successor to the Vault. When you refuse, its honor guard seals the exits.",
+		"debriefing": "You break the containment and keep the coalition delegation intact. Despite the confrontation, the Crown Relay and its guardians remain unharmed."
 	},
 	# Chapter 14 — The Civic Core
 	72: {
 		"chapter": "The Civic Core",
-		"briefing": "Unable to install you as a solitary successor, Caelis changes course and formally petitions Cassian's coalition for stewardship of the Source. The delegations gather at the Civic Core, where armed hardliners are trying to seize the council chambers first.",
-		"debriefing": "The petition remains unresolved, but the disagreement has moved from power grids to a negotiating table. Keeping the chamber secure gives debate a chance to replace open warfare."
+		"briefing": "After its succession offer fails, Caelis requests a public hearing on the future stewardship of the Source. The delegations gather at the Civic Core, where armed hardliners are trying to seize the council chambers first.",
+		"debriefing": "The Civic Core is secured. Under coalition guard, the surviving delegations resume the negotiations the hardliners tried to end."
 	},
 	73: {
 		"chapter": "The Civic Core",
@@ -544,7 +544,7 @@ const MISSION_STORIES := {
 	74: {
 		"chapter": "The Civic Core",
 		"briefing": "Cassian is drafting the Accord while every proposed signatory presses for a final concession. Some have sent troops to strengthen their demands, so keep them away from the negotiating hall.",
-		"debriefing": "The completed draft rests on shared laws rather than any hero's authority. Its final condition is practical: every signatory must send repair crews into the Source complex and prove the network can be restored under shared control."
+		"debriefing": "The pressure forces are repelled. With outside coercion broken, Cassian seals the completed Accord draft for signatory review."
 	},
 	# Chapter 15 — The Source
 	75: {
@@ -555,7 +555,7 @@ const MISSION_STORIES := {
 	76: {
 		"chapter": "The Source",
 		"briefing": "The Accord is nearly complete, but fighting has reached the Source complex. Hold the field with champions from every faction and keep all sides alive long enough for their leaders to sign.",
-		"debriefing": "With the armies finally standing together, the Warden who once watched you from the shadows names the conflict in memory of the dead from all five factions: the Resonance War."
+		"debriefing": "The allied line holds, with faction champions fighting together at the Source approach. The surviving rejectionists fall back toward the assembly as their leaders finish the Accord."
 	},
 	77: {
 		"chapter": "The Source",
@@ -582,6 +582,89 @@ const CAMPAIGN_EPILOGUE := (
 # Authored eight-card decks, indexed by mission. Multi-battle missions keep
 # their mission's identity while Captain HP and skill change per encounter.
 # These are deliberately explicit: reward pools do not silently alter enemies.
+const MISSION_OPPONENTS := [
+	# Act 1 · Reclamation
+	["Perimeter Test Team", "Reclamation Expedition"], # 1
+	["Relay Drill Team", "Reclamation Expedition"], # 2
+	["Awakened Custodian", "Caelian Site Security"], # 3
+	["Gallery Firebreak", "Caelian Site Security"], # 4
+	["Looters' Foreman", "Unaffiliated Raiders"], # 5
+	["Exhibition Saboteur", "Unknown Sponsor"], # 6
+	["Retrieval Commander", "Unknown Sponsor"], # 7
+	["Consortium Enforcer", "Scavenger Consortium"], # 8
+	["Raider Convoy Chief", "Scavenger Clans"], # 9
+	["Licensing Examiner", "Conductor Registry"], # 10
+	["Evidence Detail Captain", "Joint Investigative Office"], # 11
+	["Contract Ambush Leader", "Deniable Contractors"], # 12
+	["Safety Inspector-General", "Three-Faction Commission"], # 13
+	["Informant's Handler", "Deniable Contractors"], # 14
+	["Bridge Defense Core", "Caelian Transit Security"], # 15
+	["Guild Champion", "Sponsor House"], # 16
+	["Inquiry Hall Agitator", "Unaffiliated Partisans"], # 17
+	["Relay Evaluator", "Conductor Registry"], # 18
+	["Feral Patrol Core", "Unaffiliated Automata"], # 19
+	["Camp Infiltrator", "Unaffiliated Raiders"], # 20
+	["Sanctuary Gate Scholar", "Order Archivists"], # 21
+	["Archive Custodian", "Caelian Sanctuary Defense"], # 22
+	# Act 2 · The Crisis
+	["Border Interdiction Chief", "Unaffiliated Border Militia"], # 23
+	["Exhibition Marshal", "Five-Faction Circuit"], # 24
+	["Opening-Heat Champion", "Grand Circuit"], # 25
+	["The Crowd Favorite", "Grand Circuit"], # 26
+	["Quarter-Final Champion", "Grand Circuit"], # 27
+	["Semi-Final Champion", "Grand Circuit"], # 28
+	["Minerva", "Grand Circuit Champion"], # 29
+	["Contractor Paymaster", "Deniable Contractors"], # 30
+	["Awakened War Engine", "Caelian War Machine"], # 31
+	["Summit Bomber", "Unknown Hardliners"], # 32
+	["Fragment Defense Swarm", "Source Network Automata"], # 33
+	["Retaliation Commander", "Border Hardliners"], # 34
+	["Route Blockade Chief", "Border Militia"], # 35
+	["Broadcast Hall Attacker", "Unaffiliated Extremists"], # 36
+	["Festival Saboteur", "Unaffiliated Raiders"], # 37
+	["Relocation Commander", "State Relocation Authority"], # 38
+	["Pass Ambush Leader", "Deniable Raiders"], # 39
+	["Salvage Recovery Chief", "Unaffiliated Salvagers"], # 40
+	["Record-Seizure Captain", "Competing Claimants"], # 41
+	["Patron Retrieval Agent", "Coalition Insiders"], # 42
+	["Clan Trialmaster", "Scavenger Clans"], # 43
+	["Guildhall Factor", "Contractors' Guild"], # 44
+	["Core Convoy Commander", "Five-Faction Arms Program"], # 45
+	["Unity Day Cell Leader", "Unaffiliated Extremists"], # 46
+	["Coup Field Marshal", "Faction Hardliners"], # 47
+	["Coup Rearguard", "Hardliner Coup"], # 48
+	["Junction Battle Commander", "Three-Faction Armies"], # 49
+	["Truce-Line Holdout", "Faction Hardliners"], # 50
+	["Coalition Test Captain", "Reclamation Coalition"], # 51
+	["Negotiation Provocateur", "Three-Party Delegation"], # 52
+	["Synchronized Defense Core", "Source Fragment Network"], # 53
+	["Detention Warden", "Conductor Registry"], # 54
+	["Offensive Field Command", "Hardliner Alliance"], # 55
+	["Assassin Cell Leader", "Hardliner Alliance"], # 56
+	["Tribunal Disruptor", "Rival Claimants"], # 57
+	["Royalist Gatekeeper", "Caelian Royalist Guard"], # 58
+	["Battery Commander", "Faction Siege Corps"], # 59
+	["Conduit Route Commander", "Faction Siege Corps"], # 60
+	["Terminus Custodian", "Caelian Transit Security"], # 61
+	["Gate Vanguard", "Five-Faction Armies"], # 62
+	# Act 3 · Caelis
+	["Warden Examiner", "Wardens of Caelis"], # 63
+	["Outer City Caretaker", "Caelian Civic Automata"], # 64
+	["Stewardship Examiner", "Wardens of Caelis"], # 65
+	["Archive Custodian", "Imperial Archive"], # 66
+	["Record-Burner Captain", "Faction Claimants"], # 67
+	["Deep Vault Guardian", "Imperial Archive"], # 68
+	["Hospice Assessor", "Conductor Vault Guardians"], # 69
+	["Evidence Erasure Agent", "Hired Intermediaries"], # 70
+	["Crown Relay Honor Guard", "Wardens of Caelis"], # 71
+	["Civic Core Seizure Leader", "Caelian Restorationists"], # 72
+	["Extremist Coalition Captain", "Restorationists & Hardliners"], # 73
+	["Negotiation Hall Coercer", "Faction Pressure Forces"], # 74
+	["Distribution Defense Core", "The Source"], # 75
+	["Rejectionist Field Marshal", "Accord Rejectionists"], # 76
+	["Last Rejectionist", "Accord Rejectionists"] # 77
+]
+
 const MISSION_ENEMY_SQUADS := [
 	# Act 1
 	["Trinity Rusher", "Trinity Potshot", "Trinity Basher", "Chain Initiate", "Pub Bouncer", "LDF Peacekeeper", "Rage Spellslinger", "Socialite Fencer"],
@@ -682,12 +765,19 @@ static func build_missions() -> Array:
 		var act := 1 if index < 22 else (2 if index < 62 else 3)
 		var act_mission := index + 1 if act == 1 else (index - 21 if act == 2 else index - 61)
 		var story: Dictionary = MISSION_STORIES.get(index + 1, {})
+		var opponent: Array = (
+			MISSION_OPPONENTS[index]
+			if index < MISSION_OPPONENTS.size()
+			else ["Unknown Opposition", "Unaffiliated"]
+		)
 		for battle_index in battle_count:
 			var hp := maxi(8, enemy_hp - (battle_count - battle_index - 1) * 2)
 			encounters.append({
 				"title": short_title if battle_index == battle_count - 1 else "%s · Approach %d" % [short_title, battle_index + 1],
 				"enemy_hp": hp,
 				"skill": SKILLS[(index + battle_index) % SKILLS.size()],
+				"opponent_name": opponent[0],
+				"opponent_affiliation": opponent[1],
 				"enemy_squad": _enemy_squad_for(index)
 			})
 		missions.append({
@@ -700,6 +790,8 @@ static func build_missions() -> Array:
 			"briefing": story.get("briefing", _mission_briefing(index, short_title)),
 			"debriefing": story.get("debriefing", _mission_debriefing(index, short_title)),
 			"enemy_hp": enemy_hp,
+			"opponent_name": opponent[0],
+			"opponent_affiliation": opponent[1],
 			"encounters": encounters,
 			"reward_pool": reward_pool
 		})

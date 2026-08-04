@@ -638,6 +638,15 @@ func _init() -> void:
 	assert(CampaignStoreScript.MISSIONS[76].act_mission == 15)
 	assert(CampaignStoreScript.MISSIONS[62].chapter == "The Outer City")
 	assert(CampaignStoreScript.MISSIONS[77 - 1].chapter == "The Source")
+	for mission in CampaignStoreScript.MISSIONS:
+		assert(not mission.get("opponent_name", "").is_empty())
+		assert(not mission.get("opponent_affiliation", "").is_empty())
+		for encounter in mission.encounters:
+			assert(encounter.opponent_name == mission.opponent_name)
+			assert(encounter.opponent_affiliation == mission.opponent_affiliation)
+	assert(CampaignStoreScript.MISSIONS[8].opponent_affiliation == "Scavenger Clans")
+	assert(CampaignStoreScript.MISSIONS[28].opponent_name == "Minerva")
+	assert(CampaignStoreScript.MISSIONS[76].opponent_affiliation == "Accord Rejectionists")
 	assert(StoryDialogueCatalogScript.INTERLUDES.size() == 46)
 	var opening_interlude := StoryDialogueCatalogScript.scene_for_mission(0)
 	assert(opening_interlude.title == "A Useful Kind of Impossible")

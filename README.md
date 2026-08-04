@@ -75,6 +75,8 @@ assets required by the prototype.
   context-aware deployment, movement, and Captain-skill AI
 - Mission-specific briefings and debriefings, Act completion tracking, active
   run status, and pre-battle enemy squad/Captain intelligence
+- Story-specific opponent names and affiliations carried from prebattle intel
+  onto the enemy side of every campaign battlefield
 - 46 first-completion character interludes with a reusable speaker-driven
   dialogue presentation and operations-map replay, spanning the campaign's
   major cast introductions and reveals

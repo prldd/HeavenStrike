@@ -38,6 +38,8 @@ var player_hp_text := ""
 var enemy_hp_text := ""
 var player_deck_text := ""
 var enemy_deck_text := ""
+var opponent_name := ""
+var opponent_affiliation := ""
 var enabled := true
 var practice_mode := false
 var hover_row := -1
@@ -88,6 +90,11 @@ func set_practice_mode(enabled_flag: bool) -> void:
 	if practice_mode == enabled_flag:
 		return
 	practice_mode = enabled_flag
+	queue_redraw()
+
+func set_opponent_identity(name: String, affiliation: String) -> void:
+	opponent_name = name
+	opponent_affiliation = affiliation
 	queue_redraw()
 
 func set_state(
@@ -441,6 +448,7 @@ func _draw() -> void:
 		12,
 		Color("#f4e6c7")
 	)
+	_draw_opponent_identity()
 
 	var preview_id: int = (
 		-1 if not targetable_unit_ids.is_empty() or not targetable_rows.is_empty()
@@ -530,6 +538,38 @@ func _draw() -> void:
 			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
 				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
 				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)
+
+func _draw_opponent_identity() -> void:
+	if opponent_name.is_empty():
+		return
+	var plaque_width := minf(270.0, size.x * 0.25)
+	var plaque := Rect2(
+		Vector2(size.x - plaque_width - 14.0, 5.0),
+		Vector2(plaque_width, 31.0)
+	)
+	draw_style_box(
+		_box(Color(0.055, 0.045, 0.055, 0.82), Color(0.93, 0.36, 0.52, 0.72), 6, 1),
+		plaque
+	)
+	var font := get_theme_default_font()
+	draw_string(
+		font,
+		plaque.position + Vector2(10, 14),
+		opponent_name.to_upper(),
+		HORIZONTAL_ALIGNMENT_RIGHT,
+		plaque.size.x - 20,
+		12,
+		Color("#ffd6df")
+	)
+	draw_string(
+		font,
+		plaque.position + Vector2(10, 26),
+		opponent_affiliation.to_upper(),
+		HORIZONTAL_ALIGNMENT_RIGHT,
+		plaque.size.x - 20,
+		9,
+		Color("#c8a9b5")
+	)
 
 func _draw_targetable(unit: Dictionary) -> void:
 	var rect := _cell_rect(unit.row, unit.col).grow(-4)

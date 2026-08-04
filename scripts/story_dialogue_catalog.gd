@@ -176,7 +176,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "Can a charter stop rain?"},
 			{"speaker": "Cassian", "text": "No. It can make stealing the roof more expensive."},
 			{"speaker": "Adele Voss", "text": "Then finish it tonight. I decoded the Stranger's coordinates, and they point to an Order sanctuary beyond the eastern border."},
-			{"speaker": "Conductor", "text": "If the settlement can stand without us, we leave at dawn."}
+			{"speaker": "Conductor", "text": "Then we leave at dawn."}
 		]
 	},
 	22: {
@@ -187,8 +187,7 @@ const INTERLUDES := {
 			{"speaker": "Adele Voss", "text": "Cargo?"},
 			{"speaker": "Archivist Serin", "text": "People. Records. Conductor equipment. All routed to Caelis."},
 			{"speaker": "Conductor", "text": "Caelis was destroyed."},
-			{"speaker": "Cassian", "text": "No. Caelis was removed from the story."},
-			{"speaker": "Archivist Serin", "text": "The route code is incomplete. My Order keeps the matching ledgers across the border; get my scholars there, and I can reconstruct it."}
+			{"speaker": "Cassian", "text": "No. Caelis was removed from the story."}
 		]
 	},
 	24: {
@@ -199,7 +198,7 @@ const INTERLUDES := {
 			{"speaker": "Adele Voss", "text": "An auction is flattering if nobody tells the lot what the paddles mean."},
 			{"speaker": "Cassian", "text": "Let them bid. Competing claims are the nearest thing we have to independence."},
 			{"speaker": "Conductor", "text": "You enjoy this."},
-			{"speaker": "Cassian", "text": "I enjoy watching powerful people discover they are not alone in the room. Next we enter the Grand Circuit and win a seat none of them can revoke."}
+			{"speaker": "Cassian", "text": "I enjoy watching powerful people discover they are not alone in the room."}
 		]
 	},
 	29: {
@@ -209,7 +208,7 @@ const INTERLUDES := {
 			{"speaker": "Minerva", "text": "You fight like a mechanic. Every motion repairs the position left by the one before it."},
 			{"speaker": "Conductor", "text": "You say that like an insult."},
 			{"speaker": "Minerva", "text": "I lost. It would be a poor one."},
-			{"speaker": "Cassian", "text": "The charter now has a recognized seat at the faction talks."},
+			{"speaker": "Cassian", "text": "Listen to them applaud. Every patron still believes your title can be made to owe them."},
 			{"speaker": "Minerva", "text": "Then sit carefully. The arena is more honest than the table."}
 		]
 	},
@@ -326,7 +325,7 @@ const INTERLUDES := {
 		"title": "The Ground We Surrendered",
 		"location": "Evacuated Township · Western Ridge",
 		"lines": [
-			{"speaker": "Minerva", "text": "Three armies hold the town. None noticed it was empty until they arrived."},
+			{"speaker": "Minerva", "text": "By sunset, each army will claim we abandoned the town to the other two."},
 			{"speaker": "Conductor", "text": "They can keep the streets."},
 			{"speaker": "Cassian", "text": "I will make certain the record distinguishes ground surrendered from lives saved."},
 			{"speaker": "Minerva", "text": "Records will not stop the next army."},
@@ -508,8 +507,8 @@ const INTERLUDES := {
 		"title": "Succession",
 		"location": "Conductor Vault · Crown Relay",
 		"lines": [
-			{"speaker": "Warden Ilyra", "text": "Accept the Vault and Caelis will recognize you as successor. In time, the Source will answer to you."},
-			{"speaker": "Conductor", "text": "That is the problem."},
+			{"speaker": "Warden Ilyra", "text": "The honor guard has withdrawn. The offer remains: accept the Vault, and Caelis will recognize you as successor."},
+			{"speaker": "Conductor", "text": "My answer remains no."},
 			{"speaker": "Cassian", "text": "One good ruler is still a system waiting for one bad heir."},
 			{"speaker": "Conductor", "text": "Open the doors. Let the world help carry what it uses."},
 			{"speaker": "Warden Ilyra", "text": "Then Caelis will petition the coalition in the morning. If we cannot name a successor, we will argue for stewardship in the open."}
@@ -561,7 +560,7 @@ const INTERLUDES := {
 		"title": "What Outlives Us",
 		"location": "Caelis · Accord Hall at Dawn",
 		"lines": [
-			{"speaker": "Cassian", "text": "The Accord is signed. Shared courts, shared inspections, rotating stewardship. Remarkably dull work."},
+			{"speaker": "Cassian", "text": "Remarkably quiet, for the end of a war."},
 			{"speaker": "Adele Voss", "text": "You have been smiling at the filing clauses for ten minutes."},
 			{"speaker": "Warden Ilyra", "text": "The Source is reconnecting. It recognizes no single master."},
 			{"speaker": "The Rook", "text": "Formation expanded. Purpose shared."},
