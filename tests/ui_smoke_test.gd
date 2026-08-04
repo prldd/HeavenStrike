@@ -30,6 +30,11 @@ func _run() -> void:
 	assert(game.motion_button.text == "MOTION FULL")
 	assert(game.audio_button.get_parent().get_parent() == game.settings_panel)
 	assert(game.speed_button.get_parent().get_parent() == game.settings_panel)
+	assert(not game.has_method("_open_tutorial"))
+	for action in game.main_menu_overlay.find_children("*", "Button", true, false):
+		assert(action.text != "HOW TO PLAY")
+	for action in game.settings_panel.find_children("*", "Button", true, false):
+		assert(action.text != "HOW TO PLAY")
 	assert(not game.settings_panel.visible)
 	game._toggle_settings()
 	assert(game.settings_panel.visible)
@@ -133,6 +138,31 @@ func _run() -> void:
 	var summon_unit: Dictionary = game._spawn_unit(summon_card, 0, 2, 0)
 	assert(summon_unit.quiet_triggers_left == 0)
 	game.units.clear()
+	# A Scout that defeats the final blocking unit with its first Double Strike
+	# spends the remaining strike on the newly exposed enemy Conductor.
+	game.skip_animations = true
+	var scout_card: Dictionary = UnitCatalogScript.by_name("Trinity Rusher").to_dict()
+	var scout: Dictionary = game._spawn_unit(scout_card, 0, 0, 5)
+	scout.atk = 2
+	scout.move = 0
+	scout.range = 1
+	scout.skill = {}
+	var blocker_card: Dictionary = UnitCatalogScript.by_name("Pub Bouncer").to_dict()
+	var blocker: Dictionary = game._spawn_unit(blocker_card, 1, 0, 6)
+	blocker.hp = 1
+	blocker.max_hp = 1
+	blocker.skill = {}
+	game.enemy_hp = 20
+	game.battle_simulator.events.clear()
+	game._refresh()
+	await game._activate_unit(scout)
+	assert(game._unit_by_id(blocker.id) == null)
+	assert(game.enemy_hp == 18)
+	assert(game.battle_simulator.events.filter(
+		func(event): return event.type == "commander_attack"
+	).size() == 1)
+	game.units.clear()
+	game.skip_animations = false
 	game._open_mission_select()
 	# The mission list builds progressively over several frames on open.
 	# 77 mission rows plus 15 chapter header labels.

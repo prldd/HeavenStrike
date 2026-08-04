@@ -43,9 +43,6 @@ var reward_portrait: TextureRect
 var reward_stars_label: Label
 var reward_new_label: Label
 var result_continue_button: Button
-var tutorial_overlay: ColorRect
-var tutorial_page_label: Label
-var tutorial_page := 0
 var squad_overlay: ColorRect
 var squad_grid: GridContainer
 var squad_selection_grid: GridContainer
@@ -129,7 +126,6 @@ var mission_finished := false
 var campaign_battle := false
 var squad_opened_from_menu := false
 var squad_opened_for_mission := false
-var tutorial_opened_from_menu := false
 var pending_mission_id := -1
 var recent_reward_name := ""
 
@@ -164,7 +160,6 @@ var enemy_shield_turns := 0
 var input_enabled := true
 var battle_over := false
 var status_message := ""
-var has_shown_tutorial := false
 var resolution_speed := 1.0
 var combat_log_lines: Array = []
 var last_logged_message := ""
@@ -341,7 +336,6 @@ func _build_interface() -> void:
 	_build_combat_log()
 	_build_settings_menu()
 	_build_overlay()
-	_build_tutorial()
 	_build_squad_builder()
 	_build_main_menu()
 	_build_mission_select()
@@ -363,7 +357,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		and not mission_overlay.visible
 		and not crucible_overlay.visible
 		and not squad_overlay.visible
-		and not tutorial_overlay.visible
 		and not overlay.visible
 	):
 		get_viewport().set_input_as_handled()
@@ -376,7 +369,7 @@ func _build_settings_menu() -> void:
 	settings_panel.offset_left = -238
 	settings_panel.offset_right = -18
 	settings_panel.offset_top = 64
-	settings_panel.offset_bottom = 326
+	settings_panel.offset_bottom = 280
 	settings_panel.z_index = 90
 	settings_panel.visible = false
 	add_child(settings_panel)
@@ -407,9 +400,6 @@ func _build_settings_menu() -> void:
 	var log_button := _settings_action("COMBAT LOG", "Show or hide the combat action log.")
 	log_button.pressed.connect(_open_combat_log_from_settings)
 	layout.add_child(log_button)
-	var help_button := _settings_action("HOW TO PLAY", "Open the field briefing.")
-	help_button.pressed.connect(_open_tutorial_from_settings)
-	layout.add_child(help_button)
 
 func _settings_action(label: String, tooltip: String) -> Button:
 	var button := Button.new()
@@ -424,10 +414,6 @@ func _toggle_settings() -> void:
 func _open_combat_log_from_settings() -> void:
 	settings_panel.visible = false
 	_toggle_combat_log()
-
-func _open_tutorial_from_settings() -> void:
-	settings_panel.visible = false
-	_open_tutorial()
 
 func _build_combat_log() -> void:
 	combat_log_panel = PanelContainer.new()
@@ -655,97 +641,6 @@ func _build_overlay() -> void:
 	result_menu_button.visible = false
 	result_menu_button.pressed.connect(_show_main_menu)
 	result_actions.add_child(result_menu_button)
-
-func _build_tutorial() -> void:
-	tutorial_overlay = ColorRect.new()
-	tutorial_overlay.color = Color.TRANSPARENT
-	tutorial_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tutorial_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	tutorial_overlay.visible = false
-	add_child(tutorial_overlay)
-	_add_overlay_background(
-		tutorial_overlay,
-		MAIN_MENU_BACKGROUND,
-		Color(0.035, 0.025, 0.02, 0.72)
-	)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tutorial_overlay.add_child(center)
-
-	var plaque := PanelContainer.new()
-	plaque.custom_minimum_size = Vector2(610, 380)
-	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
-	center.add_child(plaque)
-	var panel := VBoxContainer.new()
-	panel.custom_minimum_size = Vector2(550, 320)
-	panel.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_theme_constant_override("separation", 22)
-	plaque.add_child(panel)
-
-	var title := Label.new()
-	title.text = "TACTICAL DOCTRINE"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", UIThemeScript.title_color())
-	panel.add_child(title)
-
-	tutorial_page_label = Label.new()
-	tutorial_page_label.custom_minimum_size = Vector2(520, 150)
-	tutorial_page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tutorial_page_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	tutorial_page_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tutorial_page_label.add_theme_font_size_override("font_size", 18)
-	tutorial_page_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	panel.add_child(tutorial_page_label)
-
-	var actions := HBoxContainer.new()
-	actions.alignment = BoxContainer.ALIGNMENT_CENTER
-	actions.add_theme_constant_override("separation", 12)
-	panel.add_child(actions)
-
-	var close := Button.new()
-	close.text = "SKIP"
-	close.custom_minimum_size = Vector2(120, 44)
-	close.pressed.connect(_close_tutorial)
-	actions.add_child(close)
-
-	var next := Button.new()
-	next.text = "NEXT"
-	next.custom_minimum_size = Vector2(160, 44)
-	next.pressed.connect(_next_tutorial_page)
-	actions.add_child(next)
-
-func _open_tutorial() -> void:
-	tutorial_page = 0
-	end_button.visible = false
-	tutorial_overlay.visible = true
-	_update_tutorial()
-
-func _close_tutorial() -> void:
-	tutorial_overlay.visible = false
-	if tutorial_opened_from_menu:
-		tutorial_opened_from_menu = false
-		_show_main_menu()
-	else:
-		end_button.visible = not replay_mode and not battle_over
-
-func _next_tutorial_page() -> void:
-	tutorial_page += 1
-	if tutorial_page >= 5:
-		_close_tutorial()
-		return
-	_update_tutorial()
-
-func _update_tutorial() -> void:
-	var pages := [
-		"1 / 5\nASSEMBLE YOUR OPTIONS\nUnit cards show Mana cost, role, attack, health, and tactical ability.",
-		"2 / 5\nCOMMIT TO A LANE\nDeploy on an open tile at your edge. Preview the route, then account for movement before the attack.",
-		"3 / 5\nREFORM THE LINE\nReposition deployed units between open rows. Allies may be crossed, enemies obstruct the route, and you may reposition any number of times.",
-		"4 / 5\nCONTROL THEIR MOVEMENT\nTaunt and Immobilise deny enemy lane changes, letting you isolate threats and protect weak positions.",
-		"5 / 5\nBREAK THEIR COMMAND\nControl the lanes, create an opening, and project enough force through it to defeat the enemy Captain."
-	]
-	tutorial_page_label.text = pages[tutorial_page]
 
 func _build_squad_builder() -> void:
 	squad_overlay = ColorRect.new()
@@ -1398,10 +1293,6 @@ func _build_main_menu() -> void:
 	var crucible := _menu_action("KINETIC CRUCIBLE")
 	crucible.pressed.connect(_open_kinetic_crucible)
 	layout.add_child(crucible)
-
-	var tutorial := _menu_action("HOW TO PLAY")
-	tutorial.pressed.connect(_open_tutorial_from_menu)
-	layout.add_child(tutorial)
 
 func _build_replay_controls() -> void:
 	replay_panel = PanelContainer.new()
@@ -2069,13 +1960,11 @@ func _show_main_menu() -> void:
 	input_enabled = false
 	squad_opened_from_menu = false
 	squad_opened_for_mission = false
-	tutorial_opened_from_menu = false
 	pending_mission_id = -1
 	main_menu_overlay.visible = true
 	mission_overlay.visible = false
 	crucible_overlay.visible = false
 	squad_overlay.visible = false
-	tutorial_overlay.visible = false
 	overlay.visible = false
 	hover_card.visible = false
 	combat_log_panel.visible = false
@@ -2469,7 +2358,6 @@ func _begin_practice() -> void:
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
 	_start_new_match()
-	_show_tutorial_once()
 
 func _begin_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):
@@ -2485,7 +2373,6 @@ func _begin_mission(mission_id: int) -> void:
 	_start_new_match()
 	status_message = CampaignStoreScript.MISSIONS[mission_id].briefing
 	_refresh()
-	_show_tutorial_once()
 
 func _resume_mission() -> void:
 	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
@@ -2504,17 +2391,6 @@ func _resume_mission() -> void:
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
 	_start_new_match()
-	_show_tutorial_once()
-
-func _show_tutorial_once() -> void:
-	if not has_shown_tutorial:
-		has_shown_tutorial = true
-		_open_tutorial()
-
-func _open_tutorial_from_menu() -> void:
-	main_menu_overlay.visible = false
-	tutorial_opened_from_menu = true
-	_open_tutorial()
 
 func _open_squad_from_menu() -> void:
 	main_menu_overlay.visible = false
@@ -3463,6 +3339,10 @@ func _activate_unit(actor: Dictionary) -> void:
 			if target == null or target.hp <= 0:
 				target = _find_target(actor)
 			if target == null:
+				# Double Strike keeps its unused hit after defeating the last unit
+				# between the Scout and the opposing Conductor.
+				if _commander_in_range(actor):
+					await _attack_commander(actor, strikes - hit)
 				break
 			_play_attack_sound(actor.kind)
 			await board.animate_attack(actor.id, target.id, actor.kind, _animation_duration(0.24))
@@ -3630,38 +3510,41 @@ func _activate_unit(actor: Dictionary) -> void:
 
 	if _commander_in_range(actor):
 		var strikes := 2 if actor.kind == "Strider" else 1
-		var commander_side := ENEMY if actor.side == PLAYER else PLAYER
-		var total_dealt := 0
-		for hit in strikes:
-			_play_attack_sound(actor.kind)
-			await board.animate_commander_attack(
-				actor.id, commander_side, actor.kind, _animation_duration(0.25)
-			)
-			var dealt := _damage_captain(commander_side, actor.atk)
-			battle_simulator.record("commander_attack", {
-				"actor_id": actor.id,
-				"side": commander_side,
-				"damage": dealt,
-				"captain_hp": enemy_hp if commander_side == ENEMY else player_hp
-			})
-			total_dealt += dealt
-			status_message = "%s hits %s Commander for %d." % [
-				_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", dealt
-			]
-			_refresh()
-			battle_audio.play("commander")
-			board.shake(8.0)
-			board.play_commander_effect(commander_side, "-%d HP" % dealt, Color("#ff668f"))
-			if hit + 1 < strikes:
-				await _wait(0.12)
-		status_message = "%s strikes %s Commander for %d!" % [
-			_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", total_dealt
-		]
+		await _attack_commander(actor, strikes)
 		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
 			actor.atk += 1
 			actor.fury_stacks = actor.get("fury_stacks", 0) + 1
 			status_message += " Fury grants +1 ATK."
 		return
+
+func _attack_commander(actor: Dictionary, strikes: int) -> void:
+	var commander_side := ENEMY if actor.side == PLAYER else PLAYER
+	var total_dealt := 0
+	for hit in strikes:
+		_play_attack_sound(actor.kind)
+		await board.animate_commander_attack(
+			actor.id, commander_side, actor.kind, _animation_duration(0.25)
+		)
+		var dealt := _damage_captain(commander_side, actor.atk)
+		battle_simulator.record("commander_attack", {
+			"actor_id": actor.id,
+			"side": commander_side,
+			"damage": dealt,
+			"captain_hp": enemy_hp if commander_side == ENEMY else player_hp
+		})
+		total_dealt += dealt
+		status_message = "%s hits %s Commander for %d." % [
+			_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", dealt
+		]
+		_refresh()
+		battle_audio.play("commander")
+		board.shake(8.0)
+		board.play_commander_effect(commander_side, "-%d HP" % dealt, Color("#ff668f"))
+		if hit + 1 < strikes:
+			await _wait(0.12)
+	status_message = "%s strikes %s Commander for %d!" % [
+		_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", total_dealt
+	]
 
 func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 	var affected_ids: Array = []

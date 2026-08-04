@@ -832,7 +832,7 @@ Combat presentation uses eased movement and class-specific actions: melee lunges
 
 Battle audio is synthesized locally and synchronized with deployment, movement, class attacks, healing, status application, shields, impacts, and defeat. Players can select full volume, half volume, or mute; Conductor impacts also apply a brief screen shake.
 
-Presentation settings persist across sessions. A settings gear in the upper-right interface contains the shared battle/replay speed, sound, animation-skip, reduced-motion, combat-log, and field-briefing controls. Reduced motion shortens movement and suppresses screen shake. Live battle resolution is intentionally not pausable.
+Presentation settings persist across sessions. A settings gear in the upper-right interface contains the shared battle/replay speed, sound, animation-skip, reduced-motion, and combat-log controls. Reduced motion shortens movement and suppresses screen shake. Live battle resolution is intentionally not pausable.
 
 The main menu exposes the ten most recently completed battles through an event-driven replay viewer. It reconstructs deployments and board movement, animates attacks and defeats, supports play/pause and single-step transport, uses the shared speed setting, displays the original seed and event position, pages between older and newer replays, compares the recorded player and enemy squads, and reports final-state desynchronization. Replay history is newest-first and automatically removes the oldest entry after the tenth. Core unit damage, healing, shield absorption, and Conductor damage calculations live in `BattleSimulator`.
 
@@ -841,7 +841,7 @@ The main menu exposes the ten most recently completed battles through an event-d
 The replay and battle-interface cleanup is in a stable, tested state:
 
 - The battle action bar is reserved for frequently used match actions.
-- Speed, sound, animation, motion, log, and help live in the settings gear.
+- Speed, sound, animation, motion, and log live in the settings gear.
 - Replay mode removes unusable battle controls, including the Conductor ability and Resolve Turn.
 - Replay transport, event progress, seed, and history navigation are distinctly grouped.
 - The latest ten deterministic replays are retained, with legacy latest-replay compatibility.

@@ -28,7 +28,7 @@ assets required by the prototype.
   **Enter**—to resolve the turn and let units move and fight.
 - Open the upper-right **Settings** gear to change 1×/2×/4× resolution
   speed, sound volume, animation skipping, reduced motion, or to open the
-  combat log and field briefing. These settings apply to battles and replays.
+  combat log. These settings apply to battles and replays.
 - Select **Replays** from the main menu to play, pause, or
   single-step a completed battle.
 - Use **Older** and **Newer** beneath the replay seed to page through the ten
@@ -88,7 +88,6 @@ assets required by the prototype.
 - Victory triggers a dedicated ascending multi-note fanfare before the battle result is presented.
 - Each resolution begins with a compact ordered movement/attack preview; the combat log names unit classes and secondary-skill timing.
 - Deterministic rules with a presentation layer separated into `BoardView`
-- Five-step in-game field briefing
 - Animated damage, healing, movement, and buff feedback
 - Lane-aware AI that counters threats and uses support units contextually
 - Unit definitions separated into a reusable catalog
