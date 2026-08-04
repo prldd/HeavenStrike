@@ -2306,9 +2306,21 @@ func _rebuild_mission_list() -> void:
 	mission_list_build_token += 1
 	var build_token := mission_list_build_token
 	var built := 0
+	var last_chapter := ""
 	for mission in CampaignStoreScript.MISSIONS:
 		if build_token != mission_list_build_token or not mission_overlay.visible:
 			return
+		var chapter: String = mission.get("chapter", "")
+		if chapter != "" and chapter != last_chapter:
+			last_chapter = chapter
+			var chapter_header := Label.new()
+			chapter_header.text = "ACT %d · %s" % [mission.act, chapter.to_upper()]
+			chapter_header.add_theme_font_size_override("font_size", 18)
+			chapter_header.add_theme_color_override("font_color", UIThemeScript.title_color())
+			chapter_header.custom_minimum_size.y = 34
+			chapter_header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			chapter_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			mission_list.add_child(chapter_header)
 		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
 		var complete: bool = mission.id in completed_missions
 		var entry := VBoxContainer.new()
@@ -3915,6 +3927,12 @@ func _check_game_over() -> bool:
 			if campaign_battle
 			else "Victory achieved in %d rounds." % round_number
 		)
+		if campaign_battle and current_mission_id == CampaignStoreScript.MISSIONS.size() - 1:
+			overlay_title.text = "ACCORD"
+			overlay_detail.text = "%s\n\n%s" % [
+				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
+				CampaignStoreScript.CAMPAIGN_EPILOGUE
+			]
 		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
 		result_continue_button.visible = (
 			campaign_battle

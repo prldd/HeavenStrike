@@ -640,6 +640,7 @@ func _init() -> void:
 	assert("The Rook" in CampaignStoreScript.MISSIONS[62].reward_pool)
 	assert("Sterling Knight" in CampaignStoreScript.MISSIONS[62].reward_pool)
 	assert("Shining Inti" in CampaignStoreScript.MISSIONS[76].reward_pool)
+	assert(CampaignStoreScript.CAMPAIGN_EPILOGUE.contains("THE RESONANCE WAR"))
 	assert(CampaignStoreScript.encounter_count(3) == 1)
 	assert(CampaignStoreScript.encounter_count(31) == 3)
 	assert(CampaignStoreScript.encounter(31, 2).title == "Peace and Quiet")

@@ -5,6 +5,7 @@ const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const SAVE_PATH := "user://campaign.cfg"
 const SAVE_VERSION := 1
+const CAMPAIGN_EPILOGUE := StoryQuestCatalogScript.CAMPAIGN_EPILOGUE
 const REWARD_UNITS := [
 	"Chain Initiate", "LDF Medic",
 	"Apprentice Builder", "Rage Brute", "Claw Skirmisher",

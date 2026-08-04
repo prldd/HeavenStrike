@@ -564,6 +564,23 @@ const MISSION_STORIES := {
 	}
 }
 
+# Epilogue shown on completing the final mission (the Accord ending from
+# documentation/Resonance_War_Narrative_Foundation.md).
+const CAMPAIGN_EPILOGUE := (
+	"Cassian's Accord holds. The partial truth is made public; the most "
+	+ "destabilizing evidence returns to its vault, sealed by agreement of "
+	+ "every signatory. The Source passes to a coalition authority — no "
+	+ "faction's, everyone's.\n\n"
+	+ "The war ends. The grids hold. The cities stay lit.\n\n"
+	+ "Cassian is remembered as the architect of the peace. Your name survives "
+	+ "in the record as a technician present at several important events.\n\n"
+	+ "You return to repair work. The machines come with you — older now, set "
+	+ "in their ways, owed more than history will ever know.\n\n"
+	+ "Only afterward do historians, needing a name for what happened, settle "
+	+ "on one:\n\n"
+	+ "THE RESONANCE WAR"
+)
+
 # Authored eight-card decks, indexed by mission. Multi-battle missions keep
 # their mission's identity while Captain HP and skill change per encounter.
 # These are deliberately explicit: reward pools do not silently alter enemies.

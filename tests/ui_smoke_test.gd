@@ -131,15 +131,23 @@ func _run() -> void:
 	game.units.clear()
 	game._open_mission_select()
 	# The mission list builds progressively over several frames on open.
+	# 77 mission rows plus 15 chapter header labels.
 	var wait_frames := 0
-	while game.mission_list.get_child_count() < 77 and wait_frames < 120:
+	while game.mission_list.get_child_count() < 92 and wait_frames < 120:
 		await process_frame
 		wait_frames += 1
-	assert(game.mission_list.get_child_count() == 77)
+	assert(game.mission_list.get_child_count() == 92)
 	assert(game.campaign_progress_label.text.contains("ACT 1"))
 	assert(game.campaign_progress_label.text.contains("ACT 2"))
 	assert(game.campaign_progress_label.text.contains("ACT 3"))
-	var first_entry: VBoxContainer = game.mission_list.get_child(0)
+	var first_header: Label = game.mission_list.get_child(0)
+	assert(first_header.text == "ACT 1 · THE SALVAGE")
+	var chapter_headers := 0
+	for child in game.mission_list.get_children():
+		if child is Label:
+			chapter_headers += 1
+	assert(chapter_headers == 15)
+	var first_entry: VBoxContainer = game.mission_list.get_child(1)
 	assert(first_entry.size_flags_horizontal == Control.SIZE_EXPAND_FILL)
 	assert(first_entry.get_child(1) is HBoxContainer)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
