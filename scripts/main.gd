@@ -650,18 +650,18 @@ func _build_overlay() -> void:
 	result_actions.add_theme_constant_override("separation", 12)
 	panel.add_child(result_actions)
 
+	result_primary_button = Button.new()
+	result_primary_button.text = "PLAY AGAIN"
+	result_primary_button.custom_minimum_size = Vector2(180, 48)
+	result_primary_button.pressed.connect(_on_result_primary)
+	result_actions.add_child(result_primary_button)
+
 	result_continue_button = Button.new()
 	result_continue_button.text = "CONTINUE CAMPAIGN"
 	result_continue_button.custom_minimum_size = Vector2(210, 48)
 	result_continue_button.visible = false
 	result_continue_button.pressed.connect(_continue_campaign)
 	result_actions.add_child(result_continue_button)
-
-	result_primary_button = Button.new()
-	result_primary_button.text = "PLAY AGAIN"
-	result_primary_button.custom_minimum_size = Vector2(180, 48)
-	result_primary_button.pressed.connect(_on_result_primary)
-	result_actions.add_child(result_primary_button)
 
 	result_menu_button = Button.new()
 	result_menu_button.text = "MENU"
@@ -4033,6 +4033,26 @@ func _continue_campaign() -> void:
 	mission_finished = false
 	_leave_completed_mission("continue_campaign")
 
+func _emphasize_result_action(primary_action: Button) -> void:
+	for action in [result_primary_button, result_continue_button, result_menu_button]:
+		for style_name in ["normal", "hover", "pressed"]:
+			action.remove_theme_stylebox_override(style_name)
+		for color_name in ["font_color", "font_hover_color", "font_pressed_color"]:
+			action.remove_theme_color_override(color_name)
+	primary_action.add_theme_stylebox_override(
+		"normal", UIThemeScript.card_style(UIThemeScript.BRASS, 0.44, 1.0, 4)
+	)
+	primary_action.add_theme_stylebox_override(
+		"hover", UIThemeScript.card_style(UIThemeScript.BRASS_LIGHT, 0.58, 1.0, 6)
+	)
+	primary_action.add_theme_stylebox_override(
+		"pressed", UIThemeScript.card_style(UIThemeScript.BRASS_DARK, 0.52, 1.0, 2)
+	)
+	primary_action.add_theme_color_override("font_color", Color.WHITE)
+	primary_action.add_theme_color_override("font_hover_color", Color.WHITE)
+	primary_action.add_theme_color_override("font_pressed_color", UIThemeScript.PARCHMENT_LIGHT)
+	primary_action.grab_focus()
+
 func _check_game_over() -> bool:
 	if player_hp > 0 and enemy_hp > 0:
 		return false
@@ -4069,6 +4089,7 @@ func _check_game_over() -> bool:
 					player_hp, current_encounter_index + 2, encounter_count, next_encounter.title
 				]
 				result_primary_button.text = "CONTINUE MISSION"
+				_emphasize_result_action(result_primary_button)
 				_refresh()
 				return true
 			mission_interlude_pending = (
@@ -4113,6 +4134,9 @@ func _check_game_over() -> bool:
 			and current_mission_id + 1 < CampaignStoreScript.MISSIONS.size()
 		)
 		result_menu_button.visible = not campaign_battle
+		_emphasize_result_action(
+			result_continue_button if result_continue_button.visible else result_primary_button
+		)
 	else:
 		if campaign_battle:
 			MissionRunStoreScript.clear_run()
@@ -4120,6 +4144,7 @@ func _check_game_over() -> bool:
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
 		overlay_detail.text = "Your skyway has fallen.\nRebuild your formation and try again."
 		result_primary_button.text = "RETRY BATTLE"
+		_emphasize_result_action(result_primary_button)
 	_refresh()
 	return true
 
