@@ -625,11 +625,21 @@ func _init() -> void:
 	assert(CampaignStoreScript.SAVE_VERSION == 1)
 	assert(SquadStoreScript.SAVE_VERSION == 2)
 
-	assert(CampaignStoreScript.MISSIONS.size() == 62)
+	assert(CampaignStoreScript.MISSIONS.size() == 77)
 	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - Training Day")
 	assert(CampaignStoreScript.MISSIONS[61].title == "Act 2 Mission 62 - The Showdown")
+	assert(CampaignStoreScript.MISSIONS[76].title == "Act 3 Mission 77 - Accord")
 	assert(CampaignStoreScript.MISSIONS[0].enemy_hp == 8)
 	assert(CampaignStoreScript.MISSIONS[61].enemy_hp == 20)
+	assert(CampaignStoreScript.MISSIONS[76].enemy_hp == 20)
+	assert(CampaignStoreScript.MISSIONS[62].act == 3)
+	assert(CampaignStoreScript.MISSIONS[62].act_mission == 1)
+	assert(CampaignStoreScript.MISSIONS[76].act_mission == 15)
+	assert(CampaignStoreScript.MISSIONS[62].chapter == "The Outer City")
+	assert(CampaignStoreScript.MISSIONS[77 - 1].chapter == "The Source")
+	assert("The Rook" in CampaignStoreScript.MISSIONS[62].reward_pool)
+	assert("Sterling Knight" in CampaignStoreScript.MISSIONS[62].reward_pool)
+	assert("Shining Inti" in CampaignStoreScript.MISSIONS[76].reward_pool)
 	assert(CampaignStoreScript.encounter_count(3) == 1)
 	assert(CampaignStoreScript.encounter_count(31) == 3)
 	assert(CampaignStoreScript.encounter(31, 2).title == "Peace and Quiet")
@@ -789,7 +799,7 @@ func _init() -> void:
 		var signature := "|".join(configured_squad)
 		assert(signature not in enemy_squad_signatures)
 		enemy_squad_signatures.append(signature)
-	assert(enemy_squad_signatures.size() == 62)
+	assert(enemy_squad_signatures.size() == 77)
 
 	var mover := {"id": 1, "side": 0, "kind": "Duelist", "row": 1, "col": 2, "repositioned": false, "taunt_turns": 0}
 	var distant_warden := {"id": 2, "side": 1, "kind": "Warden", "row": 1, "col": 5, "repositioned": false}

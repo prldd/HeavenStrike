@@ -553,7 +553,7 @@ The contradictions previously flagged between this canon and existing prototype 
 
 - **Conductor is the single term.** The leader each side protects — and its once-per-battle power — is a Conductor, in-fiction and throughout this document (replacing the earlier "Commander"/"Captain" wording). Code and script internals still use the legacy `Commander`/`Captain` naming; renaming internals is a mechanical follow-up with no design impact.
 - **Classes exist in every faction.** All six gameplay classes (Scout, Fighter, Defender, Gunner, Mage, Priest) exist within each of the five energy factions; a faction simply fields some classes more prevalently than others. The player's canon multi-discipline synchronization is expressed through mixed-faction squad building.
-- **Story structure is being reworked.** The implemented 62-mission, two-act campaign described below is current prototype content only. It is being reorganized into the three-act structure above (Reclamation / The Crisis / Caelis). All 62 missions are retained as-is for now: 40 are mapped to the new acts, and the remaining 22 (the arena arc, M25–M28, and the reference Act 2 middle, M33–M50) stay in place unassigned until a later integration pass. Treat the old two-act framing and briefings as placeholder, not canon.
+- **Story structure is implemented.** The campaign is now 77 missions in three acts matching the structure above: Act 1 "Reclamation" (missions 1–22), Act 2 "The Crisis" (missions 23–62), and Act 3 "Caelis" (missions 63–77, original content). Every mission carries authored briefing/debriefing text (`MISSION_STORIES` in `scripts/story_quest_catalog.gd`) written to `documentation/Resonance_War_Campaign_Narrative.md`, which supersedes the old two-act framing. The older reference-mission titles are retained as cast and beat anchors.
 - **Sky premise de-emphasized.** The earlier sky-island backdrop is legacy atmosphere art only, not setting canon; see the Presentation section.
 
 ### Unresolved Story Decisions
@@ -561,12 +561,11 @@ The contradictions previously flagged between this canon and existing prototype 
 These should be addressed before campaign and quest design begins:
 
 1. Which of the Possible Major Revelations are canon, and in what order they surface.
-2. What the player finds in Caelis, and how the late-game Caelis sequence is structured.
-3. Who authorized the relay experiment, which institution they served, and what they actually expected the test to prove.
-4. The formal name and detailed structure of the Accord's new central authority.
-5. Which alternative endings are implemented alongside Accord, how the final choice is expressed mechanically, and how endings are named/numbered (Accord is currently designated "Ending B" with no confirmed Ending A).
-6. Cassian's surname, if one becomes necessary.
-7. Where the 22 retained-but-unassigned missions (M25–M28 arena arc; M33–M50) eventually fit — side operations, merged encounters, or insertion into the three acts — followed by mission-level design and detailed quest writing. All 62 missions remain playable as-is until then.
+2. The formal name and detailed structure of the Accord's new central authority.
+3. Which alternative endings are implemented alongside Accord, how the final choice is expressed mechanically, and how endings are named/numbered (Accord is currently designated "Ending B" with no confirmed Ending A).
+4. Cassian's surname, if one becomes necessary.
+
+Resolved by `documentation/Resonance_War_Campaign_Narrative.md` and the implemented 77-mission campaign: the Caelis late-game sequence (Act 3, missions 63–77), the placement of every reference mission within the three acts, and the relay experiment's authorship (a Caelian continuity test run by the wardens through expendable intermediaries).
 
 ## The Player Experience
 
@@ -765,7 +764,7 @@ Conductor selection changes a squad's strategy without adding another unit to th
 ### First Playable Version
 
 - Tutorial
-- Full 62-mission, two-act story campaign
+- Full 77-mission, three-act story campaign
 - Practice battle against AI
 - Squad-building screen
 - 88 reference units across all six classes

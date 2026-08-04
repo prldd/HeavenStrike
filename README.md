@@ -44,7 +44,7 @@ assets required by the prototype.
 - Three-lane, seven-column battlefield
 - 98 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
-- 62 sequential story missions across two acts with escalating difficulty
+- 77 sequential story missions across three acts with escalating difficulty
 - One-to-three battle encounter sequences with Captain-HP attrition
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Captain information
@@ -68,7 +68,7 @@ assets required by the prototype.
 - Enemy deployment AI
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
-- Sixty-two authored, mission-specific eight-card PvE squads and
+- Seventy-seven authored, mission-specific eight-card PvE squads and
   context-aware deployment, movement, and Captain-skill AI
 - Mission-specific briefings and debriefings, Act completion tracking, active
   run status, and pre-battle enemy squad/Captain intelligence

@@ -60,7 +60,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `captain_skills.gd` | Static resolution of the eight Commander powers and effect expiration. |
 | `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Captain-skill storage. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
-| `story_quest_catalog.gd` | Builds the 62-mission campaign from reference quest data, reward pools, authored enemy decks, and Captain configurations. `MISSION_STORIES` holds authored per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number; uncovered missions get generated placeholder text. |
+| `story_quest_catalog.gd` | Builds the 77-mission campaign from reference quest data, reward pools, authored enemy decks, and Captain configurations. `MISSION_STORIES` holds authored per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number; uncovered missions get generated placeholder text. Missions 1–62 (Acts 1–2) are ported from the reference; missions 63–77 (Act 3, "Caelis") are original content. |
 | `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Captain HP). |
 | `kinetic_crucible.gd` | Per-copy unit progression: levels 1–5, merge point values, donor rules, level-based stat growth (`scaled_stat`), promotion conversion (`record_promotion`), inventory sync, and migration from older name-based saves. |
 | `battle_settings.gd` | Player settings persistence (resolution speed, audio volume, reduced motion, animation skip). |
@@ -107,7 +107,7 @@ APPDATA="$(pwd -W)/.tools/godot-user-win" "/e/Tools/Godot/Godot.exe" --headless 
 
 - `smoke_test.gd` — validates the unit catalog, art files, simulator, replay history, damage/healing, Captain shields, squad store, Kinetic Crucible, and skill data. Extensive `assert()` calls; fails fast on regression.
 - `ui_smoke_test.gd` — instantiates `main.tscn`, probes the UI control tree, toggles settings, checks audio labels, verifies the board view API, and exercises the Kinetic Crucible UI.
-- `balance_simulation.gd` — audits all 62 campaign missions: every configured enemy encounter has a valid squad, positive power, monotonic HP progression, and the difficulty curve stays within the allowed max jump.
+- `balance_simulation.gd` — audits all 77 campaign missions: every configured enemy encounter has a valid squad, positive power, monotonic HP progression, and the difficulty curve stays within the allowed max jump.
 
 There is no separate test runner. Each script is a `SceneTree` that runs in `_init()` and exits with `quit()`.
 

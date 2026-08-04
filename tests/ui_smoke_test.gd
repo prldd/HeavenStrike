@@ -132,12 +132,13 @@ func _run() -> void:
 	game._open_mission_select()
 	# The mission list builds progressively over several frames on open.
 	var wait_frames := 0
-	while game.mission_list.get_child_count() < 62 and wait_frames < 120:
+	while game.mission_list.get_child_count() < 77 and wait_frames < 120:
 		await process_frame
 		wait_frames += 1
-	assert(game.mission_list.get_child_count() == 62)
+	assert(game.mission_list.get_child_count() == 77)
 	assert(game.campaign_progress_label.text.contains("ACT 1"))
 	assert(game.campaign_progress_label.text.contains("ACT 2"))
+	assert(game.campaign_progress_label.text.contains("ACT 3"))
 	var first_entry: VBoxContainer = game.mission_list.get_child(0)
 	assert(first_entry.size_flags_horizontal == Control.SIZE_EXPAND_FILL)
 	assert(first_entry.get_child(1) is HBoxContainer)

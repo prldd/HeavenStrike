@@ -130,7 +130,24 @@ const QUESTS := [
 	["Act 2 Mission 59 - From Afar", ["Chain Initiate", "LDF Peacekeeper", "LDF Medic"]],
 	["Act 2 Mission 60 - Away Game", ["Socialite Fencer", "Pub Bouncer", "Factory Markswoman"]],
 	["Act 2 Mission 61 - The Path", ["Chain Initiate", "LDF Peacekeeper", "LDF Medic"]],
-	["Act 2 Mission 62 - The Showdown", ["LDF Peacekeeper", "Rage Spellslinger"]]
+	["Act 2 Mission 62 - The Showdown", ["LDF Peacekeeper", "Rage Spellslinger"]],
+	# Season Three (Act 3) — original content, not ported from the reference;
+	# reward pools use REWARD_UNITS that previously had no story drops.
+	["Act 3 Mission 63 - The Gate Opens", ["The Rook", "Sterling Knight"]],
+	["Act 3 Mission 64 - Still Running", ["White Mage", "White Wizard"]],
+	["Act 3 Mission 65 - The Wardens' Test", ["Gawain the Just", "Sir Gawain"]],
+	["Act 3 Mission 66 - The True History", ["The Archaeologist", "The Castaway"]],
+	["Act 3 Mission 67 - Five Fragments", ["The Botanist", "The Ecologist", "The Biologist"]],
+	["Act 3 Mission 68 - What Was Sealed", ["Fabulous Bors", "Sir Bors"]],
+	["Act 3 Mission 69 - The First Conductors", ["Oro the Pilgrim", "Oro the Enlightened"]],
+	["Act 3 Mission 70 - The Experiment", ["Van Hohenheim", "The Sorcerer's Stone"]],
+	["Act 3 Mission 71 - Succession", ["Clair", "Awoken Clair"]],
+	["Act 3 Mission 72 - The Petition", ["Cara Pace", "Clawing Cara"]],
+	["Act 3 Mission 73 - Old Habits", ["José", "José Decomposé"]],
+	["Act 3 Mission 74 - The Architect", ["Selina the Stylist", "Selina Twinblade"]],
+	["Act 3 Mission 75 - The Balancing Network", ["Hamish Highlander", "Hamish Lochmaster"]],
+	["Act 3 Mission 76 - The Resonance War", ["Furia Rojo", "Campeon Rojo"]],
+	["Act 3 Mission 77 - Accord", ["Sakura", "Blossom Sakura", "Inti Chihuan", "Shining Inti"]]
 ]
 
 const SKILLS := [
@@ -142,7 +159,8 @@ const SKILLS := [
 # documentation/Resonance_War_Campaign_Narrative.md. Missions without an entry
 # fall back to the generated placeholder text below. Briefings state the
 # practical problem (the player's frame); debriefings state the political
-# consequence (Cassian's frame). Season One covers missions 1-22.
+# consequence (Cassian's frame). Season One covers missions 1-22, Season Two
+# covers missions 23-62.
 const MISSION_STORIES := {
 	# Chapter 1 — The Salvage
 	1: {
@@ -258,6 +276,291 @@ const MISSION_STORIES := {
 		"chapter": "Sanctuary",
 		"briefing": "The sanctuary's inner vault is guarded by custodial routines older than any living nation. Reach the records.",
 		"debriefing": "The maintenance logs run centuries past the Empire's 'fall'. The Empire did not collapse — it dismantled itself. And one unredacted manifest lists a destination: Caelis."
+	},
+	# Chapter 6 — The Arena
+	23: {
+		"chapter": "The Arena",
+		"briefing": "The reclamation charter's first contract: escort Order scholars through contested territory that neither side will police. See them through.",
+		"debriefing": "The scholars arrived intact and the charter survived its first test. Cassian notes which faction looked the other way — and what that courtesy will cost."
+	},
+	24: {
+		"chapter": "The Arena",
+		"briefing": "Every faction wants the Conductor at its exhibition this week. Attend the demonstration circuit, and expect the 'demonstrations' to turn earnest.",
+		"debriefing": "Five offers, all declined by itinerary. Cassian plays the bids against each other while you learn what an auction looks like from inside the lot."
+	},
+	25: {
+		"chapter": "The Arena",
+		"briefing": "The Grand Circuit settles faction disputes by proxy champion, and a seat at the charter talks costs a title. Win your heat. The reigning champion's name is Minerva.",
+		"debriefing": "The crowd has a new favorite and the bookmakers have a new problem. Cassian opens a line of credit in the champions' boxes."
+	},
+	26: {
+		"chapter": "The Arena",
+		"briefing": "The second heat pairs you against a crowd darling. The arena is a legislature with better catering — win the bout and read the boxes while you do.",
+		"debriefing": "Two factions applauded your victory for opposite reasons. Both are wrong about what you want."
+	},
+	27: {
+		"chapter": "The Arena",
+		"briefing": "Quarter finals. Your opponent's patron was offered a fortune for a forfeit this morning; expect the bout to be honest and everything around it not to be.",
+		"debriefing": "You won without touching the bribe. Cassian made sure the right people learned it was offered."
+	},
+	28: {
+		"chapter": "The Arena",
+		"briefing": "Your semi-final opponent has been ordered to throw the match as a 'gift'. Refuse the fix the only way available: win anyway.",
+		"debriefing": "A thrown match would have owned you. An honest win owes no one. Cassian approves; the fixers adjust their estimates."
+	},
+	29: {
+		"chapter": "The Arena",
+		"briefing": "The final. Win the title and the charter takes its seat.",
+		"debriefing": "Champion. Cassian converts the title into formal recognition of the reclamation charter before the confetti settles. The factions now share a problem: the technician will not stay bought."
+	},
+	# Chapter 7 — Fault Lines
+	30: {
+		"chapter": "Fault Lines",
+		"briefing": "Adele has a lead on the border incident: the 'raiders' from the depot days were deniable contractors. Escort her in and bring back proof.",
+		"debriefing": "Pay chits, no signatures — by design. But the contracting house carries a guild seal, and Adele recognizes it. She used to work for them."
+	},
+	31: {
+		"chapter": "Fault Lines",
+		"briefing": "A dormant Caelian war-engine has woken beneath a Wind city. Five factions are blaming each other; the machine is not waiting for a verdict. Disable it.",
+		"debriefing": "The city stands. Each faction claims its doctrine would have prevented the awakening, and each is quietly recalibrating its own buried machines."
+	},
+	32: {
+		"chapter": "Fault Lines",
+		"briefing": "Cassian's ceasefire summit convenes under your security. Someone does not want it to conclude.",
+		"debriefing": "The bomb killed the talks and nearly the delegates. Every faction's hardliners profited; none claimed it. The coalition survives its first funeral."
+	},
+	33: {
+		"chapter": "Fault Lines",
+		"briefing": "Infrastructure is failing in cascade across two territories. Triage the grid and keep the hospitals lit.",
+		"debriefing": "The Source fragments are degrading in sympathy, and the official reports call it weather. You fix what you can reach; Cassian catalogs who prevented the rest."
+	},
+	34: {
+		"chapter": "Fault Lines",
+		"briefing": "Retaliatory strikes are trading across the border, and one is aimed at a civilian district. Intercept it.",
+		"debriefing": "You saved the district and were denounced by both sides for interfering. The civilians, notably, denounced no one."
+	},
+	35: {
+		"chapter": "Fault Lines",
+		"briefing": "One repair crew, two dying grids, no time for both. Choose which district lives through the winter.",
+		"debriefing": "Whichever you saved, the other district's grief now has a flag. There was no right answer; there was only an answer. Cassian made sure it was yours and not his."
+	},
+	36: {
+		"chapter": "Fault Lines",
+		"briefing": "Faction leaders will declare the crisis resolved tonight. Provide security for the announcement — and try not to listen to it.",
+		"debriefing": "The grid is still failing and everyone at the podium knew it. Cassian, quietly: 'Institutions lie to survive. Remember who taught you that.'"
+	},
+	# Chapter 8 — Heroes and Costs
+	37: {
+		"chapter": "Heroes and Costs",
+		"briefing": "The township you saved is throwing a welcome, and an old caretaker claims to know one of your machines. Expect the celebration to attract trouble.",
+		"debriefing": "She knew the machine's first Conductor by name, sixty years dead. It stood at attention for her. You did not order that."
+	},
+	38: {
+		"chapter": "Heroes and Costs",
+		"briefing": "A commune refuses evacuation from degrading territory and will fight the relocation teams. Stand between them and the eviction.",
+		"debriefing": "You protected people from a rescue they never asked for. The coalition's lawyers are still deciding whether that was heroic or criminal. The commune has decided."
+	},
+	39: {
+		"chapter": "Heroes and Costs",
+		"briefing": "A raid on the depot convoy. Get the squad out — all of the squad.",
+		"debriefing": "One of the oldest machines fell covering the retreat. Its echo is still in the link. The squad carries it, and so do you."
+	},
+	40: {
+		"chapter": "Heroes and Costs",
+		"briefing": "No speeches, no politics. The squad goes back for their own. Bring the chassis home.",
+		"debriefing": "Recovered. What was lost cannot be restored — but what remains is yours, and the machines know you came back."
+	},
+	41: {
+		"chapter": "Heroes and Costs",
+		"briefing": "The Sanctuary archivist has decoded the Caelian logistics records and will deliver them only in person. Get her through the interested parties.",
+		"debriefing": "Caelis was not destroyed. It was removed from the maps — deliberately, by everyone, at once. Every faction's founding myth just became a lie of omission."
+	},
+	42: {
+		"chapter": "Heroes and Costs",
+		"briefing": "The Stranger resurfaces with proof that the relay activation was arranged — and the trail runs through the coalition's own patron chain. Protect the handoff.",
+		"debriefing": "Someone you have dined with arranged your accident. Cassian reads the evidence twice and says nothing for a long time."
+	},
+	43: {
+		"chapter": "Heroes and Costs",
+		"briefing": "The scavenger clans are being squeezed into picking a side. They respect one currency. Pay it on the field, then buy their neutrality with the winnings.",
+		"debriefing": "The clans stay neutral, which makes the factions' deniable muscle suddenly expensive. Garrett sends his regards and an itemized invoice."
+	},
+	44: {
+		"chapter": "Heroes and Costs",
+		"briefing": "Adele confronts her old guild over the contractor pay chits. Stand with her in a room where everyone is armed and nothing is admitted.",
+		"debriefing": "The guild factor smiled and produced paperwork older than the war. The trail points up, not back. Adele resigns loudly; Cassian hires her quietly."
+	},
+	# Chapter 9 — Cores
+	45: {
+		"chapter": "Cores",
+		"briefing": "All five factions are quietly weaponizing Source-cores. Seize the unsecured one before it enters play.",
+		"debriefing": "You now hold what every faction wants, which makes you a power — exactly as Cassian warned. The core hums in its vault like a held breath."
+	},
+	46: {
+		"chapter": "Cores",
+		"briefing": "Unity Day. Extremists who want the open war the moderates keep postponing have picked the celebration as their stage. Keep the peace.",
+		"debriefing": "The coalition held — barely, publicly, at cost. The extremists lost the battle and won the argument: everyone is now afraid."
+	},
+	47: {
+		"chapter": "Cores",
+		"briefing": "A hardliner wing has decided to settle the argument by force tonight. Break the coup before it reaches the council chambers.",
+		"debriefing": "The coup is broken. The moderates who quietly approved of it are already at Cassian's table, and he is already seating them."
+	},
+	48: {
+		"chapter": "Cores",
+		"briefing": "The battlefield sits over a buried Caelian transit line — still powered, still maintained. Clear the surface and see where it points.",
+		"debriefing": "It points somewhere no map admits exists. The maintenance is recent. Something down there is still on duty."
+	},
+	49: {
+		"chapter": "Cores",
+		"briefing": "Three factions, one field, no valid target but each other. You cannot win this battle; you can only keep the civilians out of it.",
+		"debriefing": "The war everyone feared has begun. History will record that you lost the field and saved the town. Cassian will make sure of it."
+	},
+	50: {
+		"chapter": "Cores",
+		"briefing": "Cassian stakes the coalition on an unpopular truce. Hold the line beside former enemies while it is signed.",
+		"debriefing": "The truce holds because enemies enforced it together. Garrett the Claw kept his sector quieter than you kept yours, and neither of you mentions it."
+	},
+	51: {
+		"chapter": "Cores",
+		"briefing": "Your oldest machines are declining certain orders — old resonance scars against new purpose. Take the field and learn what they will still fight for.",
+		"debriefing": "They will defend, protect, and stand. They will no longer destroy on command. You must decide what you owe the machines that made you a Conductor."
+	},
+	52: {
+		"chapter": "Cores",
+		"briefing": "A three-way negotiation is collapsing. Lose the brawl gracefully — Cassian needs to save the talks, not your pride.",
+		"debriefing": "You lost on purpose; Cassian won the room. Walking out, you realize he never asked your permission. He no longer needs it."
+	},
+	# Chapter 10 — Breaking Point
+	53: {
+		"chapter": "Breaking Point",
+		"briefing": "Source fragments are synchronizing on their own: blackouts, waking machines, networks re-forming. Hold the district through the cascade.",
+		"debriefing": "The Order confirms it is not an attack. It is a response. Something has noticed the war."
+	},
+	54: {
+		"chapter": "Breaking Point",
+		"briefing": "A detention facility for registered Conductors broke open in the blackouts. Support the rescue crews and keep the freed Conductors alive.",
+		"debriefing": "One of them asked you what they are now — asset, prisoner, or person. You had no answer. Cassian starts drafting one."
+	},
+	55: {
+		"chapter": "Breaking Point",
+		"briefing": "Full-scale offensive on three fronts. Run interceptions at maximum strain.",
+		"debriefing": "The medics have stopped clearing you for the field. You went anyway. The machines have started positioning themselves between you and the fighting."
+	},
+	56: {
+		"chapter": "Breaking Point",
+		"briefing": "Coalition delegates are being assassinated one by one. Protect the survivors.",
+		"debriefing": "The survivors live because Cassian's information network found the killers first. It is larger than he ever told you. He shows you all of it, unasked."
+	},
+	57: {
+		"chapter": "Breaking Point",
+		"briefing": "A public tribunal convenes to answer the only question that matters: who should govern the Source? Keep the chamber alive through every answer.",
+		"debriefing": "Violence interrupted every proposal, from every direction. There is no correct side. That was the point of asking."
+	},
+	58: {
+		"chapter": "Breaking Point",
+		"briefing": "The fighting reaches the old western districts, built directly over Caelian conduits. A royalist remnant guards the gates below by a charter no one remembers. Negotiate passage their way.",
+		"debriefing": "The gatekeepers stood aside for the first authority to ask correctly in two hundred years. Their charter is Caelian. It is still valid."
+	},
+	59: {
+		"chapter": "Breaking Point",
+		"briefing": "Long-range batteries are targeting the conduit network itself. Silence the guns.",
+		"debriefing": "Every side will rebuild them, and everyone knows it. Tonight the network survives. Repair versus control, at artillery scale."
+	},
+	60: {
+		"chapter": "Breaking Point",
+		"briefing": "Minerva leads a joint strike team of former arena rivals — the coalition, armed at last. Fight beside people who tried to buy, beat, and bury you.",
+		"debriefing": "She fights the way she lost: honestly. Cassian's coalition has an army now, whatever he calls it."
+	},
+	61: {
+		"chapter": "Breaking Point",
+		"briefing": "The conduits converge on a single navigable route. Secure it — and meet whoever has been waiting at its end.",
+		"debriefing": "The Stranger steps out of the shadows with a title: Warden of Caelis, sent to bring the accidental Conductor home. It is an invitation. It is also a summons."
+	},
+	62: {
+		"chapter": "Breaking Point",
+		"briefing": "Every faction army reaches the gate of Caelis in the same hour. Keep the war from following you inside.",
+		"debriefing": "Cassian arrives with a coalition, not an army. The gates open for the first time in living memory. What waits inside has been waiting a very long time."
+	},
+	# Chapter 11 — The Outer City
+	63: {
+		"chapter": "The Outer City",
+		"briefing": "Caelis sets its entry terms through its wardens: maintenance automatons and hereditary Conductors still executing a thousand-year-old disaster protocol. Submit to inspection.",
+		"debriefing": "The wardens inspect you like a malfunction — an unregistered Conductor commanding unsanctioned machines. They let you in anyway. Curiosity, it seems, is also a protocol."
+	},
+	64: {
+		"chapter": "The Outer City",
+		"briefing": "The Outer City is immaculate and empty, maintained for citizens who never came back. Its caretakers object to your presence the only way they know.",
+		"debriefing": "A civilization kept running by machines out of habit and hope. Your oldest units walk slower here. They recognize the grief."
+	},
+	65: {
+		"chapter": "The Outer City",
+		"briefing": "The wardens will not permit an unsanctioned Conductor deeper into the city. Earn passage the Caelian way: prove that conducting is stewardship, not command.",
+		"debriefing": "You fought to protect, not to take, and the wardens logged it. The inner gates unlock. Somewhere below, something ancient notes your approach."
+	},
+	# Chapter 12 — The Imperial Archive
+	66: {
+		"chapter": "The Imperial Archive",
+		"briefing": "The Imperial Archive holds the unedited record. Its custodial security protects the truth from everyone alike — including you.",
+		"debriefing": "The Source crisis, the vote to fragment, the burning of the histories. The Empire's last act was a verdict: no single power could be trusted with the whole again."
+	},
+	67: {
+		"chapter": "The Imperial Archive",
+		"briefing": "Five reading rooms, five founding myths, each annotated by Caelian archivists. Rival claimants have followed you in, and they want the rooms burned.",
+		"debriefing": "Coal's discipline, Steam's industry, Solar's faith, Wind's freedom, Fusion's ambition — each preserved exactly one virtue of the old system and lost the rest. The archive's judgment is kinder than yours."
+	},
+	68: {
+		"chapter": "The Imperial Archive",
+		"briefing": "The deepest vault holds what the fragmentation was meant to contain. Its guardians were built to fight Conductors.",
+		"debriefing": "You know now what the crisis was, and why the most destabilizing evidence must stay sealed. Cassian reads your face and asks no questions. He will ask later."
+	},
+	# Chapter 13 — The Conductor Vault
+	69: {
+		"chapter": "The Conductor Vault",
+		"briefing": "The Conductor Vault is not a prison but a hospice: the Empire's first Conductors, and the truth of what the Relay costs. Its keepers will decide whether you may enter.",
+		"debriefing": "Your medical future walks and talks here, and is gracious about it. The first Conductors did not command machines. They kept them company."
+	},
+	70: {
+		"chapter": "The Conductor Vault",
+		"briefing": "The wardens confess: your relay activation was a Caelian continuity test, arranged through expendable intermediaries. Some of those intermediaries are here, and they are armed.",
+		"debriefing": "Your accident was an exam you never applied for, paid for by patrons who never knew their client. The Stranger's debt and Cassian's leverage come due in the same hour."
+	},
+	71: {
+		"chapter": "The Conductor Vault",
+		"briefing": "The wardens offer you the Vault's purpose: succeed them as warden of the system. Their honor guard will test whether refusal is even possible.",
+		"debriefing": "A genuine offer, honestly meant — and the wrong answer. The world does not need another warden. It needs the system to stop needing one."
+	},
+	# Chapter 14 — The Civic Core
+	72: {
+		"chapter": "The Civic Core",
+		"briefing": "Caelis petitions to resume stewardship of the Source. Cassian's coalition arrives to answer, and the hardliners answer first. Hold the chambers.",
+		"debriefing": "The ideological war is finally the right shape: argued in chambers, not fought over grids. Your job is to keep it that shape a little longer."
+	},
+	73: {
+		"chapter": "The Civic Core",
+		"briefing": "Caelian restorationists and faction maximalists make common cause to collapse the talks. Protect a negotiation you are not invited to lead.",
+		"debriefing": "The talks survive because the extremes overplayed their hand. You are learning to watch a room the way Cassian watches a ledger."
+	},
+	74: {
+		"chapter": "The Civic Core",
+		"briefing": "Cassian drafts the Accord. Every signatory wants one more concession, and some send soldiers to negotiate. Buy him the quiet he needs.",
+		"debriefing": "Your name is nowhere in the document, and that is the document's greatest strength. Cassian's work no longer needs your battles. It needed this one."
+	},
+	# Chapter 15 — The Source
+	75: {
+		"chapter": "The Source",
+		"briefing": "The Source itself: not a generator but a balancing network, waking as its fragments converge. Its defenses cannot tell steward from claimant.",
+		"debriefing": "Alone, any fragment is a weapon or a bomb. Together, governed, it is a civilization. The machine has been waiting centuries for someone to understand that."
+	},
+	76: {
+		"chapter": "The Source",
+		"briefing": "The last battle: not for control of the Source, but to keep everyone alive long enough to sign. Every faction's best stands on this field — on every side.",
+		"debriefing": "The warden who once watched you from shadows gives the conflict its name, honoring the dead of all five armies: the Resonance War."
+	},
+	77: {
+		"chapter": "The Source",
+		"briefing": "The Accord is ready to sign, and the last rejectionists have come to stop it. End the war the way it began: defending a room full of people.",
+		"debriefing": "Partial truth made public, the sealed evidence re-sealed, the Source placed under coalition authority. History will remember the architect of the peace. Your machines will remember the technician."
 	}
 }
 
@@ -328,7 +631,24 @@ const MISSION_ENEMY_SQUADS := [
 	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Sureshot", "LDF Riot Mage", "Fortune Diviner", "Order Chaplain", "Master Builder"],
 	["Socialite Fencer", "Pub Bouncer", "Factory Markswoman", "Street Hoodlum", "Fortune Teller", "LDF Riot Mage", "Rage Bruiser", "Claw Ambusher"],
 	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Order Scholar", "Order Chaplain", "Order Missionary", "Minerva the Lionheart", "Farsight Naruku"],
-	["LDF Peacekeeper", "Rage Spellslinger", "Master Builder", "Rage Bruiser", "LDF Sureshot", "Order Missionary", "Trinity Herald", "Minerva the Lionheart"]
+	["LDF Peacekeeper", "Rage Spellslinger", "Master Builder", "Rage Bruiser", "LDF Sureshot", "Order Missionary", "Trinity Herald", "Minerva the Lionheart"],
+	# Act 3 — the wardens and defenses of Caelis, escalating into the coalition
+	# of every faction's best for the finale.
+	["The Rook", "Geartron Prototype", "Master Builder", "Order Chaplain", "White Mage", "Bunnybot Bethany", "LDF Greatsword", "Kerryson the Stoic"],
+	["Geartron Prototype", "Geartron-5000", "The Rook", "White Mage", "Oro the Pilgrim", "Master Builder", "Order Chaplain", "LDF Greatsword"],
+	["The Rook", "Geartron-5000", "Gawain the Just", "White Wizard", "Order Chaplain", "Kerryson the Stoic", "Bunnybot Bethany", "Master Builder"],
+	["The Archaeologist", "The Castaway", "Geartron-5000", "White Wizard", "Order Missionary", "The Rook", "Oro the Pilgrim", "Bunnybot Bethany"],
+	["The Botanist", "The Ecologist", "The Biologist", "Geartron-5000", "White Wizard", "The Rook", "Sir Gawain", "Master Builder"],
+	["Fabulous Bors", "Sir Bors", "The Rook", "Geartron-5000", "White Wizard", "Sterling Knight", "Kerryson the Stoic", "Oro the Enlightened"],
+	["Oro the Pilgrim", "Oro the Enlightened", "Clair", "Awoken Clair", "White Mage", "White Wizard", "Geartron-5000", "The Rook"],
+	["Van Hohenheim", "The Sorcerer's Stone", "Geartron-5000", "The Rook", "Awoken Clair", "White Wizard", "Sir Bors", "Sterling Knight"],
+	["The Rook", "Sterling Knight", "Sir Gawain", "Awoken Clair", "The Sorcerer's Stone", "White Wizard", "Sir Bors", "Geartron-5000"],
+	["Commune Captain", "Royal Beefeater", "LDF Flight Commander", "Order Chaplain", "Minerva the Brave", "Master Builder", "Precision Sniper", "Sterling Knight"],
+	["Flame Dissident", "José", "José Decomposé", "Blazing Dragon", "Pompous Joe Wonder", "LDF Riot Mage", "Precision Sniper", "Garrett the Claw"],
+	["Selina the Stylist", "Selina Twinblade", "Macewielder Ragnr", "Farsight Naruku", "Kerryson the Stoic", "Commune Captain", "White Wizard", "Sir Bors"],
+	["Hamish Highlander", "Hamish Lochmaster", "Deep Sea Barney", "Bulkhead Barney", "Crewman Basilic", "Captain Basilic", "The Sorcerer's Stone", "Awoken Clair"],
+	["Minerva the Lionheart", "Furia Rojo", "Campeon Rojo", "Blazing Dragon", "Sir Gawain", "Sir Bors", "Awoken Clair", "The Sorcerer's Stone"],
+	["Minerva the Lionheart", "Campeon Rojo", "Blossom Sakura", "Shining Inti", "The Sorcerer's Stone", "Sir Gawain", "Hamish Lochmaster", "Sterling Knight"]
 ]
 
 static func build_missions() -> Array:
@@ -344,8 +664,8 @@ static func build_missions() -> Array:
 		var battle_count := 1 if index < 10 else (2 if index < 30 else 3)
 		var encounters: Array = []
 		var short_title: String = quest[0].split(" - ", true, 1)[-1]
-		var act := 1 if index < 22 else 2
-		var act_mission := index + 1 if act == 1 else index - 21
+		var act := 1 if index < 22 else (2 if index < 62 else 3)
+		var act_mission := index + 1 if act == 1 else (index - 21 if act == 2 else index - 61)
 		var story: Dictionary = MISSION_STORIES.get(index + 1, {})
 		for battle_index in battle_count:
 			var hp := maxi(8, enemy_hp - (battle_count - battle_index - 1) * 2)

@@ -15,7 +15,7 @@ complete dramatic arc with its own question, escalation, and cliffhanger:
 |--------|-------|----------|--------|-----------------|
 | One | Reclamation | 1–22 | existing Act 1 | What happened to me — and was it an accident? |
 | Two | The Crisis | 23–62 | existing Act 2 | Who gets to own the future the player is rebuilding? |
-| Three | Caelis | 63–77 (new) | new content | Should the Empire's heirs resume control — or share it? |
+| Three | Caelis | 63–77 | implemented | Should the Empire's heirs resume control — or share it? |
 
 Each season is a playable stopping point: a player who stops at the end of
 Season One has a finished origin story; Season Two ends the political war;

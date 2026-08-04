@@ -2279,7 +2279,10 @@ func _rebuild_mission_list() -> void:
 		mission_list.remove_child(child)
 		child.queue_free()
 	var act_one_complete := completed_missions.filter(func(id): return id < 22).size()
-	var act_two_complete := completed_missions.filter(func(id): return id >= 22).size()
+	var act_two_complete := completed_missions.filter(
+		func(id): return (id >= 22 and id < 62)
+	).size()
+	var act_three_complete := completed_missions.filter(func(id): return id >= 62).size()
 	var saved_run: Dictionary = MissionRunStoreScript.load_run(
 		CampaignStoreScript.MISSIONS.size()
 	)
@@ -2292,8 +2295,8 @@ func _rebuild_mission_list() -> void:
 			saved_run.captain_hp
 		]
 	campaign_progress_label.text = (
-		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE%s"
-		% [act_one_complete, act_two_complete, run_text]
+		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE  ·  ACT 3  %d/15 COMPLETE%s"
+		% [act_one_complete, act_two_complete, act_three_complete, run_text]
 	)
 	var inventory: Dictionary = _inventory_counts()
 	# Build rows progressively: creating ~62 wrapped-text rows takes seconds on
