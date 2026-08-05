@@ -48,7 +48,7 @@ const CHARACTERS := {
 		"accent": "#9db7cf"
 	},
 	"Nara": {
-		"role": "Freed Conductor",
+		"role": "Freed Relay candidate",
 		"initials": "NA",
 		"accent": "#d7a7c9"
 	},
@@ -208,7 +208,7 @@ const INTERLUDES := {
 			{"speaker": "Minerva", "text": "You fight like a mechanic. Every motion repairs the position left by the one before it."},
 			{"speaker": "Conductor", "text": "You say that like an insult."},
 			{"speaker": "Minerva", "text": "I lost. It would be a poor one."},
-			{"speaker": "Cassian", "text": "Listen to them applaud. Every patron still believes your title can be made to owe them."},
+			{"speaker": "Cassian", "text": "Listen to them applaud. Every patron out there still thinks your victory belongs to them."},
 			{"speaker": "Minerva", "text": "Then sit carefully. The arena is more honest than the table."}
 		]
 	},
@@ -242,7 +242,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "They announced the grid is stable while we were carrying batteries into the hospital."},
 			{"speaker": "Cassian", "text": "Institutions lie to survive. Remember who taught you that."},
 			{"speaker": "Conductor", "text": "You sound almost proud of them."},
-			{"speaker": "Cassian", "text": "No. I am telling you the repair must include the people who write the gauges."}
+			{"speaker": "Cassian", "text": "No. I am saying the grid will fail again unless we also change the officials who keep hiding the damage."}
 		]
 	},
 	37: {
@@ -378,10 +378,10 @@ const INTERLUDES := {
 		"title": "Asset, Prisoner, Person",
 		"location": "Coalition Clinic · Intake Hall",
 		"lines": [
-			{"speaker": "Nara", "text": "The law registered my Relay as state property. When I tried to leave, it registered me as stolen equipment."},
-			{"speaker": "Conductor", "text": "You are neither."},
-			{"speaker": "Nara", "text": "Then what am I?"},
-			{"speaker": "Cassian", "text": "Someone the law failed to describe. Give me two days and several enemies."}
+			{"speaker": "Nara", "text": "I went in for a medical screening. I've never touched a Relay, but they decided my future belonged to them."},
+			{"speaker": "Conductor", "text": "A screening is not consent."},
+			{"speaker": "Nara", "text": "My file stopped using my name after I refused their contract."},
+			{"speaker": "Cassian", "text": "I have that file. By morning, it will be evidence."}
 		]
 	},
 	55: {
@@ -413,7 +413,7 @@ const INTERLUDES := {
 			{"speaker": "Archivist Serin", "text": "The gate charter bears the seal of Caelis. Legally, it never expired."},
 			{"speaker": "Cassian", "text": "Then neither did the authority that issued it."},
 			{"speaker": "Conductor", "text": "You sound pleased."},
-			{"speaker": "Cassian", "text": "I am pleased the door opened. I am concerned about what may still own the hinges."}
+			{"speaker": "Cassian", "text": "I am pleased the door opened. I am concerned its original owners may still be alive."}
 		]
 	},
 	60: {
@@ -445,7 +445,7 @@ const INTERLUDES := {
 			{"speaker": "Warden Ilyra", "text": "No foreign delegation has crossed this threshold in two hundred years."},
 			{"speaker": "Cassian", "text": "Then it is fortunate we came as a coalition rather than a foreign power."},
 			{"speaker": "Adele Voss", "text": "That sentence should not have worked."},
-			{"speaker": "Cassian", "text": "Most useful sentences should not."},
+			{"speaker": "Cassian", "text": "It worked because everyone here wants a reason not to start shooting."},
 			{"speaker": "Conductor", "text": "The machines know this place."}
 		]
 	},

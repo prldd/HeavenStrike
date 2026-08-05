@@ -435,16 +435,16 @@ const MISSION_STORIES := {
 	53: {
 		"chapter": "Breaking Point",
 		"briefing": "The power surge from the staged negotiation has spread into Source fragments across the district, causing blackouts and waking dormant machines. Follow the grid crews outward and protect them while they contain the cascade.",
-		"debriefing": "Repair crews contain the first cascade, but the blackout disables a nearby detention center holding registered Conductors. Security forces mobilize to restore its locks before the life-support system fails."
+		"debriefing": "Repair crews contain the first cascade, but the blackout opens a locked ward inside a faction recruitment center. Security forces mobilize to restore its doors before the failing life-support system forces an evacuation."
 	},
 	54: {
 		"chapter": "Breaking Point",
-		"briefing": "The Source blackout has opened a detention center for registered Conductors. Reach it before security forces restore the locks, and bring the detainees out before the failing life-support system or the arriving troops kill them.",
-		"debriefing": "The detained Conductors reach the coalition clinic alive. Hardliners brand the rescue an attack on state property and use it to launch an offensive across three fronts."
+		"briefing": "The locked ward holds people who passed medical screening for possible Relay use, then refused faction sponsorship contracts. They have no Relays and are not Conductors, but the recruitment bureau will not release them. Reach the ward before security restores the doors or life support fails.",
+		"debriefing": "The detainees reach the coalition clinic alive. Hardliners brand their extraction the theft of state recruitment assets and use it to launch an offensive across three fronts."
 	},
 	55: {
 		"chapter": "Breaking Point",
-		"briefing": "The detention-center rescue has become the hardliners' excuse for a full offensive across three fronts. The coalition has no other force able to intercept each breakthrough, so keep moving for as long as the Relay can bear the strain.",
+		"briefing": "The recruitment-center extraction has become the hardliners' excuse for a full offensive across three fronts. The coalition has no other force able to intercept each breakthrough, so keep moving for as long as the Relay can bear the strain.",
 		"debriefing": "The fronts hold at severe cost. Unable to break the coalition in battle, the offensive's sponsors switch targets and begin hunting its delegates one by one."
 	},
 	56: {
@@ -638,7 +638,7 @@ const MISSION_OPPONENTS := [
 	["Coalition Test Captain", "Reclamation Coalition"], # 51
 	["Negotiation Provocateur", "Three-Party Delegation"], # 52
 	["Synchronized Defense Core", "Source Fragment Network"], # 53
-	["Detention Warden", "Conductor Registry"], # 54
+	["Intake Security Chief", "Faction Relay Bureau"], # 54
 	["Offensive Field Command", "Hardliner Alliance"], # 55
 	["Assassin Cell Leader", "Hardliner Alliance"], # 56
 	["Tribunal Disruptor", "Rival Claimants"], # 57

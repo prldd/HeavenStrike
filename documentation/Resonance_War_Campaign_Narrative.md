@@ -251,9 +251,10 @@ wins the peace; both discover that Caelis never died.
 - **M53 Breaking Point** — The Source fragments begin synchronizing on their
   own: blackouts, machines waking, networks re-forming. The Order confirms
   it is not an attack. It is a *response*.
-- **M54 Breakout** — A detention facility for registered Conductors breaks
-  open during the blackouts. Rescue crews, freed assets, and one question
-  the player cannot answer: "What are we?"
+- **M54 Breakout** — A faction recruitment center has imprisoned people who
+  passed medical screening for possible Relay use, then refused sponsorship
+  contracts. They have no Relays and are not Conductors; the blackout gives
+  the coalition one chance to get them out before the locked ward closes.
 - **M55 No Holding Back** — Full-scale faction offensive. The player runs
   interceptions at maximum strain; the medics start refusing to clear them
   for the field.
@@ -429,8 +430,8 @@ expansion answers one question and poses another:
 
 - Who inside the patron chain *profited* from staging the relay activation?
   (The wardens arranged it; someone else sold them the access.)
-- What happens to freed Conductors from M54 in a world where the coalition
-  now governs the Source?
+- What happens to the freed Relay candidates from M54 in a world where the
+  coalition now governs the Source?
 - The sealed evidence from M68 — someone always unseals things eventually.
 - The feral automaton from M19 and the oldest machines' declining orders
   (M51): what do machines want, once no one is conducting them?
