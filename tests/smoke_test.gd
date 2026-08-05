@@ -2,6 +2,7 @@ extends SceneTree
 
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
+const BattleResultsScript = preload("res://scripts/battle_results.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
@@ -141,6 +142,28 @@ func _init() -> void:
 	assert(simulator.record("test", {"value": 7}).sequence == 1)
 	assert(simulator.replay_data().events.size() == 1)
 	assert(simulator.replay_data().seed == 4242)
+	var battle_rating := BattleResultsScript.calculate(
+		15, 20, 4,
+		[
+			{"id": 1, "side": 0, "hp": 3},
+			{"id": 3, "side": 0, "hp": 2},
+			{"id": 9, "side": 1, "hp": 1}
+		],
+		[
+			{"type": "deploy", "side": 0, "unit_id": 1},
+			{"type": "deploy", "side": 0, "unit_id": 2},
+			{"type": "deploy", "side": 0, "unit_id": 3},
+			{"type": "deploy", "side": 1, "unit_id": 9}
+		]
+	)
+	assert(battle_rating.score == 817)
+	assert(battle_rating.rating == 9)
+	assert(battle_rating.word == "AMAZING")
+	assert(battle_rating.survivors == 2 and battle_rating.deployed == 3)
+	var flawless_rating := BattleResultsScript.calculate(20, 20, 1, [], [])
+	assert(flawless_rating.score == 1000)
+	assert(flawless_rating.rating == 10)
+	assert(flawless_rating.word == "FLAWLESS")
 	var replay_history_path := "user://smoke_replay_history.json"
 	for replay_seed in range(12):
 		simulator.reset(replay_seed)
@@ -707,9 +730,21 @@ func _init() -> void:
 	assert(CampaignStoreScript.MISSIONS[28].opponent_name == "Minerva")
 	assert(CampaignStoreScript.MISSIONS[76].opponent_affiliation == "Accord Rejectionists")
 	assert(StoryDialogueCatalogScript.INTERLUDES.size() == 46)
+	assert(StoryDialogueCatalogScript.PORTRAITS.size() == 9)
+	for portrait_path in StoryDialogueCatalogScript.PORTRAITS.values():
+		var portrait_texture: Texture2D = load(portrait_path)
+		assert(portrait_texture != null)
+		assert(portrait_texture.get_image().has_mipmaps())
+	assert(StoryDialogueCatalogScript.CHARACTERS.Conductor.portrait.ends_with("Conductor.png"))
+	assert(StoryDialogueCatalogScript.CHARACTERS["The Rook"].portrait_kind == "android")
+	assert(StoryDialogueCatalogScript.CHARACTERS["First Conductor"].portrait_kind == "android")
+	for character in StoryDialogueCatalogScript.CHARACTERS.values():
+		assert(character.get("portrait_kind", "") in ["human", "android"])
+		assert(ResourceLoader.exists(character.get("portrait", "")))
 	var opening_interlude := StoryDialogueCatalogScript.scene_for_mission(0)
 	assert(opening_interlude.title == "A Useful Kind of Impossible")
 	assert(opening_interlude.lines.size() >= 4)
+	assert(opening_interlude.background == StoryDialogueCatalogScript.BACKGROUNDS.technical)
 	assert(StoryDialogueCatalogScript.scene_for_mission(1).is_empty())
 	assert(StoryDialogueCatalogScript.scene_for_mission(60).title == "The Invitation")
 	assert(StoryDialogueCatalogScript.scene_for_mission(61).title == "At the Threshold")
@@ -718,13 +753,16 @@ func _init() -> void:
 	assert(StoryDialogueCatalogScript.scene_for_mission(76).lines.size() == 6)
 	for mission_number in StoryDialogueCatalogScript.INTERLUDES:
 		var interlude: Dictionary = StoryDialogueCatalogScript.INTERLUDES[mission_number]
+		var presented_scene := StoryDialogueCatalogScript.scene_for_mission(mission_number - 1)
 		assert(mission_number >= 1 and mission_number <= CampaignStoreScript.MISSIONS.size())
 		assert(not interlude.get("title", "").is_empty())
 		assert(not interlude.get("location", "").is_empty())
+		assert(ResourceLoader.exists(presented_scene.get("background", "")))
 		assert(interlude.get("lines", []).size() >= 4)
 		for dialogue_line in interlude.lines:
 			assert(not dialogue_line.get("speaker", "").is_empty())
 			assert(not dialogue_line.get("text", "").is_empty())
+			assert(StoryDialogueCatalogScript.CHARACTERS.has(dialogue_line.speaker))
 	assert("The Rook" in CampaignStoreScript.MISSIONS[62].reward_pool)
 	assert("Sterling Knight" in CampaignStoreScript.MISSIONS[62].reward_pool)
 	assert("Shining Inti" in CampaignStoreScript.MISSIONS[76].reward_pool)

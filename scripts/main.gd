@@ -13,6 +13,7 @@ const SquadCardScript = preload("res://scripts/squad_card.gd")
 const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
+const BattleResultsScript = preload("res://scripts/battle_results.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
@@ -69,6 +70,10 @@ var reward_reveal: VBoxContainer
 var reward_portrait: TextureRect
 var reward_stars_label: Label
 var reward_new_label: Label
+var result_rating_panel: PanelContainer
+var result_rating_grade_label: Label
+var result_rating_word_label: Label
+var result_rating_breakdown_label: Label
 var result_continue_button: Button
 var squad_overlay: ColorRect
 var squad_grid: GridContainer
@@ -136,10 +141,12 @@ var replay_squad_overlay: ColorRect
 var replay_player_squad_grid: GridContainer
 var replay_enemy_squad_grid: GridContainer
 var dialogue_overlay: ColorRect
+var dialogue_backdrop: TextureRect
 var dialogue_scene_title: Label
 var dialogue_location_label: Label
 var dialogue_progress_label: Label
-var dialogue_speaker_badge: PanelContainer
+var dialogue_portrait_container: CenterContainer
+var dialogue_portrait: TextureRect
 var dialogue_initials_label: Label
 var dialogue_speaker_label: Label
 var dialogue_role_label: Label
@@ -220,6 +227,7 @@ var replay_history_index := 0
 var dialogue_scene: Dictionary = {}
 var dialogue_line_index := 0
 var dialogue_return_action := ""
+var dialogue_texture_cache := {}
 var tutorial_mode := false
 var tutorial_step := TUTORIAL_NONE
 var tutorial_saved_conductor_skill := ""
@@ -664,6 +672,41 @@ func _build_overlay() -> void:
 	overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	overlay_title.add_theme_font_size_override("font_size", 42)
 	panel.add_child(overlay_title)
+
+	result_rating_panel = PanelContainer.new()
+	result_rating_panel.custom_minimum_size = Vector2(530, 104)
+	result_rating_panel.visible = false
+	panel.add_child(result_rating_panel)
+	var rating_row := HBoxContainer.new()
+	rating_row.add_theme_constant_override("separation", 14)
+	result_rating_panel.add_child(rating_row)
+	var grade_column := VBoxContainer.new()
+	grade_column.custom_minimum_size.x = 150
+	grade_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	rating_row.add_child(grade_column)
+	var rating_heading := Label.new()
+	rating_heading.text = "BATTLE RATING"
+	rating_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rating_heading.add_theme_font_size_override("font_size", 11)
+	rating_heading.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	grade_column.add_child(rating_heading)
+	result_rating_grade_label = Label.new()
+	result_rating_grade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	result_rating_grade_label.add_theme_font_size_override("font_size", 44)
+	grade_column.add_child(result_rating_grade_label)
+	result_rating_word_label = Label.new()
+	result_rating_word_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	result_rating_word_label.add_theme_font_size_override("font_size", 12)
+	grade_column.add_child(result_rating_word_label)
+	rating_row.add_child(VSeparator.new())
+	result_rating_breakdown_label = Label.new()
+	result_rating_breakdown_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result_rating_breakdown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	result_rating_breakdown_label.add_theme_font_size_override("font_size", 12)
+	result_rating_breakdown_label.add_theme_color_override(
+		"font_color", UIThemeScript.muted_color()
+	)
+	rating_row.add_child(result_rating_breakdown_label)
 
 	var detail_scroll := ScrollContainer.new()
 	detail_scroll.custom_minimum_size = Vector2(530, 130)
@@ -1582,10 +1625,10 @@ func _build_dialogue_overlay() -> void:
 	dialogue_overlay.z_index = 120
 	dialogue_overlay.visible = false
 	add_child(dialogue_overlay)
-	_add_overlay_background(
+	dialogue_backdrop = _add_overlay_background(
 		dialogue_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.025, 0.022, 0.03, 0.84)
+		Color(0.025, 0.022, 0.03, 0.68)
 	)
 
 	var margin := MarginContainer.new()
@@ -1627,7 +1670,7 @@ func _build_dialogue_overlay() -> void:
 	layout.add_child(spacer)
 
 	var dialogue_plaque := PanelContainer.new()
-	dialogue_plaque.custom_minimum_size = Vector2(0, 285)
+	dialogue_plaque.custom_minimum_size = Vector2(0, 350)
 	dialogue_plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
 	layout.add_child(dialogue_plaque)
 
@@ -1640,15 +1683,22 @@ func _build_dialogue_overlay() -> void:
 	speech_row.add_theme_constant_override("separation", 22)
 	plaque_layout.add_child(speech_row)
 
-	dialogue_speaker_badge = PanelContainer.new()
-	dialogue_speaker_badge.custom_minimum_size = Vector2(142, 142)
-	dialogue_speaker_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	speech_row.add_child(dialogue_speaker_badge)
+	dialogue_portrait_container = CenterContainer.new()
+	dialogue_portrait_container.custom_minimum_size = Vector2(300, 300)
+	dialogue_portrait_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	speech_row.add_child(dialogue_portrait_container)
+	dialogue_portrait = TextureRect.new()
+	dialogue_portrait.custom_minimum_size = Vector2(300, 300)
+	dialogue_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	dialogue_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	dialogue_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	dialogue_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dialogue_portrait_container.add_child(dialogue_portrait)
 	dialogue_initials_label = Label.new()
 	dialogue_initials_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dialogue_initials_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	dialogue_initials_label.add_theme_font_size_override("font_size", 42)
-	dialogue_speaker_badge.add_child(dialogue_initials_label)
+	dialogue_portrait_container.add_child(dialogue_initials_label)
 
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2142,7 +2192,7 @@ func _menu_action(label: String) -> Button:
 
 func _add_overlay_background(
 	parent: Control, texture: Texture2D, tint_color: Color
-) -> void:
+) -> TextureRect:
 	var backdrop := TextureRect.new()
 	backdrop.texture = texture
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -2156,6 +2206,7 @@ func _add_overlay_background(
 	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	parent.add_child(tint)
+	return backdrop
 
 func _show_interlude(mission_id: int, return_action: String) -> bool:
 	var scene := StoryDialogueCatalogScript.scene_for_mission(mission_id)
@@ -2171,6 +2222,8 @@ func _show_interlude(mission_id: int, return_action: String) -> bool:
 	squad_overlay.visible = false
 	crucible_overlay.visible = false
 	dialogue_overlay.visible = true
+	var scene_background := _dialogue_texture(scene.get("background", ""))
+	dialogue_backdrop.texture = scene_background if scene_background != null else MAIN_MENU_BACKGROUND
 	dialogue_scene_title.text = scene.get("title", "Interlude")
 	dialogue_location_label.text = scene.get("location", "")
 	_refresh_interlude_line()
@@ -2185,17 +2238,31 @@ func _refresh_interlude_line() -> void:
 	var speaker: String = line.get("speaker", "")
 	var character := StoryDialogueCatalogScript.character(speaker)
 	var accent := Color(character.get("accent", "#efd38a"))
+	var portrait := _dialogue_texture(character.get("portrait", ""))
 	dialogue_progress_label.text = "%d  /  %d" % [dialogue_line_index + 1, lines.size()]
+	dialogue_portrait.texture = portrait
+	dialogue_portrait.visible = portrait != null
+	dialogue_initials_label.visible = portrait == null
 	dialogue_initials_label.text = character.get("initials", "??")
 	dialogue_initials_label.add_theme_color_override("font_color", accent)
 	dialogue_speaker_label.text = speaker
 	dialogue_speaker_label.add_theme_color_override("font_color", accent)
 	dialogue_role_label.text = character.get("role", "Campaign character")
+	dialogue_portrait_container.tooltip_text = "%s · %s" % [
+		speaker, character.get("portrait_kind", "character")
+	]
 	dialogue_line_label.text = line.get("text", "")
-	var badge_style := UIThemeScript.dark_plaque()
-	badge_style.border_color = accent
-	dialogue_speaker_badge.add_theme_stylebox_override("panel", badge_style)
 	dialogue_next_button.text = "CONTINUE  →" if dialogue_line_index == lines.size() - 1 else "NEXT  →"
+
+func _dialogue_texture(path: String) -> Texture2D:
+	if path.is_empty():
+		return null
+	if dialogue_texture_cache.has(path):
+		return dialogue_texture_cache[path]
+	var texture := load(path) as Texture2D
+	if texture != null:
+		dialogue_texture_cache[path] = texture
+	return texture
 
 func _advance_interlude() -> void:
 	if not dialogue_overlay.visible:
@@ -3336,6 +3403,48 @@ func _show_card_reward(unit_name: String, is_new: bool) -> void:
 	reward_stars_label.text = "★".repeat(unit.stars)
 	reward_new_label.visible = is_new
 
+func _show_battle_rating(result: Dictionary) -> void:
+	var rating := clampi(int(result.get("rating", 1)), 1, 10)
+	var color := Color("#ff668f")
+	if rating >= 10:
+		color = UIThemeScript.BRASS_LIGHT
+	elif rating >= 8:
+		color = Color("#67e6f4")
+	elif rating >= 6:
+		color = Color("#70e0a1")
+	elif rating >= 4:
+		color = Color("#f0a45d")
+	result_rating_panel.visible = true
+	result_rating_panel.add_theme_stylebox_override(
+		"panel", UIThemeScript.card_style(color, 0.14, 0.78, 2)
+	)
+	result_rating_grade_label.text = str(rating)
+	result_rating_grade_label.add_theme_color_override("font_color", color)
+	result_rating_word_label.text = "%s\n%d / %d" % [
+		result.get("word", ""), result.get("score", 0), result.get("max_score", 1000)
+	]
+	result_rating_word_label.add_theme_color_override("font_color", color)
+	var formation_detail := "NO UNITS DEPLOYED"
+	if int(result.get("deployed", 0)) > 0:
+		formation_detail = "%d/%d SURVIVED" % [
+			result.get("survivors", 0), result.get("deployed", 0)
+		]
+	result_rating_breakdown_label.text = (
+		"VICTORY  +%d\n" % result.get("victory_points", 0)
+		+ "CONDUCTOR  +%d/%d  ·  %d/%d HP\n" % [
+			result.get("integrity_points", 0), result.get("integrity_max", 0),
+			result.get("player_hp", 0), result.get("max_hp", STARTING_HP)
+		]
+		+ "FORMATION  +%d/%d  ·  %s\n" % [
+			result.get("formation_points", 0), result.get("formation_max", 0),
+			formation_detail
+		]
+		+ "TEMPO  +%d/%d  ·  %d ROUNDS" % [
+			result.get("tempo_points", 0), result.get("tempo_max", 0),
+			result.get("rounds", 1)
+		]
+	)
+
 func _select_card(index: int) -> void:
 	if not input_enabled:
 		return
@@ -4423,11 +4532,20 @@ func _check_game_over() -> bool:
 	battle_over = true
 	input_enabled = false
 	end_button.visible = false
-	battle_simulator.record("battle_finished", {
+	var battle_rating: Dictionary = {}
+	if enemy_hp <= 0:
+		battle_rating = BattleResultsScript.calculate(
+			player_hp, STARTING_HP, round_number,
+			units, battle_simulator.events
+		)
+	var finish_event := {
 		"winner": PLAYER if enemy_hp <= 0 else ENEMY,
 		"player_hp": player_hp,
 		"enemy_hp": enemy_hp
-	})
+	}
+	if not battle_rating.is_empty():
+		finish_event["rating"] = battle_rating.duplicate(true)
+	battle_simulator.record("battle_finished", finish_event)
 	var replay_metadata := {
 		"mission_id": current_mission_id,
 		"encounter_index": current_encounter_index
@@ -4436,10 +4554,12 @@ func _check_game_over() -> bool:
 	battle_simulator.archive_replay(REPLAY_HISTORY_PATH, replay_metadata)
 	overlay.visible = true
 	reward_reveal.visible = false
+	result_rating_panel.visible = false
 	result_continue_button.visible = false
 	result_menu_button.visible = false
 	if enemy_hp <= 0:
 		battle_audio.play("victory")
+		_show_battle_rating(battle_rating)
 		if campaign_battle:
 			var encounter_count := CampaignStoreScript.encounter_count(current_mission_id)
 			if current_encounter_index + 1 < encounter_count:

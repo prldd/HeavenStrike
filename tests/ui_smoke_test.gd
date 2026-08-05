@@ -467,6 +467,24 @@ func _run() -> void:
 	game.player_hp = 20
 	game.enemy_hp = 0
 	assert(game._check_game_over())
+	await process_frame
+	assert(game.result_rating_panel.visible)
+	assert(int(game.result_rating_grade_label.text) in range(1, 11))
+	assert(game.result_rating_word_label.text.contains("/ 1000"))
+	assert(game.result_rating_breakdown_label.text.contains("CONDUCTOR"))
+	assert(game.result_rating_breakdown_label.text.contains("FORMATION"))
+	assert(game.result_rating_breakdown_label.text.contains("TEMPO"))
+	var result_plaque: PanelContainer = game.result_rating_panel.get_parent().get_parent()
+	assert(result_plaque.get_global_rect().end.y <= game.get_viewport_rect().end.y)
+	assert(
+		game.result_rating_panel.get_global_rect().end.y
+		<= game.result_primary_button.get_parent().get_global_rect().position.y
+	)
+	var finished_events: Array = game.battle_simulator.events.filter(
+		func(event): return event.type == "battle_finished"
+	)
+	assert(not finished_events.is_empty())
+	assert(finished_events[-1].rating.score > 0)
 	assert(game.result_primary_button.text == "PLAY AGAIN")
 	assert(game.result_primary_button.has_theme_stylebox_override("normal"))
 	assert(not game.result_continue_button.has_theme_stylebox_override("normal"))
@@ -498,8 +516,21 @@ func _run() -> void:
 	assert(game.dialogue_scene_title.text == "A Useful Kind of Impossible")
 	assert(game.dialogue_speaker_label.text == "Cassian")
 	assert(game.dialogue_progress_label.text == "1  /  4")
+	assert(game.dialogue_portrait.texture != null)
+	assert(game.dialogue_portrait.texture.resource_path.ends_with("ComfyUI_00160_.png"))
+	assert(game.dialogue_portrait.texture_filter
+		== CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
+	assert(game.dialogue_portrait.texture.get_image().has_mipmaps())
+	assert(not game.dialogue_initials_label.visible)
+	assert(game.dialogue_backdrop.texture.resource_path.ends_with("fusion-menu.png"))
+	await process_frame
+	assert(game.dialogue_portrait_container is CenterContainer)
+	assert(game.dialogue_portrait_container.custom_minimum_size == Vector2(300, 300))
+	assert(game.dialogue_portrait_container.get_global_rect().end.y
+		<= game.get_viewport_rect().end.y)
 	game._advance_interlude()
 	assert(game.dialogue_speaker_label.text == "Conductor")
+	assert(game.dialogue_portrait.texture.resource_path.ends_with("Conductor.png"))
 	game._finish_interlude()
 	assert(not game.dialogue_overlay.visible)
 	assert(game.mission_overlay.visible)

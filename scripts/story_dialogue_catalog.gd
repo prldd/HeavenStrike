@@ -6,66 +6,112 @@ extends RefCounted
 ## script separate from main.gd lets dialogue be revised without touching UI
 ## or campaign-flow code.
 
+const PORTRAIT_ROOT := "res://assets/Unused Explorations/Talking Heads/"
+const PORTRAITS := {
+	"conductor": PORTRAIT_ROOT + "Conductor.png",
+	"nara": PORTRAIT_ROOT + "ComfyUI_00110_.png",
+	"serin": PORTRAIT_ROOT + "ComfyUI_00118_.png",
+	"ilyra": PORTRAIT_ROOT + "ComfyUI_00119_.png",
+	"cassian": PORTRAIT_ROOT + "ComfyUI_00160_.png",
+	"rook": PORTRAIT_ROOT + "ComfyUI_00167_.png",
+	"first_conductor": PORTRAIT_ROOT + "ComfyUI_00169_.png",
+	"adele": PORTRAIT_ROOT + "ComfyUI_00172_.png",
+	"garrett": PORTRAIT_ROOT + "ComfyUI_00198_.png"
+}
+
+const BACKGROUNDS := {
+	"general": "res://assets/main-menu-steampunk-deck.png",
+	"field": "res://assets/coal-set.png",
+	"arena": "res://assets/neutral-set.png",
+	"technical": "res://assets/fusion-menu.png",
+	"workshop": "res://assets/Unused Explorations/caelise-workshop.png",
+	"caelis": "res://assets/Unused Explorations/caelis-city.png"
+}
+
 const CHARACTERS := {
 	"Conductor": {
 		"role": "Reclamation technician · Conductor",
 		"initials": "CO",
-		"accent": "#67e6f4"
+		"accent": "#67e6f4",
+		"portrait": PORTRAITS.conductor,
+		"portrait_kind": "human"
 	},
 	"Cassian": {
 		"role": "Expedition logistics adjutant",
 		"initials": "CA",
-		"accent": "#efd38a"
+		"accent": "#efd38a",
+		"portrait": PORTRAITS.cassian,
+		"portrait_kind": "human"
 	},
 	"Adele Voss": {
 		"role": "Salvage-rights assessor",
 		"initials": "AV",
-		"accent": "#e8a87c"
+		"accent": "#e8a87c",
+		"portrait": PORTRAITS.adele,
+		"portrait_kind": "human"
 	},
 	"The Stranger": {
 		"role": "Unknown observer",
 		"initials": "?",
-		"accent": "#b6a1e8"
+		"accent": "#b6a1e8",
+		"portrait": PORTRAITS.ilyra,
+		"portrait_kind": "human"
 	},
 	"Archivist Serin": {
 		"role": "Order archivist",
 		"initials": "AS",
-		"accent": "#a8d8a0"
+		"accent": "#a8d8a0",
+		"portrait": PORTRAITS.serin,
+		"portrait_kind": "human"
 	},
 	"Minerva": {
 		"role": "Grand Circuit champion",
 		"initials": "MI",
-		"accent": "#ef8d8d"
+		"accent": "#ef8d8d",
+		"portrait": PORTRAITS.adele,
+		"portrait_kind": "human"
 	},
 	"Garrett": {
 		"role": "Claw clan negotiator",
 		"initials": "GA",
-		"accent": "#e3b778"
+		"accent": "#e3b778",
+		"portrait": PORTRAITS.garrett,
+		"portrait_kind": "human"
 	},
 	"The Rook": {
 		"role": "Reclaimed Caelian automaton",
 		"initials": "RK",
-		"accent": "#9db7cf"
+		"accent": "#9db7cf",
+		"portrait": PORTRAITS.rook,
+		"portrait_kind": "android"
 	},
 	"Nara": {
 		"role": "Freed Relay candidate",
 		"initials": "NA",
-		"accent": "#d7a7c9"
+		"accent": "#d7a7c9",
+		"portrait": PORTRAITS.nara,
+		"portrait_kind": "human"
 	},
 	"Warden Ilyra": {
 		"role": "Warden of Caelis",
 		"initials": "WI",
-		"accent": "#b6a1e8"
+		"accent": "#b6a1e8",
+		"portrait": PORTRAITS.ilyra,
+		"portrait_kind": "human"
 	},
 	"First Conductor": {
-		"role": "Resident of the Conductor Vault",
+		"role": "Caelian android · Conductor Vault witness",
 		"initials": "FC",
-		"accent": "#d8c8a8"
+		"accent": "#d8c8a8",
+		"portrait": PORTRAITS.first_conductor,
+		"portrait_kind": "android"
 	},
 	"Caretaker Mara": {
 		"role": "Township caretaker",
 		"initials": "CM",
-		"accent": "#c7b68b"
+		"accent": "#c7b68b",
+		"portrait": PORTRAITS.nara,
+		"portrait_kind": "human"
 	}
 }
 
@@ -572,7 +618,11 @@ const INTERLUDES := {
 
 static func scene_for_mission(mission_id: int) -> Dictionary:
 	var scene: Dictionary = INTERLUDES.get(mission_id + 1, {})
-	return scene.duplicate(true)
+	if scene.is_empty():
+		return {}
+	var result := scene.duplicate(true)
+	result["background"] = background_for_scene(result)
+	return result
 
 static func has_interlude(mission_id: int) -> bool:
 	return INTERLUDES.has(mission_id + 1)
@@ -584,3 +634,38 @@ static func character(speaker: String) -> Dictionary:
 		"accent": "#efd38a"
 	})
 	return details.duplicate(true)
+
+static func background_for_scene(scene: Dictionary) -> String:
+	var explicit_background: String = scene.get("background", "")
+	if not explicit_background.is_empty():
+		return explicit_background
+	var location := String(scene.get("location", "")).to_lower()
+	if _contains_any(location, [
+		"caelis", "source", "imperial archive", "conductor vault",
+		"warden council", "accord"
+	]):
+		return BACKGROUNDS.caelis
+	if _contains_any(location, ["arena", "circuit", "evaluation grounds"]):
+		return BACKGROUNDS.arena
+	if _contains_any(location, [
+		"relay", "grid", "substation", "clinic", "hospital", "infirmary",
+		"conductive ward", "inspection"
+	]):
+		return BACKGROUNDS.technical
+	if _contains_any(location, [
+		"depot", "workshop", "supply", "records", "archive", "cartography",
+		"pay office", "maintenance"
+	]):
+		return BACKGROUNDS.workshop
+	if _contains_any(location, [
+		"field", "pass", "border", "camp", "ridge", "route", "gate", "roof",
+		"approach", "truce line"
+	]):
+		return BACKGROUNDS.field
+	return BACKGROUNDS.general
+
+static func _contains_any(text: String, terms: Array) -> bool:
+	for term in terms:
+		if text.contains(String(term)):
+			return true
+	return false

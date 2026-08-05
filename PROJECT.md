@@ -785,6 +785,12 @@ Campaign mission selection flows from the scrollable world map into squad select
 
 The campaign map reports completion by Act and any active run. Each mission has its own briefing, completion debriefing, authored enemy squad, and Conductor configuration. Before deployment, squad selection previews the upcoming enemy cards, Conductor skill, and HP. Continuing after a mission victory opens the next mission's workshop and marks the newly awarded card in Barracks.
 
+Every victorious battle receives a deterministic 1–10 performance rating.
+The 1,000-point calculation awards 350 points for victory, up to 300 for
+remaining Conductor HP, up to 190 for deployed-unit survival, and up to 160
+for completion tempo. Ratings are presentation feedback only and do not alter
+campaign rewards or unit progression.
+
 ## Progression
 
 Campaign victories award one random card from that quest's eligible drop list. Drop weight halves with each additional Star Rarity, making lower-star cards progressively more likely. Earned card unlocks persist and expand strategic options rather than directly increasing unit statistics.

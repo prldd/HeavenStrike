@@ -56,6 +56,8 @@ assets required by the prototype.
 - Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
 - 107 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
+- Post-battle 1–10 performance ratings with Conductor integrity, formation
+  survival, and completion-tempo scoring
 - Main menu, mission selection, practice mode, and campaign briefings
 - Playable opening tutorial for deployment, locked Mana, turn resolution,
   lane repositioning, and Conductor powers
@@ -81,9 +83,9 @@ assets required by the prototype.
   run status, and pre-battle enemy squad/Conductor intelligence
 - Story-specific opponent names and affiliations carried from prebattle intel
   onto the enemy side of every campaign battlefield
-- 46 first-completion character interludes with a reusable speaker-driven
-  dialogue presentation and operations-map replay, spanning the campaign's
-  major cast introductions and reveals
+- 46 first-completion character interludes with named human/android portrait
+  busts, location-driven scene backgrounds, and operations-map replay,
+  spanning the campaign's major cast introductions and reveals
 - Continued campaign victories carry the awarded card into Barracks with a
   visible new-reward marker
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
