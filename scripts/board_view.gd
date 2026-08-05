@@ -22,9 +22,15 @@ signal unit_hover_ended
 
 const ROWS := 3
 const COLS := 7
-const BOARD_MARGIN := 16.0
-const CELL_ASPECT_RATIO := 0.88
-const UNIT_ART_EXPANSION := 6.0
+const GRID_BOTTOM_MARGIN := 18.0
+const GRID_MAX_TOP := 132.0
+const GRID_MIN_TOP := 92.0
+const GRID_SIDE_GUTTER := 260.0
+const CELL_WIDTH_TO_DEPTH := 1.04
+const PERSPECTIVE_TOP_SCALE := 0.86
+const ROW_DEPTHS := [0.0, 0.28, 0.62, 1.0]
+const UNIT_ART_CELL_SCALE := 1.82
+const UNIT_FOOT_INSET := 8.0
 const IDLE_BOB_AMPLITUDE := 2.6
 const IDLE_BOB_FREQUENCY := 1.1
 var units: Array = []
@@ -57,7 +63,6 @@ var unit_visual_offsets: Dictionary = {}
 var unit_flash_strength: Dictionary = {}
 var unit_defeat_strength: Dictionary = {}
 var full_unit_texture_cache: Dictionary = {}
-var full_unit_content_rect_cache: Dictionary = {}
 var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
@@ -346,34 +351,51 @@ func _gui_input(event: InputEvent) -> void:
 		_update_unit_hover(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		var row := _row_at(event.position)
-		var col := _col_at(event.position)
-		if row >= 0 and col >= 0 and enabled:
-			if not selected_card.is_empty() and col == 0:
+		var cell := _cell_at(event.position)
+		var row := cell.y
+		var col := cell.x
+		if enabled:
+			var hit_unit := _unit_at_point(event.position)
+			var selected_unit: Variant = _unit_by_id(selected_unit_id)
+			var is_lane_destination := (
+				selected_unit != null and cell.x == int(selected_unit.col)
+			)
+			# Enlarged silhouettes overlap adjacent lanes. During repositioning or
+			# lane-targeting, the highlighted ground cell is the user's intent and
+			# must win over a sprite whose transparent canvas reaches across it.
+			if (
+				selected_card.is_empty() and cell.x >= 0
+				and (not targetable_rows.is_empty() or is_lane_destination)
+			):
+				board_cell_clicked.emit(row, col)
+			elif selected_card.is_empty() and not hit_unit.is_empty():
+				board_cell_clicked.emit(hit_unit.row, hit_unit.col)
+			elif row >= 0 and col >= 0 and not selected_card.is_empty() and col == 0:
 				deployment_clicked.emit(row)
-			elif selected_card.is_empty():
+			elif row >= 0 and col >= 0 and selected_card.is_empty():
 				board_cell_clicked.emit(row, col)
 
 func _row_at(point: Vector2) -> int:
-	var rect := _grid_rect()
-	if not rect.has_point(point):
-		return -1
-	return clampi(int((point.y - rect.position.y) / (rect.size.y / ROWS)), 0, ROWS - 1)
+	return _cell_at(point).y
 
 func _col_at(point: Vector2) -> int:
-	var rect := _grid_rect()
-	if not rect.has_point(point):
-		return -1
-	return clampi(int((point.x - rect.position.x) / (rect.size.x / COLS)), 0, COLS - 1)
+	return _cell_at(point).x
+
+func _cell_at(point: Vector2) -> Vector2i:
+	if not _grid_rect().has_point(point):
+		return Vector2i(-1, -1)
+	for row in ROWS:
+		for col in COLS:
+			if Geometry2D.is_point_in_polygon(point, _cell_polygon(row, col)):
+				return Vector2i(col, row)
+	return Vector2i(-1, -1)
 
 func _update_unit_hover(point: Vector2) -> void:
-	var grid := _grid_rect()
-	var next_unit: Dictionary = {}
-	if grid.has_point(point):
-		var row := clampi(int((point.y - grid.position.y) / (grid.size.y / ROWS)), 0, ROWS - 1)
-		var col := clampi(int((point.x - grid.position.x) / (grid.size.x / COLS)), 0, COLS - 1)
+	var next_unit := _unit_at_point(point)
+	if next_unit.is_empty():
+		var cell := _cell_at(point)
 		for unit in units:
-			if unit.row == row and unit.col == col:
+			if cell.x >= 0 and unit.row == cell.y and unit.col == cell.x:
 				next_unit = unit
 				break
 
@@ -387,48 +409,115 @@ func _update_unit_hover(point: Vector2) -> void:
 		unit_hovered.emit(next_unit)
 
 func _grid_rect() -> Rect2:
-	var grid_height := size.y - BOARD_MARGIN * 2.0 - 52.0
-	var maximum_width := size.x - 284.0
-	var portrait_width := (grid_height / ROWS) * CELL_ASPECT_RATIO * COLS
-	var grid_width := minf(maximum_width, portrait_width)
+	var grid_top := clampf(size.y * 0.28, GRID_MIN_TOP, GRID_MAX_TOP)
+	var grid_height := maxf(1.0, size.y - grid_top - GRID_BOTTOM_MARGIN)
+	var maximum_width := maxf(1.0, size.x - GRID_SIDE_GUTTER)
+	var perspective_width := (grid_height / ROWS) * CELL_WIDTH_TO_DEPTH * COLS
+	var grid_width := minf(maximum_width, perspective_width)
 	return Rect2(
-		Vector2((size.x - grid_width) * 0.5, BOARD_MARGIN + 26.0),
+		Vector2((size.x - grid_width) * 0.5, grid_top),
 		Vector2(grid_width, grid_height)
 	)
 
-func _cell_rect(row: int, col: int) -> Rect2:
+func _cell_polygon(row: int, col: int, inset: float = 0.0) -> PackedVector2Array:
 	var grid := _grid_rect()
-	var cell := Vector2(grid.size.x / COLS, grid.size.y / ROWS)
-	return Rect2(grid.position + Vector2(col * cell.x, row * cell.y), cell)
+	var top_depth: float = ROW_DEPTHS[row]
+	var bottom_depth: float = ROW_DEPTHS[row + 1]
+	var top_scale := lerpf(PERSPECTIVE_TOP_SCALE, 1.0, top_depth)
+	var bottom_scale := lerpf(PERSPECTIVE_TOP_SCALE, 1.0, bottom_depth)
+	var top_width := grid.size.x * top_scale
+	var bottom_width := grid.size.x * bottom_scale
+	var top_left := grid.get_center().x - top_width * 0.5
+	var bottom_left := grid.get_center().x - bottom_width * 0.5
+	var top_y := grid.position.y + grid.size.y * top_depth
+	var bottom_y := grid.position.y + grid.size.y * bottom_depth
+	var points := PackedVector2Array([
+		Vector2(top_left + top_width * float(col) / COLS, top_y),
+		Vector2(top_left + top_width * float(col + 1) / COLS, top_y),
+		Vector2(bottom_left + bottom_width * float(col + 1) / COLS, bottom_y),
+		Vector2(bottom_left + bottom_width * float(col) / COLS, bottom_y),
+	])
+	if inset > 0.0:
+		var center := Vector2.ZERO
+		for point in points:
+			center += point
+		center /= points.size()
+		for index in points.size():
+			points[index] = points[index].lerp(center, inset)
+	return points
+
+func _cell_rect(row: int, col: int) -> Rect2:
+	var points := _cell_polygon(row, col)
+	var rect := Rect2(points[0], Vector2.ZERO)
+	for point in points:
+		rect = rect.expand(point)
+	return rect
+
+func _cell_foot(row: int, col: int) -> Vector2:
+	var points := _cell_polygon(row, col)
+	return (points[2] + points[3]) * 0.5 - Vector2(0, UNIT_FOOT_INSET)
+
+func _cell_visual_width(row: int, col: int) -> float:
+	var points := _cell_polygon(row, col)
+	return ((points[1] - points[0]).length() + (points[2] - points[3]).length()) * 0.5
+
+func _unit_art_rect(unit: Dictionary) -> Rect2:
+	var cell_width := _cell_visual_width(unit.row, unit.col)
+	var art_size := cell_width * UNIT_ART_CELL_SCALE
+	var foot := _cell_foot(unit.row, unit.col)
+	foot += unit_visual_offsets.get(unit.id, Vector2.ZERO)
+	return Rect2(foot - Vector2(art_size * 0.5, art_size), Vector2.ONE * art_size)
+
+func _unit_at_point(point: Vector2) -> Dictionary:
+	var layered_units := units.duplicate()
+	layered_units.sort_custom(_unit_draws_before)
+	layered_units.reverse()
+	for unit in layered_units:
+		var art_rect := _unit_art_rect(unit)
+		var hit_rect := Rect2(
+			Vector2(art_rect.get_center().x - art_rect.size.x * 0.35, art_rect.position.y),
+			Vector2(art_rect.size.x * 0.70, art_rect.size.y)
+		)
+		if hit_rect.has_point(point):
+			return unit
+	return {}
+
+func _draw_cell_shape(
+	row: int, col: int, fill: Color, border: Color, width: float = 1.0, inset: float = 0.025
+) -> void:
+	var polygon := _cell_polygon(row, col, inset)
+	draw_colored_polygon(polygon, fill)
+	var outline := polygon.duplicate()
+	outline.append(polygon[0])
+	draw_polyline(outline, border, width, true)
 
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
 	draw_texture_rect(PRACTICE_BACKGROUND if practice_mode else BOARD_BACKGROUND, panel, false)
-	# The board art is atmospheric scenery; the warm ink-and-brass frame and
-	# quiet playmat keep the illustrated units as the visual focus.
-	draw_rect(panel, Color(0.075, 0.055, 0.035, 0.42))
+	# Keep the scenery visible through the playmat. The perspective grid is a
+	# footprint for positioning rather than a set of isolated unit cards.
+	draw_rect(panel, Color(0.075, 0.055, 0.035, 0.25))
 	draw_style_box(_box(Color.TRANSPARENT, Color("#b88a48"), 12, 3), panel.grow(-2))
 	draw_style_box(_box(Color.TRANSPARENT, Color("#4e3824"), 10, 1), panel.grow(-7))
 
 	var grid := _grid_rect()
 	for row in ROWS:
 		for col in COLS:
-			var cell_rect := _cell_rect(row, col).grow(-3.0)
 			var base := (
-				Color(0.08, 0.075, 0.07, 0.48)
+				Color(0.10, 0.085, 0.065, 0.28)
 				if (row + col) % 2 == 0
-				else Color(0.12, 0.105, 0.085, 0.42)
+				else Color(0.15, 0.125, 0.085, 0.22)
 			)
 			if col == 0:
-				base = Color(0.08, 0.29, 0.34, 0.42)
+				base = Color(0.05, 0.39, 0.44, 0.30)
 			elif col == COLS - 1:
-				base = Color(0.43, 0.09, 0.16, 0.40)
+				base = Color(0.49, 0.08, 0.15, 0.28)
 			if (
 				row == hover_row and hover_col == 0 and col == 0
 				and enabled and not selected_card.is_empty()
 			):
 				base = Color(0.08, 0.62, 0.78, 0.42)
-			draw_style_box(_box(base, Color(0.72, 0.58, 0.38, 0.55), 5, 1), cell_rect)
+			_draw_cell_shape(row, col, base, Color(0.72, 0.58, 0.38, 0.48))
 
 	var event_width := minf(grid.size.x * 0.68, 620.0)
 	var event_rect := Rect2(
@@ -487,21 +576,23 @@ func _draw() -> void:
 	_draw_mana_indicator(Vector2(size.x - 82, grid.get_center().y - 92), enemy_mana_text, true)
 
 	for unit in units:
-		_draw_unit(unit)
 		if unit.id == selected_unit_id:
 			_draw_selection(unit)
 		if unit.id in targetable_unit_ids:
 			_draw_targetable(unit)
+	var layered_units := units.duplicate()
+	layered_units.sort_custom(_unit_draws_before)
+	for unit in layered_units:
+		_draw_unit(unit)
+	for unit in layered_units:
 		if unit.id in unit_effects:
 			_draw_effect(unit)
 	_draw_projectile()
 
 	for target_row in targetable_rows:
 		for col in COLS:
-			var lane_cell := _cell_rect(target_row, col).grow(-4)
-			draw_style_box(
-				_box(Color(0.74, 0.50, 0.14, 0.14), Color("#d6aa5d"), 7, 2),
-				lane_cell
+			_draw_cell_shape(
+				target_row, col, Color(0.74, 0.50, 0.14, 0.14), Color("#d6aa5d"), 2.0
 			)
 		var lane_rect := Rect2(
 			_cell_rect(target_row, 0).position,
@@ -519,11 +610,11 @@ func _draw() -> void:
 
 	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
 		for row in ROWS:
-			var deploy := _cell_rect(row, 0).grow(-8)
 			if not _occupied(row, 0):
+				var deploy := _cell_polygon(row, 0, 0.09)
 				draw_dashed_line(
-					deploy.position + Vector2(5, deploy.size.y - 5),
-					deploy.end - Vector2(5, deploy.size.y - 5),
+					deploy[3],
+					deploy[2],
 					Color("#61e8ff"),
 					2,
 					6
@@ -536,8 +627,17 @@ func _draw() -> void:
 	):
 		for target_row in ROWS:
 			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
-				var target := _cell_rect(target_row, selected_unit.col).grow(-7)
-				draw_style_box(_box(Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 10, 3), target)
+				_draw_cell_shape(
+					target_row, selected_unit.col,
+					Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 3.0, 0.06
+				)
+
+func _unit_draws_before(a: Dictionary, b: Dictionary) -> bool:
+	var a_foot := _cell_foot(a.row, a.col).y
+	var b_foot := _cell_foot(b.row, b.col).y
+	if not is_equal_approx(a_foot, b_foot):
+		return a_foot < b_foot
+	return int(a.col) < int(b.col)
 
 func _draw_opponent_identity() -> void:
 	if opponent_name.is_empty():
@@ -572,11 +672,11 @@ func _draw_opponent_identity() -> void:
 	)
 
 func _draw_targetable(unit: Dictionary) -> void:
-	var rect := _cell_rect(unit.row, unit.col).grow(-4)
-	draw_style_box(
-		_box(Color(1.0, 0.72, 0.18, 0.16), Color("#ffd166"), 12, 4),
-		rect
+	_draw_cell_shape(
+		unit.row, unit.col,
+		Color(1.0, 0.72, 0.18, 0.16), Color("#ffd166"), 4.0, 0.04
 	)
+	var rect := _cell_rect(unit.row, unit.col).grow(-5)
 	var label_rect := Rect2(rect.position + Vector2(5, 5), Vector2(rect.size.x - 10, 18))
 	draw_style_box(_box(Color(0.08, 0.07, 0.03, 0.88), Color("#ffd166"), 6, 1), label_rect)
 	draw_string(
@@ -638,35 +738,44 @@ func _draw_mana_indicator(center: Vector2, value: String, enemy: bool) -> void:
 		)
 
 func _draw_unit(unit: Dictionary) -> void:
-	var rect := _cell_rect(unit.row, unit.col).grow(-10.0)
-	rect.position += unit_visual_offsets.get(unit.id, Vector2.ZERO)
-	var center := rect.get_center()
+	var cell_rect := _cell_rect(unit.row, unit.col)
+	var cell_width := _cell_visual_width(unit.row, unit.col)
+	var visual_offset: Vector2 = unit_visual_offsets.get(unit.id, Vector2.ZERO)
+	var foot := _cell_foot(unit.row, unit.col) + visual_offset
+	var footprint_rect := Rect2(
+		Vector2(foot.x - cell_width * 0.5, foot.y - cell_rect.size.y),
+		Vector2(cell_width, cell_rect.size.y)
+	)
+	var art_rect := _unit_art_rect(unit)
+	var art_size := art_rect.size.y
 	var color: Color = UnitCatalogScript.class_color(unit.kind)
 
-	draw_style_box(
-		_box(Color(color, 0.10), Color(color, 0.32), 13, 1),
-		rect.grow(5)
-	)
-	# Let portrait art use nearly the full cell. Stats and statuses are drawn
-	# afterward, so they remain readable over the larger silhouette. The upper
-	# half of the art idles with a gentle bob over a soft ground shadow so
-	# deployed units read as characters standing on the board, not static cards.
+	# The cell is only the unit's footprint. The art intentionally reaches into
+	# neighboring rows and columns, like figures standing together on a field.
+	draw_set_transform(foot - Vector2(0, 3), 0.0, Vector2(1.0, 0.30))
+	draw_circle(Vector2.ZERO, cell_width * 0.40, Color(color, 0.13))
+	draw_arc(Vector2.ZERO, cell_width * 0.40, 0, TAU, 28, Color(color, 0.28), 1.5)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var bob := _idle_bob_offset(unit)
-	_draw_unit_shadow(rect, bob)
-	_draw_unit_art(unit, rect.grow(UNIT_ART_EXPANSION), bob)
+	_draw_unit_shadow(footprint_rect, bob)
+	_draw_unit_art(unit, art_rect, bob)
 	var flash: float = unit_flash_strength.get(unit.id, 0.0)
 	if flash > 0.0:
 		draw_style_box(
 			_box(Color(1, 1, 1, flash * 0.34), Color(1, 1, 1, flash * 0.72), 10, 2),
-			rect.grow(-2)
+			footprint_rect.grow(-2)
 		)
 	var font := get_theme_default_font()
 	var hp_text := "%d" % unit.hp
 	var atk_text := "%d" % unit.atk
-	var pill_size := Vector2(minf(38.0, rect.size.x * 0.42), 20.0)
-	var pill_y := rect.end.y - pill_size.y - 5.0
-	var health_pill := Rect2(Vector2(rect.position.x + 3, pill_y), pill_size)
-	var attack_pill := Rect2(Vector2(rect.end.x - pill_size.x - 3, pill_y), pill_size)
+	var pill_size := Vector2(minf(34.0, cell_width * 0.32), 20.0)
+	var pill_y := foot.y - pill_size.y - 1.0
+	var health_pill := Rect2(
+		Vector2(foot.x - cell_width * 0.39, pill_y), pill_size
+	)
+	var attack_pill := Rect2(
+		Vector2(foot.x + cell_width * 0.39 - pill_size.x, pill_y), pill_size
+	)
 	draw_style_box(
 		_box(Color("#3f7554"), Color("#91b886"), 10, 1),
 		health_pill
@@ -693,26 +802,34 @@ func _draw_unit(unit: Dictionary) -> void:
 		12,
 		Color.WHITE
 	)
-	_draw_protect_aura(unit, rect)
-	_draw_status_badges(unit, rect)
+	_draw_protect_aura(unit, footprint_rect)
+	var badge_rect := Rect2(
+		Vector2(foot.x - cell_width * 0.5, maxf(38.0, art_rect.position.y + 6.0)),
+		Vector2(cell_width, art_size)
+	)
+	_draw_status_badges(unit, badge_rect)
 
 	if not unit.ready:
+		var rest_rect := Rect2(
+			Vector2(foot.x - cell_width * 0.42, foot.y - 40),
+			Vector2(cell_width * 0.84, 20)
+		)
 		draw_style_box(
 			_box(Color(0.05, 0.08, 0.15, 0.48), Color.TRANSPARENT, 10, 0),
-			rect.grow(-3)
+			rest_rect
 		)
-		draw_string(font, Vector2(rect.position.x, rect.end.y - 7), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, Color("#b8c2d9"))
+		draw_string(font, rest_rect.position + Vector2(0, 14), "RESTING", HORIZONTAL_ALIGNMENT_CENTER, rest_rect.size.x, 10, Color("#b8c2d9"))
 	var defeat: float = unit_defeat_strength.get(unit.id, 0.0)
 	if defeat > 0.0:
 		draw_style_box(
 			_box(Color(0.025, 0.04, 0.08, defeat * 0.94), Color(color, 1.0 - defeat), 10, 1),
-			rect.grow(-2)
+			footprint_rect.grow(-2)
 		)
 		for slice in 4:
-			var slice_y := rect.position.y + rect.size.y * (float(slice + 1) / 5.0)
+			var slice_y := footprint_rect.position.y + footprint_rect.size.y * (float(slice + 1) / 5.0)
 			draw_line(
-				Vector2(rect.position.x + defeat * 12.0, slice_y),
-				Vector2(rect.end.x - defeat * 12.0, slice_y),
+				Vector2(footprint_rect.position.x + defeat * 12.0, slice_y),
+				Vector2(footprint_rect.end.x - defeat * 12.0, slice_y),
 				Color(color, defeat * 0.55),
 				1
 			)
@@ -856,7 +973,9 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
 	if texture == null:
 		_draw_unit_icon(unit, rect.get_center() + Vector2(0, bob), minf(rect.size.x, rect.size.y) * 0.68)
 		return
-	var content_rect := _full_unit_content_rect(icon_id, texture)
+	# Use the full generated canvas so deliberately small characters remain
+	# relatively small instead of being normalized by alpha-bound cropping.
+	var content_rect := Rect2(Vector2.ZERO, texture.get_size())
 	var content_size := content_rect.size
 	var art_scale := minf(rect.size.x / content_size.x, rect.size.y / content_size.y)
 	var draw_size := (content_size * art_scale).round()
@@ -892,33 +1011,6 @@ func _full_unit_texture(icon_id: int) -> Texture2D:
 	var texture := load(path) as Texture2D
 	full_unit_texture_cache[icon_id] = texture
 	return texture
-
-func _full_unit_content_rect(icon_id: int, texture: Texture2D) -> Rect2:
-	if full_unit_content_rect_cache.has(icon_id):
-		return full_unit_content_rect_cache[icon_id]
-	var image := texture.get_image()
-	var image_size := image.get_size()
-	var minimum := image_size
-	var maximum := Vector2i(-1, -1)
-	for y in image_size.y:
-		for x in image_size.x:
-			if image.get_pixel(x, y).a > 0.04:
-				minimum.x = mini(minimum.x, x)
-				minimum.y = mini(minimum.y, y)
-				maximum.x = maxi(maximum.x, x)
-				maximum.y = maxi(maximum.y, y)
-	var content := Rect2(Vector2.ZERO, Vector2(image_size))
-	if maximum.x >= minimum.x and maximum.y >= minimum.y:
-		var padding := maxi(2, int(maximum.y - minimum.y + 1) / 40)
-		minimum -= Vector2i(padding, padding)
-		maximum += Vector2i(padding, padding)
-		minimum.x = maxi(0, minimum.x)
-		minimum.y = maxi(0, minimum.y)
-		maximum.x = mini(image_size.x - 1, maximum.x)
-		maximum.y = mini(image_size.y - 1, maximum.y)
-		content = Rect2(minimum, maximum - minimum + Vector2i.ONE)
-	full_unit_content_rect_cache[icon_id] = content
-	return content
 
 func _draw_effect(unit: Dictionary) -> void:
 	var effect: Dictionary = unit_effects.get(unit.id, {})
@@ -957,9 +1049,10 @@ func _draw_commander_effect(center: Vector2) -> void:
 	)
 
 func _draw_selection(unit: Dictionary) -> void:
-	var rect := _cell_rect(unit.row, unit.col).grow(-5)
-	rect.position += unit_visual_offsets.get(unit.id, Vector2.ZERO)
-	draw_style_box(_box(Color(0.25, 0.8, 0.9, 0.08), Color("#71e6f5"), 12, 3), rect)
+	_draw_cell_shape(
+		unit.row, unit.col,
+		Color(0.25, 0.8, 0.9, 0.08), Color("#71e6f5"), 3.0, 0.04
+	)
 
 func _draw_action_preview(unit: Dictionary) -> void:
 	var preview: Dictionary = BattleRulesScript.projected_action(unit.id, units)
@@ -968,15 +1061,16 @@ func _draw_action_preview(unit: Dictionary) -> void:
 func _draw_action_preview_data(unit: Dictionary, preview: Dictionary) -> void:
 	var direction := 1 if unit.side == 0 else -1
 	for cell in preview.attack:
-		var attack_rect := _cell_rect(cell.y, cell.x).grow(-8)
 		var occupied_target := _enemy_at(unit, cell.y, cell.x)
 		var fill := Color(0.94, 0.31, 0.43, 0.24 if occupied_target else 0.09)
 		var width := 3 if occupied_target else 2
-		draw_style_box(_box(fill, Color("#ff667e"), 9, width), attack_rect)
+		_draw_cell_shape(cell.y, cell.x, fill, Color("#ff667e"), width, 0.07)
 
 	for cell in preview.traversal:
+		_draw_cell_shape(
+			cell.y, cell.x, Color(0.2, 0.75, 0.9, 0.14), Color("#4ec9e8"), 2.0, 0.10
+		)
 		var move_rect := _cell_rect(cell.y, cell.x).grow(-12)
-		draw_style_box(_box(Color(0.2, 0.75, 0.9, 0.14), Color("#4ec9e8"), 8, 2), move_rect)
 		var center := move_rect.get_center()
 		var arrow := "›" if direction > 0 else "‹"
 		draw_string(

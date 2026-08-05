@@ -86,8 +86,8 @@ static func choose_reposition(unit: Dictionary, units: Array) -> int:
 			best_row = row
 	return best_row
 
-static func should_use_captain_skill(
-	skill_name: String, round_number: int, captain_hp: int, units: Array
+static func should_use_conductor_skill(
+	skill_name: String, round_number: int, conductor_hp: int, units: Array
 ) -> bool:
 	var allies: Array = units.filter(func(unit): return unit.side == ENEMY)
 	var enemies: Array = units.filter(func(unit): return unit.side == PLAYER)
@@ -95,9 +95,9 @@ static func should_use_captain_skill(
 		"Aid", "Healing Wave":
 			return allies.any(func(unit): return unit.hp < unit.max_hp)
 		"Shield", "Last Stand":
-			return captain_hp <= 10 or round_number >= 4
+			return conductor_hp <= 10 or round_number >= 4
 		"Firestorm", "Lightning Burst":
-			return enemies.size() >= 2 or captain_hp <= 8
+			return enemies.size() >= 2 or conductor_hp <= 8
 		"Rally", "Bloodlust":
 			return allies.size() >= 2
 	return round_number >= 3

@@ -1,6 +1,7 @@
 class_name KineticCrucible
 extends RefCounted
 
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const SAVE_PATH := "user://kinetic_crucible.cfg"
 const SAVE_VERSION := 2
 const MAX_LEVEL := 5
@@ -22,9 +23,15 @@ static func sync_instances(roster: Array, base_counts: Dictionary) -> Array:
 	var instances: Array = []
 	if saved is Array:
 		for value in saved:
-			if value is not Dictionary or value.get("name", "") not in valid_names:
+			if value is not Dictionary:
 				continue
-			instances.append(_sanitize_instance(value))
+			var migrated_value: Dictionary = value.duplicate(true)
+			migrated_value.name = UnitCatalogScript.canonical_name(
+				str(migrated_value.get("name", ""))
+			)
+			if migrated_value.name not in valid_names:
+				continue
+			instances.append(_sanitize_instance(migrated_value))
 
 	var next_id := maxi(1, int(config.get_value("collection", "next_id", 1)))
 	for unit in roster:
@@ -46,16 +53,22 @@ static func sync_instances(roster: Array, base_counts: Dictionary) -> Array:
 	# One-time migration from the earlier shared-by-name prototype.
 	if not bool(config.get_value("meta", "instances_migrated", false)):
 		for unit in roster:
+			var old_name := UnitCatalogScript.legacy_name(unit.name)
 			var matching: Array = instances.filter(
 				func(instance): return instance.name == unit.name
 			)
 			var consumed_count := mini(
 				matching.size(),
-				maxi(0, int(config.get_value("consumed", unit.name, 0)))
+				maxi(0, int(config.get_value(
+					"consumed", unit.name,
+					config.get_value("consumed", old_name, 0)
+				)))
 			)
 			for index in consumed_count:
 				matching[index].consumed = true
-			var legacy_progress = config.get_value("progress", unit.name, {})
+			var legacy_progress = config.get_value(
+				"progress", unit.name, config.get_value("progress", old_name, {})
+			)
 			var active: Array = matching.filter(
 				func(instance): return not instance.consumed
 			)

@@ -6,7 +6,7 @@ extends RefCounted
 const ADDITIONAL_DROPS := {
 	"Street Nurse": [3, 13, 14, 19, 27, 37, 38, 45],
 	"Street Matron": [10, 13, 17, 23, 27, 37, 38, 45],
-	"Captain Kerryson": [18],
+	"Conductor Kerryson": [18],
 	"Kerryson the Stoic": [18],
 	"Garrett Talon": [9, 50],
 	"Garrett the Claw": [50],
@@ -51,7 +51,7 @@ const ADDITIONAL_DROPS := {
 	"Devout Mage": [21, 22, 24, 56],
 	"Devout Warlock": [21, 22, 24, 56],
 	"Commune Defender": [38],
-	"Commune Captain": [38],
+	"Commune Conductor": [38],
 	"LDF Constable": [10, 34, 50, 56, 62],
 	"LDF Sergeant": [19, 34, 50, 56, 62],
 	"Joe Wonder": [20, 44, 49],
@@ -580,7 +580,7 @@ const CAMPAIGN_EPILOGUE := (
 )
 
 # Authored eight-card decks, indexed by mission. Multi-battle missions keep
-# their mission's identity while Captain HP and skill change per encounter.
+# their mission's identity while Conductor HP and skill change per encounter.
 # These are deliberately explicit: reward pools do not silently alter enemies.
 const MISSION_OPPONENTS := [
 	# Act 1 · Reclamation
@@ -594,7 +594,7 @@ const MISSION_OPPONENTS := [
 	["Consortium Enforcer", "Scavenger Consortium"], # 8
 	["Raider Convoy Chief", "Scavenger Clans"], # 9
 	["Licensing Examiner", "Conductor Registry"], # 10
-	["Evidence Detail Captain", "Joint Investigative Office"], # 11
+	["Evidence Detail Conductor", "Joint Investigative Office"], # 11
 	["Contract Ambush Leader", "Deniable Contractors"], # 12
 	["Safety Inspector-General", "Three-Faction Commission"], # 13
 	["Informant's Handler", "Deniable Contractors"], # 14
@@ -625,7 +625,7 @@ const MISSION_OPPONENTS := [
 	["Relocation Commander", "State Relocation Authority"], # 38
 	["Pass Ambush Leader", "Deniable Raiders"], # 39
 	["Salvage Recovery Chief", "Unaffiliated Salvagers"], # 40
-	["Record-Seizure Captain", "Competing Claimants"], # 41
+	["Record-Seizure Conductor", "Competing Claimants"], # 41
 	["Patron Retrieval Agent", "Coalition Insiders"], # 42
 	["Clan Trialmaster", "Scavenger Clans"], # 43
 	["Guildhall Factor", "Contractors' Guild"], # 44
@@ -635,7 +635,7 @@ const MISSION_OPPONENTS := [
 	["Coup Rearguard", "Hardliner Coup"], # 48
 	["Junction Battle Commander", "Three-Faction Armies"], # 49
 	["Truce-Line Holdout", "Faction Hardliners"], # 50
-	["Coalition Test Captain", "Reclamation Coalition"], # 51
+	["Coalition Test Conductor", "Reclamation Coalition"], # 51
 	["Negotiation Provocateur", "Three-Party Delegation"], # 52
 	["Synchronized Defense Core", "Source Fragment Network"], # 53
 	["Intake Security Chief", "Faction Relay Bureau"], # 54
@@ -652,13 +652,13 @@ const MISSION_OPPONENTS := [
 	["Outer City Caretaker", "Caelian Civic Automata"], # 64
 	["Stewardship Examiner", "Wardens of Caelis"], # 65
 	["Archive Custodian", "Imperial Archive"], # 66
-	["Record-Burner Captain", "Faction Claimants"], # 67
+	["Record-Burner Conductor", "Faction Claimants"], # 67
 	["Deep Vault Guardian", "Imperial Archive"], # 68
 	["Hospice Assessor", "Conductor Vault Guardians"], # 69
 	["Evidence Erasure Agent", "Hired Intermediaries"], # 70
 	["Crown Relay Honor Guard", "Wardens of Caelis"], # 71
 	["Civic Core Seizure Leader", "Caelian Restorationists"], # 72
-	["Extremist Coalition Captain", "Restorationists & Hardliners"], # 73
+	["Extremist Coalition Conductor", "Restorationists & Hardliners"], # 73
 	["Negotiation Hall Coercer", "Faction Pressure Forces"], # 74
 	["Distribution Defense Core", "The Source"], # 75
 	["Rejectionist Field Marshal", "Accord Rejectionists"], # 76
@@ -700,7 +700,7 @@ const MISSION_ENEMY_SQUADS := [
 	["Rage Bruiser", "Socialite Fencer", "Garrett Talon", "Claw Skirmisher", "Raging Dragon", "LDF Medic", "Macabre Embalmer", "Flame Warden"],
 	["Apprentice Builder", "Greyson the Shifty", "Rage Bruiser", "Chain Initiate", "Raging Dragon", "Claw Ambusher", "Garrett Talon", "LDF Medic"],
 	["Socialite Fencer", "Pub Bouncer", "Royal Yeoman", "LDF Bolt Slinger", "Blight Doctor", "Order Pupil", "Prison Warden", "LDF Constable"],
-	["LDF Medic", "Street Nurse", "Claw Slicer", "Dart Shooter", "Conjuring Clown", "LDF Flight Officer", "LDF Sergeant", "Captain Kerryson"],
+	["LDF Medic", "Street Nurse", "Claw Slicer", "Dart Shooter", "Conjuring Clown", "LDF Flight Officer", "LDF Sergeant", "Conductor Kerryson"],
 	["Claw Slicer", "Socialite Fencer", "Trinity Messenger", "Street Matron", "Claw Cleaver", "Rage Spellslinger", "The Botanist", "Dart Shooter"],
 	["Pub Bouncer", "Claw Caster", "Factory Markswoman", "Street Hoodlum", "Rage Brute", "Chain Initiate", "LDF Peacekeeper", "Trinity Potshot"],
 	["Rescue Corps", "Street Matron", "Socialite Fencer", "Trinity Rusher", "Claw Cleaver", "Dart Shooter", "Pub Bouncer", "Trinity Herald"],
@@ -743,7 +743,7 @@ const MISSION_ENEMY_SQUADS := [
 	["Geartron-5000", "Street Hoodlum", "Present Verdandi", "Awoken Final Empress", "Blight Doctor", "Bethany", "Macewielder Ragnr", "Order Scholar"],
 	["Minerva the Brave", "Commune Defender", "The Rook", "José", "Talon Slasher", "Garrett the Claw", "Geartron Prototype", "Fortune Diviner"],
 	["Beautifly Hookie", "Furia Rojo", "Galloping Philippa", "Crewman Basilic", "Mata Swiftblade", "The Botanist", "Steph Lopod", "LDF Flight Commander"],
-	["Frog-Hopper Keru", "Commune Captain", "Vicious Pierrot", "Glowing Opelle", "Innocent Gretel", "Greyson the Shifty", "Jimimi the Shepherd", "Three of Hearts"],
+	["Frog-Hopper Keru", "Commune Conductor", "Vicious Pierrot", "Glowing Opelle", "Innocent Gretel", "Greyson the Shifty", "Jimimi the Shepherd", "Three of Hearts"],
 	["Minerva the Brave", "LDF Sureshot", "Order Scholar", "Frost-Kid Kokori", "Bartok Loco", "Kerryson the Stoic", "The Bard", "Master Builder"],
 	["Bunnybot Bethany", "Thief", "Talon Slasher", "Final Empress", "Hookie", "Present Verdandi", "Garrett the Raider", "Campeon Rojo"],
 	["Rage Bruiser", "Dart Sharpshooter", "Flame Schematic", "Crewman Basilic", "Selina the Stylist", "Street Hoodlum", "Medusa", "Bulkhead Barney"],
@@ -756,19 +756,19 @@ const MISSION_ENEMY_SQUADS := [
 	# Act 3 — the wardens and defenses of Caelis, escalating into the coalition
 	# of every faction's best for the finale.
 	["The Rook", "White Wizard", "Blossom Sakura", "Frontier Protector", "Happy Elf Harding", "Whirling Ragnr", "Talon Slasher", "Vicious Pierrot"],
-	["White Mage", "Thief", "Commune Captain", "Frog-Hopper Keru", "The Bard", "Hamish Lochmaster", "Awoken Final Empress", "Booth Kavar"],
+	["White Mage", "Thief", "Commune Conductor", "Frog-Hopper Keru", "The Bard", "Hamish Lochmaster", "Awoken Final Empress", "Booth Kavar"],
 	["Sir Gawain", "Devout Warlock", "Witchkiller Gretel", "Shakespeare", "Lunnain Oracle", "Ki", "Sir Bors", "Booth Kavar"],
 	["The Castaway", "Blossom Sakura", "Winter Harding", "White Mage", "Crewman Basilic", "Bulkhead Barney", "Edge", "Gorgon Medusa"],
-	["The Biologist", "Sakuya Le Bel Shirogane", "Commune Captain", "Clawing Cara", "Summoner Rydia", "Bunnybot Bethany", "Van Hohenheim", "Royal Beefeater"],
+	["The Biologist", "Sakuya Le Bel Shirogane", "Commune Conductor", "Clawing Cara", "Summoner Rydia", "Bunnybot Bethany", "Van Hohenheim", "Royal Beefeater"],
 	["Sir Bors", "The Hydronaut", "Van Hohenheim", "Galloping Philippa", "Ninja Edge", "Sakura", "Conjuring Jester", "Geartron Prototype"],
 	["Oro the Enlightened", "Talon Slasher", "LDF Mastersword", "Lizard-Licker Keru", "Dart Sharpshooter", "The Bard", "Ki", "Ra"],
 	["The Sorcerer's Stone", "Explorer Gatling", "Campeon Rojo", "The Ecologist", "Crewman Basilic", "Fortune Diviner", "Bartok Loco", "Frog-Hopper Keru"],
 	["Awoken Clair", "Gawain the Just", "Blight Physician", "Talon Slasher", "Innocent Gretel", "Summoner Rydia", "The Biologist", "Sterling Knight"],
 	["Clawing Cara", "Devout Warlock", "Bethany", "Communicator Ripley", "The Castaway", "The Biologist", "Campeon Rojo", "Galloping Philippa"],
-	["José Decomposé", "Macabre Undertaker", "Pompous Joe Wonder", "Opelle", "Medusa", "Commune Captain", "Shakespeare", "Precision Sniper"],
-	["Selina Twinblade", "Flame Dissident", "Gawain the Just", "Witchkiller Gretel", "Sakuya Le Bel Shirogane", "Macabre Undertaker", "Sir Bors", "Captain Basilic"],
+	["José Decomposé", "Macabre Undertaker", "Pompous Joe Wonder", "Opelle", "Medusa", "Commune Conductor", "Shakespeare", "Precision Sniper"],
+	["Selina Twinblade", "Flame Dissident", "Gawain the Just", "Witchkiller Gretel", "Sakuya Le Bel Shirogane", "Macabre Undertaker", "Sir Bors", "Conductor Basilic"],
 	["Hamish Lochmaster", "Innocent Gretel", "Summoner Rydia", "Verdandi Norn", "Commune Commander", "Explorer Gatling", "Swiftblade Heroine", "Clair"],
-	["Campeon Rojo", "Lizard-Licker Keru", "Swiftblade Heroine", "Captain Basilic", "Winter Harding", "Van Hohenheim", "Awoken Final Empress", "Lunnain Oracle"],
+	["Campeon Rojo", "Lizard-Licker Keru", "Swiftblade Heroine", "Conductor Basilic", "Winter Harding", "Van Hohenheim", "Awoken Final Empress", "Lunnain Oracle"],
 	["Blossom Sakura", "Shining Inti", "The Earth Whisperer", "Gorgon Medusa", "Derailed Bartok", "Frontier Rider", "Ace of Hearts", "Talon Slasher"]
 ]
 
@@ -830,7 +830,7 @@ static func build_missions() -> Array:
 # Placeholder generator for missions not yet covered by MISSION_STORIES.
 static func _mission_briefing(index: int, title: String) -> String:
 	var objectives := [
-		"Secure the approach before the opposing captain can reinforce it.",
+		"Secure the approach before the opposing conductor can reinforce it.",
 		"Break the opposing formation and keep the route open.",
 		"Read the enemy lanes carefully; their squad is prepared for an ambush.",
 		"Protect the expedition while pushing through the hostile line."

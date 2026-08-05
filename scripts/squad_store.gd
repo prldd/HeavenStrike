@@ -1,10 +1,12 @@
 class_name SquadStore
 extends RefCounted
 
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const SQUAD_SIZE := 8
 const SAVE_PATH := "user://player.cfg"
-const SAVE_VERSION := 2
-const DEFAULT_CAPTAIN_SKILL := "Rally"
+const SAVE_VERSION := 3
+const DEFAULT_CONDUCTOR_SKILL := "Rally"
+const LEGACY_LEADER_SKILL_KEY := "cap" + "tain_skill"
 
 static func default_squad(roster: Array) -> Array:
 	var names: Array = []
@@ -17,7 +19,8 @@ static func default_squad(roster: Array) -> Array:
 static func sanitize(candidate_names: Array, roster: Array) -> Array:
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = []
-	for unit_name in candidate_names:
+	for saved_name in candidate_names:
+		var unit_name := UnitCatalogScript.canonical_name(str(saved_name))
 		if unit_name in valid_names and result.count(unit_name) < 2:
 			result.append(unit_name)
 		if result.size() >= SQUAD_SIZE:
@@ -27,7 +30,8 @@ static func sanitize(candidate_names: Array, roster: Array) -> Array:
 static func sanitize_owned(candidate_names: Array, roster: Array, inventory: Dictionary) -> Array:
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = []
-	for unit_name in candidate_names:
+	for saved_name in candidate_names:
+		var unit_name := UnitCatalogScript.canonical_name(str(saved_name))
 		var owned: int = inventory.get(unit_name, 0)
 		if unit_name in valid_names and result.count(unit_name) < mini(2, owned):
 			result.append(unit_name)
@@ -50,7 +54,12 @@ static func load_squad(roster: Array) -> Array:
 	var saved = config.get_value("squad", "units", [])
 	if saved is not Array:
 		return default_squad(roster)
-	return sanitize(saved, roster)
+	var migrated := sanitize(saved, roster)
+	if migrated != saved:
+		config.set_value("meta", "version", SAVE_VERSION)
+		config.set_value("squad", "units", migrated)
+		config.save(SAVE_PATH)
+	return migrated
 
 static func save_squad(names: Array, roster: Array) -> bool:
 	var clean := sanitize(names, roster)
@@ -124,20 +133,30 @@ static func instance_names(instance_ids: Array, instances: Array) -> Array:
 			names.append(instance.name)
 	return names
 
-static func load_captain_skill(valid_skills: Array) -> String:
+static func load_conductor_skill(valid_skills: Array) -> String:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
-		return DEFAULT_CAPTAIN_SKILL
-	var saved: String = config.get_value("squad", "captain_skill", DEFAULT_CAPTAIN_SKILL)
-	return saved if saved in valid_skills else DEFAULT_CAPTAIN_SKILL
+		return DEFAULT_CONDUCTOR_SKILL
+	var legacy_saved = config.get_value("squad", LEGACY_LEADER_SKILL_KEY, DEFAULT_CONDUCTOR_SKILL)
+	var saved: String = config.get_value("squad", "conductor_skill", legacy_saved)
+	if (
+		not config.has_section_key("squad", "conductor_skill")
+		and config.has_section_key("squad", LEGACY_LEADER_SKILL_KEY)
+	):
+		config.set_value("meta", "version", SAVE_VERSION)
+		config.set_value("squad", "conductor_skill", saved)
+		config.erase_section_key("squad", LEGACY_LEADER_SKILL_KEY)
+		config.save(SAVE_PATH)
+	return saved if saved in valid_skills else DEFAULT_CONDUCTOR_SKILL
 
-static func save_captain_skill(skill_name: String, valid_skills: Array) -> bool:
+static func save_conductor_skill(skill_name: String, valid_skills: Array) -> bool:
 	if skill_name not in valid_skills:
 		return false
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("meta", "version", SAVE_VERSION)
-	config.set_value("squad", "captain_skill", skill_name)
+	config.set_value("squad", "conductor_skill", skill_name)
+	config.erase_section_key("squad", LEGACY_LEADER_SKILL_KEY)
 	return config.save(SAVE_PATH) == OK
 
 static func build_deck(names: Array, roster: Array, instances: Array = []) -> Array:

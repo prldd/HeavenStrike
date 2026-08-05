@@ -1,4 +1,4 @@
-class_name CaptainSkills
+class_name ConductorSkills
 extends RefCounted
 
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
@@ -19,19 +19,19 @@ const DESCRIPTIONS := {
 	"Bloodlust": "The strongest allied unit gains +2 ATK for 1 turn.",
 	"Aid": "Restore 3 HP to the most damaged allied unit.",
 	"Healing Wave": "Restore 2 HP to every damaged allied unit.",
-	"Shield": "Give your Captain 5 Shield for 2 turns.",
-	"Last Stand": "At 8 Captain HP or less, allies gain +2 ATK for 1 turn.",
-	"Lightning Burst": "Deal 3 damage to the strongest enemy unit or Captain.",
-	"Firestorm": "Deal 2 damage to every enemy unit, or the enemy Captain."
+	"Shield": "Give your Conductor 5 Shield for 2 turns.",
+	"Last Stand": "At 8 Conductor HP or less, allies gain +2 ATK for 1 turn.",
+	"Lightning Burst": "Deal 3 damage to the strongest enemy unit or Conductor.",
+	"Firestorm": "Deal 2 damage to every enemy unit, or the enemy Conductor."
 }
 
-static func apply(skill_name: String, side: int, units: Array, captain_hp: int) -> Dictionary:
+static func apply(skill_name: String, side: int, units: Array, conductor_hp: int) -> Dictionary:
 	var allies: Array = units.filter(func(unit): return unit.side == side)
 	var enemies: Array = units.filter(func(unit): return unit.side != side)
 	var result := {
 		"success": false,
 		"message": "",
-		"captain_damage": 0,
+		"conductor_damage": 0,
 		"shield": 0,
 		"shield_turns": 0,
 		"affected": []
@@ -77,10 +77,10 @@ static func apply(skill_name: String, side: int, units: Array, captain_hp: int) 
 		"Shield":
 			result.shield = 5
 			result.shield_turns = 2
-			result.message = "Shield protects the Captain for 2 turns."
+			result.message = "Shield protects the Conductor for 2 turns."
 		"Last Stand":
-			if captain_hp > 8:
-				result.message = "Last Stand requires 8 Captain HP or less."
+			if conductor_hp > 8:
+				result.message = "Last Stand requires 8 Conductor HP or less."
 				return result
 			if allies.is_empty():
 				result.message = "Last Stand needs at least one allied unit."
@@ -91,8 +91,8 @@ static func apply(skill_name: String, side: int, units: Array, captain_hp: int) 
 			result.message = "Last Stand grants all allied units +2 ATK this turn."
 		"Lightning Burst":
 			if enemies.is_empty():
-				result.captain_damage = 3
-				result.message = "Lightning Burst strikes the enemy Captain for 3."
+				result.conductor_damage = 3
+				result.message = "Lightning Burst strikes the enemy Conductor for 3."
 			else:
 				enemies.sort_custom(func(a, b): return a.atk > b.atk)
 				enemies[0].hp -= 3
@@ -100,15 +100,15 @@ static func apply(skill_name: String, side: int, units: Array, captain_hp: int) 
 				result.message = "Lightning Burst deals 3 damage to %s." % enemies[0].name
 		"Firestorm":
 			if enemies.is_empty():
-				result.captain_damage = 2
-				result.message = "Firestorm scorches the enemy Captain for 2."
+				result.conductor_damage = 2
+				result.message = "Firestorm scorches the enemy Conductor for 2."
 			else:
 				for unit in enemies:
 					unit.hp -= 2
 					result.affected.append(unit.id)
 				result.message = "Firestorm deals 2 damage to every enemy unit."
 		_:
-			result.message = "Unknown Captain skill."
+			result.message = "Unknown Conductor skill."
 			return result
 
 	result.success = true

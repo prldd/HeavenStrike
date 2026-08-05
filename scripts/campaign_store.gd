@@ -3,6 +3,7 @@ extends RefCounted
 
 const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
+const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const SAVE_PATH := "user://campaign.cfg"
 const SAVE_VERSION := 1
 const CAMPAIGN_EPILOGUE := StoryQuestCatalogScript.CAMPAIGN_EPILOGUE
@@ -19,14 +20,14 @@ const REWARD_UNITS := [
 	"Witchkiller Gretel", "Talon Slicer",
 	"Street Urchin", "Street Hoodlum", "LDF Crowd Mage",
 	"LDF Riot Mage", "Fortune Teller", "Fortune Diviner",
-	"Street Nurse", "Street Matron", "Captain Kerryson", "Kerryson the Stoic",
+	"Street Nurse", "Street Matron", "Conductor Kerryson", "Kerryson the Stoic",
 	"Garrett Talon", "Garrett the Claw", "Precision Shooter", "Precision Sniper",
 	"Greyson the Shifty", "LDF Flight Officer", "LDF Flight Commander",
 	"Claw Chopper", "Claw Cleaver", "LDF Bowgunner", "LDF Bolt Slinger",
 	"LDF Swordwielder", "LDF Greatsword",
 	"Haven Trapper", "Haven Huntsman", "Macabre Embalmer", "Macabre Undertaker",
 	"Devout Mage", "Devout Warlock",
-	"Commune Defender", "Commune Captain",
+	"Commune Defender", "Commune Conductor",
 	"LDF Constable", "LDF Sergeant", "Joe Wonder", "Pompous Joe Wonder",
 	"Raging Dragon", "Blazing Dragon", "Royal Yeoman", "Royal Beefeater",
 	"Pub Barman", "Pub Landlord", "The Archaeologist", "The Castaway",
@@ -35,7 +36,7 @@ const REWARD_UNITS := [
 	"Selina the Stylist", "Selina Twinblade",
 	"The Witch Doctor", "The Earth Whisperer",
 	"Hamish Highlander", "Hamish Lochmaster", "The Rook", "Sterling Knight",
-	"Deep Sea Barney", "Bulkhead Barney", "Crewman Basilic", "Captain Basilic",
+	"Deep Sea Barney", "Bulkhead Barney", "Crewman Basilic", "Conductor Basilic",
 	"Oro the Pilgrim", "Oro the Enlightened", "Cara Pace", "Clawing Cara",
 	"Clair", "Awoken Clair", "White Mage", "White Wizard",
 	"Steph Lopod", "Steph the Tentacled", "Ant Lantis", "Swelling Ant",
@@ -92,9 +93,14 @@ static func load_reward_units(roster: Array) -> Array:
 		return []
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = []
-	for unit_name in saved:
+	for saved_name in saved:
+		var unit_name := UnitCatalogScript.canonical_name(str(saved_name))
 		if unit_name in valid_names:
 			result.append(unit_name)
+	if result != saved:
+		config.set_value("meta", "version", SAVE_VERSION)
+		config.set_value("campaign", "reward_units", result)
+		config.save(SAVE_PATH)
 	return result
 
 static func award_reward(unit_name: String, roster: Array, earned: Array) -> Array:

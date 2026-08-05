@@ -195,7 +195,7 @@ static func estimate_squad_power(cards: Array) -> float:
 
 ## The single damage gate. Attack damage (a normal attack hit and its
 ## Blast/Pierce riders) passes the attacking unit as `source`; secondary-skill
-## and Captain damage passes no source and therefore bypasses both damage
+## and Conductor damage passes no source and therefore bypasses both damage
 ## immunities: Summon Forth (0 damage when attacked while its counter holds)
 ## and Quiet! (0 damage from Silenced attackers while the carrier lives).
 ## The returned `immunity` names the immunity that zeroed the hit ("" when
@@ -246,21 +246,21 @@ static func apply_unit_healing(
 		"after": unit.hp
 	}
 
-static func apply_captain_damage(
-	side: int, amount: int, captain_state: Dictionary
+static func apply_conductor_damage(
+	side: int, amount: int, conductor_state: Dictionary
 ) -> Dictionary:
 	var hp_key := "player_hp" if side == PLAYER else "enemy_hp"
 	var shield_key := "player_shield" if side == PLAYER else "enemy_shield"
 	var remaining := maxi(0, amount)
-	var absorbed := mini(int(captain_state.get(shield_key, 0)), remaining)
-	captain_state[shield_key] = int(captain_state.get(shield_key, 0)) - absorbed
+	var absorbed := mini(int(conductor_state.get(shield_key, 0)), remaining)
+	conductor_state[shield_key] = int(conductor_state.get(shield_key, 0)) - absorbed
 	remaining -= absorbed
-	var before: int = captain_state.get(hp_key, 0)
-	captain_state[hp_key] = maxi(0, before - remaining)
+	var before: int = conductor_state.get(hp_key, 0)
+	conductor_state[hp_key] = maxi(0, before - remaining)
 	return {
 		"side": side,
 		"before": before,
 		"shield_absorbed": absorbed,
 		"damage": remaining,
-		"after": captain_state[hp_key]
+		"after": conductor_state[hp_key]
 	}

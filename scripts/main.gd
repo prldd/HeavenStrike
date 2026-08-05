@@ -6,7 +6,7 @@ const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
-const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
+const ConductorSkillsScript = preload("res://scripts/conductor_skills.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const SquadCardScript = preload("res://scripts/squad_card.gd")
@@ -25,6 +25,9 @@ const ROWS := 3
 const COLS := 7
 const BENCH_LIMIT := 6
 const STARTING_HP := 20
+const LOSS_TITLE := "TACTICAL DEFEAT"
+const LOSS_DETAIL := "Your Conductor was defeated.\nRetry the battle with a new tactical approach."
+const LEGACY_LEADER_HP_KEY := "cap" + "tain_hp"
 
 var board: BoardView
 var turn_label: Label
@@ -50,7 +53,7 @@ var squad_selection_grid: GridContainer
 var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
-var captain_skill_option: OptionButton
+var conductor_skill_option: OptionButton
 var reserve_class_option: OptionButton
 var reserve_search_edit: LineEdit
 var reserve_filter_class := ""
@@ -125,14 +128,14 @@ var squad_names: Array = []
 var editing_squad_names: Array = []
 var battle_deck: Array = []
 var enemy_deck: Array = []
-var player_captain_skill := "Rally"
-var editing_captain_skill := "Rally"
-var enemy_captain_skill := "Rally"
+var player_conductor_skill := "Rally"
+var editing_conductor_skill := "Rally"
+var enemy_conductor_skill := "Rally"
 var completed_missions: Array = []
 var earned_reward_units: Array = []
 var current_mission_id := -1
 var current_encounter_index := 0
-var mission_run_captain_hp := STARTING_HP
+var mission_run_conductor_hp := STARTING_HP
 var awaiting_next_encounter := false
 var mission_finished := false
 var mission_interlude_pending := false
@@ -205,7 +208,7 @@ func _ready() -> void:
 	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
 	_sync_collection()
 	squad_names = SquadStoreScript.load_instance_squad(roster, collection_instances)
-	player_captain_skill = SquadStoreScript.load_captain_skill(CaptainSkillsScript.SKILLS)
+	player_conductor_skill = SquadStoreScript.load_conductor_skill(ConductorSkillsScript.SKILLS)
 	_sanitize_squad_unlocks()
 	_start_new_match()
 	_show_main_menu()
@@ -746,12 +749,12 @@ func _build_squad_builder() -> void:
 	skill_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	skill_row.add_child(skill_label)
 
-	captain_skill_option = OptionButton.new()
-	captain_skill_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for skill_name in CaptainSkillsScript.SKILLS:
-		captain_skill_option.add_item("%s · %s" % [skill_name, CaptainSkillsScript.DESCRIPTIONS[skill_name]])
-	captain_skill_option.item_selected.connect(_select_captain_skill)
-	skill_row.add_child(captain_skill_option)
+	conductor_skill_option = OptionButton.new()
+	conductor_skill_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for skill_name in ConductorSkillsScript.SKILLS:
+		conductor_skill_option.add_item("%s · %s" % [skill_name, ConductorSkillsScript.DESCRIPTIONS[skill_name]])
+	conductor_skill_option.item_selected.connect(_select_conductor_skill)
+	skill_row.add_child(conductor_skill_option)
 
 	var workshop_columns := HBoxContainer.new()
 	workshop_columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -864,8 +867,8 @@ func _open_squad_builder() -> void:
 	squad_opened_for_mission = false
 	pending_mission_id = -1
 	editing_squad_names = squad_names.duplicate()
-	editing_captain_skill = player_captain_skill
-	captain_skill_option.select(CaptainSkillsScript.SKILLS.find(editing_captain_skill))
+	editing_conductor_skill = player_conductor_skill
+	conductor_skill_option.select(ConductorSkillsScript.SKILLS.find(editing_conductor_skill))
 	end_button.visible = false
 	squad_overlay.visible = true
 	# Let the overlay render before the (potentially heavy) grid rebuild so the
@@ -935,9 +938,9 @@ func _close_squad_builder() -> void:
 		return
 	end_button.visible = not replay_mode and not battle_over
 
-func _select_captain_skill(index: int) -> void:
-	if index >= 0 and index < CaptainSkillsScript.SKILLS.size():
-		editing_captain_skill = CaptainSkillsScript.SKILLS[index]
+func _select_conductor_skill(index: int) -> void:
+	if index >= 0 and index < ConductorSkillsScript.SKILLS.size():
+		editing_conductor_skill = ConductorSkillsScript.SKILLS[index]
 
 func _add_squad_unit(instance_id: String) -> void:
 	if _touch_details_active:
@@ -1100,7 +1103,7 @@ func _refresh_mission_intel() -> void:
 	if mission.get("chapter", "") != "":
 		chapter_label = " · %s" % String(mission.chapter).to_upper()
 	mission_intel_label.text = (
-		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CAPTAIN: %s\nOPPONENT: %s · %s"
+		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CONDUCTOR: %s\nOPPONENT: %s · %s"
 		% [
 			mission.act, mission.act_mission, chapter_label,
 			mission.short_title.to_upper(),
@@ -1210,9 +1213,9 @@ func _save_squad() -> void:
 	if editing_squad_names.is_empty() or editing_squad_names.size() > SquadStoreScript.SQUAD_SIZE:
 		return
 	squad_names = editing_squad_names.duplicate()
-	player_captain_skill = editing_captain_skill
+	player_conductor_skill = editing_conductor_skill
 	if SquadStoreScript.save_instance_squad(squad_names, collection_instances):
-		SquadStoreScript.save_captain_skill(player_captain_skill, CaptainSkillsScript.SKILLS)
+		SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
 		status_message = "Squad saved. It will be used in the next battle."
 	else:
 		status_message = "Squad selected for this session, but the save file could not be written."
@@ -1223,9 +1226,9 @@ func _save_and_start_mission() -> void:
 	if editing_squad_names.is_empty() or pending_mission_id < 0:
 		return
 	squad_names = editing_squad_names.duplicate()
-	player_captain_skill = editing_captain_skill
+	player_conductor_skill = editing_conductor_skill
 	SquadStoreScript.save_instance_squad(squad_names, collection_instances)
-	SquadStoreScript.save_captain_skill(player_captain_skill, CaptainSkillsScript.SKILLS)
+	SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
 	var mission_id := pending_mission_id
 	squad_opened_for_mission = false
 	pending_mission_id = -1
@@ -2303,7 +2306,7 @@ func _apply_next_replay_event() -> void:
 	var event_type: String = event.get("type", "")
 	match event_type:
 		"combat_log":
-			status_message = event.get("message", "")
+			status_message = _canonical_replay_text(str(event.get("message", "")))
 		"deploy":
 			var card := UnitCatalogScript.by_name(event.get("card", ""))
 			if card != null:
@@ -2353,9 +2356,13 @@ func _apply_next_replay_event() -> void:
 					_animation_duration(0.20)
 				)
 			if side == PLAYER:
-				player_hp = event.get("captain_hp", player_hp)
+				player_hp = event.get(
+					"conductor_hp", event.get(LEGACY_LEADER_HP_KEY, player_hp)
+				)
 			else:
-				enemy_hp = event.get("captain_hp", enemy_hp)
+				enemy_hp = event.get(
+					"conductor_hp", event.get(LEGACY_LEADER_HP_KEY, enemy_hp)
+				)
 			board.shake(6.0)
 		"unit_defeated":
 			var defeated = _unit_by_id(event.get("unit_id", -1))
@@ -2375,11 +2382,20 @@ func _apply_replay_snapshot(event: Dictionary) -> void:
 		var unit = _unit_by_id(state.get("id", -1))
 		if unit != null:
 			for key in state:
-				unit[key] = state[key]
+				unit[key] = (
+					UnitCatalogScript.canonical_name(str(state[key]))
+					if key == "name" else state[key]
+				)
 	player_hp = event.get("player_hp", player_hp)
 	enemy_hp = event.get("enemy_hp", enemy_hp)
 	player_shield = event.get("player_shield", player_shield)
 	enemy_shield = event.get("enemy_shield", enemy_shield)
+
+func _canonical_replay_text(value: String) -> String:
+	var retired_word := "Cap" + "tain"
+	return value.replace(retired_word.to_upper(), "CONDUCTOR") \
+		.replace(retired_word, "Conductor") \
+		.replace(retired_word.to_lower(), "conductor")
 
 func _verify_replay_result(event: Dictionary) -> void:
 	var expected_player: int = event.get("player_hp", player_hp)
@@ -2419,7 +2435,7 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 		run_text = "  ·  ACTIVE RUN: ACT %d MISSION %d · BATTLE %d/%d · %d HP" % [
 			run_mission.act, run_mission.act_mission,
 			saved_run.encounter_index + 1, run_mission.encounters.size(),
-			saved_run.captain_hp
+			saved_run.conductor_hp
 		]
 	campaign_progress_label.text = (
 		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE  ·  ACT 3  %d/15 COMPLETE%s"
@@ -2609,7 +2625,7 @@ func _begin_mission(mission_id: int) -> void:
 	board.set_practice_mode(false)
 	current_mission_id = mission_id
 	current_encounter_index = 0
-	mission_run_captain_hp = STARTING_HP
+	mission_run_conductor_hp = STARTING_HP
 	awaiting_next_encounter = false
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
@@ -2629,7 +2645,7 @@ func _resume_mission() -> void:
 	board.set_practice_mode(false)
 	current_mission_id = saved_run.mission_id
 	current_encounter_index = saved_run.encounter_index
-	mission_run_captain_hp = saved_run.captain_hp
+	mission_run_conductor_hp = saved_run.conductor_hp
 	awaiting_next_encounter = false
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
@@ -2725,7 +2741,7 @@ func _show_unit_details(unit: Dictionary) -> void:
 		definition.move,
 		definition.range
 	]
-	var active_effects: String = CaptainSkillsScript.effect_summary(unit)
+	var active_effects: String = ConductorSkillsScript.effect_summary(unit)
 	hover_ability_label.text = _format_primary_ability(definition.description)
 	var skill: SkillData = definition.skill
 	if skill != null:
@@ -2841,7 +2857,7 @@ func _start_new_match() -> void:
 	next_unit_id = 1
 	last_deployed_unit_id = {PLAYER: -1, ENEMY: -1}
 	round_number = 1
-	player_hp = mission_run_captain_hp if campaign_battle else STARTING_HP
+	player_hp = mission_run_conductor_hp if campaign_battle else STARTING_HP
 	enemy_hp = STARTING_HP if not campaign_battle else encounter.enemy_hp
 	player_max_energy = 2
 	player_energy = 2
@@ -2853,7 +2869,7 @@ func _start_new_match() -> void:
 	enemy_shield = 0
 	player_shield_turns = 0
 	enemy_shield_turns = 0
-	enemy_captain_skill = encounter.get("skill", "Shield") if campaign_battle else "Shield"
+	enemy_conductor_skill = encounter.get("skill", "Shield") if campaign_battle else "Shield"
 	battle_simulator.record("battle_started", {
 		"mission_id": current_mission_id,
 		"encounter_index": current_encounter_index,
@@ -2863,8 +2879,8 @@ func _start_new_match() -> void:
 			squad_names, collection_instances
 		),
 		"enemy_squad": enemy_squad_names.duplicate(),
-		"player_skill": player_captain_skill,
-		"enemy_skill": enemy_captain_skill
+		"player_skill": player_conductor_skill,
+		"enemy_skill": enemy_conductor_skill
 	})
 	input_enabled = true
 	battle_over = false
@@ -2914,8 +2930,8 @@ func _refresh() -> void:
 	)
 	win_button.disabled = not input_enabled
 	power_button.disabled = not input_enabled or player_power_used or battle_over
-	power_button.text = "%s USED" % player_captain_skill.to_upper() if player_power_used else player_captain_skill.to_upper()
-	power_button.tooltip_text = CaptainSkillsScript.DESCRIPTIONS[player_captain_skill]
+	power_button.text = "%s USED" % player_conductor_skill.to_upper() if player_power_used else player_conductor_skill.to_upper()
+	power_button.tooltip_text = ConductorSkillsScript.DESCRIPTIONS[player_conductor_skill]
 
 	var selected := {}
 	if selected_hand_index >= 0 and selected_hand_index < player_hand.size():
@@ -3353,7 +3369,7 @@ func _lane_target_side(skill_name: String) -> int:
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
 		return
-	var applied: bool = await _apply_captain_skill(PLAYER, player_captain_skill)
+	var applied: bool = await _apply_conductor_skill(PLAYER, player_conductor_skill)
 	if not applied:
 		_refresh()
 		return
@@ -3436,14 +3452,14 @@ func _enemy_turn() -> void:
 
 	if (
 		not enemy_power_used
-		and BattleAIScript.should_use_captain_skill(
-			enemy_captain_skill, round_number, enemy_hp, units
+		and BattleAIScript.should_use_conductor_skill(
+			enemy_conductor_skill, round_number, enemy_hp, units
 		)
 	):
-		var skill_applied: bool = await _apply_captain_skill(ENEMY, enemy_captain_skill)
+		var skill_applied: bool = await _apply_conductor_skill(ENEMY, enemy_conductor_skill)
 		if skill_applied:
 			enemy_power_used = true
-			status_message = "Enemy Captain: " + status_message
+			status_message = "Enemy Conductor: " + status_message
 			_refresh()
 			await _wait(0.45)
 
@@ -3776,15 +3792,15 @@ func _attack_commander(actor: Dictionary, strikes: int) -> void:
 		await board.animate_commander_attack(
 			actor.id, commander_side, actor.kind, _animation_duration(0.25)
 		)
-		var dealt := _damage_captain(commander_side, actor.atk)
+		var dealt := _damage_conductor(commander_side, actor.atk)
 		battle_simulator.record("commander_attack", {
 			"actor_id": actor.id,
 			"side": commander_side,
 			"damage": dealt,
-			"captain_hp": enemy_hp if commander_side == ENEMY else player_hp
+			"conductor_hp": enemy_hp if commander_side == ENEMY else player_hp
 		})
 		total_dealt += dealt
-		status_message = "%s hits %s Commander for %d." % [
+		status_message = "%s hits %s Conductor for %d." % [
 			_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", dealt
 		]
 		_refresh()
@@ -3793,7 +3809,7 @@ func _attack_commander(actor: Dictionary, strikes: int) -> void:
 		board.play_commander_effect(commander_side, "-%d HP" % dealt, Color("#ff668f"))
 		if hit + 1 < strikes:
 			await _wait(0.12)
-	status_message = "%s strikes %s Commander for %d!" % [
+	status_message = "%s strikes %s Conductor for %d!" % [
 		_actor_tag(actor), "the enemy" if actor.side == PLAYER else "your", total_dealt
 	]
 
@@ -3901,13 +3917,13 @@ func _refresh_auras() -> void:
 		else:
 			_log_action("%s loses %d %s as %s fades." % [unit.name, -delta, stat, event.label])
 
-func _apply_captain_skill(side: int, skill_name: String) -> bool:
-	var captain_hp: int = player_hp if side == PLAYER else enemy_hp
-	var result: Dictionary = CaptainSkillsScript.apply(skill_name, side, units, captain_hp)
+func _apply_conductor_skill(side: int, skill_name: String) -> bool:
+	var conductor_hp: int = player_hp if side == PLAYER else enemy_hp
+	var result: Dictionary = ConductorSkillsScript.apply(skill_name, side, units, conductor_hp)
 	status_message = result.message
 	if not result.success:
 		return false
-	_log_action("%s CAPTAIN [SKILL · %s] %s" % [
+	_log_action("%s CONDUCTOR [SKILL · %s] %s" % [
 		"YOUR" if side == PLAYER else "ENEMY", skill_name, result.message
 	])
 
@@ -3920,9 +3936,9 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 			enemy_shield = result.shield
 			enemy_shield_turns = result.shield_turns
 
-	if result.captain_damage > 0:
+	if result.conductor_damage > 0:
 		var target_side := ENEMY if side == PLAYER else PLAYER
-		var dealt := _damage_captain(target_side, result.captain_damage)
+		var dealt := _damage_conductor(target_side, result.conductor_damage)
 		_refresh()
 		battle_audio.play("commander")
 		board.shake(8.0)
@@ -3942,7 +3958,7 @@ func _apply_captain_skill(side: int, skill_name: String) -> bool:
 	return true
 
 func _expire_side_effects(side: int) -> void:
-	CaptainSkillsScript.expire_effects(units, side)
+	ConductorSkillsScript.expire_effects(units, side)
 	BattleRulesScript.expire_taunts(units, side)
 	UnitSkillsScript.expire_statuses(units, side)
 	if side == PLAYER and player_shield_turns > 0:
@@ -3990,14 +4006,14 @@ func _resolve_chants(side: int, phase: String = "start") -> void:
 	_remove_defeated()
 	_refresh_auras()
 
-func _damage_captain(side: int, damage: int) -> int:
+func _damage_conductor(side: int, damage: int) -> int:
 	var state := {
 		"player_hp": player_hp,
 		"enemy_hp": enemy_hp,
 		"player_shield": player_shield,
 		"enemy_shield": enemy_shield
 	}
-	var result: Dictionary = BattleSimulatorScript.apply_captain_damage(side, damage, state)
+	var result: Dictionary = BattleSimulatorScript.apply_conductor_damage(side, damage, state)
 	player_hp = state.player_hp
 	enemy_hp = state.enemy_hp
 	player_shield = state.player_shield
@@ -4084,12 +4100,12 @@ func _check_game_over() -> bool:
 			var encounter_count := CampaignStoreScript.encounter_count(current_mission_id)
 			if current_encounter_index + 1 < encounter_count:
 				awaiting_next_encounter = true
-				mission_run_captain_hp = player_hp
-				MissionRunStoreScript.save_run(current_mission_id, current_encounter_index + 1, mission_run_captain_hp)
+				mission_run_conductor_hp = player_hp
+				MissionRunStoreScript.save_run(current_mission_id, current_encounter_index + 1, mission_run_conductor_hp)
 				var next_encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index + 1)
 				overlay_title.text = "FIELD SECURED"
 				overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
-				overlay_detail.text = "Captain HP carried forward: %d\nNext: Battle %d/%d · %s" % [
+				overlay_detail.text = "Conductor HP carried forward: %d\nNext: Battle %d/%d · %s" % [
 					player_hp, current_encounter_index + 2, encounter_count, next_encounter.title
 				]
 				result_primary_button.text = "CONTINUE MISSION"
@@ -4144,9 +4160,9 @@ func _check_game_over() -> bool:
 	else:
 		if campaign_battle:
 			MissionRunStoreScript.clear_run()
-		overlay_title.text = "LINE BROKEN"
+		overlay_title.text = LOSS_TITLE
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
-		overlay_detail.text = "Your skyway has fallen.\nRebuild your formation and try again."
+		overlay_detail.text = LOSS_DETAIL
 		result_primary_button.text = "RETRY BATTLE"
 		_emphasize_result_action(result_primary_button)
 	_refresh()

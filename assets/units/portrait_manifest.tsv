@@ -70,7 +70,7 @@
 071	12.fq3rm.png	4	12.fbv5r.png	4	The Botanist
 072	12.fq3rm.png	5	12.fbv5r.png	5	The Ecologist
 073	13.am352.png	0	13.bp69q.png	0	Commune Defender
-074	13.am352.png	1	13.bp69q.png	1	Commune Captain
+074	13.am352.png	1	13.bp69q.png	1	Commune Conductor
 075	13.am352.png	2	13.bp69q.png	2	LDF Swordwielder
 076	13.am352.png	3	13.bp69q.png	3	LDF Greatsword
 077	13.am352.png	4	13.bp69q.png	4	Talon Scratcher
@@ -81,7 +81,7 @@
 082	14.grd4.png	3	14.6jumc.png	3	Devout Warlock
 083	14.grd4.png	4	14.6jumc.png	4	Minerva the Brave
 084	14.grd4.png	5	14.6jumc.png	5	Minerva the Lionheart
-085	15.ddlo6.png	0	15.5n0uk.png	0	Captain Kerryson
+085	15.ddlo6.png	0	15.5n0uk.png	0	Conductor Kerryson
 086	15.ddlo6.png	1	15.5n0uk.png	1	Kerryson the Stoic
 087	15.ddlo6.png	2	15.5n0uk.png	2	Royal Yeoman
 088	15.ddlo6.png	3	15.5n0uk.png	3	Royal Beefeater
@@ -254,7 +254,7 @@
 257	43.12g34.png	4	43.ikle.png	4	Alice and Cheshire
 258	43.12g34.png	5	43.ikle.png	5	Curious Alice
 259	44.8v4mk.png	0	44.ak5rp.png	0	Crewman Basilic
-260	44.8v4mk.png	1	44.ak5rp.png	1	Captain Basilic
+260	44.8v4mk.png	1	44.ak5rp.png	1	Conductor Basilic
 261	44.8v4mk.png	2	44.ak5rp.png	2	Reporter Mikeko
 262	44.8v4mk.png	3	44.ak5rp.png	3	Director Mikeko
 263	44.8v4mk.png	4	44.ak5rp.png	4	Jimimi the Shepherd

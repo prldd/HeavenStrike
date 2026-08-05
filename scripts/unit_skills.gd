@@ -1389,7 +1389,7 @@ static func expire_statuses(units: Array, side: int) -> void:
 
 ## A Silenced unit's secondary skill does not trigger while the counter
 ## holds: it skips its Warcry, Strike, Chants, and Reaction, and stops
-## contributing its Aura. Movement, attacks, and Captain skills are unaffected.
+## contributing its Aura. Movement, attacks, and Conductor skills are unaffected.
 static func is_silenced(unit: Dictionary) -> bool:
 	return unit.get("silenced_turns", 0) > 0
 

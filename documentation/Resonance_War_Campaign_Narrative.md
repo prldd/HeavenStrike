@@ -69,7 +69,7 @@ things; Cassian learns what the player is worth.
   Caelian relay site. The player runs field diagnostics with the first two
   recovered automatons. Teaches deployment and attacks.
 - **M2 Training Day (2)** — More reclaimed machines come online; Cassian is
-  introduced counting crates and favors. Teaches Captain skills.
+  introduced counting crates and favors. Teaches Conductor skills.
 - **M3 Cause for Alarm** — The relay synchronizes unexpectedly during a
   power-up test. Security routines wake mid-accident; the player fights out
   of the collapsing gallery. Unbeknownst to everyone, they are now

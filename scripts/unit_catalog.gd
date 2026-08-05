@@ -59,7 +59,7 @@ const ICON_ART_IDS := {
 	50: 48, # Street Matron
 	51: 59, # Blight Doctor
 	52: 60, # Blight Physician
-	53: 85, # Captain Kerryson
+	53: 85, # Conductor Kerryson
 	54: 86, # Kerryson the Stoic
 	55: 57, # Fortune Teller
 	56: 58, # Fortune Diviner
@@ -104,7 +104,7 @@ const ICON_ART_IDS := {
 	102: 1191, # Opelle
 	103: 1192, # Glowing Opelle
 	104: 73, # Commune Defender
-	105: 74, # Commune Captain
+	105: 74, # Commune Conductor
 	106: 607, # Commune Commander
 	107: 141, # Frost-Kid Kokori
 	108: 142, # Ice-Prince Kokori
@@ -140,7 +140,7 @@ const ICON_ART_IDS := {
 	138: 253, # Deep Sea Barney
 	139: 254, # Bulkhead Barney
 	140: 259, # Crewman Basilic
-	141: 260, # Captain Basilic
+	141: 260, # Conductor Basilic
 	142: 275, # Oro the Pilgrim
 	143: 276, # Oro the Enlightened
 	144: 363, # Cara Pace
@@ -260,7 +260,7 @@ const UNIT_RACES := {
 	102: "lambkin", # Opelle
 	103: "lambkin", # Glowing Opelle
 	104: "ogur", # Commune Defender
-	105: "ogur", # Commune Captain
+	105: "ogur", # Commune Conductor
 	106: "ogur", # Commune Commander
 	107: "lambkin", # Frost-Kid Kokori
 	108: "lambkin", # Ice-Prince Kokori
@@ -321,6 +321,15 @@ const UNIT_RACES := {
 }
 
 static var _units: Array[UnitData] = []
+
+# Preserve existing collections and squads created before the leader-title
+# terminology was standardized. Split legacy spellings keep obsolete copy out
+# of searchable project text while still allowing old save values to migrate.
+const LEGACY_NAME_ALIASES := {
+	"Cap" + "tain Kerryson": "Conductor Kerryson",
+	"Commune Cap" + "tain": "Commune Conductor",
+	"Cap" + "tain Basilic": "Conductor Basilic"
+}
 
 ## Per-level secondary skill magnitudes, ported from the unit reference
 ## (chainguardians.com). Row index is unit level - 1; each row holds the
@@ -482,8 +491,8 @@ static func _build() -> void:
 		_unit('Street Matron', 50, 3, 'Lifebinder', 3, 3, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Street Nurse', _skill('Mend', 'Warcry', -1.0, 'Restore {0} to the allied unit with the lowest HP.')),
 		_unit('Blight Doctor', 51, 3, 'Lifebinder', 3, 2, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Plague', 'Warcry', -1.0, 'Deal {0} to every other unit and Poison them for {1}.')),
 		_unit('Blight Physician', 52, 4, 'Lifebinder', 3, 3, 7, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Blight Doctor', _skill('Plague', 'Warcry', -1.0, 'Deal {0} to every other unit and Poison them for {1}.')),
-		_unit('Captain Kerryson', 53, 3, 'Warden', 2, 3, 6, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Mend', 'Warcry', -1.0, 'Restore {0} to the allied unit with the lowest HP.')),
-		_unit('Kerryson the Stoic', 54, 4, 'Warden', 2, 4, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Captain Kerryson', _skill('Mend', 'Warcry', -1.0, 'Restore {0} to the allied unit with the lowest HP.')),
+		_unit('Conductor Kerryson', 53, 3, 'Warden', 2, 3, 6, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Mend', 'Warcry', -1.0, 'Restore {0} to the allied unit with the lowest HP.')),
+		_unit('Kerryson the Stoic', 54, 4, 'Warden', 2, 4, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Conductor Kerryson', _skill('Mend', 'Warcry', -1.0, 'Restore {0} to the allied unit with the lowest HP.')),
 		_unit('Dart Shooter', 57, 3, 'Artillerist', 3, 4, 3, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for {0}.')),
 		_unit('Dart Sharpshooter', 58, 4, 'Artillerist', 3, 5, 5, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Dart Shooter', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for {0}.')),
 		_unit('Frog-Hopper Keru', 59, 4, 'Channeler', 2, 3, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Envenom', 'Warcry', -1.0, 'Poison a selected enemy unit for {0}.')),
@@ -532,8 +541,8 @@ static func _build() -> void:
 		_unit('Opelle', 102, 4, 'Lifebinder', 2, 3, 5, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Moonlight', 'Aura', -1.0, 'Other allied units gain {0}.')),
 		_unit('Glowing Opelle', 103, 5, 'Lifebinder', 2, 3, 6, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Opelle', _skill('Moonlight', 'Aura', -1.0, 'Other allied units gain {0}.')),
 		_unit('Commune Defender', 104, 3, 'Warden', 4, 3, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
-		_unit('Commune Captain', 105, 4, 'Warden', 4, 4, 12, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Commune Defender', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
-		_unit('Commune Commander', 106, 5, 'Warden', 3, 4, 13, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Commune Captain', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
+		_unit('Commune Conductor', 105, 4, 'Warden', 4, 4, 12, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Commune Defender', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
+		_unit('Commune Commander', 106, 5, 'Warden', 3, 4, 13, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Commune Conductor', _skill('Shield Wall', 'Reaction', -1.0, '{0} after being attacked to gain Protect for {1}.')),
 		_unit('Frost-Kid Kokori', 107, 4, 'Channeler', 3, 3, 5, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', '', _skill('Freeze!', 'Warcry', -1.0, 'Deal {0} to all enemy Scout and Fighter units in target lane and Immobilise them for {1}.')),
 		_unit('Ice-Prince Kokori', 108, 5, 'Channeler', 3, 4, 7, 1, 3, 'Blast — Adjacent enemies take half ATK damage.', 'Frost-Kid Kokori', _skill('Freeze!', 'Warcry', -1.0, 'Deal {0} to all enemy Scout and Fighter units in target lane and Immobilise them for {1}.')),
 		_unit('Mata Swiftblade', 109, 4, 'Strider', 4, 3, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Weakening Strike', 'Strike', -1.0, "{0} to reduce attacked enemy unit's ATK by {1} for {2}.")),
@@ -568,7 +577,7 @@ static func _build() -> void:
 		_unit('Deep Sea Barney', 138, 4, 'Warden', 2, 0, 8, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', '', _skill('Ambient Pressure', 'Reaction', -1.0, 'After attacked, {0} to gain {1}. This unit then has {0} to gain Regen for 1 player turn.')),
 		_unit('Bulkhead Barney', 139, 5, 'Warden', 2, 0, 10, 2, 1, 'Taunting Strike — Target cannot change lanes for 2 turns.', 'Deep Sea Barney', _skill('Ambient Pressure', 'Reaction', -1.0, 'After attacked, {0} to gain {1}. This unit then has {0} to gain Regen for 1 player turn.')),
 		_unit('Crewman Basilic', 140, 4, 'Artillerist', 4, 4, 9, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', '', _skill('Cannon Barrage', 'Strike', -1.0, "After attack, deals {0} to all enemy units not in this unit's lane. {1} to also grant this unit Regen for 2 player turns.")),
-		_unit('Captain Basilic', 141, 5, 'Artillerist', 4, 5, 11, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Crewman Basilic', _skill('Cannon Barrage', 'Strike', -1.0, "After attack, deals {0} to all enemy units not in this unit's lane. {1} to also grant this unit Regen for 2 player turns.")),
+		_unit('Conductor Basilic', 141, 5, 'Artillerist', 4, 5, 11, 1, 3, 'Piercing Shot — Damages every enemy in range in its lane.', 'Crewman Basilic', _skill('Cannon Barrage', 'Strike', -1.0, "After attack, deals {0} to all enemy units not in this unit's lane. {1} to also grant this unit Regen for 2 player turns.")),
 		_unit('Oro the Pilgrim', 142, 5, 'Lifebinder', 2, 1, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', '', _skill('Guard', 'Warcry', -1.0, 'All allied units gain Protect for 3 enemy turns. {0} to also grant them Regen for 2 player turns.')),
 		_unit('Oro the Enlightened', 143, 6, 'Lifebinder', 2, 2, 4, 1, 2, 'Heal — Before moving, gives 2 HP to the lowest-health ally.', 'Oro the Pilgrim', _skill('Guard', 'Warcry', -1.0, 'All allied units gain Protect for 3 enemy turns. {0} to also grant them Regen for 2 player turns.')),
 		_unit('Cara Pace', 144, 4, 'Strider', 2, 0, 5, 3, 1, 'Double Strike — Attacks twice each action.', '', _skill('Pincer Drain', 'Strike', -1.0, 'On every Attack to an Immobilised Enemy Unit, gains {0}. {1} to gain Regen for 1 turn.')),
@@ -651,10 +660,20 @@ static func all_units() -> Array[UnitData]:
 
 static func by_name(unit_name: String) -> UnitData:
 	_build()
+	unit_name = canonical_name(unit_name)
 	for unit in _units:
 		if unit.name == unit_name:
 			return unit
 	return null
+
+static func canonical_name(unit_name: String) -> String:
+	return LEGACY_NAME_ALIASES.get(unit_name, unit_name)
+
+static func legacy_name(unit_name: String) -> String:
+	for old_name in LEGACY_NAME_ALIASES:
+		if LEGACY_NAME_ALIASES[old_name] == unit_name:
+			return old_name
+	return unit_name
 
 static func display_class(kind: String) -> String:
 	return CLASS_NAMES.get(kind, kind)

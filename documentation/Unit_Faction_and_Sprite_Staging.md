@@ -96,7 +96,7 @@ Each active PNG and its matching .png.import file live together. The 001-bak.png
 | Class | Secondary skill | Promotion lineage and source art |
 |---|---|---|
 | Defender (Warden) | Sundering Smash | Geartron Prototype (4★; 289.png) → Geartron-5000 (5★; 290.png) |
-| Defender (Warden) | Shield Wall | Commune Defender (3★; 073.png) → Commune Captain (4★; 074.png) → Commune Commander (5★; 607.png) |
+| Defender (Warden) | Shield Wall | Commune Defender (3★; 073.png) → Commune Conductor (4★; 074.png) → Commune Commander (5★; 607.png) |
 | Defender (Warden) | Protect | LDF Constable (2★; 037.png) → LDF Sergeant (3★; 038.png) |
 | Defender (Warden) | Impairing Joust | The Rook (5★; 241.png) → Sterling Knight (6★; 242.png) |
 | Defender (Warden) | Ambient Pressure | Deep Sea Barney (4★; 253.png) → Bulkhead Barney (5★; 254.png) |
@@ -139,13 +139,13 @@ Each active PNG and its matching .png.import file live together. The 001-bak.png
 
 | Class | Secondary skill | Promotion lineage and source art |
 |---|---|---|
-| Defender (Warden) | Mend | Captain Kerryson (3★; 085.png) → Kerryson the Stoic (4★; 086.png) |
+| Defender (Warden) | Mend | Conductor Kerryson (3★; 085.png) → Kerryson the Stoic (4★; 086.png) |
 | Defender (Warden) | Yield! | Ki (4★; 651.png) → Hammering Ki (5★; 652.png) |
 | Fighter (Duelist) | Demoralize | Vicious Pierrot (4★; 183.png) → Pierrot the Deciever (5★; 184.png) |
 | Scout (Strider) | Heaven's Wrath | Order Apostle (2★; 029.png) → Order Missionary (3★; 030.png) |
 | Scout (Strider) | Punish | Shakespeare (4★; 487.png) → The Bard (5★; 488.png) |
 | Gunner (Artillerist) | Bolt | LDF Gunner (2★; 019.png) → LDF Sureshot (3★; 020.png) |
-| Gunner (Artillerist) | Cannon Barrage | Crewman Basilic (4★; 259.png) → Captain Basilic (5★; 260.png) |
+| Gunner (Artillerist) | Cannon Barrage | Crewman Basilic (4★; 259.png) → Conductor Basilic (5★; 260.png) |
 | Mage (Channeler) | Misfortune | LDF Crowd Mage (2★; 045.png) → LDF Riot Mage (3★; 046.png) |
 | Mage (Channeler) | Meteor Barrage | Devout Mage (3★; 081.png) → Devout Warlock (4★; 082.png) |
 | Mage (Channeler) | Freeze! | Frost-Kid Kokori (4★; 141.png) → Ice-Prince Kokori (5★; 142.png) |

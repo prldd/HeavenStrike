@@ -53,17 +53,17 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `board_view.gd` | Presentation layer for the battlefield: drawing, animations, projectiles, hit flash, screen shake, hover previews. Emits `deployment_clicked`, `board_cell_clicked`, `unit_hovered`, `unit_hover_ended`. |
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
-| `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Captain-skill timing. |
+| `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Conductor-skill timing. |
 | `unit_catalog.gd` | Authoritative unit roster: 210 units as `UnitData` Resources with stats, class, race, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
-| `captain_skills.gd` | Static resolution of the eight Commander powers and effect expiration. |
-| `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Captain-skill storage. |
+| `conductor_skills.gd` | Static resolution of the eight Conductor powers and effect expiration. |
+| `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Conductor-skill storage. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
-| `story_quest_catalog.gd` | Builds the 77-mission campaign from reference quest data, reward pools, authored enemy decks, and Captain configurations. `MISSION_STORIES` holds authored per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number; uncovered missions get generated placeholder text. Missions 1–62 (Acts 1–2) are ported from the reference; missions 63–77 (Act 3, "Caelis") are original content. |
+| `story_quest_catalog.gd` | Builds the 77-mission campaign from reference quest data, reward pools, authored enemy decks, and Conductor configurations. `MISSION_STORIES` holds authored per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number; uncovered missions get generated placeholder text. Missions 1–62 (Acts 1–2) are ported from the reference; missions 63–77 (Act 3, "Caelis") are original content. |
 | `story_dialogue_catalog.gd` | Editable post-mission interludes. `INTERLUDES` is keyed by 1-based mission number and holds a scene title, location, and ordered speaker/text lines; `CHARACTERS` owns speaker roles, initials, and accent colors. `main.gd` owns only the dialogue presentation and return flow. |
-| `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Captain HP). |
+| `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Conductor HP). |
 | `kinetic_crucible.gd` | Per-copy unit progression: levels 1–5, merge point values, donor rules, level-based stat growth (`scaled_stat`), promotion conversion (`record_promotion`), inventory sync, and migration from older name-based saves. |
 | `battle_settings.gd` | Player settings persistence (resolution speed, audio volume, reduced motion, animation skip). |
 | `battle_audio.gd` | Procedural audio generation and polyphonic playback; `AudioStreamPlayer` pool. |
@@ -107,7 +107,7 @@ mkdir -p .tools/godot-user-win
 APPDATA="$(pwd -W)/.tools/godot-user-win" "/e/Tools/Godot/Godot.exe" --headless --path . --script res://tests/smoke_test.gd
 ```
 
-- `smoke_test.gd` — validates the unit catalog, art files, simulator, replay history, damage/healing, Captain shields, squad store, Kinetic Crucible, and skill data. Extensive `assert()` calls; fails fast on regression.
+- `smoke_test.gd` — validates the unit catalog, art files, simulator, replay history, damage/healing, Conductor shields, squad store, Kinetic Crucible, and skill data. Extensive `assert()` calls; fails fast on regression.
 - `ui_smoke_test.gd` — instantiates `main.tscn`, probes the UI control tree, toggles settings, checks audio labels, verifies the board view API, and exercises the Kinetic Crucible UI.
 - `balance_simulation.gd` — audits all 77 campaign missions: every configured enemy encounter has a valid squad, positive power, monotonic HP progression, and the difficulty curve stays within the allowed max jump.
 
@@ -137,7 +137,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 - **Single main scene:** `main.tscn` is the only committed scene. The rest of the UI is built in code inside `main.gd`. Add new UI elements inside `main.gd` unless there is a strong reason to introduce a scene file.
 - **Mobile touch scrolling:** on Android/iOS (`OS.has_feature("mobile")`), interactive children of `ScrollContainer`s must use `MOUSE_FILTER_PASS` (see `SquadCard.configure` and the mission-list buttons in `main.gd`), otherwise a touch drag that starts on them never reaches the container and the list cannot scroll. Only skip this when the child keeps drag-and-drop on mobile (squad-formation cards). Card drag-and-drop itself is disabled on mobile for list cards (`SquadCard._get_drag_data`) so drags scroll instead of starting a drag; `ui_theme.gd` also widens scrollbars on mobile.
 - **Mobile touch details:** touch has no hover, so detail popups must not be driven by `mouse_entered` on mobile (it fires on every tap/scroll and the popup tracks the last touch point). Cards show details via long-press instead: `SquadCard` emits `long_pressed`/`long_press_released` (0.45 s hold, cancelled by ~10 px of movement), wired through `main.gd:_connect_card_details`, and the card tap handlers bail out when `_touch_details_active` is set so the release that ends a long-press does not also fire the card's action (the Viewport delivers the release to the pressed button regardless of `mouse_filter`, so suppression must happen at the action level).
-- **Simulation vs. presentation:** keep deterministic combat rules in `BattleSimulator`, `BattleRules`, `BattleAI`, `UnitSkills`, and `CaptainSkills`. Keep drawing, animation, audio, and input in `BoardView` and `main.gd`. Do not add combat logic to `BoardView`.
+- **Simulation vs. presentation:** keep deterministic combat rules in `BattleSimulator`, `BattleRules`, `BattleAI`, `UnitSkills`, and `ConductorSkills`. Keep drawing, animation, audio, and input in `BoardView` and `main.gd`. Do not add combat logic to `BoardView`.
 - **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards (applying `KineticCrucible.scaled_stat` for the card's level). Secondary skills scale with unit level: `UnitCatalog.RANK_VALUES` holds the five per-level rows ported from the unit reference, `SkillData` carries them as `rank_values` with `{0}`/`{1}` placeholder descriptions, and `UnitSkills.rank_value` reads the magnitudes at resolution time. Any new secondary skill needs a rank table (or flat fallback), a matching resolution branch in `UnitSkills`, and an AI consideration in `BattleAI` if relevant.
 - **Deterministic replays:** the simulator records events. Replays are saved to `user://last_replay.json` and archived newest-first to `user://replay_history.json` (limit 10). Keep replay serialization backward-compatible where possible; the tests already assert version 1 format.
 - **Persistence:** all player save data is written under `user://` via `ConfigFile` or `JSON`. Files include `user://player.cfg`, `user://campaign.cfg`, `user://mission_run.cfg`, and `user://kinetic_crucible.cfg`. Migration code is kept in the relevant store scripts, not in `main.gd`.
@@ -323,7 +323,7 @@ starting Reserves.
    `immobilized_turns` — at the end of the silenced unit's own side turns —
    so the rank value N lasts N of the silenced unit's turns (the "enemy
    turns" of the reference text, from the caster's perspective). Silence
-   never blocks movement, attacks, or Captain skills, and class abilities
+   never blocks movement, attacks, or Conductor skills, and class abilities
    are flavor text with no mechanics, so "Class Skills are silenced" from
    the reference is a no-op here. The Divine Silence AI fallback
    (`_skilled_enemy`) picks the highest-ATK enemy carrying a secondary
@@ -339,7 +339,7 @@ starting Reserves.
    `_append_roguish_snare` pre-pass Stuns it for 2 turns with a rank-scaled
    chance of permanent Poison (`PERMANENT_POISON_TURNS = 999`, which
    `resolve_start_statuses` never ticks down; `BoardView` and
-   `CaptainSkills.effect_summary` special-case it for display).
+   `ConductorSkills.effect_summary` special-case it for display).
    Wrangle is column-relative and cross-lane ("Affects all lanes"): side 0
    advances toward higher columns and side 1 toward lower ones, so allies
    on columns further from the enemy edge than the chanter are "behind"
@@ -350,7 +350,7 @@ starting Reserves.
    `BattleSimulator.apply_unit_damage(unit, amount, source)`: attack damage
    (the direct hit in `main.gd:_activate_unit` and its Blast/Pierce riders in
    `_apply_special_damage`) passes the attacking unit as `source`, while
-   secondary-skill and Captain damage passes no source and bypasses both
+   secondary-skill and Conductor damage passes no source and bypasses both
    immunities. Summon Forth is a Warcry that sets `summon_forth_turns`
    (ticking on the opposing side's expiry pass, like `doom_turns`, so N
    covers exactly the next N enemy turns); while it holds, attack damage
@@ -406,7 +406,7 @@ Gotchas when running the Windows binary headless:
 
 - **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, place its replacement-art source under the assigned `assets/units/full_by_class/<Pool>/<Class>/` folder, update `documentation/Unit_Faction_and_Sprite_Staging.md`, update `smoke_test.gd` counts if intentional, and run the three tests. Keep every promotion lineage in one pool. For reference-sourced units follow the full workflow in "Porting units and skills from the reference" above.
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
-- **Add a Captain skill:** edit `scripts/captain_skills.gd`, add the name to `CaptainSkills.SKILLS`, and update the description.
+- **Add a Conductor skill:** edit `scripts/conductor_skills.gd`, add the name to `ConductorSkills.SKILLS`, and update the description.
 - **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`. New missions must be appended at the end of `QUESTS` — never inserted mid-list — because `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`, and the balance test all key off mission index. Add story text to `MISSION_STORIES` and, when the mission has a character scene, add a 1-based entry to `scripts/story_dialogue_catalog.gd:INTERLUDES`. Follow `documentation/Resonance_War_Campaign_Narrative.md` (the narrative plan) and `documentation/Resonance_War_Narrative_Foundation.md` (the world rules).
 - **Change UI theme:** edit `scripts/ui_theme.gd`; the theme is generated programmatically and applied to the root control in `main.gd`.
 - **Change audio:** edit `scripts/battle_audio.gd`; the sounds are generated from wave functions.

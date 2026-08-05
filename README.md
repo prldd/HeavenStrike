@@ -40,7 +40,7 @@ assets required by the prototype.
   missions with an interlude offer **View Scene** on the operations map.
 - Drag cards within the selected squad to reorder them; right-click a card to assign it as Vanguard.
 - Squad Workshop supports click-to-add/remove and drag-and-drop between the Barracks and Squad.
-- Defeat the enemy Commander before it reduces your 20 HP to zero.
+- Defeat the enemy Conductor before it reduces your 20 HP to zero.
 
 ## Implemented
 
@@ -48,9 +48,9 @@ assets required by the prototype.
 - 210 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 77 sequential story missions across three acts with escalating difficulty
-- One-to-three battle encounter sequences with Captain-HP attrition
+- One-to-three battle encounter sequences with Conductor-HP attrition
 - Persistent in-progress mission runs and main-menu resume
-- Encounter transition screens with upcoming Captain information
+- Encounter transition screens with upcoming Conductor information
 - Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
 - 107 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
@@ -72,9 +72,9 @@ assets required by the prototype.
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
 - Seventy-seven authored, mission-specific eight-card PvE squads and
-  context-aware deployment, movement, and Captain-skill AI
+  context-aware deployment, movement, and Conductor-skill AI
 - Mission-specific briefings and debriefings, Act completion tracking, active
-  run status, and pre-battle enemy squad/Captain intelligence
+  run status, and pre-battle enemy squad/Conductor intelligence
 - Story-specific opponent names and affiliations carried from prebattle intel
   onto the enemy side of every campaign battlefield
 - 46 first-completion character interludes with a reusable speaker-driven
@@ -85,14 +85,14 @@ assets required by the prototype.
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
 - Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
 - Player-selected targets for Empower Warcries
-- Commander health, Rally powers, victory, defeat, and replay
-- Persistent selection of eight Captain skills
-- Timed attack effects, healing, direct damage, area damage, and Captain shields
+- Conductor health, Rally powers, victory, defeat, and replay
+- Persistent selection of eight Conductor skills
+- Timed attack effects, healing, direct damage, area damage, and Conductor shields
 - Active-effect names and remaining duration in unit hover cards
 - Persistent battlefield badges show Taunt, Immobilise, Fury stacks, and timed stat changes.
-- Floating combat feedback calls out damage, healing, status application, and Commander hits.
+- Floating combat feedback calls out damage, healing, status application, and Conductor hits.
 - Class-specific combat animation includes melee lunges, Gunner trails, Mage projectiles, Priest healing pulses, hit recoil, distinct Double Strike impacts, and defeat dissolves.
-- Synthesized battle audio distinguishes deployment, movement, class attacks, healing, statuses, shields, Commander hits, and defeats; Commander damage also triggers subtle screen shake.
+- Synthesized battle audio distinguishes deployment, movement, class attacks, healing, statuses, shields, Conductor hits, and defeats; Conductor damage also triggers subtle screen shake.
 - Victory triggers a dedicated ascending multi-note fanfare before the battle result is presented.
 - Each resolution begins with a compact ordered movement/attack preview; the combat log names unit classes and secondary-skill timing.
 - Deterministic rules with a presentation layer separated into `BoardView`
@@ -133,7 +133,7 @@ the player configuration. Completed battles are added newest-first to
 `user://replay_history.json`, which retains the latest ten and discards the
 oldest as new battles finish. `user://last_replay.json` remains as a
 backward-compatible latest-replay save. The viewer reconstructs each battle
-timeline and verifies its final Captain HP state.
+timeline and verifies its final Conductor HP state.
 
 Player, campaign, and in-progress mission-run saves include version metadata.
 Legacy unversioned saves remain loadable as version-zero data.
@@ -143,7 +143,7 @@ Legacy unversioned saves remain loadable as version-zero data.
 The current interface cleanup is complete:
 
 - Live battles expose only frequently used battle actions in the action bar.
-- Replay mode hides unusable live controls such as the Captain ability and
+- Replay mode hides unusable live controls such as the Conductor ability and
   Resolve Turn.
 - Replay playback and history navigation are visually separated.
 - Speed has one persistent control in Settings; it is not duplicated in the

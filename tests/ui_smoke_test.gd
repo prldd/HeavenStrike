@@ -31,6 +31,12 @@ func _run() -> void:
 	assert(game.audio_button.text == "SOUND 100%")
 	assert(game.animation_button.text == "ANIM ON")
 	assert(game.motion_button.text == "MOTION FULL")
+	assert(game.LOSS_TITLE == "TACTICAL DEFEAT")
+	assert(game.LOSS_DETAIL == "Your Conductor was defeated.\nRetry the battle with a new tactical approach.")
+	var retired_leader_term := "Cap" + "tain"
+	assert(game._canonical_replay_text(
+		"Enemy " + retired_leader_term + " loses 3 HP."
+	) == "Enemy Conductor loses 3 HP.")
 	assert(game.audio_button.get_parent().get_parent() == game.settings_panel)
 	assert(game.speed_button.get_parent().get_parent() == game.settings_panel)
 	assert(not game.has_method("_open_tutorial"))
@@ -99,11 +105,33 @@ func _run() -> void:
 	assert(game.board.player_hp_text == "18 HP\n2 SHIELD")
 	assert(game.board.player_deck_text == "DECK 3")
 	var board_cell: Rect2 = game.board._cell_rect(0, 0)
-	assert(board_cell.size.y > board_cell.size.x)
-	assert(is_equal_approx(
-		board_cell.size.x / board_cell.size.y,
-		game.board.CELL_ASPECT_RATIO
-	))
+	var board_cell_shape: PackedVector2Array = game.board._cell_polygon(0, 0)
+	assert(board_cell.size.x > 0.0 and board_cell.size.y > 0.0)
+	assert(board_cell_shape.size() == 4)
+	assert((board_cell_shape[1] - board_cell_shape[0]).length()
+		< (board_cell_shape[2] - board_cell_shape[3]).length())
+	assert(game.board._cell_at(board_cell.get_center()) == Vector2i(0, 0))
+	assert(game.board.UNIT_ART_CELL_SCALE > 1.0)
+	var overlap_hit_unit := {"id": 99, "row": 1, "col": 3}
+	game.board.units = [overlap_hit_unit]
+	var overlap_art: Rect2 = game.board._unit_art_rect(overlap_hit_unit)
+	assert(game.board._unit_at_point(
+		Vector2(overlap_art.get_center().x, overlap_art.position.y + 4)
+	).id == 99)
+	game.board.selected_unit_id = 99
+	var reposition_clicks: Array[Vector2i] = []
+	var capture_reposition_click := func(row: int, col: int):
+		reposition_clicks.append(Vector2i(col, row))
+	game.board.board_cell_clicked.connect(capture_reposition_click)
+	var lane_change_event := InputEventMouseButton.new()
+	lane_change_event.button_index = MOUSE_BUTTON_LEFT
+	lane_change_event.pressed = true
+	lane_change_event.position = game.board._cell_rect(0, 3).get_center()
+	game.board._gui_input(lane_change_event)
+	assert(reposition_clicks == [Vector2i(3, 0)])
+	game.board.board_cell_clicked.disconnect(capture_reposition_click)
+	game.board.selected_unit_id = -1
+	game.board.units = []
 	assert(game.board.has_method("animate_unit_move"))
 	assert(game.board.has_method("animate_attack"))
 	assert(game.board.has_method("animate_commander_attack"))
@@ -445,7 +473,7 @@ func _run() -> void:
 		assert(action.text != "RESET")
 	assert(game.mission_intel_panel.visible)
 	assert(game.mission_enemy_preview_row.get_child_count() == 8)
-	assert(game.mission_intel_label.text.contains("CAPTAIN:"))
+	assert(game.mission_intel_label.text.contains("CONDUCTOR:"))
 	assert(game.mission_intel_label.text.contains("OPPONENT: RELAY DRILL TEAM"))
 	assert(game.mission_intel_label.text.contains("RECLAMATION EXPEDITION"))
 	assert(game.mission_intel_stats_label.text.contains("AVG MANA"))

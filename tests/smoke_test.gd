@@ -6,10 +6,11 @@ const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
-const CaptainSkillsScript = preload("res://scripts/captain_skills.gd")
+const ConductorSkillsScript = preload("res://scripts/conductor_skills.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
+const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
@@ -20,6 +21,60 @@ func _init() -> void:
 	assert(UnitCatalogScript.class_color("Strider") != UnitCatalogScript.class_color("Duelist"))
 	assert(UnitCatalogScript.class_color("Warden") != UnitCatalogScript.class_color("Lifebinder"))
 	assert(UnitCatalogScript.by_name("Missing") == null)
+	var retired_rank_word := "Cap" + "tain"
+	assert(roster.all(func(unit): return retired_rank_word.to_lower() not in unit.name.to_lower()))
+	assert(UnitCatalogScript.canonical_name(retired_rank_word + " Kerryson") == "Conductor Kerryson")
+	assert(UnitCatalogScript.canonical_name("Commune " + retired_rank_word) == "Commune Conductor")
+	assert(UnitCatalogScript.by_name(retired_rank_word + " Basilic").name == "Conductor Basilic")
+	assert(SquadStoreScript.sanitize(
+		[retired_rank_word + " Kerryson"], roster
+	) == ["Conductor Kerryson"])
+	var retired_skill_key := retired_rank_word.to_lower() + "_skill"
+	var retired_hp_key := retired_rank_word.to_lower() + "_hp"
+	var old_player_config := ConfigFile.new()
+	old_player_config.set_value("squad", retired_skill_key, "Shield")
+	assert(old_player_config.save(SquadStoreScript.SAVE_PATH) == OK)
+	assert(SquadStoreScript.load_conductor_skill(ConductorSkillsScript.SKILLS) == "Shield")
+	var migrated_player_config := ConfigFile.new()
+	assert(migrated_player_config.load(SquadStoreScript.SAVE_PATH) == OK)
+	assert(migrated_player_config.get_value("squad", "conductor_skill", "") == "Shield")
+	assert(not migrated_player_config.has_section_key("squad", retired_skill_key))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SquadStoreScript.SAVE_PATH))
+	var old_run_config := ConfigFile.new()
+	old_run_config.set_value("run", "mission_id", 2)
+	old_run_config.set_value("run", "encounter_index", 1)
+	old_run_config.set_value("run", retired_hp_key, 13)
+	assert(old_run_config.save(MissionRunStoreScript.SAVE_PATH) == OK)
+	var migrated_run := MissionRunStoreScript.load_run(77)
+	assert(migrated_run.conductor_hp == 13)
+	var migrated_run_config := ConfigFile.new()
+	assert(migrated_run_config.load(MissionRunStoreScript.SAVE_PATH) == OK)
+	assert(migrated_run_config.get_value("run", "conductor_hp", 0) == 13)
+	assert(not migrated_run_config.has_section_key("run", retired_hp_key))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(MissionRunStoreScript.SAVE_PATH))
+	var old_campaign_config := ConfigFile.new()
+	old_campaign_config.set_value("campaign", "reward_units", [
+		retired_rank_word + " Kerryson", "Commune " + retired_rank_word
+	])
+	assert(old_campaign_config.save(CampaignStoreScript.SAVE_PATH) == OK)
+	assert(CampaignStoreScript.load_reward_units(roster) == [
+		"Conductor Kerryson", "Commune Conductor"
+	])
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
+	var old_crucible_config := ConfigFile.new()
+	old_crucible_config.set_value("meta", "instances_migrated", true)
+	old_crucible_config.set_value("collection", "next_id", 2)
+	old_crucible_config.set_value("collection", "instances", [{
+		"id": "unit_000001", "name": retired_rank_word + " Basilic",
+		"level": 2, "points": 1, "consumed": false
+	}])
+	assert(old_crucible_config.save(KineticCrucibleScript.SAVE_PATH) == OK)
+	var migrated_instances := KineticCrucibleScript.sync_instances(
+		roster, {"Conductor Basilic": 1}
+	)
+	assert(migrated_instances.size() == 1)
+	assert(migrated_instances[0].name == "Conductor Basilic")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	assert(KineticCrucibleScript.LEVEL_COSTS == [3, 6, 12, 24])
 	assert(KineticCrucibleScript.apply_points(
 		{"level": 1, "points": 0}, 2
@@ -98,15 +153,15 @@ func _init() -> void:
 	var damage_target := {"id": 99, "hp": 5, "max_hp": 5}
 	assert(BattleSimulatorScript.apply_unit_damage(damage_target, 3).after == 2)
 	assert(BattleSimulatorScript.apply_unit_healing(damage_target, 2).after == 4)
-	var captain_state := {
+	var conductor_state := {
 		"player_hp": 20, "enemy_hp": 20,
 		"player_shield": 2, "enemy_shield": 0
 	}
-	var captain_hit := BattleSimulatorScript.apply_captain_damage(
-		0, 5, captain_state
+	var conductor_hit := BattleSimulatorScript.apply_conductor_damage(
+		0, 5, conductor_state
 	)
-	assert(captain_hit.shield_absorbed == 2)
-	assert(captain_state.player_hp == 17)
+	assert(conductor_hit.shield_absorbed == 2)
+	assert(conductor_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
 		func(icon_id): return icon_id >= 1 and icon_id <= 215
 	))
@@ -192,8 +247,8 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Glowing Opelle").promotion_of == "Opelle")
 	assert(UnitCatalogScript.by_name("Commune Defender").skill.name == "Shield Wall")
 	assert(UnitCatalogScript.by_name("Commune Defender").skill.type == "Reaction")
-	assert(UnitCatalogScript.by_name("Commune Captain").promotion_of == "Commune Defender")
-	assert(UnitCatalogScript.by_name("Commune Commander").promotion_of == "Commune Captain")
+	assert(UnitCatalogScript.by_name("Commune Conductor").promotion_of == "Commune Defender")
+	assert(UnitCatalogScript.by_name("Commune Commander").promotion_of == "Commune Conductor")
 	assert(UnitCatalogScript.by_name("Commune Commander").stars == 5)
 	assert(UnitCatalogScript.by_name("Frost-Kid Kokori").skill.name == "Freeze!")
 	assert(UnitCatalogScript.by_name("Frost-Kid Kokori").skill.type == "Warcry")
@@ -626,9 +681,9 @@ func _init() -> void:
 		inventory
 	)
 	assert(owned_squad == ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"])
-	assert(CaptainSkillsScript.SKILLS.size() == 8)
+	assert(ConductorSkillsScript.SKILLS.size() == 8)
 	assert(CampaignStoreScript.SAVE_VERSION == 1)
-	assert(SquadStoreScript.SAVE_VERSION == 2)
+	assert(SquadStoreScript.SAVE_VERSION == 3)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 77)
 	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - Training Day")
@@ -715,7 +770,7 @@ func _init() -> void:
 	assert("Order Missionary" in CampaignStoreScript.MISSIONS[27].reward_pool)
 	assert("Street Nurse" in CampaignStoreScript.MISSIONS[2].reward_pool)
 	assert("Street Matron" in CampaignStoreScript.MISSIONS[9].reward_pool)
-	assert("Captain Kerryson" in CampaignStoreScript.MISSIONS[17].reward_pool)
+	assert("Conductor Kerryson" in CampaignStoreScript.MISSIONS[17].reward_pool)
 	assert("Kerryson the Stoic" in CampaignStoreScript.MISSIONS[17].reward_pool)
 	assert("Garrett Talon" in CampaignStoreScript.MISSIONS[8].reward_pool)
 	assert("Garrett the Claw" in CampaignStoreScript.MISSIONS[49].reward_pool)
@@ -731,7 +786,7 @@ func _init() -> void:
 	assert("Devout Mage" in CampaignStoreScript.MISSIONS[20].reward_pool)
 	assert("Devout Warlock" in CampaignStoreScript.MISSIONS[55].reward_pool)
 	assert("Commune Defender" in CampaignStoreScript.MISSIONS[37].reward_pool)
-	assert("Commune Captain" in CampaignStoreScript.MISSIONS[37].reward_pool)
+	assert("Commune Conductor" in CampaignStoreScript.MISSIONS[37].reward_pool)
 	assert("LDF Constable" in CampaignStoreScript.MISSIONS[9].reward_pool)
 	assert("LDF Constable" in CampaignStoreScript.MISSIONS[61].reward_pool)
 	assert("LDF Sergeant" in CampaignStoreScript.MISSIONS[18].reward_pool)
@@ -880,7 +935,7 @@ func _init() -> void:
 		top_lane_mover, 2, [top_lane_mover, middle_lane_blocker]
 	))
 	assert(BattleAIScript.choose_reposition(top_lane_mover, [top_lane_mover]) == 0)
-	assert(BattleAIScript.should_use_captain_skill(
+	assert(BattleAIScript.should_use_conductor_skill(
 		"Shield", 4, 18, []
 	))
 
@@ -902,21 +957,21 @@ func _init() -> void:
 		"hp": 6, "max_hp": 6, "effects": [], "taunted_by": -1
 	}
 	var skill_units := [skill_ally, skill_enemy]
-	var rally: Dictionary = CaptainSkillsScript.apply("Rally", 0, skill_units, 20)
+	var rally: Dictionary = ConductorSkillsScript.apply("Rally", 0, skill_units, 20)
 	assert(rally.success)
 	assert(skill_ally.atk == 3)
-	assert("Rally (1 turn)" in CaptainSkillsScript.effect_summary(skill_ally))
-	CaptainSkillsScript.expire_effects(skill_units, 0)
+	assert("Rally (1 turn)" in ConductorSkillsScript.effect_summary(skill_ally))
+	ConductorSkillsScript.expire_effects(skill_units, 0)
 	assert(skill_ally.atk == 2)
 	assert(skill_ally.effects.is_empty())
-	var aid: Dictionary = CaptainSkillsScript.apply("Aid", 0, skill_units, 20)
+	var aid: Dictionary = ConductorSkillsScript.apply("Aid", 0, skill_units, 20)
 	assert(aid.success and skill_ally.hp == 5)
-	var shield: Dictionary = CaptainSkillsScript.apply("Shield", 0, skill_units, 20)
+	var shield: Dictionary = ConductorSkillsScript.apply("Shield", 0, skill_units, 20)
 	assert(shield.success and shield.shield == 5 and shield.shield_turns == 2)
-	assert(not CaptainSkillsScript.apply("Last Stand", 0, skill_units, 9).success)
-	assert(CaptainSkillsScript.apply("Last Stand", 0, skill_units, 8).success)
-	CaptainSkillsScript.expire_effects(skill_units, 0)
-	var firestorm: Dictionary = CaptainSkillsScript.apply("Firestorm", 0, skill_units, 20)
+	assert(not ConductorSkillsScript.apply("Last Stand", 0, skill_units, 9).success)
+	assert(ConductorSkillsScript.apply("Last Stand", 0, skill_units, 8).success)
+	ConductorSkillsScript.expire_effects(skill_units, 0)
+	var firestorm: Dictionary = ConductorSkillsScript.apply("Firestorm", 0, skill_units, 20)
 	assert(firestorm.success and skill_enemy.hp == 4)
 
 	var builder := {
@@ -935,9 +990,9 @@ func _init() -> void:
 	var warcry_units := [builder, fortify_ally, warcry_enemy]
 	assert(not UnitSkillsScript.resolve_warcry(builder, warcry_units).message.is_empty())
 	assert(fortify_ally.hp == 5 and fortify_ally.max_hp == 8)
-	CaptainSkillsScript.expire_effects(warcry_units, 0)
+	ConductorSkillsScript.expire_effects(warcry_units, 0)
 	assert(fortify_ally.max_hp == 8)
-	CaptainSkillsScript.expire_effects(warcry_units, 0)
+	ConductorSkillsScript.expire_effects(warcry_units, 0)
 	assert(fortify_ally.hp == 5 and fortify_ally.max_hp == 5)
 
 	var brute := {
@@ -987,9 +1042,9 @@ func _init() -> void:
 	).message.is_empty())
 	assert(enemy_scout.atk == 4)
 	assert(enemy_gunner.atk == 4 and enemy_fighter.atk == 8)
-	CaptainSkillsScript.expire_effects(misfortune_units, 1)
+	ConductorSkillsScript.expire_effects(misfortune_units, 1)
 	assert(enemy_scout.atk == 4)
-	CaptainSkillsScript.expire_effects(misfortune_units, 1)
+	ConductorSkillsScript.expire_effects(misfortune_units, 1)
 	assert(enemy_scout.atk == 5)
 	var mend_actor := {
 		"id": 41, "side": 0, "name": "Street Nurse", "kind": "Lifebinder",
@@ -1112,8 +1167,8 @@ func _init() -> void:
 	)
 	assert(punish_result.affected == [52])
 	assert(lane_mage.atk == 5)
-	CaptainSkillsScript.expire_effects(debuff_units, 1)
-	CaptainSkillsScript.expire_effects(debuff_units, 1)
+	ConductorSkillsScript.expire_effects(debuff_units, 1)
+	ConductorSkillsScript.expire_effects(debuff_units, 1)
 	assert(lane_fighter.atk == 5 and lane_mage.atk == 6)
 	var pupil := {
 		"id": 36, "side": 0, "name": "Order Pupil", "atk": 3,
@@ -1327,7 +1382,7 @@ func _init() -> void:
 	assert(not hydro_other_lane.has("effects") or hydro_other_lane.effects.is_empty())
 	assert(UnitSkillsScript.resolve_chants(1, hydro_units).is_empty())
 	# The debuff lifts at the end of the enemy's next turn.
-	CaptainSkillsScript.expire_effects(hydro_units, 1)
+	ConductorSkillsScript.expire_effects(hydro_units, 1)
 	assert(hydro_foe.atk == 4 and hydro_blocker.atk == 3)
 	# Level scaling: a level-5 chanter debuffs 3 ATK and Knocks Back 3 spaces.
 	var hydronaut := {
@@ -1472,7 +1527,7 @@ func _init() -> void:
 	assert(UnitSkillsScript.resolve_chants(1, wrangle_units).is_empty())
 	assert(UnitSkillsScript.resolve_chants(0, wrangle_units, "end").is_empty())
 	# The level-1 debuff lasts one enemy turn, mirroring Hydroblast.
-	CaptainSkillsScript.expire_effects(wrangle_units, 1)
+	ConductorSkillsScript.expire_effects(wrangle_units, 1)
 	assert(wrangle_foe_front.atk == 4 and wrangle_foe_front.effects.is_empty())
 	# Level scaling: the level-5 rank row is 2-turn Protect, -3 ATK, 2 turns.
 	var frontier_protector := {
@@ -1499,9 +1554,9 @@ func _init() -> void:
 	assert(wrangle_veteran_ally.protect_turns == 2)
 	assert(wrangle_veteran_foe.atk == 2)
 	# The 2-turn debuff survives the first enemy expiry and lifts at the second.
-	CaptainSkillsScript.expire_effects(wrangle_veteran_units, 1)
+	ConductorSkillsScript.expire_effects(wrangle_veteran_units, 1)
 	assert(wrangle_veteran_foe.atk == 2 and wrangle_veteran_foe.effects.size() == 1)
-	CaptainSkillsScript.expire_effects(wrangle_veteran_units, 1)
+	ConductorSkillsScript.expire_effects(wrangle_veteran_units, 1)
 	assert(wrangle_veteran_foe.atk == 5 and wrangle_veteran_foe.effects.is_empty())
 	# A dead chanter resolves nothing.
 	frontier_protector.hp = 0
@@ -1511,7 +1566,7 @@ func _init() -> void:
 	# rank-scaled number of that unit's side turns (the "enemy turns" of the
 	# reference text, counted from the caster's perspective). While Silenced,
 	# none of the unit's skill timing hooks fire; movement, attacks, and
-	# Captain skills are unaffected.
+	# Conductor skills are unaffected.
 	var lunnain_oracle := {
 		"id": 440, "side": 0, "name": "Lunnain Oracle", "kind": "Lifebinder",
 		"row": 1, "col": 0, "atk": 2, "hp": 5, "max_hp": 5, "effects": [], "level": 3,
@@ -1552,7 +1607,7 @@ func _init() -> void:
 	assert(silence_result.affected == [441])
 	assert(silenced_chanter.silenced_turns == 3)
 	assert(UnitSkillsScript.is_silenced(silenced_chanter))
-	assert("Silenced (3 turns)" in CaptainSkillsScript.effect_summary(silenced_chanter))
+	assert("Silenced (3 turns)" in ConductorSkillsScript.effect_summary(silenced_chanter))
 	# A unit without a secondary skill is never Silenced.
 	assert(not silence_plain_foe.has("silenced_turns"))
 	# The AI fallback picks the skill-bearing enemy over the higher-ATK
@@ -1715,7 +1770,7 @@ func _init() -> void:
 	assert(cattle_taunted_ally.col == 4 and cattle_taunted_ally.atk == 2)
 	assert(cattle_taunted_ally.get("immobilized_turns", 0) == 0)
 	# Both the debuff and the Immobilise lift at the end of the enemy's turn.
-	CaptainSkillsScript.expire_effects(cattle_units, 1)
+	ConductorSkillsScript.expire_effects(cattle_units, 1)
 	UnitSkillsScript.expire_statuses(cattle_units, 1)
 	assert(cattle_taunted_foe.atk == 4 and cattle_taunted_foe.effects.is_empty())
 	assert(cattle_taunted_foe.immobilized_turns == 0)
@@ -1997,8 +2052,8 @@ func _init() -> void:
 		swiftblade, weaken_target, [], 0.60
 	).message.is_empty())
 	assert(weaken_target.atk == 4)
-	CaptainSkillsScript.expire_effects([weaken_target], 1)
-	CaptainSkillsScript.expire_effects([weaken_target], 1)
+	ConductorSkillsScript.expire_effects([weaken_target], 1)
+	ConductorSkillsScript.expire_effects([weaken_target], 1)
 	assert(weaken_target.atk == 5)
 
 	# Warcry: Protect grants a chosen allied unit Protect for a level-scaled
@@ -2155,9 +2210,9 @@ func _init() -> void:
 	# debuff expires with its effect timer.
 	UnitSkillsScript.expire_statuses(bind_units, 1)
 	assert(bind_foe_a.immobilized_turns == 2)
-	CaptainSkillsScript.expire_effects(bind_units, 1)
-	CaptainSkillsScript.expire_effects(bind_units, 1)
-	CaptainSkillsScript.expire_effects(bind_units, 1)
+	ConductorSkillsScript.expire_effects(bind_units, 1)
+	ConductorSkillsScript.expire_effects(bind_units, 1)
+	ConductorSkillsScript.expire_effects(bind_units, 1)
 	assert(bind_foe_a.atk == 4 and bind_foe_b.atk == 5)
 	assert(bind_foe_a.effects.is_empty())
 	# A Silenced caster's Shadowbind does not trigger.
@@ -2231,8 +2286,8 @@ func _init() -> void:
 	assert(vigour_warden.hp == 5 and vigour_warden.max_hp == 8)
 	assert(vigour_warden.atk == 3)
 	assert(vigour_mage.hp == 1 and vigour_mage.atk == 3)
-	CaptainSkillsScript.expire_effects([vigour_warden], 0)
-	CaptainSkillsScript.expire_effects([vigour_warden], 0)
+	ConductorSkillsScript.expire_effects([vigour_warden], 0)
+	ConductorSkillsScript.expire_effects([vigour_warden], 0)
 	assert(vigour_warden.atk == 2)
 	assert(vigour_warden.max_hp == 6 and vigour_warden.hp == 5)
 	# With no eligible Defender or Fighter ally the Warcry does nothing.
@@ -2630,7 +2685,7 @@ func _init() -> void:
 	var bloom_results := UnitSkillsScript.resolve_chants(0, bloom_units)
 	assert(bloom_results.size() == 1 and bloom_results[0].affected == [177])
 	assert(bloom_ally.atk == 3 and bloom_plain.atk == 2)
-	CaptainSkillsScript.expire_effects(bloom_units, 0)
+	ConductorSkillsScript.expire_effects(bloom_units, 0)
 	assert(bloom_ally.atk == 2)
 
 	# Warcry + end phase: Sun Festival counts down, then heals all allies and
@@ -2745,9 +2800,9 @@ func _init() -> void:
 	)
 	assert(hurtful_sakuya.affected == [186, 187])
 	assert(yuuya.regen_turns == 2 and sakuya.regen_turns == 2)
-	CaptainSkillsScript.expire_effects([yuuya, sakuya], 0)
+	ConductorSkillsScript.expire_effects([yuuya, sakuya], 0)
 	assert(yuuya.max_hp == 8) # both +1 HP stacks still active
-	CaptainSkillsScript.expire_effects([yuuya, sakuya], 0)
+	ConductorSkillsScript.expire_effects([yuuya, sakuya], 0)
 	assert(yuuya.max_hp == 6 and yuuya.hp == 6) # both stacks expired together
 	# Heartful Brother: enemies lose ATK; the Vulnerable rider needs Yuuya.
 	yuuya.hp = 6
@@ -2905,7 +2960,7 @@ func _init() -> void:
 	var summon_warcry := UnitSkillsScript.resolve_warcry(rydia, summon_units)
 	assert(summon_warcry.affected == [500])
 	assert(rydia.summon_forth_turns == 1)
-	assert("Summon Forth (1 turns)" in CaptainSkillsScript.effect_summary(rydia))
+	assert("Summon Forth (1 turns)" in ConductorSkillsScript.effect_summary(rydia))
 	# The level-1 row blocks the attack and deals 50% of 4 ATK = 2 damage to
 	# the single highest-ATK enemy (the 6-ATK Brute, not the attacker).
 	var summon_hit: Dictionary = BattleSimulatorScript.apply_unit_damage(
