@@ -38,6 +38,8 @@ var selected_card: Dictionary = {}
 var selected_unit_id := -1
 var targetable_unit_ids: Array = []
 var targetable_rows: Array = []
+var guided_deployment_row := -1
+var guided_reposition_row := -1
 var player_mana_text := ""
 var enemy_mana_text := ""
 var player_hp_text := ""
@@ -100,6 +102,11 @@ func set_practice_mode(enabled_flag: bool) -> void:
 func set_opponent_identity(name: String, affiliation: String) -> void:
 	opponent_name = name
 	opponent_affiliation = affiliation
+	queue_redraw()
+
+func set_guidance(deployment_row: int = -1, reposition_row: int = -1) -> void:
+	guided_deployment_row = deployment_row
+	guided_reposition_row = reposition_row
 	queue_redraw()
 
 func set_state(
@@ -515,6 +522,7 @@ func _draw() -> void:
 			if (
 				row == hover_row and hover_col == 0 and col == 0
 				and enabled and not selected_card.is_empty()
+				and (guided_deployment_row < 0 or row == guided_deployment_row)
 			):
 				base = Color(0.08, 0.62, 0.78, 0.42)
 			_draw_cell_shape(row, col, base, Color(0.72, 0.58, 0.38, 0.48))
@@ -551,6 +559,7 @@ func _draw() -> void:
 	if (
 		preview_unit == null and not selected_card.is_empty()
 		and hover_row >= 0 and hover_col == 0 and not _occupied(hover_row, 0)
+		and (guided_deployment_row < 0 or hover_row == guided_deployment_row)
 		and targetable_unit_ids.is_empty() and targetable_rows.is_empty()
 	):
 		var projected_unit := selected_card.duplicate(true)
@@ -610,7 +619,7 @@ func _draw() -> void:
 
 	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
 		for row in ROWS:
-			if not _occupied(row, 0):
+			if not _occupied(row, 0) and (guided_deployment_row < 0 or row == guided_deployment_row):
 				var deploy := _cell_polygon(row, 0, 0.09)
 				draw_dashed_line(
 					deploy[3],
@@ -626,7 +635,10 @@ func _draw() -> void:
 		and not BattleRulesScript.is_taunted(selected_unit, units)
 	):
 		for target_row in ROWS:
-			if BattleRulesScript.can_reposition(selected_unit, target_row, units):
+			if (
+				BattleRulesScript.can_reposition(selected_unit, target_row, units)
+				and (guided_reposition_row < 0 or target_row == guided_reposition_row)
+			):
 				_draw_cell_shape(
 					target_row, selected_unit.col,
 					Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 3.0, 0.06

@@ -17,6 +17,7 @@ const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
+const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
 
 const PLAYER := 0
@@ -28,6 +29,28 @@ const STARTING_HP := 20
 const LOSS_TITLE := "TACTICAL DEFEAT"
 const LOSS_DETAIL := "Your Conductor was defeated.\nRetry the battle with a new tactical approach."
 const LEGACY_LEADER_HP_KEY := "cap" + "tain_hp"
+const TUTORIAL_NONE := -1
+const TUTORIAL_INTRO := 0
+const TUTORIAL_SELECT_CARD := 1
+const TUTORIAL_DEPLOY := 2
+const TUTORIAL_MANA := 3
+const TUTORIAL_RESOLVE := 4
+const TUTORIAL_WAIT := 5
+const TUTORIAL_SELECT_UNIT := 6
+const TUTORIAL_REPOSITION := 7
+const TUTORIAL_POWER := 8
+const TUTORIAL_COMPLETE := 9
+const TUTORIAL_UNIT_NAME := "Trinity Rusher"
+const TUTORIAL_DEPLOYMENT_ROW := 1
+const TUTORIAL_REPOSITION_ROW := 0
+const TUTORIAL_PLAYER_SQUAD := [
+	"Trinity Rusher", "Trinity Potshot", "Chain Initiate", "Apprentice Builder",
+	"LDF Peacekeeper", "Claw Caster", "Factory Markswoman", "Socialite Fencer"
+]
+const TUTORIAL_ENEMY_SQUAD := [
+	"Chain Initiate", "Socialite Fencer", "Factory Markswoman", "Claw Caster",
+	"Trinity Potshot", "LDF Peacekeeper", "Apprentice Builder", "Trinity Rusher"
+]
 
 var board: BoardView
 var turn_label: Label
@@ -122,6 +145,12 @@ var dialogue_speaker_label: Label
 var dialogue_role_label: Label
 var dialogue_line_label: Label
 var dialogue_next_button: Button
+var tutorial_panel: PanelContainer
+var tutorial_progress_label: Label
+var tutorial_title_label: Label
+var tutorial_body_label: Label
+var tutorial_continue_button: Button
+var tutorial_skip_button: Button
 
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
@@ -191,6 +220,9 @@ var replay_history_index := 0
 var dialogue_scene: Dictionary = {}
 var dialogue_line_index := 0
 var dialogue_return_action := ""
+var tutorial_mode := false
+var tutorial_step := TUTORIAL_NONE
+var tutorial_saved_conductor_skill := ""
 
 const REPLAY_PATH := "user://last_replay.json"
 const REPLAY_HISTORY_PATH := "user://replay_history.json"
@@ -212,6 +244,11 @@ func _ready() -> void:
 	_sanitize_squad_unlocks()
 	_start_new_match()
 	_show_main_menu()
+	if (
+		not TutorialStoreScript.is_completed() and completed_missions.is_empty()
+		and MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size()).is_empty()
+	):
+		_begin_tutorial()
 	_prewarm_icons()
 
 func _prewarm_icons() -> void:
@@ -312,13 +349,6 @@ func _build_interface() -> void:
 	power_button.pressed.connect(_use_player_power)
 	action_row.add_child(power_button)
 
-	var squad_button := Button.new()
-	squad_button.text = "SQUAD"
-	squad_button.tooltip_text = "Choose the 8 units in your battle squad."
-	squad_button.custom_minimum_size.x = 78
-	squad_button.pressed.connect(_open_squad_builder)
-	action_row.add_child(squad_button)
-
 	menu_button = Button.new()
 	menu_button.text = "MENU"
 	menu_button.custom_minimum_size.x = 64
@@ -363,6 +393,7 @@ func _build_interface() -> void:
 	_build_hover_card()
 	_build_replay_controls()
 	_build_replay_squad_overlay()
+	_build_tutorial_panel()
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if (
@@ -438,6 +469,48 @@ func _settings_action(label: String, tooltip: String) -> Button:
 	button.tooltip_text = tooltip
 	button.custom_minimum_size.y = 38
 	return button
+
+func _build_tutorial_panel() -> void:
+	tutorial_panel = PanelContainer.new()
+	tutorial_panel.set_anchor(SIDE_LEFT, 1.0)
+	tutorial_panel.set_anchor(SIDE_RIGHT, 1.0)
+	tutorial_panel.offset_left = -410
+	tutorial_panel.offset_right = -18
+	tutorial_panel.offset_top = 72
+	tutorial_panel.offset_bottom = 350
+	tutorial_panel.z_index = 85
+	tutorial_panel.visible = false
+	add_child(tutorial_panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	tutorial_panel.add_child(layout)
+	tutorial_progress_label = Label.new()
+	tutorial_progress_label.add_theme_font_size_override("font_size", 11)
+	tutorial_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	layout.add_child(tutorial_progress_label)
+	tutorial_title_label = Label.new()
+	tutorial_title_label.add_theme_font_size_override("font_size", 20)
+	tutorial_title_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	layout.add_child(tutorial_title_label)
+	tutorial_body_label = Label.new()
+	tutorial_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tutorial_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tutorial_body_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	layout.add_child(tutorial_body_label)
+
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation", 8)
+	layout.add_child(actions)
+	tutorial_skip_button = Button.new()
+	tutorial_skip_button.text = "SKIP TUTORIAL"
+	tutorial_skip_button.pressed.connect(_skip_tutorial)
+	actions.add_child(tutorial_skip_button)
+	tutorial_continue_button = Button.new()
+	tutorial_continue_button.text = "CONTINUE"
+	tutorial_continue_button.pressed.connect(_on_tutorial_continue)
+	actions.add_child(tutorial_continue_button)
 
 func _toggle_settings() -> void:
 	settings_panel.visible = not settings_panel.visible
@@ -716,27 +789,33 @@ func _build_squad_builder() -> void:
 	mission_intel_panel = PanelContainer.new()
 	mission_intel_panel.visible = false
 	layout.add_child(mission_intel_panel)
-	var intel_layout := HBoxContainer.new()
-	intel_layout.add_theme_constant_override("separation", 12)
+	var intel_layout := VBoxContainer.new()
+	intel_layout.add_theme_constant_override("separation", 6)
 	mission_intel_panel.add_child(intel_layout)
 	mission_intel_label = Label.new()
-	mission_intel_label.custom_minimum_size.x = 330
+	mission_intel_label.custom_minimum_size.y = 62
+	mission_intel_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mission_intel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	mission_intel_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mission_intel_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	mission_intel_label.add_theme_color_override("font_color", Color("#e8b4a2"))
 	intel_layout.add_child(mission_intel_label)
+	var opposition_row := HBoxContainer.new()
+	opposition_row.add_theme_constant_override("separation", 12)
+	intel_layout.add_child(opposition_row)
 	mission_intel_stats_label = Label.new()
 	mission_intel_stats_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mission_intel_stats_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	mission_intel_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	mission_intel_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	mission_intel_stats_label.clip_text = true
 	mission_intel_stats_label.add_theme_font_size_override("font_size", 11)
 	mission_intel_stats_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	intel_layout.add_child(mission_intel_stats_label)
+	opposition_row.add_child(mission_intel_stats_label)
 	mission_enemy_preview_row = HBoxContainer.new()
-	mission_enemy_preview_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_enemy_preview_row.size_flags_horizontal = Control.SIZE_SHRINK_END
 	mission_enemy_preview_row.alignment = BoxContainer.ALIGNMENT_END
 	mission_enemy_preview_row.add_theme_constant_override("separation", 5)
-	intel_layout.add_child(mission_enemy_preview_row)
+	opposition_row.add_child(mission_enemy_preview_row)
 
 	var skill_row := HBoxContainer.new()
 	skill_row.add_theme_constant_override("separation", 12)
@@ -1270,7 +1349,7 @@ func _build_main_menu() -> void:
 	var layout := VBoxContainer.new()
 	layout.custom_minimum_size = Vector2(420, 600)
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override("separation", 16)
+	layout.add_theme_constant_override("separation", 12)
 	plaque.add_child(layout)
 
 	var title := Label.new()
@@ -1298,6 +1377,10 @@ func _build_main_menu() -> void:
 	var practice := _menu_action("PRACTICE BATTLE")
 	practice.pressed.connect(_begin_practice)
 	layout.add_child(practice)
+
+	var tutorial := _menu_action("GUIDED TUTORIAL")
+	tutorial.pressed.connect(_begin_tutorial)
+	layout.add_child(tutorial)
 
 	replay_button = _menu_action("REPLAYS")
 	replay_button.pressed.connect(_open_last_replay)
@@ -2143,9 +2226,142 @@ func _complete_interlude_return(return_action: String) -> void:
 		_:
 			_show_main_menu()
 
+func _begin_tutorial() -> void:
+	_leave_tutorial()
+	tutorial_mode = true
+	tutorial_saved_conductor_skill = player_conductor_skill
+	player_conductor_skill = "Rally"
+	campaign_battle = false
+	board.set_practice_mode(true)
+	current_mission_id = -1
+	current_encounter_index = 0
+	awaiting_next_encounter = false
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	_start_new_match()
+	_set_tutorial_step(TUTORIAL_INTRO)
+
+func _leave_tutorial() -> void:
+	if tutorial_mode and not tutorial_saved_conductor_skill.is_empty():
+		player_conductor_skill = tutorial_saved_conductor_skill
+	tutorial_mode = false
+	tutorial_step = TUTORIAL_NONE
+	tutorial_saved_conductor_skill = ""
+	if tutorial_panel != null:
+		tutorial_panel.visible = false
+	if menu_button != null:
+		menu_button.visible = true
+	if board != null:
+		board.set_guidance()
+
+func _set_tutorial_step(next_step: int) -> void:
+	tutorial_step = next_step
+	tutorial_panel.visible = tutorial_mode
+	tutorial_continue_button.visible = false
+	tutorial_continue_button.text = "CONTINUE"
+	tutorial_skip_button.text = "SKIP TUTORIAL"
+	match tutorial_step:
+		TUTORIAL_INTRO:
+			tutorial_progress_label.text = "GUIDED DRILL · 5 LESSONS"
+			tutorial_title_label.text = "TAKE THE COMMAND DECK"
+			tutorial_body_label.text = (
+				"This short battle uses the real rules. You will deploy a unit, see "
+				+ "how Mana stays locked, resolve a turn, change lanes, and fire a Conductor power."
+			)
+			tutorial_continue_button.visible = true
+			status_message = "Guided drill ready."
+		TUTORIAL_SELECT_CARD:
+			tutorial_progress_label.text = "LESSON 1 OF 5 · DEPLOYMENT"
+			tutorial_title_label.text = "SELECT TRINITY RUSHER"
+			tutorial_body_label.text = (
+				"Cards spend available Mana when deployed. Select the glowing 2◆ Strider card in your hand."
+			)
+			status_message = "Select Trinity Rusher in your hand."
+		TUTORIAL_DEPLOY:
+			tutorial_progress_label.text = "LESSON 1 OF 5 · DEPLOYMENT"
+			tutorial_title_label.text = "DEPLOY TO THE CENTER LANE"
+			tutorial_body_label.text = (
+				"Your deployment edge is the cyan column on the left. Select the highlighted center tile."
+			)
+			status_message = "Deploy Trinity Rusher to the highlighted center lane."
+		TUTORIAL_MANA:
+			tutorial_progress_label.text = "LESSON 2 OF 5 · LOCKED MANA"
+			tutorial_title_label.text = "UNITS HOLD THEIR COST"
+			tutorial_body_label.text = (
+				"The 2 Mana you spent is now LOCKED under your Conductor. It remains committed while "
+				+ "Trinity Rusher is on the board and returns when that unit is defeated."
+			)
+			tutorial_continue_button.visible = true
+			status_message = "2 Mana is locked by your deployed unit."
+		TUTORIAL_RESOLVE:
+			tutorial_progress_label.text = "LESSON 3 OF 5 · RESOLUTION"
+			tutorial_title_label.text = "RESOLVE THE TURN"
+			tutorial_body_label.text = (
+				"The cyan preview shows where ready units will travel and attack. Select the glowing → button."
+			)
+			status_message = "Select → to resolve movement and combat."
+		TUTORIAL_WAIT:
+			tutorial_progress_label.text = "LESSON 3 OF 5 · RESOLUTION"
+			tutorial_title_label.text = "WATCH THE BOARD"
+			tutorial_body_label.text = (
+				"Ready units act automatically: they advance, choose a target in range, and attack. "
+				+ "Then the enemy takes its turn."
+			)
+			status_message = "Resolving both sides of the round..."
+		TUTORIAL_SELECT_UNIT:
+			tutorial_progress_label.text = "LESSON 4 OF 5 · REPOSITIONING"
+			tutorial_title_label.text = "SELECT YOUR STRIDER"
+			tutorial_body_label.text = (
+				"During your Command phase, select a deployed ally to reveal legal lane shifts."
+			)
+			status_message = "Select Trinity Rusher on the battlefield."
+		TUTORIAL_REPOSITION:
+			tutorial_progress_label.text = "LESSON 4 OF 5 · REPOSITIONING"
+			tutorial_title_label.text = "SHIFT TO THE TOP LANE"
+			tutorial_body_label.text = (
+				"Lane shifts keep the unit in the same column. Select the highlighted tile in the top lane."
+			)
+			status_message = "Shift Trinity Rusher to the highlighted top lane."
+		TUTORIAL_POWER:
+			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
+			tutorial_title_label.text = "USE RALLY"
+			tutorial_body_label.text = (
+				"Conductor powers do not cost Mana, but each can be used only once per battle. Select RALLY now."
+			)
+			status_message = "Use Rally to give all current allies +1 ATK."
+		TUTORIAL_COMPLETE:
+			tutorial_progress_label.text = "GUIDED DRILL COMPLETE"
+			tutorial_title_label.text = "YOU HAVE COMMAND"
+			tutorial_body_label.text = (
+				"You have deployed, managed locked Mana, resolved combat, changed lanes, and used a Conductor power."
+			)
+			tutorial_continue_button.text = "START PRACTICE"
+			tutorial_continue_button.visible = true
+			tutorial_skip_button.text = "MENU"
+			status_message = "Guided drill complete."
+	if tutorial_continue_button.visible:
+		tutorial_continue_button.grab_focus()
+	_refresh()
+
+func _on_tutorial_continue() -> void:
+	match tutorial_step:
+		TUTORIAL_INTRO:
+			_set_tutorial_step(TUTORIAL_SELECT_CARD)
+		TUTORIAL_MANA:
+			_set_tutorial_step(TUTORIAL_RESOLVE)
+		TUTORIAL_COMPLETE:
+			TutorialStoreScript.mark_completed()
+			_leave_tutorial()
+			_begin_practice()
+
+func _skip_tutorial() -> void:
+	TutorialStoreScript.mark_completed()
+	_show_main_menu()
+
 func _show_main_menu() -> void:
 	if get_tree().paused:
 		get_tree().paused = false
+	_leave_tutorial()
 	if settings_panel != null:
 		settings_panel.visible = false
 	replay_mode = false
@@ -2609,6 +2825,7 @@ func _replay_interlude(mission_id: int) -> void:
 	_show_interlude(mission_id, "mission_select")
 
 func _begin_practice() -> void:
+	_leave_tutorial()
 	campaign_battle = false
 	board.set_practice_mode(true)
 	current_mission_id = -1
@@ -2621,6 +2838,7 @@ func _begin_practice() -> void:
 func _begin_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):
 		return
+	_leave_tutorial()
 	campaign_battle = true
 	board.set_practice_mode(false)
 	current_mission_id = mission_id
@@ -2641,6 +2859,7 @@ func _resume_mission() -> void:
 		MissionRunStoreScript.clear_run()
 		_show_main_menu()
 		return
+	_leave_tutorial()
 	campaign_battle = true
 	board.set_practice_mode(false)
 	current_mission_id = saved_run.mission_id
@@ -2832,19 +3051,30 @@ func _start_new_match() -> void:
 		combat_log_label.text = ""
 	player_hand.clear()
 	enemy_hand.clear()
-	battle_seed = int(Time.get_unix_time_from_system() * 1000.0) ^ int(Time.get_ticks_usec())
+	battle_seed = 8675309 if tutorial_mode else (
+		int(Time.get_unix_time_from_system() * 1000.0) ^ int(Time.get_ticks_usec())
+	)
 	battle_simulator.reset(battle_seed)
-	battle_deck = SquadStoreScript.shuffle_for_battle(
-		SquadStoreScript.build_deck(
-			squad_names, roster, collection_instances
-		), battle_simulator.rng
+	var player_squad_names: Array = (
+		TUTORIAL_PLAYER_SQUAD.duplicate() if tutorial_mode
+		else SquadStoreScript.instance_names(squad_names, collection_instances)
+	)
+	battle_deck = SquadStoreScript.build_deck(
+		TUTORIAL_PLAYER_SQUAD, roster
+	) if tutorial_mode else SquadStoreScript.shuffle_for_battle(
+		SquadStoreScript.build_deck(squad_names, roster, collection_instances),
+		battle_simulator.rng
 	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
 	_set_board_opponent(encounter)
-	var enemy_squad_names: Array = CampaignStoreScript.enemy_squad_names(
-		current_mission_id, current_encounter_index, roster
+	var enemy_squad_names: Array = TUTORIAL_ENEMY_SQUAD.duplicate() if tutorial_mode else (
+		CampaignStoreScript.enemy_squad_names(
+			current_mission_id, current_encounter_index, roster
+		)
 	)
-	enemy_deck = SquadStoreScript.shuffle_for_battle(
+	enemy_deck = SquadStoreScript.build_deck(
+		enemy_squad_names, roster
+	) if tutorial_mode else SquadStoreScript.shuffle_for_battle(
 		SquadStoreScript.build_deck(enemy_squad_names, roster), battle_simulator.rng
 	)
 	draw_index = 0
@@ -2875,9 +3105,7 @@ func _start_new_match() -> void:
 		"encounter_index": current_encounter_index,
 		"player_hp": player_hp,
 		"enemy_hp": enemy_hp,
-		"player_squad": SquadStoreScript.instance_names(
-			squad_names, collection_instances
-		),
+		"player_squad": player_squad_names,
 		"enemy_squad": enemy_squad_names.duplicate(),
 		"player_skill": player_conductor_skill,
 		"enemy_skill": enemy_conductor_skill
@@ -2916,22 +3144,38 @@ func _refresh() -> void:
 	_log_action(status_message)
 	var player_locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
 	var enemy_locked_mana := BattleRulesScript.locked_mana(units, ENEMY)
-	turn_label.text = "ROUND %02d  ·  YOUR COMMAND" % round_number if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
+	turn_label.text = "GUIDED DRILL  ·  ROUND %02d" % round_number if tutorial_mode else (
+		"ROUND %02d  ·  YOUR COMMAND" % round_number
+		if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
+	)
 	hint_label.text = status_message
 	end_button.disabled = (
 		not input_enabled or battle_over
 		or pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
 		or pending_lane_actor_id >= 0
+		or (tutorial_mode and tutorial_step != TUTORIAL_RESOLVE)
 	)
+	if tutorial_mode:
+		menu_button.visible = false
 	menu_button.disabled = not input_enabled or battle_over
 	win_button.visible = (
 		campaign_battle and not replay_mode and not battle_over
 		and not main_menu_overlay.visible and not mission_overlay.visible
 	)
 	win_button.disabled = not input_enabled
-	power_button.disabled = not input_enabled or player_power_used or battle_over
+	power_button.disabled = (
+		not input_enabled or player_power_used or battle_over
+		or (tutorial_mode and tutorial_step != TUTORIAL_POWER)
+	)
 	power_button.text = "%s USED" % player_conductor_skill.to_upper() if player_power_used else player_conductor_skill.to_upper()
 	power_button.tooltip_text = ConductorSkillsScript.DESCRIPTIONS[player_conductor_skill]
+	if tutorial_mode:
+		var tutorial_action_locked := (
+			(not input_enabled and tutorial_step != TUTORIAL_COMPLETE)
+			or tutorial_step == TUTORIAL_WAIT
+		)
+		tutorial_skip_button.disabled = tutorial_action_locked
+		tutorial_continue_button.disabled = tutorial_action_locked
 
 	var selected := {}
 	if selected_hand_index >= 0 and selected_hand_index < player_hand.size():
@@ -2954,6 +3198,10 @@ func _refresh() -> void:
 		).map(func(unit): return unit.id)
 	elif pending_lane_actor_id >= 0:
 		targetable_ids = []
+	elif tutorial_mode and tutorial_step == TUTORIAL_SELECT_UNIT:
+		var tutorial_unit = _tutorial_unit()
+		if tutorial_unit != null:
+			targetable_ids = [tutorial_unit.id]
 	var targetable_rows: Array = []
 	if pending_lane_actor_id >= 0:
 		var lane_actor = _unit_by_id(pending_lane_actor_id)
@@ -2970,9 +3218,17 @@ func _refresh() -> void:
 				)
 			):
 				targetable_rows.append(row)
+	board.set_guidance(
+		TUTORIAL_DEPLOYMENT_ROW if tutorial_mode and tutorial_step == TUTORIAL_DEPLOY else -1,
+		TUTORIAL_REPOSITION_ROW if tutorial_mode and tutorial_step == TUTORIAL_REPOSITION else -1
+	)
+	var tutorial_board_input := tutorial_step in [
+		TUTORIAL_DEPLOY, TUTORIAL_SELECT_UNIT, TUTORIAL_REPOSITION
+	]
 	board.set_state(
 		units, selected, selected_board_unit_id,
-		input_enabled and not battle_over, status_message, targetable_ids,
+		input_enabled and not battle_over and (not tutorial_mode or tutorial_board_input),
+		status_message, targetable_ids,
 		"%d / %d\n%d LOCKED" % [player_energy, player_max_energy, player_locked_mana],
 		"%d / %d\n%d LOCKED" % [enemy_energy, enemy_max_energy, enemy_locked_mana],
 		"%d HP%s" % [player_hp, "\n%d SHIELD" % player_shield if player_shield > 0 else ""],
@@ -2981,6 +3237,8 @@ func _refresh() -> void:
 		"DECK %d" % (enemy_deck.size() - enemy_draw_index),
 		targetable_rows
 	)
+	_set_tutorial_button_highlight(end_button, tutorial_mode and tutorial_step == TUTORIAL_RESOLVE)
+	_set_tutorial_button_highlight(power_button, tutorial_mode and tutorial_step == TUTORIAL_POWER)
 	_rebuild_hand()
 
 func _set_board_opponent(encounter: Dictionary) -> void:
@@ -3001,6 +3259,10 @@ func _rebuild_hand() -> void:
 		button.toggle_mode = true
 		button.button_pressed = i == selected_hand_index
 		button.disabled = not input_enabled or card.cost > player_energy or battle_over
+		if tutorial_mode:
+			button.disabled = not (
+				tutorial_step == TUTORIAL_SELECT_CARD and card.name == TUTORIAL_UNIT_NAME
+			)
 		button.icon = _unit_icon(card.get("icon", 0))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.text = "%s\n%d◆ · %s\n%d ATK · %d HP" % [
@@ -3008,11 +3270,28 @@ func _rebuild_hand() -> void:
 			card.atk, card.hp
 		]
 		_apply_class_card_style(button, card.kind)
+		if tutorial_mode and tutorial_step == TUTORIAL_SELECT_CARD and card.name == TUTORIAL_UNIT_NAME:
+			_set_tutorial_button_highlight(button, true)
 		button.add_theme_font_size_override("font_size", 10)
 		button.pressed.connect(_select_card.bind(i))
 		button.mouse_entered.connect(_show_unit_details.bind(card))
 		button.mouse_exited.connect(_hide_unit_details)
 		hand_row.add_child(button)
+
+func _set_tutorial_button_highlight(button: Button, active: bool) -> void:
+	for style_name in ["normal", "hover", "pressed"]:
+		button.remove_theme_stylebox_override(style_name)
+	if not active:
+		return
+	button.add_theme_stylebox_override(
+		"normal", UIThemeScript.card_style(UIThemeScript.BRASS, 0.42, 1.0, 5)
+	)
+	button.add_theme_stylebox_override(
+		"hover", UIThemeScript.card_style(UIThemeScript.BRASS_LIGHT, 0.58, 1.0, 7)
+	)
+	button.add_theme_stylebox_override(
+		"pressed", UIThemeScript.card_style(UIThemeScript.BRASS_DARK, 0.52, 1.0, 3)
+	)
 
 func _apply_class_card_style(button: Button, kind: String) -> void:
 	var color: Color = UnitCatalogScript.class_color(kind)
@@ -3060,6 +3339,14 @@ func _show_card_reward(unit_name: String, is_new: bool) -> void:
 func _select_card(index: int) -> void:
 	if not input_enabled:
 		return
+	if tutorial_mode:
+		if (
+			tutorial_step != TUTORIAL_SELECT_CARD or index < 0
+			or index >= player_hand.size() or player_hand[index].name != TUTORIAL_UNIT_NAME
+		):
+			status_message = "Select the glowing Trinity Rusher card."
+			_refresh()
+			return
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
 		or pending_lane_actor_id >= 0
@@ -3073,12 +3360,32 @@ func _select_card(index: int) -> void:
 		status_message = "Choose a highlighted tile on your deployment edge."
 	else:
 		status_message = "Select a unit card, then choose a deployment lane."
-	_refresh()
+	if tutorial_mode and selected_hand_index >= 0:
+		_set_tutorial_step(TUTORIAL_DEPLOY)
+	else:
+		_refresh()
 
 func _on_board_cell_clicked(row: int, col: int) -> void:
 	if not input_enabled or battle_over:
 		return
 	var clicked = _unit_at(row, col)
+	if tutorial_mode:
+		if tutorial_step == TUTORIAL_SELECT_UNIT:
+			if clicked == null or clicked.side != PLAYER or clicked.name != TUTORIAL_UNIT_NAME:
+				status_message = "Select Trinity Rusher on the battlefield."
+				_refresh()
+				return
+		elif tutorial_step == TUTORIAL_REPOSITION:
+			var tutorial_unit = _tutorial_unit()
+			if (
+				tutorial_unit == null or selected_board_unit_id != tutorial_unit.id
+				or row != TUTORIAL_REPOSITION_ROW or col != tutorial_unit.col
+			):
+				status_message = "Shift Trinity Rusher to the highlighted top-lane tile."
+				_refresh()
+				return
+		else:
+			return
 	if pending_empower_actor_id >= 0:
 		var actor = _unit_by_id(pending_empower_actor_id)
 		var ally_kinds: Array = _ally_target_kinds(
@@ -3149,6 +3456,9 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 			await board.animate_unit_move(selected.id, old_row, old_col, _animation_duration(0.24))
 			input_enabled = true
 			board.play_unit_effect(selected.id, "SHIFT", Color("#71e6f5"))
+			if tutorial_mode:
+				_set_tutorial_step(TUTORIAL_POWER)
+				return
 		else:
 			status_message = _reposition_block_reason(selected, row, col)
 			selected_board_unit_id = -1
@@ -3156,6 +3466,9 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 		selected_hand_index = -1
 		selected_board_unit_id = clicked.id
 		status_message = _reposition_status(clicked)
+		if tutorial_mode:
+			_set_tutorial_step(TUTORIAL_REPOSITION)
+			return
 	_refresh()
 
 func _reposition_status(unit: Dictionary) -> String:
@@ -3176,6 +3489,13 @@ func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
 
 func _on_deployment_clicked(row: int) -> void:
 	if not input_enabled or selected_hand_index < 0 or selected_hand_index >= player_hand.size():
+		return
+	if tutorial_mode and (
+		tutorial_step != TUTORIAL_DEPLOY or row != TUTORIAL_DEPLOYMENT_ROW
+		or player_hand[selected_hand_index].name != TUTORIAL_UNIT_NAME
+	):
+		status_message = "Deploy Trinity Rusher to the highlighted center lane."
+		_refresh()
 		return
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
@@ -3208,7 +3528,10 @@ func _on_deployment_clicked(row: int) -> void:
 		status_message += " " + warcry_message
 	player_hand.remove_at(selected_hand_index)
 	selected_hand_index = -1
-	_refresh()
+	if tutorial_mode:
+		_set_tutorial_step(TUTORIAL_MANA)
+	else:
+		_refresh()
 
 func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 	var unit_level: int = card.get("level", 1)
@@ -3369,12 +3692,19 @@ func _lane_target_side(skill_name: String) -> int:
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
 		return
+	if tutorial_mode and tutorial_step != TUTORIAL_POWER:
+		return
 	var applied: bool = await _apply_conductor_skill(PLAYER, player_conductor_skill)
 	if not applied:
 		_refresh()
 		return
 	player_power_used = true
-	_refresh()
+	if tutorial_mode:
+		TutorialStoreScript.mark_completed()
+		input_enabled = false
+		_set_tutorial_step(TUTORIAL_COMPLETE)
+	else:
+		_refresh()
 
 func _win_campaign_battle() -> void:
 	if not campaign_battle or replay_mode or battle_over or not input_enabled:
@@ -3385,6 +3715,8 @@ func _win_campaign_battle() -> void:
 func _end_player_turn() -> void:
 	if not input_enabled or battle_over:
 		return
+	if tutorial_mode and tutorial_step != TUTORIAL_RESOLVE:
+		return
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
 		or pending_lane_actor_id >= 0
@@ -3392,8 +3724,11 @@ func _end_player_turn() -> void:
 		status_message = "Choose the highlighted Warcry target before resolving."
 		_refresh()
 		return
-	status_message = _resolution_preview(PLAYER)
-	_refresh()
+	if tutorial_mode:
+		_set_tutorial_step(TUTORIAL_WAIT)
+	else:
+		status_message = _resolution_preview(PLAYER)
+		_refresh()
 	await _wait(0.8)
 	input_enabled = false
 	selected_hand_index = -1
@@ -3484,8 +3819,11 @@ func _enemy_turn() -> void:
 			unit.repositioned = false
 	await _resolve_chants(PLAYER)
 	input_enabled = true
-	status_message = "Select a card or resolve the board as it stands."
-	_refresh()
+	if tutorial_mode and tutorial_step == TUTORIAL_WAIT:
+		_set_tutorial_step(TUTORIAL_SELECT_UNIT)
+	else:
+		status_message = "Select a card or resolve the board as it stands."
+		_refresh()
 
 func _enemy_reposition_units() -> void:
 	var enemy_ids: Array = units.filter(func(unit): return unit.side == ENEMY).map(func(unit): return unit.id)
@@ -3895,6 +4233,12 @@ func _unit_by_id(id: int):
 			return unit
 	return null
 
+func _tutorial_unit():
+	for unit in units:
+		if unit.side == PLAYER and unit.name == TUTORIAL_UNIT_NAME:
+			return unit
+	return null
+
 func _remove_defeated() -> void:
 	units = units.filter(func(unit): return unit.hp > 0)
 	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
@@ -4143,7 +4487,7 @@ func _check_game_over() -> bool:
 			else "Victory achieved in %d rounds." % round_number
 		)
 		if campaign_battle and current_mission_id == CampaignStoreScript.MISSIONS.size() - 1:
-			overlay_title.text = "ACCORD"
+			overlay_title.text = "END OF CAMPAIGN 1"
 			overlay_detail.text = "%s\n\n%s" % [
 				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
 				CampaignStoreScript.CAMPAIGN_EPILOGUE

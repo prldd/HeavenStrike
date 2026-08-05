@@ -4,6 +4,7 @@ const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 
 func _init() -> void:
@@ -16,6 +17,8 @@ func _run() -> void:
 		"reduced_motion": false,
 		"skip_animations": false
 	})
+	assert(TutorialStoreScript.mark_completed())
+	assert(TutorialStoreScript.is_completed())
 	var scene: PackedScene = load("res://main.tscn")
 	var game = scene.instantiate()
 	root.add_child(game)
@@ -39,11 +42,18 @@ func _run() -> void:
 	) == "Enemy Conductor loses 3 HP.")
 	assert(game.audio_button.get_parent().get_parent() == game.settings_panel)
 	assert(game.speed_button.get_parent().get_parent() == game.settings_panel)
-	assert(not game.has_method("_open_tutorial"))
+	assert(game.has_method("_begin_tutorial"))
+	var tutorial_menu_found := false
 	for action in game.main_menu_overlay.find_children("*", "Button", true, false):
-		assert(action.text != "HOW TO PLAY")
-	for action in game.settings_panel.find_children("*", "Button", true, false):
-		assert(action.text != "HOW TO PLAY")
+		if action.text == "GUIDED TUTORIAL":
+			tutorial_menu_found = true
+	assert(tutorial_menu_found)
+	var main_menu_plaques: Array[Node] = game.main_menu_overlay.find_children(
+		"*", "PanelContainer", true, false
+	)
+	assert(main_menu_plaques.size() == 1)
+	assert(main_menu_plaques[0].get_global_rect().end.y <= game.get_viewport_rect().end.y)
+	assert(not game.tutorial_panel.visible)
 	assert(not game.settings_panel.visible)
 	game._toggle_settings()
 	assert(game.settings_panel.visible)
@@ -70,11 +80,61 @@ func _run() -> void:
 	assert(game.end_button.text == "→")
 	assert(game.end_button.tooltip_text.contains("Enter"))
 	assert(not game.end_button.visible)
+	for action in game.find_children("*", "Button", true, false):
+		assert(action.text != "SQUAD")
 	assert(game.win_button.text == "WIN")
 	assert(game.win_button.tooltip_text.contains("campaign battle"))
 	assert(game.win_button.pressed.is_connected(game._win_campaign_battle))
 	assert(not game.win_button.visible)
 	assert(game.hand_row.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
+	game.skip_animations = true
+	game.board.idle_bob_enabled = false
+	game._begin_tutorial()
+	assert(game.tutorial_mode)
+	assert(game.tutorial_step == game.TUTORIAL_INTRO)
+	assert(game.tutorial_panel.visible)
+	assert(game.player_conductor_skill == "Rally")
+	assert(game.player_hand[0].name == game.TUTORIAL_UNIT_NAME)
+	game._on_tutorial_continue()
+	assert(game.tutorial_step == game.TUTORIAL_SELECT_CARD)
+	var tutorial_card_index := -1
+	for index in game.player_hand.size():
+		if game.player_hand[index].name == game.TUTORIAL_UNIT_NAME:
+			tutorial_card_index = index
+			break
+	assert(tutorial_card_index >= 0)
+	game._select_card(tutorial_card_index)
+	assert(game.tutorial_step == game.TUTORIAL_DEPLOY)
+	assert(game.board.guided_deployment_row == game.TUTORIAL_DEPLOYMENT_ROW)
+	await game._on_deployment_clicked(game.TUTORIAL_DEPLOYMENT_ROW)
+	assert(game.tutorial_step == game.TUTORIAL_MANA)
+	assert(game.player_energy == 0)
+	assert(game.BattleRulesScript.locked_mana(game.units, game.PLAYER) == 2)
+	game._on_tutorial_continue()
+	assert(game.tutorial_step == game.TUTORIAL_RESOLVE)
+	assert(not game.end_button.disabled)
+	await game._end_player_turn()
+	assert(game.round_number == 2)
+	assert(game.tutorial_step == game.TUTORIAL_SELECT_UNIT)
+	var tutorial_unit = game._tutorial_unit()
+	assert(tutorial_unit != null)
+	await game._on_board_cell_clicked(tutorial_unit.row, tutorial_unit.col)
+	assert(game.tutorial_step == game.TUTORIAL_REPOSITION)
+	assert(game.board.guided_reposition_row == game.TUTORIAL_REPOSITION_ROW)
+	await game._on_board_cell_clicked(game.TUTORIAL_REPOSITION_ROW, tutorial_unit.col)
+	assert(tutorial_unit.row == game.TUTORIAL_REPOSITION_ROW)
+	assert(game.tutorial_step == game.TUTORIAL_POWER)
+	assert(not game.power_button.disabled)
+	await game._use_player_power()
+	assert(game.player_power_used)
+	assert(game.tutorial_step == game.TUTORIAL_COMPLETE)
+	game._skip_tutorial()
+	assert(not game.tutorial_mode)
+	assert(game.main_menu_overlay.visible)
+	game.skip_animations = false
+	game.board.idle_bob_enabled = true
+	game.units.clear()
+	game._refresh()
 	game._cycle_resolution_speed()
 	assert(game.resolution_speed == 2.0)
 	assert(Engine.time_scale == 2.0)
@@ -479,6 +539,16 @@ func _run() -> void:
 	assert(game.mission_intel_stats_label.text.contains("AVG MANA"))
 	assert(game.mission_intel_stats_label.text.contains("RECOMMENDED"))
 	assert(game.mission_intel_stats_label.text.contains("×"))
+	assert(game.mission_intel_label.get_parent() is VBoxContainer)
+	assert(game.mission_intel_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART)
+	game.pending_mission_id = 60 # Act 2 · Mission 39
+	game._refresh_mission_intel()
+	await process_frame
+	assert(game.mission_intel_label.text.contains("ACT 2 / MISSION 39"))
+	assert(game.mission_intel_label.text.contains("OPPONENT: TERMINUS CUSTODIAN"))
+	assert(game.mission_intel_label.text.contains("CAELIAN TRANSIT SECURITY"))
+	assert(game.mission_intel_label.get_global_rect().end.x
+		<= game.mission_intel_panel.get_global_rect().end.x + 0.5)
 	assert(game.reward_carry_label.visible)
 	assert(game.reward_carry_label.text.contains("CHAIN INITIATE"))
 	game.squad_overlay.visible = false

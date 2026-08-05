@@ -13,7 +13,9 @@ assets required by the prototype.
 
 ## Controls
 
-- Start from the main menu in **Campaign** or **Practice Battle**.
+- New profiles begin with a five-step guided battle; replay it any time from
+  **Guided Tutorial** on the main menu.
+- Start a full battle from the main menu in **Campaign** or **Practice Battle**.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Select a deployed unit, then a reachable tile in any other row to reposition it; friendly units may be crossed, but enemies block the path.
@@ -55,6 +57,8 @@ assets required by the prototype.
 - 107 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Main menu, mission selection, practice mode, and campaign briefings
+- Playable opening tutorial for deployment, locked Mana, turn resolution,
+  lane repositioning, and Conductor powers
 - Mission squad selection before campaign battles
 - Six-unit bench and persistent locked-Mana economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing

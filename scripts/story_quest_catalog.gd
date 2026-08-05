@@ -522,8 +522,8 @@ const MISSION_STORIES := {
 	},
 	70: {
 		"chapter": "The Conductor Vault",
-		"briefing": "The First Conductors direct the delegation to the Warden council for answers about your activation. Before the council can testify, hired intermediaries breach its protected chamber to destroy the surviving records.",
-		"debriefing": "The erasure team is stopped and the council records survive. With concealment no longer possible, the Wardens agree to give formal testimony."
+		"briefing": "The First Conductors direct the delegation to the Warden council for answers about your activation. The Continuity Directorate—the Warden faction that authorized the experiment—seals the witness chamber and activates its custodial forces to prevent the council from testifying. Break the lockdown without destroying the surviving records.",
+		"debriefing": "The Continuity Directorate's lockdown is broken and the council records survive. Unable to conceal its role any longer, the Warden council admits that your activation was a deliberate continuity test."
 	},
 	71: {
 		"chapter": "The Conductor Vault",
@@ -655,7 +655,7 @@ const MISSION_OPPONENTS := [
 	["Record-Burner Conductor", "Faction Claimants"], # 67
 	["Deep Vault Guardian", "Imperial Archive"], # 68
 	["Hospice Assessor", "Conductor Vault Guardians"], # 69
-	["Evidence Erasure Agent", "Hired Intermediaries"], # 70
+	["Continuity Marshal", "Warden Continuity Directorate"], # 70
 	["Crown Relay Honor Guard", "Wardens of Caelis"], # 71
 	["Civic Core Seizure Leader", "Caelian Restorationists"], # 72
 	["Extremist Coalition Conductor", "Restorationists & Hardliners"], # 73
