@@ -583,8 +583,12 @@ func _init() -> void:
 		assert(FileAccess.file_exists(
 			"res://assets/units/portraits/%03d.png" % art_id
 		))
-		assert(FileAccess.file_exists(
-			"res://assets/units/full/%03d.png" % art_id
+		var full_art_path := "res://assets/units/full/%03d.png" % art_id
+		assert(FileAccess.file_exists(full_art_path))
+		var full_art_import_path := full_art_path + ".import"
+		assert(FileAccess.file_exists(full_art_import_path))
+		assert(FileAccess.get_file_as_string(full_art_import_path).contains(
+			"mipmaps/generate=true"
 		))
 	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 103)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
