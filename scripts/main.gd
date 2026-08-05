@@ -37,19 +37,26 @@ const TUTORIAL_DEPLOY := 2
 const TUTORIAL_MANA := 3
 const TUTORIAL_RESOLVE := 4
 const TUTORIAL_WAIT := 5
-const TUTORIAL_SELECT_UNIT := 6
-const TUTORIAL_REPOSITION := 7
-const TUTORIAL_POWER := 8
-const TUTORIAL_COMPLETE := 9
+const TUTORIAL_ENEMY_TURN := 6
+const TUTORIAL_SELECT_UNIT := 7
+const TUTORIAL_REPOSITION := 8
+const TUTORIAL_POWER := 9
+const TUTORIAL_FINAL_RESOLVE := 10
+const TUTORIAL_FINAL_WAIT := 11
+const TUTORIAL_COMPLETE := 12
 const TUTORIAL_UNIT_NAME := "Trinity Rusher"
+const TUTORIAL_TARGET_NAME := "Trinity Potshot"
+const TUTORIAL_REINFORCEMENT_NAME := "Pub Bouncer"
 const TUTORIAL_DEPLOYMENT_ROW := 1
 const TUTORIAL_REPOSITION_ROW := 0
+const TUTORIAL_TARGET_COL := 4
+const TUTORIAL_ENEMY_HP := 6
 const TUTORIAL_PLAYER_SQUAD := [
 	"Trinity Rusher", "Trinity Potshot", "Chain Initiate", "Apprentice Builder",
 	"LDF Peacekeeper", "Claw Caster", "Factory Markswoman", "Socialite Fencer"
 ]
 const TUTORIAL_ENEMY_SQUAD := [
-	"Chain Initiate", "Socialite Fencer", "Factory Markswoman", "Claw Caster",
+	"Pub Bouncer", "Socialite Fencer", "Factory Markswoman", "Claw Caster",
 	"Trinity Potshot", "LDF Peacekeeper", "Apprentice Builder", "Trinity Rusher"
 ]
 
@@ -231,6 +238,8 @@ var dialogue_texture_cache := {}
 var tutorial_mode := false
 var tutorial_step := TUTORIAL_NONE
 var tutorial_saved_conductor_skill := ""
+var tutorial_pulse_time := 0.0
+var tutorial_pulse_buttons: Array[Button] = []
 
 const REPLAY_PATH := "user://last_replay.json"
 const REPLAY_HISTORY_PATH := "user://replay_history.json"
@@ -2309,6 +2318,7 @@ func _begin_tutorial() -> void:
 	_set_tutorial_step(TUTORIAL_INTRO)
 
 func _leave_tutorial() -> void:
+	_clear_tutorial_pulses()
 	if tutorial_mode and not tutorial_saved_conductor_skill.is_empty():
 		player_conductor_skill = tutorial_saved_conductor_skill
 	tutorial_mode = false
@@ -2332,8 +2342,8 @@ func _set_tutorial_step(next_step: int) -> void:
 			tutorial_progress_label.text = "GUIDED DRILL · 5 LESSONS"
 			tutorial_title_label.text = "TAKE THE COMMAND DECK"
 			tutorial_body_label.text = (
-				"This short battle uses the real rules. You will deploy a unit, see "
-				+ "how Mana stays locked, resolve a turn, change lanes, and fire a Conductor power."
+				"This short battle uses the real rules. You will deploy a unit, destroy "
+				+ "an enemy, change lanes, use a Conductor power, and strike the enemy Conductor."
 			)
 			tutorial_continue_button.visible = true
 			status_message = "Guided drill ready."
@@ -2348,7 +2358,8 @@ func _set_tutorial_step(next_step: int) -> void:
 			tutorial_progress_label.text = "LESSON 1 OF 5 · DEPLOYMENT"
 			tutorial_title_label.text = "DEPLOY TO THE CENTER LANE"
 			tutorial_body_label.text = (
-				"Your deployment edge is the cyan column on the left. Select the highlighted center tile."
+				"Your deployment edge is the cyan column on the left. Deploy in the "
+				+ "highlighted center lane to engage Trinity Potshot."
 			)
 			status_message = "Deploy Trinity Rusher to the highlighted center lane."
 		TUTORIAL_MANA:
@@ -2362,45 +2373,74 @@ func _set_tutorial_step(next_step: int) -> void:
 			status_message = "2 Mana is locked by your deployed unit."
 		TUTORIAL_RESOLVE:
 			tutorial_progress_label.text = "LESSON 3 OF 5 · RESOLUTION"
-			tutorial_title_label.text = "RESOLVE THE TURN"
+			tutorial_title_label.text = "ELIMINATE THE BLOCKER"
 			tutorial_body_label.text = (
-				"The cyan preview shows where ready units will travel and attack. Select the glowing → button."
+				"The cyan preview stops in attack range. Select the glowing → button; "
+				+ "Trinity Rusher's Double Strike will hit the 4-HP enemy twice."
 			)
-			status_message = "Select → to resolve movement and combat."
+			status_message = "Resolve to eliminate Trinity Potshot with Double Strike."
 		TUTORIAL_WAIT:
 			tutorial_progress_label.text = "LESSON 3 OF 5 · RESOLUTION"
 			tutorial_title_label.text = "WATCH THE BOARD"
 			tutorial_body_label.text = (
-				"Ready units act automatically: they advance, choose a target in range, and attack. "
-				+ "Then the enemy takes its turn."
+				"Ready units act automatically: Trinity Rusher advances until the enemy "
+				+ "blocks its path, then attacks twice."
 			)
-			status_message = "Resolving both sides of the round..."
+			status_message = "Trinity Rusher is advancing on Trinity Potshot..."
+		TUTORIAL_ENEMY_TURN:
+			tutorial_progress_label.text = "LESSON 3 OF 5 · ENEMY TURN"
+			tutorial_title_label.text = "THE ENEMY RESPONDS"
+			tutorial_body_label.text = (
+				"Pub Bouncer will deploy into the same lane and attack for 3 damage. "
+				+ "Trinity Rusher survives, but the center route is blocked again."
+			)
+			status_message = "Enemy turn · Pub Bouncer is deploying to the center lane..."
 		TUTORIAL_SELECT_UNIT:
 			tutorial_progress_label.text = "LESSON 4 OF 5 · REPOSITIONING"
 			tutorial_title_label.text = "SELECT YOUR STRIDER"
 			tutorial_body_label.text = (
-				"During your Command phase, select a deployed ally to reveal legal lane shifts."
+				"Trinity Rusher survived the counterattack, but Pub Bouncer blocks its "
+				+ "route. Select your Strider to reveal legal lane shifts."
 			)
 			status_message = "Select Trinity Rusher on the battlefield."
 		TUTORIAL_REPOSITION:
 			tutorial_progress_label.text = "LESSON 4 OF 5 · REPOSITIONING"
 			tutorial_title_label.text = "SHIFT TO THE TOP LANE"
 			tutorial_body_label.text = (
-				"Lane shifts keep the unit in the same column. Select the highlighted tile in the top lane."
+				"The center lane leads into Pub Bouncer. Shift to the highlighted top-lane "
+				+ "tile to create an open route to the Conductor."
 			)
 			status_message = "Shift Trinity Rusher to the highlighted top lane."
 		TUTORIAL_POWER:
 			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
 			tutorial_title_label.text = "USE RALLY"
 			tutorial_body_label.text = (
-				"Conductor powers do not cost Mana, but each can be used only once per battle. Select RALLY now."
+				"Conductor powers do not cost Mana, but each can be used only once per battle. "
+				+ "Use RALLY to raise Trinity Rusher to 3 ATK."
 			)
-			status_message = "Use Rally to give all current allies +1 ATK."
+			status_message = "Use Rally so Double Strike can deal 6 Conductor damage."
+		TUTORIAL_FINAL_RESOLVE:
+			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
+			tutorial_title_label.text = "STRIKE THE CONDUCTOR"
+			tutorial_body_label.text = (
+				"The top lane is clear. Resolve again: Trinity Rusher will advance to "
+				+ "the enemy edge and its two 3-ATK hits will defeat the 6-HP Conductor."
+			)
+			status_message = "Resolve to strike the exposed enemy Conductor."
+		TUTORIAL_FINAL_WAIT:
+			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
+			tutorial_title_label.text = "WATCH THE FINAL ADVANCE"
+			tutorial_body_label.text = (
+				"With no enemy unit blocking this lane, Trinity Rusher can reach and "
+				+ "attack the Conductor directly."
+			)
+			status_message = "Trinity Rusher is advancing on the enemy Conductor..."
 		TUTORIAL_COMPLETE:
 			tutorial_progress_label.text = "GUIDED DRILL COMPLETE"
 			tutorial_title_label.text = "YOU HAVE COMMAND"
 			tutorial_body_label.text = (
-				"You have deployed, managed locked Mana, resolved combat, changed lanes, and used a Conductor power."
+				"You eliminated an enemy unit, changed lanes, and defeated the enemy "
+				+ "Conductor. Units block attacks in their lane; an open lane creates a path to victory."
 			)
 			tutorial_continue_button.text = "START PRACTICE"
 			tutorial_continue_button.visible = true
@@ -3086,7 +3126,8 @@ func _on_card_long_press_released() -> void:
 	await get_tree().process_frame
 	_touch_details_active = false
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_tutorial_pulses(delta)
 	if hover_card != null and hover_card.visible:
 		_position_hover_card()
 
@@ -3155,7 +3196,9 @@ func _start_new_match() -> void:
 	last_deployed_unit_id = {PLAYER: -1, ENEMY: -1}
 	round_number = 1
 	player_hp = mission_run_conductor_hp if campaign_battle else STARTING_HP
-	enemy_hp = STARTING_HP if not campaign_battle else encounter.enemy_hp
+	enemy_hp = TUTORIAL_ENEMY_HP if tutorial_mode else (
+		STARTING_HP if not campaign_battle else encounter.enemy_hp
+	)
 	player_max_energy = 2
 	player_energy = 2
 	enemy_max_energy = 2
@@ -3193,6 +3236,8 @@ func _start_new_match() -> void:
 	for i in 4:
 		_draw_player_card()
 		_draw_enemy_card()
+	if tutorial_mode:
+		_setup_tutorial_target()
 	_refresh()
 
 func _draw_player_card() -> void:
@@ -3207,6 +3252,27 @@ func _draw_enemy_card() -> void:
 	enemy_hand.append(enemy_deck[enemy_draw_index].duplicate())
 	enemy_draw_index += 1
 
+func _setup_tutorial_target() -> void:
+	var target_card: Dictionary = {}
+	for card in enemy_deck:
+		if card.name == TUTORIAL_TARGET_NAME:
+			target_card = card
+			break
+	assert(not target_card.is_empty())
+	var target := _spawn_unit(
+		target_card.duplicate(true), ENEMY,
+		TUTORIAL_DEPLOYMENT_ROW, TUTORIAL_TARGET_COL
+	)
+	target.ready = false
+	battle_simulator.record("deploy", {
+		"side": ENEMY,
+		"unit_id": target.id,
+		"card": target.name,
+		"row": target.row,
+		"col": target.col,
+		"tutorial_setup": true
+	})
+
 func _refresh() -> void:
 	_log_action(status_message)
 	var player_locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
@@ -3220,7 +3286,7 @@ func _refresh() -> void:
 		not input_enabled or battle_over
 		or pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
 		or pending_lane_actor_id >= 0
-		or (tutorial_mode and tutorial_step != TUTORIAL_RESOLVE)
+		or (tutorial_mode and tutorial_step not in [TUTORIAL_RESOLVE, TUTORIAL_FINAL_RESOLVE])
 	)
 	if tutorial_mode:
 		menu_button.visible = false
@@ -3287,7 +3353,8 @@ func _refresh() -> void:
 				targetable_rows.append(row)
 	board.set_guidance(
 		TUTORIAL_DEPLOYMENT_ROW if tutorial_mode and tutorial_step == TUTORIAL_DEPLOY else -1,
-		TUTORIAL_REPOSITION_ROW if tutorial_mode and tutorial_step == TUTORIAL_REPOSITION else -1
+		TUTORIAL_REPOSITION_ROW if tutorial_mode and tutorial_step == TUTORIAL_REPOSITION else -1,
+		tutorial_mode and tutorial_step == TUTORIAL_SELECT_UNIT
 	)
 	var tutorial_board_input := tutorial_step in [
 		TUTORIAL_DEPLOY, TUTORIAL_SELECT_UNIT, TUTORIAL_REPOSITION
@@ -3304,8 +3371,15 @@ func _refresh() -> void:
 		"DECK %d" % (enemy_deck.size() - enemy_draw_index),
 		targetable_rows
 	)
-	_set_tutorial_button_highlight(end_button, tutorial_mode and tutorial_step == TUTORIAL_RESOLVE)
+	_set_tutorial_button_highlight(
+		end_button,
+		tutorial_mode and tutorial_step in [TUTORIAL_RESOLVE, TUTORIAL_FINAL_RESOLVE]
+	)
 	_set_tutorial_button_highlight(power_button, tutorial_mode and tutorial_step == TUTORIAL_POWER)
+	_set_tutorial_button_highlight(
+		tutorial_continue_button,
+		tutorial_mode and tutorial_continue_button.visible
+	)
 	_rebuild_hand()
 
 func _set_board_opponent(encounter: Dictionary) -> void:
@@ -3349,7 +3423,14 @@ func _set_tutorial_button_highlight(button: Button, active: bool) -> void:
 	for style_name in ["normal", "hover", "pressed"]:
 		button.remove_theme_stylebox_override(style_name)
 	if not active:
+		button.remove_meta("tutorial_pulse")
+		button.modulate = Color.WHITE
+		button.scale = Vector2.ONE
+		tutorial_pulse_buttons.erase(button)
 		return
+	button.set_meta("tutorial_pulse", true)
+	if button not in tutorial_pulse_buttons:
+		tutorial_pulse_buttons.append(button)
 	button.add_theme_stylebox_override(
 		"normal", UIThemeScript.card_style(UIThemeScript.BRASS, 0.42, 1.0, 5)
 	)
@@ -3359,6 +3440,34 @@ func _set_tutorial_button_highlight(button: Button, active: bool) -> void:
 	button.add_theme_stylebox_override(
 		"pressed", UIThemeScript.card_style(UIThemeScript.BRASS_DARK, 0.52, 1.0, 3)
 	)
+	_apply_tutorial_button_pulse(button, 0.7)
+
+func _update_tutorial_pulses(delta: float) -> void:
+	if tutorial_pulse_buttons.is_empty():
+		return
+	tutorial_pulse_time = fmod(
+		tutorial_pulse_time + delta / maxf(Engine.time_scale, 0.001), 1.1
+	)
+	var pulse := 0.7
+	if not reduced_motion and not skip_animations:
+		pulse = (sin(tutorial_pulse_time / 1.1 * TAU - PI * 0.5) + 1.0) * 0.5
+	for index in range(tutorial_pulse_buttons.size() - 1, -1, -1):
+		var button := tutorial_pulse_buttons[index]
+		if not is_instance_valid(button) or not button.has_meta("tutorial_pulse"):
+			tutorial_pulse_buttons.remove_at(index)
+			continue
+		_apply_tutorial_button_pulse(button, pulse)
+
+func _apply_tutorial_button_pulse(button: Button, pulse: float) -> void:
+	button.modulate = Color.WHITE.lerp(Color("#fff0b0"), 0.18 + pulse * 0.32)
+	button.scale = Vector2.ONE
+
+func _clear_tutorial_pulses() -> void:
+	for button in tutorial_pulse_buttons.duplicate():
+		if is_instance_valid(button):
+			_set_tutorial_button_highlight(button, false)
+	tutorial_pulse_buttons.clear()
+	tutorial_pulse_time = 0.0
 
 func _apply_class_card_style(button: Button, kind: String) -> void:
 	var color: Color = UnitCatalogScript.class_color(kind)
@@ -3809,9 +3918,7 @@ func _use_player_power() -> void:
 		return
 	player_power_used = true
 	if tutorial_mode:
-		TutorialStoreScript.mark_completed()
-		input_enabled = false
-		_set_tutorial_step(TUTORIAL_COMPLETE)
+		_set_tutorial_step(TUTORIAL_FINAL_RESOLVE)
 	else:
 		_refresh()
 
@@ -3824,8 +3931,9 @@ func _win_campaign_battle() -> void:
 func _end_player_turn() -> void:
 	if not input_enabled or battle_over:
 		return
-	if tutorial_mode and tutorial_step != TUTORIAL_RESOLVE:
+	if tutorial_mode and tutorial_step not in [TUTORIAL_RESOLVE, TUTORIAL_FINAL_RESOLVE]:
 		return
+	var tutorial_resolution_step := tutorial_step
 	if (
 		pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
 		or pending_lane_actor_id >= 0
@@ -3834,7 +3942,10 @@ func _end_player_turn() -> void:
 		_refresh()
 		return
 	if tutorial_mode:
-		_set_tutorial_step(TUTORIAL_WAIT)
+		_set_tutorial_step(
+			TUTORIAL_FINAL_WAIT
+			if tutorial_resolution_step == TUTORIAL_FINAL_RESOLVE else TUTORIAL_WAIT
+		)
 	else:
 		status_message = _resolution_preview(PLAYER)
 		_refresh()
@@ -3847,10 +3958,82 @@ func _end_player_turn() -> void:
 	await _resolve_side(PLAYER)
 	await _resolve_chants(PLAYER, "end")
 	_expire_side_effects(PLAYER)
+	if tutorial_mode:
+		if tutorial_resolution_step == TUTORIAL_FINAL_RESOLVE:
+			if enemy_hp <= 0:
+				TutorialStoreScript.mark_completed()
+				battle_over = true
+				input_enabled = false
+				end_button.visible = false
+				battle_simulator.record("battle_finished", {
+					"winner": PLAYER,
+					"player_hp": player_hp,
+					"enemy_hp": enemy_hp,
+					"tutorial": true
+				})
+				_set_tutorial_step(TUTORIAL_COMPLETE)
+			else:
+				input_enabled = true
+				_set_tutorial_step(TUTORIAL_FINAL_RESOLVE)
+			return
+		await _wait(0.35)
+		await _run_tutorial_enemy_turn()
+		return
 	if _check_game_over():
 		return
 	await _wait(0.35)
 	await _enemy_turn()
+
+func _run_tutorial_enemy_turn() -> void:
+	_set_tutorial_step(TUTORIAL_ENEMY_TURN)
+	await _wait(0.65)
+	var hand_index := -1
+	for index in enemy_hand.size():
+		if enemy_hand[index].name == TUTORIAL_REINFORCEMENT_NAME:
+			hand_index = index
+			break
+	assert(hand_index >= 0)
+	var card: Dictionary = enemy_hand[hand_index]
+	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
+	assert(card.cost <= enemy_energy)
+	var spawned := _spawn_unit(
+		card, ENEMY, TUTORIAL_DEPLOYMENT_ROW, COLS - 1
+	)
+	battle_simulator.record("deploy", {
+		"side": ENEMY,
+		"unit_id": spawned.id,
+		"card": card.name,
+		"row": spawned.row,
+		"col": spawned.col,
+		"tutorial_reinforcement": true
+	})
+	enemy_energy -= card.cost
+	enemy_hand.remove_at(hand_index)
+	status_message = "Enemy deployed Pub Bouncer to the center lane."
+	_refresh()
+	battle_audio.play("deploy")
+	await board.animate_unit_move(
+		spawned.id, spawned.row, COLS, _animation_duration(0.32)
+	)
+	await _wait(0.35)
+	status_message = "Enemy units advance."
+	_refresh()
+	await _resolve_side(ENEMY)
+	await _resolve_chants(ENEMY, "end")
+	_expire_side_effects(ENEMY)
+	await _wait(0.35)
+	_advance_tutorial_round()
+
+func _advance_tutorial_round() -> void:
+	round_number += 1
+	player_max_energy = mini(10, player_max_energy + 2)
+	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
+	for unit in units:
+		if unit.side == PLAYER:
+			unit.ready = true
+			unit.repositioned = false
+	input_enabled = true
+	_set_tutorial_step(TUTORIAL_SELECT_UNIT)
 
 func _enemy_turn() -> void:
 	for unit in units:

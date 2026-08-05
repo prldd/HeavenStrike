@@ -93,8 +93,16 @@ func _run() -> void:
 	assert(game.tutorial_mode)
 	assert(game.tutorial_step == game.TUTORIAL_INTRO)
 	assert(game.tutorial_panel.visible)
+	assert(game.tutorial_continue_button.has_meta("tutorial_pulse"))
 	assert(game.player_conductor_skill == "Rally")
 	assert(game.player_hand[0].name == game.TUTORIAL_UNIT_NAME)
+	assert(game.enemy_hp == game.TUTORIAL_ENEMY_HP)
+	var tutorial_target = game.units.filter(
+		func(unit): return unit.side == game.ENEMY and unit.name == game.TUTORIAL_TARGET_NAME
+	).front()
+	assert(tutorial_target.row == game.TUTORIAL_DEPLOYMENT_ROW)
+	assert(tutorial_target.col == game.TUTORIAL_TARGET_COL)
+	assert(tutorial_target.hp == 4)
 	game._on_tutorial_continue()
 	assert(game.tutorial_step == game.TUTORIAL_SELECT_CARD)
 	var tutorial_card_index := -1
@@ -103,33 +111,84 @@ func _run() -> void:
 			tutorial_card_index = index
 			break
 	assert(tutorial_card_index >= 0)
+	var tutorial_card_button: Button = game.hand_row.get_child(tutorial_card_index)
+	assert(tutorial_card_button.has_meta("tutorial_pulse"))
+	game.skip_animations = false
+	game._apply_tutorial_button_pulse(tutorial_card_button, 1.0)
+	assert(tutorial_card_button.scale == Vector2.ONE)
+	assert(tutorial_card_button.modulate != Color.WHITE)
+	game.skip_animations = true
+	assert(not game.tutorial_continue_button.has_meta("tutorial_pulse"))
 	game._select_card(tutorial_card_index)
 	assert(game.tutorial_step == game.TUTORIAL_DEPLOY)
 	assert(game.board.guided_deployment_row == game.TUTORIAL_DEPLOYMENT_ROW)
+	assert(game.board._has_guidance_pulse())
 	await game._on_deployment_clicked(game.TUTORIAL_DEPLOYMENT_ROW)
 	assert(game.tutorial_step == game.TUTORIAL_MANA)
+	assert(game.tutorial_continue_button.has_meta("tutorial_pulse"))
 	assert(game.player_energy == 0)
 	assert(game.BattleRulesScript.locked_mana(game.units, game.PLAYER) == 2)
 	game._on_tutorial_continue()
 	assert(game.tutorial_step == game.TUTORIAL_RESOLVE)
 	assert(not game.end_button.disabled)
+	assert(game.end_button.has_meta("tutorial_pulse"))
 	await game._end_player_turn()
 	assert(game.round_number == 2)
 	assert(game.tutorial_step == game.TUTORIAL_SELECT_UNIT)
+	assert(not game.units.any(func(unit): return unit.id == tutorial_target.id))
+	assert(game.enemy_hp == game.TUTORIAL_ENEMY_HP)
+	assert(game.battle_simulator.events.filter(
+		func(event): return event.type == "attack" and event.target_id == tutorial_target.id
+	).size() == 2)
+	assert(game.board.guided_target_pulse)
 	var tutorial_unit = game._tutorial_unit()
 	assert(tutorial_unit != null)
+	assert(tutorial_unit.col == 3)
+	assert(tutorial_unit.hp == 1)
+	assert(tutorial_unit.get("taunt_turns", 0) == 0)
+	var tutorial_reinforcement = game.units.filter(
+		func(unit): return (
+			unit.side == game.ENEMY and unit.name == game.TUTORIAL_REINFORCEMENT_NAME
+		)
+	).front()
+	assert(tutorial_reinforcement.row == game.TUTORIAL_DEPLOYMENT_ROW)
+	assert(tutorial_reinforcement.col == 4)
+	assert(tutorial_reinforcement.kind == "Duelist")
+	assert(game.battle_simulator.events.filter(
+		func(event): return (
+			event.type == "attack" and event.actor_id == tutorial_reinforcement.id
+			and event.target_id == tutorial_unit.id
+		)
+	).size() == 1)
 	await game._on_board_cell_clicked(tutorial_unit.row, tutorial_unit.col)
 	assert(game.tutorial_step == game.TUTORIAL_REPOSITION)
 	assert(game.board.guided_reposition_row == game.TUTORIAL_REPOSITION_ROW)
+	assert(game.board._has_guidance_pulse())
 	await game._on_board_cell_clicked(game.TUTORIAL_REPOSITION_ROW, tutorial_unit.col)
 	assert(tutorial_unit.row == game.TUTORIAL_REPOSITION_ROW)
 	assert(game.tutorial_step == game.TUTORIAL_POWER)
 	assert(not game.power_button.disabled)
+	assert(game.power_button.has_meta("tutorial_pulse"))
 	await game._use_player_power()
 	assert(game.player_power_used)
+	assert(tutorial_unit.atk == 3)
+	assert(game.tutorial_step == game.TUTORIAL_FINAL_RESOLVE)
+	assert(not game.end_button.disabled)
+	assert(game.end_button.has_meta("tutorial_pulse"))
+	await game._end_player_turn()
+	assert(game.enemy_hp == 0)
+	assert(game.battle_over)
+	assert(not game.overlay.visible)
+	assert(tutorial_unit.col == 5)
+	assert(game.battle_simulator.events.filter(
+		func(event): return event.type == "commander_attack" and event.side == game.ENEMY
+	).size() == 2)
 	assert(game.tutorial_step == game.TUTORIAL_COMPLETE)
+	assert(game.tutorial_continue_button.has_meta("tutorial_pulse"))
 	game._skip_tutorial()
 	assert(not game.tutorial_mode)
+	assert(game.tutorial_pulse_buttons.is_empty())
+	assert(not game.board._has_guidance_pulse())
 	assert(game.main_menu_overlay.visible)
 	game.skip_animations = false
 	game.board.idle_bob_enabled = true

@@ -40,6 +40,8 @@ var targetable_unit_ids: Array = []
 var targetable_rows: Array = []
 var guided_deployment_row := -1
 var guided_reposition_row := -1
+var guided_target_pulse := false
+var guidance_pulse_time := 0.0
 var player_mana_text := ""
 var enemy_mana_text := ""
 var player_hp_text := ""
@@ -80,10 +82,19 @@ func _ready() -> void:
 	mouse_exited.connect(_clear_hover)
 
 func _process(delta: float) -> void:
-	if reduced_motion or not idle_bob_enabled or units.is_empty() or not is_visible_in_tree():
+	if reduced_motion or not idle_bob_enabled or not is_visible_in_tree():
 		return
-	idle_time += delta
-	queue_redraw()
+	var redraw := false
+	if not units.is_empty():
+		idle_time += delta
+		redraw = true
+	if _has_guidance_pulse():
+		guidance_pulse_time = fmod(
+			guidance_pulse_time + delta / maxf(Engine.time_scale, 0.001), 1.1
+		)
+		redraw = true
+	if redraw:
+		queue_redraw()
 
 func _clear_hover() -> void:
 	hover_row = -1
@@ -104,10 +115,28 @@ func set_opponent_identity(name: String, affiliation: String) -> void:
 	opponent_affiliation = affiliation
 	queue_redraw()
 
-func set_guidance(deployment_row: int = -1, reposition_row: int = -1) -> void:
+func set_guidance(
+	deployment_row: int = -1,
+	reposition_row: int = -1,
+	target_pulse: bool = false
+) -> void:
 	guided_deployment_row = deployment_row
 	guided_reposition_row = reposition_row
+	guided_target_pulse = target_pulse
+	if not _has_guidance_pulse():
+		guidance_pulse_time = 0.0
 	queue_redraw()
+
+func _has_guidance_pulse() -> bool:
+	return (
+		guided_deployment_row >= 0 or guided_reposition_row >= 0
+		or guided_target_pulse
+	)
+
+func _guidance_pulse_amount() -> float:
+	if reduced_motion or not idle_bob_enabled:
+		return 0.7
+	return (sin(guidance_pulse_time / 1.1 * TAU - PI * 0.5) + 1.0) * 0.5
 
 func set_state(
 	next_units: Array,
@@ -526,6 +555,15 @@ func _draw() -> void:
 			):
 				base = Color(0.08, 0.62, 0.78, 0.42)
 			_draw_cell_shape(row, col, base, Color(0.72, 0.58, 0.38, 0.48))
+	if guided_deployment_row >= 0:
+		var pulse := _guidance_pulse_amount()
+		_draw_cell_shape(
+			guided_deployment_row, 0,
+			Color(0.20, 0.86, 1.0, 0.10 + pulse * 0.14),
+			Color("#b7f6ff").lerp(Color.WHITE, pulse * 0.45),
+			3.0 + pulse * 2.0,
+			0.04
+		)
 
 	var event_width := minf(grid.size.x * 0.68, 620.0)
 	var event_rect := Rect2(
@@ -639,9 +677,16 @@ func _draw() -> void:
 				BattleRulesScript.can_reposition(selected_unit, target_row, units)
 				and (guided_reposition_row < 0 or target_row == guided_reposition_row)
 			):
+				var pulse := (
+					_guidance_pulse_amount()
+					if guided_reposition_row == target_row else 0.0
+				)
 				_draw_cell_shape(
 					target_row, selected_unit.col,
-					Color(0.2, 0.75, 0.85, 0.12), Color("#61e8ff"), 3.0, 0.06
+					Color(0.2, 0.75, 0.85, 0.12 + pulse * 0.14),
+					Color("#61e8ff").lerp(Color.WHITE, pulse * 0.45),
+					3.0 + pulse * 2.0,
+					0.06
 				)
 
 func _unit_draws_before(a: Dictionary, b: Dictionary) -> bool:
@@ -684,9 +729,13 @@ func _draw_opponent_identity() -> void:
 	)
 
 func _draw_targetable(unit: Dictionary) -> void:
+	var pulse := _guidance_pulse_amount() if guided_target_pulse else 0.0
 	_draw_cell_shape(
 		unit.row, unit.col,
-		Color(1.0, 0.72, 0.18, 0.16), Color("#ffd166"), 4.0, 0.04
+		Color(1.0, 0.72, 0.18, 0.16 + pulse * 0.12),
+		Color("#ffd166").lerp(Color.WHITE, pulse * 0.45),
+		4.0 + pulse * 2.0,
+		0.04
 	)
 	var rect := _cell_rect(unit.row, unit.col).grow(-5)
 	var label_rect := Rect2(rect.position + Vector2(5, 5), Vector2(rect.size.x - 10, 18))

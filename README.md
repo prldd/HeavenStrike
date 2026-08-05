@@ -59,8 +59,8 @@ assets required by the prototype.
 - Post-battle 1–10 performance ratings with Conductor integrity, formation
   survival, and completion-tempo scoring
 - Main menu, mission selection, practice mode, and campaign briefings
-- Playable opening tutorial for deployment, locked Mana, turn resolution,
-  lane repositioning, and Conductor powers
+- Playable opening tutorial for deployment, locked Mana, eliminating blocking
+  units, lane repositioning, Conductor powers, and direct Conductor attacks
 - Mission squad selection before campaign battles
 - Six-unit bench and persistent locked-Mana economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing
