@@ -665,88 +665,111 @@ const MISSION_OPPONENTS := [
 	["Last Rejectionist", "Accord Rejectionists"] # 77
 ]
 
+# The modern faction represented by each enemy squad. Local unaffiliated groups
+# can borrow a regional faction identity; "Blended" is used when no single
+# identity is intended. Caelian teams blend the five successor factions because
+# each inherited part of Caelis.
+const MISSION_SQUAD_FACTIONS := [
+	# Act 1
+	"Blended", "Blended", "Caelian", "Caelian", "Coal", "Solar", "Solar",
+	"Coal", "Coal", "Steam", "Blended", "Solar", "Blended", "Solar",
+	"Caelian", "Solar", "Blended", "Steam", "Blended", "Coal", "Wind",
+	"Caelian",
+	# Act 2
+	"Wind", "Blended", "Blended", "Blended", "Blended", "Blended", "Fusion",
+	"Solar", "Caelian", "Blended", "Caelian", "Wind", "Wind", "Blended",
+	"Coal", "Steam", "Coal", "Coal", "Blended", "Solar", "Coal", "Solar",
+	"Blended", "Blended", "Steam", "Steam", "Blended", "Steam", "Blended",
+	"Blended", "Caelian", "Fusion", "Blended", "Blended", "Blended", "Caelian",
+	"Coal", "Coal", "Caelian", "Blended",
+	# Act 3
+	"Caelian", "Caelian", "Caelian", "Caelian", "Blended", "Caelian", "Caelian",
+	"Blended", "Caelian", "Caelian", "Blended", "Blended", "Caelian", "Blended",
+	"Blended"
+]
+
 const MISSION_ENEMY_SQUADS := [
 	# Act 1
 	["Trinity Rusher", "Trinity Potshot", "Trinity Basher", "Chain Initiate", "Pub Bouncer", "LDF Peacekeeper", "Rage Spellslinger", "Socialite Fencer"],
 	["Chain Initiate", "Rage Spellslinger", "Pub Bouncer", "Trinity Rusher", "Trinity Potshot", "LDF Peacekeeper", "Claw Slicer", "Factory Markswoman"],
-	["Rage Brute", "Pub Bouncer", "Rage Spellslinger", "Trinity Basher", "Street Nurse", "Trinity Potshot", "Claw Caster", "LDF Peacekeeper"],
-	["Talon Scratcher", "Claw Slicer", "Claw Caster", "Rage Brute", "Pub Bouncer", "Factory Markswoman", "Chain Initiate", "Trinity Rusher"],
-	["Rage Spellslinger", "Rage Brute", "Pub Bouncer", "Trinity Basher", "Claw Caster", "Chain Initiate", "Factory Markswoman", "LDF Peacekeeper"],
-	["Chain Initiate", "Socialite Fencer", "Trinity Rusher", "Trinity Potshot", "Pub Bouncer", "LDF Medic", "Claw Slicer", "Rage Spellslinger"],
-	["Talon Scratcher", "LDF Crowd Mage", "Street Urchin", "Chain Initiate", "Claw Slicer", "Pub Bouncer", "Trinity Potshot", "Socialite Fencer"],
-	["Claw Caster", "Claw Slicer", "Claw Skirmisher", "Claw Ambusher", "Rage Brute", "Pub Bouncer", "Factory Markswoman", "Chain Initiate"],
-	["Claw Slicer", "Claw Caster", "Claw Skirmisher", "Garrett Talon", "Rage Brute", "Trinity Potshot", "LDF Peacekeeper", "Chain Initiate"],
-	["Socialite Fencer", "Pub Bouncer", "Factory Markswoman", "Street Matron", "Rage Spellslinger", "Chain Initiate", "Trinity Rusher", "Claw Caster"],
-	["Trinity Rusher", "Chain Initiate", "Trinity Basher", "Claw Slicer", "Apprentice Builder", "Master Builder", "Trinity Potshot", "LDF Medic"],
-	["Pub Bouncer", "Claw Slicer", "Factory Markswoman", "Claw Ambusher", "Street Urchin", "Rage Spellslinger", "Chain Initiate", "Socialite Fencer"],
+	["LDF Peacekeeper", "Haven Huntsman", "Conjuring Clown", "Order Apostle", "Pub Bouncer", "Greyson the Shifty", "The Botanist", "Claw Skirmisher"],
+	["LDF Peacekeeper", "Chain Initiate", "Claw Chopper", "LDF Flight Officer", "Order Missionary", "Claw Rocker", "LDF Sureshot", "LDF Crowd Mage"],
+	["Factory Markswoman", "Raging Dragon", "Claw Slicer", "Precision Shooter", "Macabre Embalmer", "Apprentice Builder", "Flame Warden", "Rage Bruiser"],
+	["Master Builder", "Trinity Messenger", "Trinity Basher", "Dart Shooter", "Fortune Teller", "Claw Slicer", "Rescue Corps", "Claw Cleaver"],
+	["Trinity Rusher", "Fortune Teller", "Rescue Corps", "Dart Shooter", "Rage Spellslinger", "Claw Chopper", "Socialite Fencer", "The Botanist"],
+	["Rage Bruiser", "Socialite Fencer", "Garrett Talon", "Claw Skirmisher", "Raging Dragon", "LDF Medic", "Macabre Embalmer", "Flame Warden"],
+	["Apprentice Builder", "Greyson the Shifty", "Rage Bruiser", "Chain Initiate", "Raging Dragon", "Claw Ambusher", "Garrett Talon", "LDF Medic"],
+	["Socialite Fencer", "Pub Bouncer", "Royal Yeoman", "LDF Bolt Slinger", "Blight Doctor", "Order Pupil", "Prison Warden", "LDF Constable"],
+	["LDF Medic", "Street Nurse", "Claw Slicer", "Dart Shooter", "Conjuring Clown", "LDF Flight Officer", "LDF Sergeant", "Captain Kerryson"],
+	["Claw Slicer", "Socialite Fencer", "Trinity Messenger", "Street Matron", "Claw Cleaver", "Rage Spellslinger", "The Botanist", "Dart Shooter"],
 	["Pub Bouncer", "Claw Caster", "Factory Markswoman", "Street Hoodlum", "Rage Brute", "Chain Initiate", "LDF Peacekeeper", "Trinity Potshot"],
-	["Pub Bouncer", "Claw Caster", "Greyson the Shifty", "Street Hoodlum", "Socialite Fencer", "Factory Markswoman", "Chain Initiate", "Rage Spellslinger"],
+	["Rescue Corps", "Street Matron", "Socialite Fencer", "Trinity Rusher", "Claw Cleaver", "Dart Shooter", "Pub Bouncer", "Trinity Herald"],
 	["Trinity Potshot", "Rage Spellslinger", "LDF Flight Commander", "Factory Markswoman", "Pub Bouncer", "LDF Peacekeeper", "Chain Initiate", "Claw Slicer"],
-	["Trinity Basher", "Claw Slicer", "Factory Markswoman", "Rage Spellslinger", "Claw Skirmisher", "Rage Brute", "Socialite Fencer", "Chain Initiate"],
+	["Socialite Fencer", "Opelle", "Selina the Stylist", "Hamish Highlander", "Blightshot", "Street Matron", "Trinity Herald", "Pub Bouncer"],
 	["Socialite Fencer", "Pub Bouncer", "Trinity Basher", "Rage Spellslinger", "Rage Bruiser", "Factory Markswoman", "LDF Medic", "Trinity Rusher"],
-	["Socialite Fencer", "Trinity Rusher", "Trinity Potshot", "Trinity Basher", "Trinity Messenger", "Captain Kerryson", "Kerryson the Stoic", "LDF Peacekeeper"],
-	["Trinity Potshot", "Claw Caster", "Claw Slicer", "LDF Flight Officer", "Talon Scratcher", "Pub Bouncer", "Chain Initiate", "Factory Markswoman"],
-	["Socialite Fencer", "Trinity Rusher", "Rage Spellslinger", "Rage Brute", "Trinity Potshot", "Chain Initiate", "LDF Peacekeeper", "Pub Bouncer"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Gunner", "LDF Crowd Mage", "Trinity Rusher", "Pub Bouncer", "Factory Markswoman"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Sureshot", "LDF Crowd Mage", "Apprentice Builder", "Order Pupil", "Trinity Basher"],
+	["Jimimi the Shepherd", "Whirling Ragnr", "Street Hoodlum", "LDF Sergeant", "LDF Bowgunner", "Factory Markswoman", "Naruku the Lookout", "Trinity Rusher"],
+	["Macabre Undertaker", "LDF Sureshot", "LDF Swordwielder", "Order Missionary", "Three of Hearts", "Rescue Paramedic", "Bethany", "Yuuya (Fantail Pigeon)"],
+	["Flame Dissident", "Final Empress", "Rage Bruiser", "Claw Skirmisher", "Precision Shooter", "Hookie", "Pub Landlord", "Garrett the Claw"],
+	["Order Chaplain", "Order Scholar", "Claw Rocker", "Innocent Gretel", "Philippa Trot", "Mata Swiftblade", "Haven Huntsman", "Joe Wonder"],
+	["Order Scholar", "LDF Swordwielder", "Order Missionary", "Hamish Highlander", "Dart Sharpshooter", "Shakespeare", "Flame Dissident", "Rage Spellslinger"],
 	# Act 2
-	["Pub Bouncer", "Rage Spellslinger", "Rage Brute", "Street Urchin", "Claw Slicer", "Factory Markswoman", "Chain Initiate", "Socialite Fencer"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Gunner", "Order Pupil", "Order Cleric", "Apprentice Builder", "Trinity Rusher"],
+	["Communicator Ripley", "Order Chaplain", "Final Empress", "Haven Huntsman", "Talon Scratcher", "Frog-Hopper Keru", "Innocent Gretel", "Master Builder"],
+	["Minerva the Brave", "Final Empress", "Commune Defender", "Claw Skirmisher", "Prison Warden", "Dart Sharpshooter", "Ant Lantis", "Order Scholar"],
 	["Trinity Rusher", "Trinity Potshot", "Claw Caster", "Trinity Basher", "Claw Skirmisher", "Pub Bouncer", "Socialite Fencer", "Chain Initiate"],
 	["Socialite Fencer", "Claw Caster", "Claw Slicer", "Claw Skirmisher", "Factory Markswoman", "Pub Bouncer", "Chain Initiate", "Rage Brute"],
 	["Socialite Fencer", "Pub Bouncer", "Factory Markswoman", "Street Hoodlum", "LDF Gunner", "Chain Initiate", "Rage Spellslinger", "Trinity Rusher"],
 	["Rage Spellslinger", "LDF Medic", "Order Pupil", "Order Cleric", "Rage Brute", "LDF Peacekeeper", "Factory Markswoman", "Claw Slicer"],
-	["Chain Initiate", "Factory Markswoman", "LDF Medic", "LDF Gunner", "Order Apostle", "Pub Bouncer", "Socialite Fencer", "Claw Skirmisher"],
-	["Pub Bouncer", "Rage Spellslinger", "Rage Brute", "Rage Bruiser", "Street Urchin", "Trinity Potshot", "Chain Initiate", "Claw Caster"],
-	["Claw Caster", "Claw Slicer", "Rage Spellslinger", "Claw Skirmisher", "Claw Ambusher", "Talon Scratcher", "Pub Bouncer", "Chain Initiate"],
-	["Socialite Fencer", "Pub Bouncer", "Claw Slicer", "Street Hoodlum", "Factory Markswoman", "Rage Brute", "Chain Initiate", "LDF Peacekeeper"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Apprentice Builder", "LDF Gunner", "LDF Crowd Mage", "Order Cleric", "Trinity Rusher"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Gunner", "LDF Sureshot", "Trinity Rusher", "Trinity Potshot", "Socialite Fencer"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Master Builder", "LDF Crowd Mage", "Order Pupil", "Order Cleric", "Rage Brute"],
-	["Claw Caster", "Claw Slicer", "Rage Spellslinger", "Claw Ambusher", "Rage Bruiser", "Talon Scratcher", "Factory Markswoman", "Chain Initiate"],
-	["Pub Bouncer", "Claw Caster", "Factory Markswoman", "Street Urchin", "Street Hoodlum", "Rage Brute", "Chain Initiate", "Socialite Fencer"],
-	["Pub Bouncer", "Claw Slicer", "Factory Markswoman", "Claw Skirmisher", "Claw Ambusher", "LDF Gunner", "Chain Initiate", "Rage Spellslinger"],
-	["Socialite Fencer", "Trinity Rusher", "Trinity Potshot", "Trinity Basher", "Trinity Messenger", "Trinity Herald", "Chain Initiate", "LDF Medic"],
-	["Socialite Fencer", "Claw Caster", "Claw Slicer", "Claw Ambusher", "Talon Scratcher", "Factory Markswoman", "Chain Initiate", "Pub Bouncer"],
-	["Trinity Rusher", "Trinity Potshot", "Chain Initiate", "Order Pupil", "Order Cleric", "Order Apostle", "Apprentice Builder", "Socialite Fencer"],
-	["LDF Peacekeeper", "LDF Medic", "LDF Gunner", "LDF Crowd Mage", "Chain Initiate", "Apprentice Builder", "Factory Markswoman", "Trinity Basher"],
-	["Claw Caster", "Claw Slicer", "Rage Spellslinger", "Claw Ambusher", "Rage Bruiser", "Talon Slasher", "Factory Markswoman", "Chain Initiate"],
-	["Socialite Fencer", "Pub Bouncer", "Factory Markswoman", "Street Hoodlum", "Rage Bruiser", "LDF Sureshot", "Chain Initiate", "Claw Caster"],
-	["Pub Bouncer", "Claw Caster", "Claw Slicer", "Street Urchin", "Street Hoodlum", "Blight Doctor", "Blight Physician", "Factory Markswoman"],
-	["Claw Caster", "Claw Slicer", "Claw Skirmisher", "Claw Ambusher", "Talon Scratcher", "Talon Slasher", "Rage Brute", "Chain Initiate"],
-	["Claw Caster", "Claw Slicer", "Rage Brute", "Rage Bruiser", "Claw Ambusher", "Talon Scratcher", "Factory Markswoman", "LDF Medic"],
-	["Claw Caster", "Claw Slicer", "Garrett Talon", "Garrett the Claw", "Street Hoodlum", "Fortune Teller", "Rage Bruiser", "LDF Sureshot"],
-	["Socialite Fencer", "Trinity Rusher", "Trinity Potshot", "Trinity Messenger", "Trinity Herald", "Minerva the Brave", "Chain Initiate", "Pub Bouncer"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Order Pupil", "Order Cleric", "Order Apostle", "Apprentice Builder", "LDF Gunner"],
-	["Socialite Fencer", "Claw Caster", "Trinity Basher", "Claw Slicer", "Claw Ambusher", "Talon Scratcher", "Street Hoodlum", "Chain Initiate"],
-	["Pub Bouncer", "Claw Caster", "Factory Markswoman", "Street Hoodlum", "LDF Crowd Mage", "Fortune Teller", "Rage Bruiser", "Chain Initiate"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Order Pupil", "Order Cleric", "Precision Shooter", "Precision Sniper", "Apprentice Builder"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Gunner", "LDF Crowd Mage", "LDF Riot Mage", "Master Builder", "Order Chaplain"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Order Apostle", "Order Missionary", "Order Scholar", "Order Chaplain", "Master Builder"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Sureshot", "Precision Shooter", "Precision Sniper", "Master Builder", "Order Missionary"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Order Scholar", "Order Chaplain", "Order Missionary", "Minerva the Lionheart", "Master Builder"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Sureshot", "Precision Shooter", "Precision Sniper", "Minerva the Brave", "Master Builder"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "LDF Sureshot", "LDF Riot Mage", "Fortune Diviner", "Order Chaplain", "Master Builder"],
-	["Socialite Fencer", "Pub Bouncer", "Factory Markswoman", "Street Hoodlum", "Fortune Teller", "LDF Riot Mage", "Rage Bruiser", "Claw Ambusher"],
-	["Chain Initiate", "LDF Peacekeeper", "LDF Medic", "Order Scholar", "Order Chaplain", "Order Missionary", "Minerva the Lionheart", "Farsight Naruku"],
-	["LDF Peacekeeper", "Rage Spellslinger", "Master Builder", "Rage Bruiser", "LDF Sureshot", "Order Missionary", "Trinity Herald", "Minerva the Lionheart"],
+	["Minerva the Brave", "Crewman Basilic", "Whirling Ragnr", "Shakespeare", "Conjuring Harlequin", "LDF Sureshot", "LDF Crowd Mage", "Master Builder"],
+	["Fortune Teller", "Dart Shooter", "Rescue Paramedic", "Bartok Loco", "Street Matron", "Selina the Stylist", "Master Builder", "The Archaeologist"],
+	["Rescue Paramedic", "Prison Warden", "Claw Chopper", "Winter Harding", "Final Empress", "LDF Constable", "Garrett Talon", "Hookie"],
+	["Order Cleric", "LDF Constable", "Prison Warden", "Order Apostle", "Hookie", "Conjuring Clown", "LDF Bolt Slinger", "LDF Greatsword"],
+	["Street Matron", "Fortune Diviner", "Ki", "Order Missionary", "Crewman Basilic", "Blight Doctor", "Rage Bruiser", "LDF Flight Commander"],
+	["Order Cleric", "Order Scholar", "Talon Slasher", "LDF Greatsword", "LDF Flight Officer", "Mata Swiftblade", "Haven Trapper", "Master Builder"],
+	["Claw Minstrel", "Master Builder", "Innocent Gretel", "Haven Huntsman", "Talon Slasher", "The Archaeologist", "Frog-Hopper Keru", "Philippa Trot"],
+	["Dart Shooter", "Rage Brute", "LDF Sergeant", "Conjuring Harlequin", "LDF Flight Commander", "Claw Ambusher", "Innocent Gretel", "Flame Dissident"],
+	["Claw Ambusher", "Precision Sniper", "The Archaeologist", "Flame Dissident", "Garrett Talon", "Macabre Embalmer", "Rage Brute", "Pub Landlord"],
+	["Street Hoodlum", "Prison Warden", "Naruku the Lookout", "Whirling Ragnr", "Jimimi the Shepherd", "LDF Sergeant", "Final Empress", "Bethany"],
+	["Garrett Talon", "Pub Landlord", "Final Empress", "Greyson the Shifty", "Philippa Trot", "Precision Shooter", "Flame Dissident", "Raging Dragon"],
+	["Raging Dragon", "Flame Warden", "Hookie", "Greyson the Shifty", "The Archaeologist", "Bartok Loco", "Pub Barman", "Garrett the Claw"],
+	["Order Scholar", "Pub Landlord", "Prison Warden", "Order Cleric", "Garrett Talon", "Bartok Loco", "Rescue Paramedic", "Claw Skirmisher"],
+	["LDF Greatsword", "The Ecologist", "Trinity Messenger", "Blightshot", "Master Builder", "Selina the Stylist", "Fortune Diviner", "Dart Sharpshooter"],
+	["Garrett the Claw", "Claw Ambusher", "Flame Warden", "The Archaeologist", "Precision Shooter", "LDF Greatsword", "Pub Landlord", "Hookie"],
+	["LDF Greatsword", "Claw Cleaver", "Order Scholar", "Fortune Diviner", "Selina the Stylist", "Apprentice Builder", "Dart Shooter", "Rescue Paramedic"],
+	["Garrett the Claw", "Geartron-5000", "Blight Doctor", "Haven Huntsman", "Royal Beefeater", "Ant Lantis", "Belladonna", "Selina the Stylist"],
+	["Opelle", "Raging Dragon", "Geartron-5000", "Whirling Ragnr", "Shakespeare", "The Rook", "Blight Physician", "Blightshot"],
+	["Farsight Naruku", "Street Hoodlum", "Whirling Ragnr", "Royal Beefeater", "Jimimi the Herder", "LDF Bolt Slinger", "Bulkhead Barney", "Prison Warden"],
+	["Sakura", "Bulkhead Barney", "Whirling Ragnr", "LDF Greatsword", "Jimimi the Herder", "Naruku the Lookout", "Bunnybot Bethany", "Prison Warden"],
+	["Minerva the Brave", "Three of Hearts", "Awoken Final Empress", "Pub Landlord", "Devout Mage", "Lunnain Oracle", "Precision Shooter", "Swiftblade Heroine"],
+	["Geartron-5000", "Street Hoodlum", "Present Verdandi", "Awoken Final Empress", "Blight Doctor", "Bethany", "Macewielder Ragnr", "Order Scholar"],
+	["Minerva the Brave", "Commune Defender", "The Rook", "José", "Talon Slasher", "Garrett the Claw", "Geartron Prototype", "Fortune Diviner"],
+	["Beautifly Hookie", "Furia Rojo", "Galloping Philippa", "Crewman Basilic", "Mata Swiftblade", "The Botanist", "Steph Lopod", "LDF Flight Commander"],
+	["Frog-Hopper Keru", "Commune Captain", "Vicious Pierrot", "Glowing Opelle", "Innocent Gretel", "Greyson the Shifty", "Jimimi the Shepherd", "Three of Hearts"],
+	["Minerva the Brave", "LDF Sureshot", "Order Scholar", "Frost-Kid Kokori", "Bartok Loco", "Kerryson the Stoic", "The Bard", "Master Builder"],
+	["Bunnybot Bethany", "Thief", "Talon Slasher", "Final Empress", "Hookie", "Present Verdandi", "Garrett the Raider", "Campeon Rojo"],
+	["Rage Bruiser", "Dart Sharpshooter", "Flame Schematic", "Crewman Basilic", "Selina the Stylist", "Street Hoodlum", "Medusa", "Bulkhead Barney"],
+	["LDF Swordwielder", "Talon Slasher", "Beautifly Hookie", "LDF Bolt Slinger", "Haven Huntsman", "Rescue Paramedic", "Furia Rojo", "Flame Warden"],
+	["Sir Bors", "Talon Scratcher", "Inti Chihuan", "Commune Defender", "Trinity Herald", "Clair", "Vicious Pierrot", "Bunnybot Bethany"],
+	["Garrett Talon", "Claw Ambusher", "Pub Barman", "Flame Schematic", "The Castaway", "Clair", "Campeon Rojo", "Order Scholar"],
+	["Furia Rojo", "Hookie", "Blazing Dragon", "The Aquanaut", "Greyson the Shrewd", "White Mage", "Pub Barman", "LDF Greatsword"],
+	["Fortune Teller", "Crewman Basilic", "Swiftblade Heroine", "Beautifly Hookie", "LDF Sergeant", "Galloping Philippa", "The Telecommunicator", "Van Hohenheim"],
+	["Minerva the Lionheart", "Macewielder Ragnr", "Devout Warlock", "Opelle", "Bethany", "Cara Pace", "Pub Landlord", "LDF Sergeant"],
 	# Act 3 — the wardens and defenses of Caelis, escalating into the coalition
 	# of every faction's best for the finale.
-	["The Rook", "Geartron Prototype", "Master Builder", "Order Chaplain", "White Mage", "Bunnybot Bethany", "LDF Greatsword", "Kerryson the Stoic"],
-	["Geartron Prototype", "Geartron-5000", "The Rook", "White Mage", "Oro the Pilgrim", "Master Builder", "Order Chaplain", "LDF Greatsword"],
-	["The Rook", "Geartron-5000", "Gawain the Just", "White Wizard", "Order Chaplain", "Kerryson the Stoic", "Bunnybot Bethany", "Master Builder"],
-	["The Archaeologist", "The Castaway", "Geartron-5000", "White Wizard", "Order Missionary", "The Rook", "Oro the Pilgrim", "Bunnybot Bethany"],
-	["The Botanist", "The Ecologist", "The Biologist", "Geartron-5000", "White Wizard", "The Rook", "Sir Gawain", "Master Builder"],
-	["Fabulous Bors", "Sir Bors", "The Rook", "Geartron-5000", "White Wizard", "Sterling Knight", "Kerryson the Stoic", "Oro the Enlightened"],
-	["Oro the Pilgrim", "Oro the Enlightened", "Clair", "Awoken Clair", "White Mage", "White Wizard", "Geartron-5000", "The Rook"],
-	["Van Hohenheim", "The Sorcerer's Stone", "Geartron-5000", "The Rook", "Awoken Clair", "White Wizard", "Sir Bors", "Sterling Knight"],
-	["The Rook", "Sterling Knight", "Sir Gawain", "Awoken Clair", "The Sorcerer's Stone", "White Wizard", "Sir Bors", "Geartron-5000"],
-	["Commune Captain", "Royal Beefeater", "LDF Flight Commander", "Order Chaplain", "Minerva the Brave", "Master Builder", "Precision Sniper", "Sterling Knight"],
-	["Flame Dissident", "José", "José Decomposé", "Blazing Dragon", "Pompous Joe Wonder", "LDF Riot Mage", "Precision Sniper", "Garrett the Claw"],
-	["Selina the Stylist", "Selina Twinblade", "Macewielder Ragnr", "Farsight Naruku", "Kerryson the Stoic", "Commune Captain", "White Wizard", "Sir Bors"],
-	["Hamish Highlander", "Hamish Lochmaster", "Deep Sea Barney", "Bulkhead Barney", "Crewman Basilic", "Captain Basilic", "The Sorcerer's Stone", "Awoken Clair"],
-	["Minerva the Lionheart", "Furia Rojo", "Campeon Rojo", "Blazing Dragon", "Sir Gawain", "Sir Bors", "Awoken Clair", "The Sorcerer's Stone"],
-	["Minerva the Lionheart", "Campeon Rojo", "Blossom Sakura", "Shining Inti", "The Sorcerer's Stone", "Sir Gawain", "Hamish Lochmaster", "Sterling Knight"]
+	["The Rook", "White Wizard", "Blossom Sakura", "Frontier Protector", "Happy Elf Harding", "Whirling Ragnr", "Talon Slasher", "Vicious Pierrot"],
+	["White Mage", "Thief", "Commune Captain", "Frog-Hopper Keru", "The Bard", "Hamish Lochmaster", "Awoken Final Empress", "Booth Kavar"],
+	["Sir Gawain", "Devout Warlock", "Witchkiller Gretel", "Shakespeare", "Lunnain Oracle", "Ki", "Sir Bors", "Booth Kavar"],
+	["The Castaway", "Blossom Sakura", "Winter Harding", "White Mage", "Crewman Basilic", "Bulkhead Barney", "Edge", "Gorgon Medusa"],
+	["The Biologist", "Sakuya Le Bel Shirogane", "Commune Captain", "Clawing Cara", "Summoner Rydia", "Bunnybot Bethany", "Van Hohenheim", "Royal Beefeater"],
+	["Sir Bors", "The Hydronaut", "Van Hohenheim", "Galloping Philippa", "Ninja Edge", "Sakura", "Conjuring Jester", "Geartron Prototype"],
+	["Oro the Enlightened", "Talon Slasher", "LDF Mastersword", "Lizard-Licker Keru", "Dart Sharpshooter", "The Bard", "Ki", "Ra"],
+	["The Sorcerer's Stone", "Explorer Gatling", "Campeon Rojo", "The Ecologist", "Crewman Basilic", "Fortune Diviner", "Bartok Loco", "Frog-Hopper Keru"],
+	["Awoken Clair", "Gawain the Just", "Blight Physician", "Talon Slasher", "Innocent Gretel", "Summoner Rydia", "The Biologist", "Sterling Knight"],
+	["Clawing Cara", "Devout Warlock", "Bethany", "Communicator Ripley", "The Castaway", "The Biologist", "Campeon Rojo", "Galloping Philippa"],
+	["José Decomposé", "Macabre Undertaker", "Pompous Joe Wonder", "Opelle", "Medusa", "Commune Captain", "Shakespeare", "Precision Sniper"],
+	["Selina Twinblade", "Flame Dissident", "Gawain the Just", "Witchkiller Gretel", "Sakuya Le Bel Shirogane", "Macabre Undertaker", "Sir Bors", "Captain Basilic"],
+	["Hamish Lochmaster", "Innocent Gretel", "Summoner Rydia", "Verdandi Norn", "Commune Commander", "Explorer Gatling", "Swiftblade Heroine", "Clair"],
+	["Campeon Rojo", "Lizard-Licker Keru", "Swiftblade Heroine", "Captain Basilic", "Winter Harding", "Van Hohenheim", "Awoken Final Empress", "Lunnain Oracle"],
+	["Blossom Sakura", "Shining Inti", "The Earth Whisperer", "Gorgon Medusa", "Derailed Bartok", "Frontier Rider", "Ace of Hearts", "Talon Slasher"]
 ]
 
 static func build_missions() -> Array:
@@ -770,6 +793,11 @@ static func build_missions() -> Array:
 			if index < MISSION_OPPONENTS.size()
 			else ["Unknown Opposition", "Unaffiliated"]
 		)
+		var squad_faction: String = (
+			MISSION_SQUAD_FACTIONS[index]
+			if index < MISSION_SQUAD_FACTIONS.size()
+			else "Blended"
+		)
 		for battle_index in battle_count:
 			var hp := maxi(8, enemy_hp - (battle_count - battle_index - 1) * 2)
 			encounters.append({
@@ -778,6 +806,7 @@ static func build_missions() -> Array:
 				"skill": SKILLS[(index + battle_index) % SKILLS.size()],
 				"opponent_name": opponent[0],
 				"opponent_affiliation": opponent[1],
+				"squad_faction": squad_faction,
 				"enemy_squad": _enemy_squad_for(index)
 			})
 		missions.append({
@@ -792,6 +821,7 @@ static func build_missions() -> Array:
 			"enemy_hp": enemy_hp,
 			"opponent_name": opponent[0],
 			"opponent_affiliation": opponent[1],
+			"squad_faction": squad_faction,
 			"encounters": encounters,
 			"reward_pool": reward_pool
 		})

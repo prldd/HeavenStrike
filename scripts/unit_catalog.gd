@@ -19,6 +19,17 @@ const CLASS_COLORS := {
 	"Lifebinder": Color("#ff77b2")
 }
 
+# Political faction assignments mirror
+# documentation/Unit_Faction_and_Sprite_Staging.md. Icons not listed here are
+# Universal: neutral units that can appear in any faction's squad.
+const FACTION_ICON_IDS := {
+	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215],
+	"Steam": [96, 97, 104, 105, 106, 111, 112, 136, 137, 138, 139, 186, 187, 200, 201, 117, 118, 43, 44, 77, 78, 83, 84, 98, 99, 28, 34, 158, 159, 51, 52, 180, 181, 196, 197],
+	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209],
+	"Fusion": [53, 54, 154, 155, 73, 74, 25, 31, 79, 80, 19, 20, 140, 141, 45, 46, 92, 93, 107, 108, 188, 189, 192, 193, 206, 207, 210, 211, 212, 27, 33, 184, 185, 194, 195],
+	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163]
+}
+
 const ICON_ART_IDS := {
 	25: 29, # Order Apostle
 	26: 33, # Trinity Messenger
@@ -650,6 +661,16 @@ static func display_class(kind: String) -> String:
 
 static func class_color(kind: String) -> Color:
 	return CLASS_COLORS.get(kind, Color("#91a7ce"))
+
+static func faction_for_icon(icon_id: int) -> String:
+	for faction in FACTION_ICON_IDS:
+		if icon_id in FACTION_ICON_IDS[faction]:
+			return faction
+	return "Universal"
+
+static func faction_for_name(unit_name: String) -> String:
+	var unit := by_name(unit_name)
+	return faction_for_icon(unit.icon) if unit != null else ""
 
 static func art_id(icon_id: int) -> int:
 	return ICON_ART_IDS.get(icon_id, icon_id)
