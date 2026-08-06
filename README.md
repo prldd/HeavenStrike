@@ -51,6 +51,9 @@ assets required by the prototype.
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 77 sequential story missions across three acts with escalating difficulty
 - One-to-three battle encounter sequences with Conductor-HP attrition
+- Data-driven campaign encounter rules with survival, protection, and priority-target
+  objectives; round limits; blocked terrain; predeployed units; reinforcements; and
+  per-encounter Mana parameters
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Conductor information
 - Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
@@ -80,7 +83,7 @@ assets required by the prototype.
 - Seventy-seven authored, mission-specific eight-card PvE squads and
   context-aware deployment, movement, and Conductor-skill AI
 - Mission-specific briefings and debriefings, Act completion tracking, active
-  run status, and pre-battle enemy squad/Conductor intelligence
+  run status, and pre-battle objective, modifier, enemy squad, and Conductor intelligence
 - Story-specific opponent names and affiliations carried from prebattle intel
   onto the enemy side of every campaign battlefield
 - 46 first-completion character interludes with named human/android portrait
@@ -155,10 +158,12 @@ The current interface cleanup is complete:
 - Speed has one persistent control in Settings; it is not duplicated in the
   battle or replay bars.
 - Practice victories offer both **Play Again** and **Menu**.
+- Missions 3–9 now exercise the authored encounter-rule system with survival,
+  priority-target, and protection objectives plus terrain, timing, reinforcement,
+  and Mana modifiers.
 
-For the next session, begin by running the validation commands above. A useful
-next pass is hands-on playtesting at the target window size, concentrating on
-the replay bar, Settings popover, combat-log overlap, and the transition
-between replay, squad comparison, and the main menu. After UI verification,
-return to gameplay balance or progression work rather than adding more replay
-controls.
+For the next session, begin by running the validation commands above. Then play
+Missions 3–9 at the target window size, concentrating on objective clarity,
+blocked-cell readability, protection-target durability, reinforcement timing,
+and the round-limit difficulty. After that balance pass, progression polish is
+the next productive focus.

@@ -50,6 +50,8 @@ var player_deck_text := ""
 var enemy_deck_text := ""
 var opponent_name := ""
 var opponent_affiliation := ""
+var blocked_cells: Array = []
+var mission_objective_text := ""
 var enabled := true
 var practice_mode := false
 var hover_row := -1
@@ -113,6 +115,11 @@ func set_practice_mode(enabled_flag: bool) -> void:
 func set_opponent_identity(name: String, affiliation: String) -> void:
 	opponent_name = name
 	opponent_affiliation = affiliation
+	queue_redraw()
+
+func set_mission_rules(next_blocked_cells: Array, objective_text: String) -> void:
+	blocked_cells = next_blocked_cells.duplicate(true)
+	mission_objective_text = objective_text
 	queue_redraw()
 
 func set_guidance(
@@ -555,6 +562,8 @@ func _draw() -> void:
 			):
 				base = Color(0.08, 0.62, 0.78, 0.42)
 			_draw_cell_shape(row, col, base, Color(0.72, 0.58, 0.38, 0.48))
+			if BattleRulesScript.is_cell_blocked(blocked_cells, row, col):
+				_draw_blocked_cell(row, col)
 	if guided_deployment_row >= 0:
 		var pulse := _guidance_pulse_amount()
 		_draw_cell_shape(
@@ -583,6 +592,20 @@ func _draw() -> void:
 		12,
 		Color("#f4e6c7")
 	)
+	if not mission_objective_text.is_empty():
+		var objective_rect := Rect2(
+			Vector2((size.x - event_width) * 0.5, 37),
+			Vector2(event_width, 20)
+		)
+		draw_string(
+			get_theme_default_font(),
+			objective_rect.position + Vector2(0, 14),
+			mission_objective_text,
+			HORIZONTAL_ALIGNMENT_CENTER,
+			objective_rect.size.x,
+			10,
+			Color("#e8c77b")
+		)
 	_draw_opponent_identity()
 
 	var preview_id: int = (
@@ -605,7 +628,7 @@ func _draw() -> void:
 		projected_unit.row = hover_row
 		projected_unit.col = 0
 		deployment_preview = BattleRulesScript.projected_deployment(
-			selected_card, hover_row, units
+			selected_card, hover_row, units, blocked_cells
 		)
 		_draw_action_preview_data(projected_unit, deployment_preview)
 
@@ -674,7 +697,9 @@ func _draw() -> void:
 	):
 		for target_row in ROWS:
 			if (
-				BattleRulesScript.can_reposition(selected_unit, target_row, units)
+				BattleRulesScript.can_reposition(
+					selected_unit, target_row, units, blocked_cells
+				)
 				and (guided_reposition_row < 0 or target_row == guided_reposition_row)
 			):
 				var pulse := (
@@ -931,6 +956,10 @@ func _draw_protect_aura(unit: Dictionary, rect: Rect2) -> void:
 
 func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	var badges: Array = []
+	if unit.get("mission_role", "") == "priority":
+		badges.append({"label": "!", "color": Color("#ff668f")})
+	elif unit.get("mission_role", "") == "protected":
+		badges.append({"label": "◆", "color": Color("#67e6f4")})
 	if unit.get("taunt_turns", 0) > 0:
 		badges.append({"label": "T%d" % unit.taunt_turns, "color": Color("#ff9d66")})
 	if unit.get("immobilized_turns", 0) > 0:
@@ -1116,7 +1145,9 @@ func _draw_selection(unit: Dictionary) -> void:
 	)
 
 func _draw_action_preview(unit: Dictionary) -> void:
-	var preview: Dictionary = BattleRulesScript.projected_action(unit.id, units)
+	var preview: Dictionary = BattleRulesScript.projected_action(
+		unit.id, units, blocked_cells
+	)
 	_draw_action_preview_data(unit, preview)
 
 func _draw_action_preview_data(unit: Dictionary, preview: Dictionary) -> void:
@@ -1151,10 +1182,28 @@ func _enemy_at(unit: Dictionary, row: int, col: int) -> bool:
 	return false
 
 func _occupied(row: int, col: int) -> bool:
+	if BattleRulesScript.is_cell_blocked(blocked_cells, row, col):
+		return true
 	for unit in units:
 		if unit.row == row and unit.col == col:
 			return true
 	return false
+
+func _draw_blocked_cell(row: int, col: int) -> void:
+	var polygon := _cell_polygon(row, col, 0.08)
+	draw_colored_polygon(polygon, Color(0.035, 0.035, 0.04, 0.84))
+	var rect := _cell_rect(row, col).grow(-10)
+	draw_line(rect.position, rect.end, Color("#d2a05c"), 3.0, true)
+	draw_line(
+		Vector2(rect.end.x, rect.position.y),
+		Vector2(rect.position.x, rect.end.y),
+		Color("#d2a05c"), 3.0, true
+	)
+	draw_string(
+		get_theme_default_font(), rect.position + Vector2(0, 14),
+		"BLOCKED", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 9,
+		Color("#f0d7a5")
+	)
 
 func _unit_by_id(unit_id: int):
 	for unit in units:

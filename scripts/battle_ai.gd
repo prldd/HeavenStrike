@@ -6,14 +6,19 @@ const PLAYER := 0
 const ENEMY := 1
 const COLS := 7
 
-static func choose_deployment(roster: Array, energy: int, units: Array) -> Dictionary:
+static func choose_deployment(
+	roster: Array, energy: int, units: Array, blocked_cells: Array = []
+) -> Dictionary:
 	var best := {}
 	var best_score := -INF
 	for card in roster:
 		if card.cost > energy:
 			continue
 		for row in 3:
-			if _occupied(units, row, COLS - 1):
+			if (
+				_occupied(units, row, COLS - 1)
+				or BattleRulesScript.is_cell_blocked(blocked_cells, row, COLS - 1)
+			):
 				continue
 			var score := _score(card, row, energy, units)
 			if score > best_score:
@@ -74,11 +79,13 @@ static func _score(card: Dictionary, row: int, energy: int, units: Array) -> flo
 				score += 2.0
 	return score
 
-static func choose_reposition(unit: Dictionary, units: Array) -> int:
+static func choose_reposition(
+	unit: Dictionary, units: Array, blocked_cells: Array = []
+) -> int:
 	var best_row: int = unit.row
 	var best_score := _reposition_score(unit, unit.row, units)
 	for row in 3:
-		if row == unit.row or not _can_reposition(unit, row, units):
+		if row == unit.row or not _can_reposition(unit, row, units, blocked_cells):
 			continue
 		var score := _reposition_score(unit, row, units)
 		if score > best_score:
@@ -119,8 +126,10 @@ static func _reposition_score(unit: Dictionary, row: int, units: Array) -> float
 		score += targets_in_range * 2.0
 	return score
 
-static func _can_reposition(unit: Dictionary, target_row: int, units: Array) -> bool:
-	return BattleRulesScript.can_reposition(unit, target_row, units)
+static func _can_reposition(
+	unit: Dictionary, target_row: int, units: Array, blocked_cells: Array = []
+) -> bool:
+	return BattleRulesScript.can_reposition(unit, target_row, units, blocked_cells)
 
 static func _occupied(units: Array, row: int, col: int) -> bool:
 	for unit in units:

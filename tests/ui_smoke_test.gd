@@ -4,6 +4,7 @@ const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 
@@ -339,6 +340,10 @@ func _run() -> void:
 	assert(game.mission_detail_kicker.text == "ACT 1 · THE SALVAGE · OPERATION 01")
 	assert(game.mission_detail_title.text == CampaignStoreScript.MISSIONS[0].short_title.to_upper())
 	assert(game.mission_detail_briefing.text == CampaignStoreScript.MISSIONS[0].briefing)
+	game._select_mission_on_map(2)
+	assert(game.mission_detail_stats.text.contains("EVACUATE THE GALLERY"))
+	assert(game.mission_detail_stats.text.contains("2 BLOCKED CELLS"))
+	game._select_mission_on_map(0)
 	assert(game.mission_node_buttons[0].text == "01")
 	assert(game.mission_node_buttons[21].text == "22")
 	assert(game.mission_node_buttons[0].get_meta("operation_region") == "The Salvage")
@@ -679,6 +684,42 @@ func _run() -> void:
 	assert(game.mission_node_buttons[76].get_meta("operation_region") == "The Source")
 	assert(game.mission_launch_button.disabled)
 	game.mission_overlay.visible = false
+	# Authored mission rules load into the deterministic runtime and board.
+	game.campaign_battle = true
+	game.current_mission_id = 2
+	game.current_encounter_index = 0
+	game.mission_run_conductor_hp = 20
+	game._start_new_match()
+	assert(game.active_mission_rules.objective.type == "survive")
+	assert(game.player_max_energy == 4)
+	assert(game.board.blocked_cells.size() == 2)
+	assert(game.board.mission_objective_text.contains("EVACUATE THE GALLERY"))
+	var authored_start_events: Array = game.battle_simulator.events.filter(
+		func(event): return event.type == "battle_started"
+	)
+	assert(authored_start_events.size() == 1)
+	assert(authored_start_events[0].mission_rules.objective.type == "survive")
+	game.current_mission_id = 4
+	game._start_new_match()
+	var protected_units: Array = game.units.filter(
+		func(unit): return unit.get("mission_role", "") == "protected"
+	)
+	assert(protected_units.size() == 1)
+	assert(protected_units[0].get("mission_stationary", false))
+	assert(not protected_units[0].get("locks_mana", true))
+	assert(protected_units[0].id not in game.battle_simulator.activation_order(
+		0, game.units
+	))
+	game.current_mission_id = 5
+	game._start_new_match()
+	game.round_number = 2
+	await game._deploy_mission_reinforcements(1)
+	assert(game.units.any(func(unit): return unit.name == "Dart Shooter"))
+	assert(game.battle_simulator.events.any(func(event): return (
+		event.type == "mission_rule_triggered"
+		and event.get("kind", "") == "reinforcement"
+	)))
+	MissionRunStoreScript.clear_run()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://replay_history.json"))
 	var older_replay := BattleSimulatorScript.new()
 	older_replay.reset(555)
@@ -693,10 +734,14 @@ func _run() -> void:
 		"player_hp": 20,
 		"enemy_hp": 20,
 		"player_squad": ["Trinity Rusher", "Pub Bouncer"],
-		"enemy_squad": ["Chain Initiate", "Socialite Fencer"]
+		"enemy_squad": ["Chain Initiate", "Socialite Fencer"],
+		"mission_rules": {
+			"objective": {"type": "survive", "rounds": 3, "title": "Replay Hold"}
+		}
 	})
 	replay.record("deploy", {
-		"side": 0, "unit_id": 1, "card": "Trinity Rusher", "row": 1
+		"side": 0, "unit_id": 1, "card": "Trinity Rusher", "row": 1,
+		"col": 2, "mission_role": "priority", "locks_mana": false
 	})
 	replay.record("battle_finished", {
 		"winner": 0, "player_hp": 20, "enemy_hp": 20
@@ -721,6 +766,10 @@ func _run() -> void:
 	await game._apply_next_replay_event()
 	await game._apply_next_replay_event()
 	assert(game.units.size() == 1)
+	assert(game.units[0].col == 2)
+	assert(game.units[0].mission_role == "priority")
+	assert(not game.units[0].locks_mana)
+	assert(game.board.mission_objective_text.contains("REPLAY HOLD"))
 	assert(game.replay_timeline_label.text.contains("SEED 777"))
 	assert(game.replay_timeline_label.text.contains("REPLAY 1 / 2"))
 	assert(game.replay_event_label.text == "EVENT 2 / 3")

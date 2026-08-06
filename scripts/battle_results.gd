@@ -30,6 +30,7 @@ static func calculate(
 		if (
 			event.get("type", "") == "deploy"
 			and int(event.get("side", -1)) == PLAYER
+			and not event.get("mission_setup", false)
 		):
 			var unit_id := int(event.get("unit_id", -1))
 			if unit_id >= 0 and unit_id not in deployed_ids:

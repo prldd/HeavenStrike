@@ -1,6 +1,8 @@
 class_name StoryQuestCatalog
 extends RefCounted
 
+const MissionRulesScript = preload("res://scripts/mission_rules.gd")
+
 # Exact mission appearances from https://chainguardians.com/story-quests.
 # A unit must not be added here unless that reference lists it for the mission.
 const ADDITIONAL_DROPS := {
@@ -688,6 +690,106 @@ const MISSION_SQUAD_FACTIONS := [
 	"Blended"
 ]
 
+## Optional per-encounter rules, keyed as "<1-based mission>:<0-based battle>".
+## Encounters without an entry retain the standard defeat-the-Conductor rules.
+## The first authored set teaches one variation at a time across the opening
+## campaign chapters before later missions return to the unmodified baseline.
+const ENCOUNTER_RULES := {
+	"3:0": {
+		"objective": {
+			"type": "survive",
+			"rounds": 4,
+			"title": "Evacuate the Gallery",
+			"description": "Hold the security machines back through round 4 while the expedition crew escapes."
+		},
+		"blocked_cells": [
+			{"row": 0, "col": 3}, {"row": 2, "col": 3}
+		],
+		"mana": {"player_start": 4, "enemy_start": 2, "growth": 2, "cap": 10}
+	},
+	"4:0": {
+		"objective": {
+			"type": "eliminate_target",
+			"target_name": "the security warden",
+			"title": "Break the Security Line",
+			"description": "Eliminate the marked security warden blocking Cassian's extraction route."
+		},
+		"turn_limit": 6,
+		"predeployed": [{
+			"unit": "Claw Chopper", "side": 1, "row": 1, "col": 4,
+			"role": "priority", "locks_mana": false
+		}]
+	},
+	"5:0": {
+		"objective": {
+			"type": "protect",
+			"target_name": "Adele's survey rig",
+			"title": "Protect the Survey",
+			"description": "Keep Adele's marked survey rig operational and defeat the raider Conductor."
+		},
+		"turn_limit": 7,
+		"predeployed": [{
+			"unit": "Apprentice Builder", "side": 0, "row": 1, "col": 1,
+			"role": "protected", "stationary": true, "locks_mana": false
+		}]
+	},
+	"6:0": {
+		"objective": {
+			"type": "survive",
+			"rounds": 5,
+			"title": "Secure the Exhibition",
+			"description": "Hold the demonstration floor through round 5 while spectators reach the exits."
+		},
+		"reinforcements": [
+			{"unit": "Dart Shooter", "side": 1, "round": 2, "row": 0, "col": 6},
+			{"unit": "Claw Slicer", "side": 1, "round": 4, "row": 2, "col": 6}
+		]
+	},
+	"7:0": {
+		"objective": {
+			"type": "eliminate_target",
+			"target_name": "the extraction leader",
+			"title": "Cut Off the Extraction",
+			"description": "Eliminate the marked leader before the armed crew can withdraw with its prize."
+		},
+		"turn_limit": 6,
+		"predeployed": [{
+			"unit": "Trinity Rusher", "side": 1, "row": 1, "col": 4,
+			"role": "priority", "locks_mana": false
+		}],
+		"reinforcements": [{
+			"unit": "Rescue Corps", "side": 1, "round": 3, "row": 0, "col": 6
+		}]
+	},
+	"8:0": {
+		"objective": {
+			"type": "survive",
+			"rounds": 4,
+			"title": "Hold the Stockyard",
+			"description": "Keep control of the stockyard through round 4 while Cassian verifies the salvage claim."
+		},
+		"blocked_cells": [{"row": 1, "col": 3}],
+		"mana": {"player_start": 2, "enemy_start": 4, "growth": 2, "cap": 8}
+	},
+	"9:0": {
+		"objective": {
+			"type": "protect",
+			"target_name": "the salvage transport",
+			"title": "Guard the Convoy",
+			"description": "Keep the marked transport operational and defeat the pursuing Conductor."
+		},
+		"turn_limit": 7,
+		"predeployed": [{
+			"unit": "Apprentice Builder", "side": 0, "row": 1, "col": 2,
+			"role": "protected", "stationary": true, "locks_mana": false
+		}],
+		"reinforcements": [
+			{"unit": "Claw Ambusher", "side": 1, "round": 2, "row": 0, "col": 6},
+			{"unit": "Garrett Talon", "side": 1, "round": 4, "row": 2, "col": 6}
+		]
+	}
+}
+
 const MISSION_ENEMY_SQUADS := [
 	# Act 1
 	["Trinity Rusher", "Trinity Potshot", "Trinity Basher", "Chain Initiate", "Pub Bouncer", "LDF Peacekeeper", "Rage Spellslinger", "Socialite Fencer"],
@@ -800,6 +902,10 @@ static func build_missions() -> Array:
 		)
 		for battle_index in battle_count:
 			var hp := maxi(8, enemy_hp - (battle_count - battle_index - 1) * 2)
+			var rule_key := "%d:%d" % [index + 1, battle_index]
+			var rules: Dictionary = MissionRulesScript.normalize(
+				ENCOUNTER_RULES.get(rule_key, {})
+			)
 			encounters.append({
 				"title": short_title if battle_index == battle_count - 1 else "%s · Approach %d" % [short_title, battle_index + 1],
 				"enemy_hp": hp,
@@ -807,7 +913,8 @@ static func build_missions() -> Array:
 				"opponent_name": opponent[0],
 				"opponent_affiliation": opponent[1],
 				"squad_faction": squad_faction,
-				"enemy_squad": _enemy_squad_for(index)
+				"enemy_squad": _enemy_squad_for(index),
+				"rules": rules
 			})
 		missions.append({
 			"id": index,

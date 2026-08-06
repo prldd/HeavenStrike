@@ -3,6 +3,7 @@ extends SceneTree
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleResultsScript = preload("res://scripts/battle_results.gd")
+const MissionRulesScript = preload("res://scripts/mission_rules.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
@@ -164,6 +165,12 @@ func _init() -> void:
 	assert(flawless_rating.score == 1000)
 	assert(flawless_rating.rating == 10)
 	assert(flawless_rating.word == "FLAWLESS")
+	var setup_ignored_rating := BattleResultsScript.calculate(
+		20, 20, 1,
+		[{"id": 90, "side": 0, "hp": 1}],
+		[{"type": "deploy", "side": 0, "unit_id": 90, "mission_setup": true}]
+	)
+	assert(setup_ignored_rating.deployed == 0)
 	var replay_history_path := "user://smoke_replay_history.json"
 	for replay_seed in range(12):
 		simulator.reset(replay_seed)
@@ -771,6 +778,61 @@ func _init() -> void:
 	assert(CampaignStoreScript.encounter_count(31) == 3)
 	assert(CampaignStoreScript.encounter(31, 2).title == "Peace and Quiet")
 	assert(CampaignStoreScript.encounter(999, 0).is_empty())
+	var default_mission_rules: Dictionary = MissionRulesScript.default_rules()
+	assert(default_mission_rules.objective.type == "defeat_conductor")
+	assert(not MissionRulesScript.has_authored_rules(default_mission_rules))
+	var authored_encounters := 0
+	for mission in CampaignStoreScript.MISSIONS:
+		for encounter in mission.encounters:
+			if MissionRulesScript.has_authored_rules(encounter.rules):
+				authored_encounters += 1
+			var occupied_rule_cells: Array = []
+			for deployment in encounter.rules.predeployed:
+				assert(UnitCatalogScript.by_name(deployment.unit) != null)
+				var cell := {"row": deployment.row, "col": deployment.col}
+				assert(cell not in encounter.rules.blocked_cells)
+				assert(cell not in occupied_rule_cells)
+				occupied_rule_cells.append(cell)
+			for reinforcement in encounter.rules.reinforcements:
+				assert(UnitCatalogScript.by_name(reinforcement.unit) != null)
+				assert(reinforcement.round >= 1)
+	assert(authored_encounters == 7)
+	var evacuation_rules: Dictionary = CampaignStoreScript.encounter(2, 0).rules
+	assert(evacuation_rules.objective.type == "survive")
+	assert(evacuation_rules.objective.rounds == 4)
+	assert(evacuation_rules.blocked_cells.size() == 2)
+	assert(evacuation_rules.mana.player_start == 4)
+	assert(MissionRulesScript.dossier_text(evacuation_rules).contains("EVACUATE THE GALLERY"))
+	assert(not MissionRulesScript.evaluate(
+		evacuation_rules, [], 3, 10, 10, "enemy_end"
+	).finished)
+	var survival_result: Dictionary = MissionRulesScript.evaluate(
+		evacuation_rules, [], 4, 10, 10, "enemy_end"
+	)
+	assert(survival_result.finished and survival_result.winner == 0)
+	var priority_rules: Dictionary = CampaignStoreScript.encounter(3, 0).rules
+	assert(priority_rules.objective.type == "eliminate_target")
+	assert(priority_rules.predeployed[0].role == "priority")
+	assert(not MissionRulesScript.evaluate(
+		priority_rules,
+		[{"mission_role": "priority", "hp": 1}], 1, 20, 10
+	).finished)
+	assert(MissionRulesScript.evaluate(
+		priority_rules, [], 1, 20, 10
+	).winner == 0)
+	var protect_rules: Dictionary = CampaignStoreScript.encounter(4, 0).rules
+	assert(protect_rules.objective.type == "protect")
+	assert(MissionRulesScript.evaluate(
+		protect_rules, [], 1, 20, 10
+	).winner == 1)
+	assert(not MissionRulesScript.evaluate(
+		protect_rules,
+		[{"mission_role": "protected", "hp": 1}], 1, 20, 10
+	).finished)
+	assert(MissionRulesScript.evaluate(
+		priority_rules,
+		[{"mission_role": "priority", "hp": 1}], 6, 20, 10, "enemy_end"
+	).winner == 1)
 	assert(CampaignStoreScript.is_available(0, []))
 	assert(not CampaignStoreScript.is_available(1, []))
 	assert(CampaignStoreScript.is_available(1, [0]))
@@ -948,6 +1010,15 @@ func _init() -> void:
 	mover.immobilized_turns = 0
 	assert(not BattleRulesScript.is_immobilized(mover))
 	assert(BattleRulesScript.can_reposition(mover, 0, [mover]))
+	var mission_blocks := [{"row": 0, "col": 2}, {"row": 1, "col": 3}]
+	assert(not BattleRulesScript.can_reposition(mover, 0, [mover], mission_blocks))
+	var terrain_mover := {
+		"id": 99, "side": 0, "row": 1, "col": 2, "move": 2,
+		"immobilized_turns": 0, "stun_turns": 0
+	}
+	assert(BattleRulesScript.traversal_cells(
+		terrain_mover, [terrain_mover], mission_blocks
+	).is_empty())
 	var blocker := {"id": 4, "side": 0, "kind": "Strider", "row": 0, "col": 2, "repositioned": false}
 	assert(not BattleRulesScript.can_reposition(mover, 0, [mover, blocker]))
 	assert(not BattleRulesScript.can_reposition(mover, 2, [mover, {"id": 5, "side": 1, "kind": "Strider", "row": 2, "col": 2}]))
@@ -985,6 +1056,9 @@ func _init() -> void:
 	assert(BattleRulesScript.locked_mana(mana_units, 0) == 5)
 	assert(BattleRulesScript.available_mana(8, mana_units, 0) == 3)
 	assert(BattleRulesScript.available_mana(10, [mana_units[1]], 0) == 7)
+	assert(BattleRulesScript.locked_mana([
+		{"side": 0, "cost": 4, "locks_mana": false}
+	], 0) == 0)
 
 	var skill_ally := {
 		"id": 20, "side": 0, "name": "Test Ally", "atk": 2,

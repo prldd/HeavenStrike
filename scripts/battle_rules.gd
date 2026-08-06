@@ -22,15 +22,22 @@ static func expire_taunts(units: Array, side: int) -> void:
 		if unit.side == side and unit.get("taunt_turns", 0) > 0:
 			unit.taunt_turns -= 1
 
-static func can_reposition(unit: Dictionary, target_row: int, units: Array) -> bool:
+static func can_reposition(
+	unit: Dictionary, target_row: int, units: Array, blocked_cells: Array = []
+) -> bool:
 	if target_row < 0 or target_row >= ROWS:
 		return false
 	if target_row == unit.row:
 		return false
-	if is_taunted(unit, units) or is_immobilized(unit) or is_stunned(unit):
+	if (
+		is_taunted(unit, units) or is_immobilized(unit) or is_stunned(unit)
+		or unit.get("mission_stationary", false)
+	):
 		return false
 	var direction := 1 if target_row > unit.row else -1
 	for row in range(unit.row + direction, target_row + direction, direction):
+		if is_cell_blocked(blocked_cells, row, unit.col):
+			return false
 		for other in units:
 			if other.get("id", -1) != unit.id and other.row == row and other.col == unit.col:
 				# Friendly units may be crossed, but no unit may share the destination.
@@ -51,9 +58,14 @@ static func attack_cells_from(unit: Dictionary, origin_col: int) -> Array:
 		cells.append(Vector2i(col, unit.row))
 	return cells
 
-static func traversal_cells(unit: Dictionary, units: Array) -> Array:
+static func traversal_cells(
+	unit: Dictionary, units: Array, blocked_cells: Array = []
+) -> Array:
 	var cells: Array = []
-	if unit.get("immobilized_turns", 0) > 0 or unit.get("stun_turns", 0) > 0:
+	if (
+		unit.get("immobilized_turns", 0) > 0 or unit.get("stun_turns", 0) > 0
+		or unit.get("mission_stationary", false)
+	):
 		return cells
 	var direction := 1 if unit.side == PLAYER else -1
 	var final_col := COLS - 2 if unit.side == PLAYER else 1
@@ -62,12 +74,14 @@ static func traversal_cells(unit: Dictionary, units: Array) -> Array:
 		var col: int = unit.col + direction * step
 		if (direction > 0 and col > final_col) or (direction < 0 and col < final_col):
 			break
-		if _occupied(units, unit.row, col):
+		if _occupied(units, unit.row, col) or is_cell_blocked(blocked_cells, unit.row, col):
 			break
 		cells.append(Vector2i(col, unit.row))
 	return cells
 
-static func projected_action(unit_id: int, units: Array) -> Dictionary:
+static func projected_action(
+	unit_id: int, units: Array, blocked_cells: Array = []
+) -> Dictionary:
 	var projected_units: Array = units.duplicate(true)
 	var selected = _unit_by_id(projected_units, unit_id)
 	if selected == null or not selected.get("ready", false):
@@ -83,7 +97,7 @@ static func projected_action(unit_id: int, units: Array) -> Dictionary:
 	)
 
 	for actor in actors:
-		var path := traversal_cells(actor, projected_units)
+		var path := traversal_cells(actor, projected_units, blocked_cells)
 		if actor.id == unit_id:
 			var destination: int = actor.col if path.is_empty() else path[-1].x
 			return {
@@ -97,8 +111,13 @@ static func projected_action(unit_id: int, units: Array) -> Dictionary:
 
 	return {"traversal": [], "attack": [], "origin_col": -1, "projected_col": -1}
 
-static func projected_deployment(card: Dictionary, row: int, units: Array) -> Dictionary:
-	if row < 0 or row >= ROWS or _occupied(units, row, 0):
+static func projected_deployment(
+	card: Dictionary, row: int, units: Array, blocked_cells: Array = []
+) -> Dictionary:
+	if (
+		row < 0 or row >= ROWS or _occupied(units, row, 0)
+		or is_cell_blocked(blocked_cells, row, 0)
+	):
 		return {"traversal": [], "attack": [], "origin_col": -1, "projected_col": -1}
 	var projected_units: Array = units.duplicate(true)
 	var projected_unit := card.duplicate(true)
@@ -112,7 +131,7 @@ static func projected_deployment(card: Dictionary, row: int, units: Array) -> Di
 	projected_unit.ready = true
 	projected_unit.immobilized_turns = 0
 	projected_units.append(projected_unit)
-	return projected_action(projected_id, projected_units)
+	return projected_action(projected_id, projected_units, blocked_cells)
 
 static func has_target_in_range(unit: Dictionary, units: Array) -> bool:
 	var direction := 1 if unit.side == PLAYER else -1
@@ -140,12 +159,18 @@ static func blast_cells(target: Dictionary) -> Array:
 static func locked_mana(units: Array, side: int) -> int:
 	var locked := 0
 	for unit in units:
-		if unit.side == side:
+		if unit.side == side and unit.get("locks_mana", true):
 			locked += unit.get("cost", 0)
 	return locked
 
 static func available_mana(capacity: int, units: Array, side: int) -> int:
 	return maxi(0, capacity - locked_mana(units, side))
+
+static func is_cell_blocked(blocked_cells: Array, row: int, col: int) -> bool:
+	for cell in blocked_cells:
+		if int(cell.get("row", -1)) == row and int(cell.get("col", -1)) == col:
+			return true
+	return false
 
 static func _occupied(units: Array, row: int, col: int) -> bool:
 	for unit in units:

@@ -14,6 +14,7 @@ const SquadDropZoneScript = preload("res://scripts/squad_drop_zone.gd")
 const BattleAudioScript = preload("res://scripts/battle_audio.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleResultsScript = preload("res://scripts/battle_results.gd")
+const MissionRulesScript = preload("res://scripts/mission_rules.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
@@ -222,6 +223,10 @@ var enemy_deck: Array = []
 var player_conductor_skill := "Rally"
 var editing_conductor_skill := "Rally"
 var enemy_conductor_skill := "Rally"
+var active_mission_rules: Dictionary = MissionRulesScript.default_rules()
+var deployed_reinforcement_indices: Array[int] = []
+var mana_growth := 2
+var mana_cap := 10
 var completed_missions: Array = []
 var earned_reward_units: Array = []
 var current_mission_id := -1
@@ -1283,13 +1288,14 @@ func _refresh_mission_intel() -> void:
 	if mission.get("chapter", "") != "":
 		chapter_label = " · %s" % String(mission.chapter).to_upper()
 	mission_intel_label.text = (
-		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CONDUCTOR: %s\nOPPONENT: %s · %s"
+		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CONDUCTOR: %s\nOPPONENT: %s · %s\nOBJECTIVE: %s"
 		% [
 			mission.act, mission.act_mission, chapter_label,
 			mission.short_title.to_upper(),
 			encounter.enemy_hp, encounter.skill.to_upper(),
 			String(encounter.opponent_name).to_upper(),
-			String(encounter.opponent_affiliation).to_upper()
+			String(encounter.opponent_affiliation).to_upper(),
+			MissionRulesScript.objective_title(encounter.get("rules", {}))
 		]
 	)
 	mission_intel_stats_label.text = _enemy_squad_summary(encounter.enemy_squad)
@@ -2711,6 +2717,8 @@ func _load_replay_at_index() -> void:
 	enemy_hp = STARTING_HP
 	player_shield = 0
 	enemy_shield = 0
+	round_number = 1
+	active_mission_rules = MissionRulesScript.default_rules()
 	status_message = "Replay ready."
 	var metadata: Dictionary = replay_data.get("metadata", {})
 	var replay_encounter := CampaignStoreScript.encounter(
@@ -2723,7 +2731,16 @@ func _load_replay_at_index() -> void:
 		if event.get("type", "") == "battle_started":
 			player_hp = event.get("player_hp", STARTING_HP)
 			enemy_hp = event.get("enemy_hp", STARTING_HP)
+			active_mission_rules = MissionRulesScript.normalize(
+				event.get("mission_rules", replay_encounter.get("rules", {}))
+			)
 			break
+	battle_simulator.set_blocked_cells(active_mission_rules.blocked_cells)
+	board.set_mission_rules(
+		active_mission_rules.blocked_cells,
+		MissionRulesScript.objective_banner(active_mission_rules, round_number)
+		if MissionRulesScript.has_authored_rules(active_mission_rules) else ""
+	)
 	_update_replay_timeline()
 	_refresh()
 
@@ -2774,6 +2791,13 @@ func _apply_next_replay_event() -> void:
 	replay_event_index += 1
 	var event_type: String = event.get("type", "")
 	match event_type:
+		"battle_started":
+			player_hp = event.get("player_hp", player_hp)
+			enemy_hp = event.get("enemy_hp", enemy_hp)
+			active_mission_rules = MissionRulesScript.normalize(
+				event.get("mission_rules", {})
+			)
+			battle_simulator.set_blocked_cells(active_mission_rules.blocked_cells)
 		"combat_log":
 			status_message = _canonical_replay_text(str(event.get("message", "")))
 		"deploy":
@@ -2781,9 +2805,14 @@ func _apply_next_replay_event() -> void:
 			if card != null:
 				var side: int = event.get("side", PLAYER)
 				var row: int = event.get("row", 0)
-				var col := 0 if side == PLAYER else COLS - 1
+				var col: int = event.get(
+					"col", 0 if side == PLAYER else COLS - 1
+				)
 				var spawned := _spawn_unit(card.to_dict(), side, row, col)
 				spawned.id = event.get("unit_id", spawned.id)
+				spawned.mission_role = event.get("mission_role", "")
+				spawned.mission_stationary = event.get("mission_stationary", false)
+				spawned.locks_mana = event.get("locks_mana", true)
 				next_unit_id = maxi(next_unit_id, spawned.id + 1)
 				battle_audio.play("deploy")
 				await board.animate_unit_move(
@@ -2840,6 +2869,9 @@ func _apply_next_replay_event() -> void:
 				units.erase(defeated)
 		"state_snapshot":
 			_apply_replay_snapshot(event)
+		"mission_rule_triggered", "mission_objective_resolved":
+			status_message = str(event.get("message", event.get("reason", "")))
+			round_number = maxi(round_number, int(event.get("round", round_number)))
 		"battle_finished":
 			_verify_replay_result(event)
 	_refresh()
@@ -3143,7 +3175,8 @@ func _refresh_operation_dossier() -> void:
 		]
 		+ "OPPONENT  ·  %s\n" % encounter.opponent_name.to_upper()
 		+ "%s\n" % encounter.opponent_affiliation.to_upper()
-		+ "ENEMY CONDUCTOR  ·  %s" % encounter.skill.to_upper()
+		+ "ENEMY CONDUCTOR  ·  %s\n\n" % encounter.skill.to_upper()
+		+ MissionRulesScript.dossier_text(encounter.get("rules", {}))
 	)
 	for child in mission_detail_rewards.get_children():
 		mission_detail_rewards.remove_child(child)
@@ -3457,6 +3490,17 @@ func _start_new_match() -> void:
 		battle_simulator.rng
 	)
 	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
+	active_mission_rules = MissionRulesScript.normalize(
+		encounter.get("rules", {}) if campaign_battle and not tutorial_mode else {}
+	)
+	deployed_reinforcement_indices.clear()
+	battle_simulator.set_blocked_cells(active_mission_rules.blocked_cells)
+	board.set_mission_rules(
+		active_mission_rules.blocked_cells,
+		MissionRulesScript.objective_banner(active_mission_rules, 1)
+		if campaign_battle and MissionRulesScript.has_authored_rules(active_mission_rules)
+		else ""
+	)
 	_set_board_opponent(encounter)
 	var enemy_squad_names: Array = TUTORIAL_ENEMY_SQUAD.duplicate() if tutorial_mode else (
 		CampaignStoreScript.enemy_squad_names(
@@ -3482,10 +3526,13 @@ func _start_new_match() -> void:
 	enemy_hp = TUTORIAL_ENEMY_HP if tutorial_mode else (
 		STARTING_HP if not campaign_battle else encounter.enemy_hp
 	)
-	player_max_energy = 2
-	player_energy = 2
-	enemy_max_energy = 2
-	enemy_energy = 2
+	var mana_rules: Dictionary = active_mission_rules.mana
+	mana_growth = mana_rules.growth
+	mana_cap = mana_rules.cap
+	player_max_energy = mana_rules.player_start
+	player_energy = player_max_energy
+	enemy_max_energy = mana_rules.enemy_start
+	enemy_energy = enemy_max_energy
 	player_power_used = false
 	enemy_power_used = false
 	player_shield = 0
@@ -3501,7 +3548,8 @@ func _start_new_match() -> void:
 		"player_squad": player_squad_names,
 		"enemy_squad": enemy_squad_names.duplicate(),
 		"player_skill": player_conductor_skill,
-		"enemy_skill": enemy_conductor_skill
+		"enemy_skill": enemy_conductor_skill,
+		"mission_rules": active_mission_rules.duplicate(true)
 	})
 	input_enabled = true
 	battle_over = false
@@ -3519,6 +3567,8 @@ func _start_new_match() -> void:
 	for i in 4:
 		_draw_player_card()
 		_draw_enemy_card()
+	if campaign_battle and not tutorial_mode:
+		_apply_mission_setup_units()
 	if tutorial_mode:
 		_setup_tutorial_target()
 	_refresh()
@@ -3555,6 +3605,87 @@ func _setup_tutorial_target() -> void:
 		"col": target.col,
 		"tutorial_setup": true
 	})
+
+func _apply_mission_setup_units() -> void:
+	for deployment in active_mission_rules.predeployed:
+		var previous_last_id: int = last_deployed_unit_id.get(deployment.side, -1)
+		var spawned := _spawn_mission_unit(deployment, true)
+		last_deployed_unit_id[deployment.side] = previous_last_id
+		if spawned.is_empty():
+			continue
+		battle_simulator.record("mission_rule_triggered", {
+			"kind": "setup",
+			"message": "%s begins on the field." % spawned.name
+		})
+
+func _spawn_mission_unit(deployment: Dictionary, setup: bool = false) -> Dictionary:
+	var definition := UnitCatalogScript.by_name(str(deployment.get("unit", "")))
+	if definition == null:
+		return {}
+	var row := clampi(int(deployment.get("row", 1)), 0, ROWS - 1)
+	var col := clampi(int(deployment.get(
+		"col", 0 if int(deployment.get("side", ENEMY)) == PLAYER else COLS - 1
+	)), 0, COLS - 1)
+	if (
+		_unit_at(row, col) != null
+		or BattleRulesScript.is_cell_blocked(active_mission_rules.blocked_cells, row, col)
+	):
+		return {}
+	var side := clampi(int(deployment.get("side", ENEMY)), PLAYER, ENEMY)
+	var spawned := _spawn_unit(definition.to_dict(), side, row, col)
+	spawned.mission_role = str(deployment.get("role", ""))
+	spawned.mission_stationary = bool(deployment.get("stationary", false))
+	spawned.locks_mana = bool(deployment.get("locks_mana", false))
+	battle_simulator.record("deploy", {
+		"side": side,
+		"unit_id": spawned.id,
+		"card": spawned.name,
+		"row": row,
+		"col": col,
+		"mission_setup": setup,
+		"mission_reinforcement": not setup,
+		"mission_role": spawned.mission_role,
+		"mission_stationary": spawned.mission_stationary,
+		"locks_mana": spawned.locks_mana
+	})
+	return spawned
+
+func _deploy_mission_reinforcements(side: int) -> void:
+	if not campaign_battle or tutorial_mode or replay_mode:
+		return
+	for index in active_mission_rules.reinforcements.size():
+		if index in deployed_reinforcement_indices:
+			continue
+		var deployment: Dictionary = active_mission_rules.reinforcements[index]
+		if deployment.side != side or deployment.round != round_number:
+			continue
+		deployed_reinforcement_indices.append(index)
+		var spawned := _spawn_mission_unit(deployment)
+		if spawned.is_empty():
+			battle_simulator.record("mission_rule_triggered", {
+				"kind": "reinforcement_blocked",
+				"message": "A scheduled reinforcement could not enter the occupied field."
+			})
+			continue
+		var message := "%s reinforcement: %s enters lane %d." % [
+			"Allied" if side == PLAYER else "Enemy", spawned.name, spawned.row + 1
+		]
+		battle_simulator.record("mission_rule_triggered", {
+			"kind": "reinforcement", "message": message,
+			"unit_id": spawned.id, "round": round_number
+		})
+		status_message = message
+		_refresh()
+		battle_audio.play("deploy")
+		await board.animate_unit_move(
+			spawned.id, spawned.row,
+			-1 if side == PLAYER else COLS,
+			_animation_duration(0.32)
+		)
+		var warcry_message := await _resolve_warcry(spawned)
+		if not warcry_message.is_empty():
+			status_message += " " + warcry_message
+		_refresh()
 
 func _refresh() -> void:
 	_log_action(status_message)
@@ -3638,6 +3769,15 @@ func _refresh() -> void:
 		TUTORIAL_DEPLOYMENT_ROW if tutorial_mode and tutorial_step == TUTORIAL_DEPLOY else -1,
 		TUTORIAL_REPOSITION_ROW if tutorial_mode and tutorial_step == TUTORIAL_REPOSITION else -1,
 		tutorial_mode and tutorial_step == TUTORIAL_SELECT_UNIT
+	)
+	board.set_mission_rules(
+		active_mission_rules.blocked_cells,
+		MissionRulesScript.objective_banner(active_mission_rules, round_number)
+		if (
+			(campaign_battle or replay_mode)
+			and MissionRulesScript.has_authored_rules(active_mission_rules)
+		)
+		else ""
 	)
 	var tutorial_board_input := tutorial_step in [
 		TUTORIAL_DEPLOY, TUTORIAL_SELECT_UNIT, TUTORIAL_REPOSITION
@@ -3946,7 +4086,12 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 		elif clicked != null and clicked.side == PLAYER:
 			selected_board_unit_id = clicked.id
 			status_message = _reposition_status(clicked)
-		elif BattleRulesScript.can_reposition(selected, row, units) and col == selected.col:
+		elif (
+			BattleRulesScript.can_reposition(
+				selected, row, units, active_mission_rules.blocked_cells
+			)
+			and col == selected.col
+		):
 			var old_row: int = selected.row
 			var old_col: int = selected.col
 			selected.row = row
@@ -3977,6 +4122,8 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 	_refresh()
 
 func _reposition_status(unit: Dictionary) -> String:
+	if unit.get("mission_stationary", false):
+		return "%s is a fixed mission asset and cannot reposition." % unit.name
 	if BattleRulesScript.is_immobilized(unit):
 		return "%s is immobilised and cannot leave this lane." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
@@ -3984,12 +4131,16 @@ func _reposition_status(unit: Dictionary) -> String:
 	return "Choose a reachable highlighted tile in another lane to reposition %s." % unit.name
 
 func _reposition_block_reason(unit: Dictionary, row: int, col: int) -> String:
+	if unit.get("mission_stationary", false):
+		return "%s is a fixed mission asset and cannot reposition." % unit.name
 	if BattleRulesScript.is_immobilized(unit):
 		return "%s is immobilised and must remain in its lane." % unit.name
 	if BattleRulesScript.is_taunted(unit, units):
 		return "%s is taunted and must remain in its lane." % unit.name
 	if col != unit.col or row == unit.row:
 		return "Units can only shift between lanes in the same column."
+	if BattleRulesScript.is_cell_blocked(active_mission_rules.blocked_cells, row, col):
+		return "Mission terrain blocks that lane shift."
 	return "Another unit blocks that lane shift."
 
 func _on_deployment_clicked(row: int) -> void:
@@ -4011,6 +4162,10 @@ func _on_deployment_clicked(row: int) -> void:
 		return
 	if _unit_at(row, 0) != null:
 		status_message = "That deployment tile is occupied."
+		_refresh()
+		return
+	if BattleRulesScript.is_cell_blocked(active_mission_rules.blocked_cells, row, 0):
+		status_message = "That deployment tile is blocked by mission terrain."
 		_refresh()
 		return
 
@@ -4059,6 +4214,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"instance_id": card.get("instance_id", ""),
 		"level": card.get("level", 1),
 		"level_points": card.get("level_points", 0),
+		"mission_role": card.get("mission_role", ""),
+		"mission_stationary": card.get("mission_stationary", false),
+		"locks_mana": card.get("locks_mana", true),
 		# Deployment is part of the turn: newly placed units move and attack
 		# when that side resolves immediately afterward.
 		"ready": true,
@@ -4204,6 +4362,8 @@ func _use_player_power() -> void:
 		_refresh()
 		return
 	player_power_used = true
+	if not tutorial_mode and _check_game_over("action"):
+		return
 	if tutorial_mode:
 		_set_tutorial_step(TUTORIAL_FINAL_RESOLVE)
 	else:
@@ -4243,6 +4403,8 @@ func _end_player_turn() -> void:
 	status_message = "Your units advance."
 	_refresh()
 	await _resolve_side(PLAYER)
+	if not tutorial_mode and _check_game_over("action"):
+		return
 	await _resolve_chants(PLAYER, "end")
 	_expire_side_effects(PLAYER)
 	if tutorial_mode:
@@ -4266,7 +4428,7 @@ func _end_player_turn() -> void:
 		await _wait(0.35)
 		await _run_tutorial_enemy_turn()
 		return
-	if _check_game_over():
+	if _check_game_over("player_end"):
 		return
 	await _wait(0.35)
 	await _enemy_turn()
@@ -4328,11 +4490,14 @@ func _enemy_turn() -> void:
 			unit.ready = true
 			unit.repositioned = false
 	await _resolve_chants(ENEMY)
+	if _check_game_over("action"):
+		return
 	if round_number > 1:
-		enemy_max_energy = mini(10, enemy_max_energy + 2)
+		enemy_max_energy = mini(mana_cap, enemy_max_energy + mana_growth)
 	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
 	if round_number > 1:
 		_draw_enemy_card()
+	await _deploy_mission_reinforcements(ENEMY)
 	status_message = "Enemy is deploying..."
 	_refresh()
 	await _wait(0.55)
@@ -4340,7 +4505,9 @@ func _enemy_turn() -> void:
 
 	var attempts := 0
 	while attempts < 3:
-		var choice: Dictionary = BattleAIScript.choose_deployment(enemy_hand, enemy_energy, units)
+		var choice: Dictionary = BattleAIScript.choose_deployment(
+			enemy_hand, enemy_energy, units, active_mission_rules.blocked_cells
+		)
 		if choice.is_empty():
 			break
 		var card: Dictionary = choice.card
@@ -4376,6 +4543,8 @@ func _enemy_turn() -> void:
 			status_message = "Enemy Conductor: " + status_message
 			_refresh()
 			await _wait(0.45)
+			if _check_game_over("action"):
+				return
 
 	status_message = _resolution_preview(ENEMY)
 	_refresh()
@@ -4383,20 +4552,25 @@ func _enemy_turn() -> void:
 	status_message = "Enemy units advance."
 	_refresh()
 	await _resolve_side(ENEMY)
+	if _check_game_over("action"):
+		return
 	await _resolve_chants(ENEMY, "end")
 	_expire_side_effects(ENEMY)
-	if _check_game_over():
+	if _check_game_over("enemy_end"):
 		return
 
 	round_number += 1
-	player_max_energy = mini(10, player_max_energy + 2)
+	player_max_energy = mini(mana_cap, player_max_energy + mana_growth)
 	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
 	_draw_player_card()
 	for unit in units:
 		if unit.side == PLAYER:
 			unit.ready = true
 			unit.repositioned = false
+	await _deploy_mission_reinforcements(PLAYER)
 	await _resolve_chants(PLAYER)
+	if _check_game_over("action"):
+		return
 	input_enabled = true
 	if tutorial_mode and tutorial_step == TUTORIAL_WAIT:
 		_set_tutorial_step(TUTORIAL_SELECT_UNIT)
@@ -4414,7 +4588,9 @@ func _enemy_reposition_units() -> void:
 			or BattleRulesScript.is_immobilized(unit)
 		):
 			continue
-		var best_row: int = BattleAIScript.choose_reposition(unit, units)
+		var best_row: int = BattleAIScript.choose_reposition(
+			unit, units, active_mission_rules.blocked_cells
+		)
 		if best_row != unit.row:
 			var old_row: int = unit.row
 			var old_col: int = unit.col
@@ -4459,7 +4635,16 @@ func _resolve_side(side: int) -> void:
 		})
 		_remove_defeated()
 		_refresh()
-		if player_hp <= 0 or enemy_hp <= 0:
+		if (
+			player_hp <= 0 or enemy_hp <= 0
+			or (
+				campaign_battle
+				and MissionRulesScript.evaluate(
+					active_mission_rules, units, round_number,
+					player_hp, enemy_hp, "action"
+				).finished
+			)
+		):
 			return
 		await _wait(0.32)
 
@@ -4495,7 +4680,9 @@ func _activate_unit(actor: Dictionary) -> void:
 			_refresh()
 			await _wait(0.22)
 
-	var path: Array = BattleRulesScript.traversal_cells(actor, units)
+	var path: Array = BattleRulesScript.traversal_cells(
+		actor, units, active_mission_rules.blocked_cells
+	)
 	if not path.is_empty():
 		var old_row: int = actor.row
 		var old_col: int = actor.col
@@ -4996,23 +5183,49 @@ func _emphasize_result_action(primary_action: Button) -> void:
 	primary_action.add_theme_color_override("font_pressed_color", UIThemeScript.PARCHMENT_LIGHT)
 	primary_action.grab_focus()
 
-func _check_game_over() -> bool:
-	if player_hp > 0 and enemy_hp > 0:
+func _check_game_over(checkpoint: String = "action") -> bool:
+	var outcome: Dictionary
+	if campaign_battle and not tutorial_mode:
+		outcome = MissionRulesScript.evaluate(
+			active_mission_rules, units, round_number,
+			player_hp, enemy_hp, checkpoint
+		)
+	else:
+		outcome = {
+			"finished": player_hp <= 0 or enemy_hp <= 0,
+			"winner": PLAYER if enemy_hp <= 0 else ENEMY,
+			"reason": (
+				"The enemy Conductor was defeated."
+				if enemy_hp <= 0 else "Your Conductor was defeated."
+			)
+		}
+	if not outcome.finished:
 		return false
+	var player_won: bool = outcome.winner == PLAYER
+	var outcome_reason: String = outcome.reason
 	battle_over = true
 	input_enabled = false
 	end_button.visible = false
 	var battle_rating: Dictionary = {}
-	if enemy_hp <= 0:
+	if player_won:
 		battle_rating = BattleResultsScript.calculate(
 			player_hp, STARTING_HP, round_number,
 			units, battle_simulator.events
 		)
 	var finish_event := {
-		"winner": PLAYER if enemy_hp <= 0 else ENEMY,
+		"winner": outcome.winner,
 		"player_hp": player_hp,
-		"enemy_hp": enemy_hp
+		"enemy_hp": enemy_hp,
+		"round": round_number,
+		"reason": outcome_reason,
+		"objective": active_mission_rules.objective.duplicate(true)
 	}
+	if campaign_battle and MissionRulesScript.has_authored_rules(active_mission_rules):
+		battle_simulator.record("mission_objective_resolved", {
+			"winner": outcome.winner,
+			"reason": outcome_reason,
+			"round": round_number
+		})
 	if not battle_rating.is_empty():
 		finish_event["rating"] = battle_rating.duplicate(true)
 	battle_simulator.record("battle_finished", finish_event)
@@ -5027,7 +5240,7 @@ func _check_game_over() -> bool:
 	result_rating_panel.visible = false
 	result_continue_button.visible = false
 	result_menu_button.visible = false
-	if enemy_hp <= 0:
+	if player_won:
 		battle_audio.play("victory")
 		_show_battle_rating(battle_rating)
 		if campaign_battle:
@@ -5039,8 +5252,9 @@ func _check_game_over() -> bool:
 				var next_encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index + 1)
 				overlay_title.text = "FIELD SECURED"
 				overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
-				overlay_detail.text = "Conductor HP carried forward: %d\nNext: Battle %d/%d · %s" % [
-					player_hp, current_encounter_index + 2, encounter_count, next_encounter.title
+				overlay_detail.text = "%s\nConductor HP carried forward: %d\nNext: Battle %d/%d · %s" % [
+					outcome_reason, player_hp,
+					current_encounter_index + 2, encounter_count, next_encounter.title
 				]
 				result_primary_button.text = "CONTINUE MISSION"
 				_emphasize_result_action(result_primary_button)
@@ -5068,13 +5282,14 @@ func _check_game_over() -> bool:
 		)
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = (
-			"%s\nVictory achieved in %d rounds."
+			"%s\n%s\nVictory achieved in %d rounds."
 			% [
 				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
+				outcome_reason,
 				round_number
 			]
 			if campaign_battle
-			else "Victory achieved in %d rounds." % round_number
+			else "%s\nVictory achieved in %d rounds." % [outcome_reason, round_number]
 		)
 		if campaign_battle and current_mission_id == CampaignStoreScript.MISSIONS.size() - 1:
 			overlay_title.text = "END OF CAMPAIGN 1"
@@ -5096,7 +5311,7 @@ func _check_game_over() -> bool:
 			MissionRunStoreScript.clear_run()
 		overlay_title.text = LOSS_TITLE
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
-		overlay_detail.text = LOSS_DETAIL
+		overlay_detail.text = "%s\nRetry the battle with a new tactical approach." % outcome_reason
 		result_primary_button.text = "RETRY BATTLE"
 		_emphasize_result_action(result_primary_button)
 	_refresh()

@@ -785,6 +785,17 @@ Campaign mission selection flows from three illustrated, Act-tabbed regional map
 
 The campaign map reports completion by Act and any active run. Each mission has its own briefing, completion debriefing, authored enemy squad, and Conductor configuration. Before deployment, squad selection previews the upcoming enemy cards, Conductor skill, and HP. Continuing after a mission victory opens the next mission's workshop and marks the newly awarded card in Barracks.
 
+Campaign encounters may also carry normalized, authored mission rules. Standard
+encounters still end when a Conductor is defeated. Authored encounters can instead
+ask the player to hold through a specified round, eliminate a marked priority unit,
+or protect a marked allied asset while defeating the opposing Conductor. Optional
+modifiers add round limits, impassable board cells, setup units, scheduled
+reinforcements, and alternate starting/growth/cap Mana values. Objectives and
+modifiers appear in both the operations dossier and formation intelligence; the
+battlefield marks blocked cells and objective units. The opening authored set spans
+Missions 3–9, introducing the variations one at a time. Rule data and every setup,
+reinforcement, and objective-resolution event remain part of deterministic replays.
+
 Every victorious battle receives a deterministic 1–10 performance rating.
 The 1,000-point calculation awards 350 points for victory, up to 300 for
 remaining Conductor HP, up to 190 for deployed-unit survival, and up to 160
@@ -860,8 +871,11 @@ The replay and battle-interface cleanup is in a stable, tested state:
 - Replay transport, event progress, seed, and history navigation are distinctly grouped.
 - The latest ten deterministic replays are retained, with legacy latest-replay compatibility.
 - Practice victories provide both Play Again and Menu exits.
+- A normalized authored encounter-rule layer now supports alternate objectives,
+  round limits, terrain, setup units, reinforcements, and Mana variants; Missions
+  3–9 provide the first playable campaign set.
 
-At the start of the next development session, run the gameplay and UI smoke tests and perform a visual pass at the target 16:9 window size. Pay particular attention to the Settings popover, replay controls, combat-log overlap, replay squad comparison, and returning to the menu. Once those flows are visually confirmed, the next productive focus is gameplay balance and progression polish rather than additional replay UI.
+At the start of the next development session, run the gameplay and UI smoke tests and play Missions 3–9 at the target 16:9 window size. Pay particular attention to objective clarity, blocked-cell readability, protection-target durability, reinforcement timing, and round limits. Once those encounters are tuned, the next productive focus is progression polish rather than additional replay UI.
 
 ## First Milestone
 

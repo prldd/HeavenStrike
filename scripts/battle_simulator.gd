@@ -11,17 +11,23 @@ var seed_value := 1
 var rng := RandomNumberGenerator.new()
 var events: Array = []
 var sequence := 0
+var blocked_cells: Array = []
 
 func reset(next_seed: int) -> void:
 	seed_value = next_seed
 	rng.seed = next_seed
 	events.clear()
 	sequence = 0
+	blocked_cells.clear()
+
+func set_blocked_cells(cells: Array) -> void:
+	blocked_cells = cells.duplicate(true)
 
 func activation_order(side: int, units: Array) -> Array:
 	var ordered := units.filter(func(unit):
 		return unit.side == side and unit.get("ready", false) \
-			and unit.get("stun_turns", 0) <= 0
+			and unit.get("stun_turns", 0) <= 0 \
+			and not unit.get("mission_stationary", false)
 	)
 	ordered.sort_custom(func(a, b):
 		if a.col == b.col:
@@ -34,7 +40,7 @@ func plan_activation(actor_id: int, units: Array) -> Dictionary:
 	var actor = unit_by_id(units, actor_id)
 	if actor == null:
 		return {}
-	var path: Array = BattleRulesScript.traversal_cells(actor, units)
+	var path: Array = BattleRulesScript.traversal_cells(actor, units, blocked_cells)
 	var projected_col: int = actor.col if path.is_empty() else path[-1].x
 	var projected_actor: Dictionary = actor.duplicate(true)
 	projected_actor.col = projected_col
