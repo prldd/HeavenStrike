@@ -20,6 +20,7 @@ const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
+const OPERATIONS_MAP_BACKGROUND := preload("res://assets/operations-map-tempest-front.png")
 
 const PLAYER := 0
 const ENEMY := 1
@@ -131,9 +132,20 @@ var crucible_target_id := ""
 var crucible_donor_ids: Array = []
 var collection_instances: Array = []
 var crucible_notice := ""
-var mission_list: VBoxContainer
-var mission_scroll: ScrollContainer
-var mission_list_build_token := 0
+var mission_list: Control
+var mission_map_texture: TextureRect
+var mission_act_buttons: Array[Button] = []
+var mission_node_buttons: Dictionary = {}
+var mission_map_act := 1
+var mission_selected_id := -1
+var mission_detail_kicker: Label
+var mission_detail_title: Label
+var mission_detail_state: Label
+var mission_detail_briefing: Label
+var mission_detail_stats: Label
+var mission_detail_rewards: HBoxContainer
+var mission_launch_button: Button
+var mission_scene_button: Button
 var _touch_details_active := false
 var campaign_progress_label: Label
 var resume_button: Button
@@ -1583,48 +1595,150 @@ func _build_mission_select() -> void:
 	_add_overlay_background(
 		mission_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.035, 0.025, 0.02, 0.78)
+		Color(0.025, 0.022, 0.025, 0.86)
 	)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 180)
-	margin.add_theme_constant_override("margin_right", 180)
-	margin.add_theme_constant_override("margin_top", 60)
-	margin.add_theme_constant_override("margin_bottom", 50)
+	margin.add_theme_constant_override("margin_left", 34)
+	margin.add_theme_constant_override("margin_right", 34)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
 	mission_overlay.add_child(margin)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 14)
+	layout.add_theme_constant_override("separation", 9)
 	margin.add_child(layout)
 
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 18)
+	layout.add_child(title_row)
 	var title := Label.new()
-	title.text = "OPERATIONS MAP · THE TEMPEST FRONT"
+	title.text = "OPERATIONS MAP"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
-	layout.add_child(title)
+	title_row.add_child(title)
 
 	campaign_progress_label = Label.new()
+	campaign_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	campaign_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	campaign_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	layout.add_child(campaign_progress_label)
+	title_row.add_child(campaign_progress_label)
 
-	mission_scroll = ScrollContainer.new()
-	mission_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mission_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mission_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	layout.add_child(mission_scroll)
+	var act_row := HBoxContainer.new()
+	act_row.add_theme_constant_override("separation", 8)
+	layout.add_child(act_row)
+	for act in range(1, 4):
+		var act_button := Button.new()
+		act_button.custom_minimum_size = Vector2(150, 38)
+		act_button.pressed.connect(_switch_operations_act.bind(act))
+		act_row.add_child(act_button)
+		mission_act_buttons.append(act_button)
 
-	mission_list = VBoxContainer.new()
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 12)
+	layout.add_child(body)
+
+	var map_frame := PanelContainer.new()
+	map_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	map_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	map_frame.clip_contents = true
+	body.add_child(map_frame)
+	var map_stack := Control.new()
+	map_stack.custom_minimum_size = Vector2(760, 470)
+	map_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	map_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	map_frame.add_child(map_stack)
+	mission_map_texture = TextureRect.new()
+	mission_map_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mission_map_texture.texture = OPERATIONS_MAP_BACKGROUND
+	mission_map_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	mission_map_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	mission_map_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	mission_map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_stack.add_child(mission_map_texture)
+	var map_shade := ColorRect.new()
+	map_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	map_shade.color = Color(0.025, 0.035, 0.05, 0.22)
+	map_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_stack.add_child(map_shade)
+	mission_list = Control.new()
+	mission_list.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mission_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mission_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mission_list.add_theme_constant_override("separation", 10)
-	mission_scroll.add_child(mission_list)
+	map_stack.add_child(mission_list)
 
+	var dossier := PanelContainer.new()
+	dossier.custom_minimum_size.x = 350
+	dossier.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(dossier)
+	var dossier_layout := VBoxContainer.new()
+	dossier_layout.add_theme_constant_override("separation", 7)
+	dossier.add_child(dossier_layout)
+	mission_detail_kicker = Label.new()
+	mission_detail_kicker.add_theme_font_size_override("font_size", 11)
+	mission_detail_kicker.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	dossier_layout.add_child(mission_detail_kicker)
+	mission_detail_title = Label.new()
+	mission_detail_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mission_detail_title.add_theme_font_size_override("font_size", 23)
+	mission_detail_title.add_theme_color_override("font_color", UIThemeScript.title_color())
+	dossier_layout.add_child(mission_detail_title)
+	mission_detail_state = Label.new()
+	mission_detail_state.add_theme_font_size_override("font_size", 12)
+	dossier_layout.add_child(mission_detail_state)
+	var dossier_rule := HSeparator.new()
+	dossier_layout.add_child(dossier_rule)
+	mission_detail_briefing = Label.new()
+	mission_detail_briefing.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mission_detail_briefing.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mission_detail_briefing.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	dossier_layout.add_child(mission_detail_briefing)
+	mission_detail_stats = Label.new()
+	mission_detail_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mission_detail_stats.add_theme_font_size_override("font_size", 11)
+	mission_detail_stats.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	dossier_layout.add_child(mission_detail_stats)
+	var reward_heading := Label.new()
+	reward_heading.text = "POSSIBLE CARD RECOVERY"
+	reward_heading.add_theme_font_size_override("font_size", 10)
+	reward_heading.add_theme_color_override("font_color", UIThemeScript.title_color())
+	dossier_layout.add_child(reward_heading)
+	var reward_scroll := ScrollContainer.new()
+	reward_scroll.custom_minimum_size.y = 58
+	reward_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	dossier_layout.add_child(reward_scroll)
+	mission_detail_rewards = HBoxContainer.new()
+	mission_detail_rewards.add_theme_constant_override("separation", 6)
+	reward_scroll.add_child(mission_detail_rewards)
+	mission_scene_button = Button.new()
+	mission_scene_button.text = "VIEW SCENE"
+	mission_scene_button.visible = false
+	mission_scene_button.pressed.connect(_view_selected_mission_scene)
+	dossier_layout.add_child(mission_scene_button)
+	mission_launch_button = Button.new()
+	mission_launch_button.custom_minimum_size.y = 46
+	mission_launch_button.pressed.connect(_launch_selected_mission)
+	dossier_layout.add_child(mission_launch_button)
+
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 12)
+	layout.add_child(footer)
 	var back := Button.new()
 	back.text = "BACK TO MENU"
 	back.custom_minimum_size = Vector2(180, 44)
 	back.pressed.connect(_show_main_menu)
-	layout.add_child(back)
+	footer.add_child(back)
+	var legend := Label.new()
+	legend.text = "✓ SECURED   ◆ AVAILABLE   ○ LOCKED   ·   SELECT AN OPERATION FOR INTEL"
+	legend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	legend.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	legend.add_theme_font_size_override("font_size", 11)
+	legend.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	footer.add_child(legend)
 
 func _build_dialogue_overlay() -> void:
 	dialogue_overlay = ColorRect.new()
@@ -2740,10 +2854,29 @@ func _update_replay_timeline() -> void:
 	replay_previous_button.disabled = replay_history_index + 1 >= replay_history.size()
 	replay_next_button.disabled = replay_history_index <= 0
 
+func _switch_operations_act(act: int) -> void:
+	mission_map_act = clampi(act, 1, 3)
+	_rebuild_mission_list(_latest_available_mission_in_act(mission_map_act))
+
+func _latest_available_mission_in_act(act: int) -> int:
+	var first_id := -1
+	var latest_id := -1
+	for mission in CampaignStoreScript.MISSIONS:
+		if mission.act != act:
+			continue
+		if first_id < 0:
+			first_id = mission.id
+		if CampaignStoreScript.is_available(mission.id, completed_missions):
+			latest_id = mission.id
+			if mission.id not in completed_missions:
+				return mission.id
+	return latest_id if latest_id >= 0 else first_id
+
 func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 	for child in mission_list.get_children():
 		mission_list.remove_child(child)
 		child.queue_free()
+	mission_node_buttons.clear()
 	var act_one_complete := completed_missions.filter(func(id): return id < 22).size()
 	var act_two_complete := completed_missions.filter(
 		func(id): return (id >= 22 and id < 62)
@@ -2755,166 +2888,230 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 	var run_text := ""
 	if not saved_run.is_empty():
 		var run_mission: Dictionary = CampaignStoreScript.MISSIONS[saved_run.mission_id]
-		run_text = "  ·  ACTIVE RUN: ACT %d MISSION %d · BATTLE %d/%d · %d HP" % [
+		run_text = "  ·  ACTIVE: A%d M%02d BATTLE %d/%d" % [
 			run_mission.act, run_mission.act_mission,
-			saved_run.encounter_index + 1, run_mission.encounters.size(),
-			saved_run.conductor_hp
+			saved_run.encounter_index + 1, run_mission.encounters.size()
 		]
-	campaign_progress_label.text = (
-		"ACT 1  %d/22 COMPLETE  ·  ACT 2  %d/40 COMPLETE  ·  ACT 3  %d/15 COMPLETE%s"
-		% [act_one_complete, act_two_complete, act_three_complete, run_text]
+	campaign_progress_label.text = "A1 %d/22  ·  A2 %d/40  ·  A3 %d/15%s" % [
+		act_one_complete, act_two_complete, act_three_complete, run_text
+	]
+	if focus_mission_id >= 0 and focus_mission_id < CampaignStoreScript.MISSIONS.size():
+		mission_map_act = CampaignStoreScript.MISSIONS[focus_mission_id].act
+	var act_missions: Array = CampaignStoreScript.MISSIONS.filter(
+		func(mission): return mission.act == mission_map_act
 	)
-	var inventory: Dictionary = _inventory_counts()
-	# Build rows progressively: creating ~62 wrapped-text rows takes seconds on
-	# mobile, so yield every few rows to keep the page responsive. The token
-	# aborts this coroutine if a newer rebuild starts or the user navigates
-	# away mid-build.
-	mission_list_build_token += 1
-	var build_token := mission_list_build_token
-	var built := 0
-	var last_chapter := ""
-	var focus_button: Button = null
-	for mission in CampaignStoreScript.MISSIONS:
-		if build_token != mission_list_build_token or not mission_overlay.visible:
-			return
-		var chapter: String = mission.get("chapter", "")
-		if chapter != "" and chapter != last_chapter:
-			last_chapter = chapter
-			var chapter_header := Label.new()
-			chapter_header.text = "ACT %d · %s" % [mission.act, chapter.to_upper()]
-			chapter_header.add_theme_font_size_override("font_size", 18)
-			chapter_header.add_theme_color_override("font_color", UIThemeScript.title_color())
-			chapter_header.custom_minimum_size.y = 34
-			chapter_header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			chapter_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			mission_list.add_child(chapter_header)
-		var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
-		var complete: bool = mission.id in completed_missions
-		var entry := VBoxContainer.new()
-		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		entry.add_theme_constant_override("separation", 4)
-		mission_list.add_child(entry)
+	if act_missions.is_empty():
+		return
+	mission_selected_id = focus_mission_id
+	if not act_missions.any(func(mission): return mission.id == mission_selected_id):
+		mission_selected_id = _latest_available_mission_in_act(mission_map_act)
+	_refresh_operations_act_buttons([
+		act_one_complete, act_two_complete, act_three_complete
+	])
+	await get_tree().process_frame
+	if not mission_overlay.visible:
+		return
+	var positions := _operations_route_positions(act_missions.size(), mission_list.size)
+	for index in range(1, act_missions.size()):
+		var previous: Dictionary = act_missions[index - 1]
+		var mission: Dictionary = act_missions[index]
+		var segment_color := Color("#4f5960")
+		if previous.id in completed_missions and mission.id in completed_missions:
+			segment_color = Color("#55c7cf")
+		elif CampaignStoreScript.is_available(mission.id, completed_missions):
+			segment_color = UIThemeScript.BRASS
+		var shadow := Line2D.new()
+		shadow.points = PackedVector2Array([positions[index - 1], positions[index]])
+		shadow.width = 7.0
+		shadow.default_color = Color(0.02, 0.025, 0.035, 0.78)
+		shadow.antialiased = true
+		mission_list.add_child(shadow)
+		var route := Line2D.new()
+		route.points = shadow.points
+		route.width = 3.0
+		route.default_color = segment_color
+		route.antialiased = true
+		mission_list.add_child(route)
+	for index in act_missions.size():
+		var mission: Dictionary = act_missions[index]
+		var node := Button.new()
+		node.name = "OperationNode%02d" % mission.act_mission
+		node.text = "%02d" % mission.act_mission
+		node.tooltip_text = "ACT %d · MISSION %02d\n%s" % [
+			mission.act, mission.act_mission, mission.short_title
+		]
+		node.custom_minimum_size = Vector2(42, 42)
+		node.size = Vector2(42, 42)
+		node.position = positions[index] - Vector2(21, 21)
+		node.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		node.add_theme_font_size_override("font_size", 12)
+		node.set_meta("mission_id", mission.id)
+		node.pressed.connect(_select_mission_on_map.bind(mission.id))
+		mission_list.add_child(node)
+		mission_node_buttons[mission.id] = node
+	_refresh_mission_node_styles()
+	_refresh_operation_dossier()
 
-		var button := Button.new()
-		button.custom_minimum_size.y = 92
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-		button.disabled = not available
-		if OS.has_feature("mobile"):
-			# Let touch drags bubble up to the ScrollContainer so the list
-			# scrolls even when the gesture starts on a mission row (same
-			# treatment as SquadCard).
-			button.mouse_filter = Control.MOUSE_FILTER_PASS
-		button.text = "%s  ACT %d · MISSION %02d  ·  %s  ·  %d BATTLE%s  ·  UP TO %d HP\n%s" % [
-			"✓" if complete else ("◆" if available else "🔒"),
-			mission.act,
-			mission.act_mission,
-			mission.short_title.to_upper(),
+func _operations_route_positions(count: int, map_size: Vector2) -> Array:
+	var columns := 6
+	if count > 30:
+		columns = 8
+	elif count <= 15:
+		columns = 5
+	var rows := int(ceil(float(count) / float(columns)))
+	var left := 46.0
+	var right := maxf(left + 1.0, map_size.x - 46.0)
+	var top := 48.0
+	var bottom := maxf(top + 1.0, map_size.y - 48.0)
+	var positions: Array = []
+	for index in count:
+		var row := index / columns
+		var column := index % columns
+		if row % 2 == 1:
+			column = columns - 1 - column
+		var x_ratio := float(column) / float(maxi(1, columns - 1))
+		var y_ratio := float(row) / float(maxi(1, rows - 1))
+		var position := Vector2(
+			lerpf(left, right, x_ratio),
+			lerpf(top, bottom, y_ratio)
+		)
+		position.y += sin(float(column) * 1.35 + float(row)) * 8.0
+		positions.append(position)
+	return positions
+
+func _refresh_operations_act_buttons(completed_counts: Array) -> void:
+	var totals := [22, 40, 15]
+	var numerals := ["I", "II", "III"]
+	for index in mission_act_buttons.size():
+		var button := mission_act_buttons[index]
+		var act := index + 1
+		button.text = "ACT %s  ·  %d/%d" % [
+			numerals[index], completed_counts[index], totals[index]
+		]
+		for style_name in ["normal", "hover", "pressed"]:
+			button.remove_theme_stylebox_override(style_name)
+		if act == mission_map_act:
+			button.add_theme_stylebox_override(
+				"normal", UIThemeScript.card_style(UIThemeScript.BRASS, 0.42, 1.0, 5)
+			)
+			button.add_theme_stylebox_override(
+				"hover", UIThemeScript.card_style(UIThemeScript.BRASS_LIGHT, 0.55, 1.0, 6)
+			)
+
+func _select_mission_on_map(mission_id: int) -> void:
+	if mission_id < 0 or mission_id >= CampaignStoreScript.MISSIONS.size():
+		return
+	mission_selected_id = mission_id
+	_refresh_mission_node_styles()
+	_refresh_operation_dossier()
+
+func _refresh_mission_node_styles() -> void:
+	for mission_id in mission_node_buttons:
+		var button: Button = mission_node_buttons[mission_id]
+		var available: bool = CampaignStoreScript.is_available(mission_id, completed_missions)
+		var complete: bool = mission_id in completed_missions
+		var color := Color("#68737a")
+		if complete:
+			color = Color("#67e6f4")
+		elif available:
+			color = UIThemeScript.BRASS
+		if mission_id == mission_selected_id:
+			color = UIThemeScript.BRASS_LIGHT
+		var normal := UIThemeScript.card_style(
+			color, 0.34 if available or complete else 0.15, 1.0, 5 if mission_id == mission_selected_id else 2
+		)
+		normal.set_corner_radius_all(21)
+		var hover := UIThemeScript.card_style(color.lightened(0.16), 0.48, 1.0, 6)
+		hover.set_corner_radius_all(21)
+		var pressed := UIThemeScript.card_style(color.darkened(0.18), 0.44, 1.0, 3)
+		pressed.set_corner_radius_all(21)
+		button.add_theme_stylebox_override("normal", normal)
+		button.add_theme_stylebox_override("hover", hover)
+		button.add_theme_stylebox_override("pressed", pressed)
+		button.modulate = Color.WHITE if available or complete else Color(0.70, 0.72, 0.75, 0.82)
+
+func _refresh_operation_dossier() -> void:
+	if mission_selected_id < 0 or mission_selected_id >= CampaignStoreScript.MISSIONS.size():
+		return
+	var mission: Dictionary = CampaignStoreScript.MISSIONS[mission_selected_id]
+	var available: bool = CampaignStoreScript.is_available(mission.id, completed_missions)
+	var complete: bool = mission.id in completed_missions
+	var encounter: Dictionary = mission.encounters[0]
+	mission_detail_kicker.text = "ACT %d · %s · OPERATION %02d" % [
+		mission.act, mission.chapter.to_upper(), mission.act_mission
+	]
+	mission_detail_title.text = mission.short_title.to_upper()
+	mission_detail_state.text = "✓ SECURED" if complete else ("◆ AVAILABLE" if available else "○ LOCKED")
+	mission_detail_state.add_theme_color_override(
+		"font_color",
+		Color("#67e6f4") if complete else (
+			UIThemeScript.BRASS_LIGHT if available else Color("#8b9298")
+		)
+	)
+	mission_detail_briefing.text = mission.briefing
+	mission_detail_stats.text = (
+		"%d BATTLE%s  ·  UP TO %d HP\n" % [
 			mission.encounters.size(),
 			"" if mission.encounters.size() == 1 else "S",
-			mission.enemy_hp,
-			mission.briefing
+			mission.enemy_hp
 		]
-		button.pressed.connect(_prepare_mission.bind(mission.id))
-		entry.add_child(button)
-		if mission.id == focus_mission_id:
-			focus_button = button
-
-		var rewards := HBoxContainer.new()
-		rewards.custom_minimum_size.y = 42
-		rewards.add_theme_constant_override("separation", 8)
-		entry.add_child(rewards)
-
-		var reward_label := Label.new()
-		var reward_options: Array = CampaignStoreScript.reward_options(mission.id, roster)
-		reward_label.text = (
-			"CARD DROPS" if not reward_options.is_empty()
-			else "NO IMPLEMENTED CARD DROP"
-		)
-		reward_label.custom_minimum_size.x = 118
-		reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		reward_label.add_theme_font_size_override("font_size", 11)
-		reward_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-		rewards.add_child(reward_label)
-
+		+ "OPPONENT  ·  %s\n" % encounter.opponent_name.to_upper()
+		+ "%s\n" % encounter.opponent_affiliation.to_upper()
+		+ "ENEMY CONDUCTOR  ·  %s" % encounter.skill.to_upper()
+	)
+	for child in mission_detail_rewards.get_children():
+		mission_detail_rewards.remove_child(child)
+		child.queue_free()
+	var reward_options: Array = CampaignStoreScript.reward_options(mission.id, roster)
+	if reward_options.is_empty():
+		var none := Label.new()
+		none.text = "NO CARD DROP"
+		none.add_theme_color_override("font_color", UIThemeScript.muted_color())
+		mission_detail_rewards.add_child(none)
+	else:
 		for option in reward_options:
 			var reward_unit: UnitData = option.unit
-			var is_unobtained: bool = int(inventory.get(reward_unit.name, 0)) <= 0
 			var tile := VBoxContainer.new()
-			tile.custom_minimum_size = Vector2(34, 40)
+			tile.custom_minimum_size = Vector2(48, 54)
 			tile.add_theme_constant_override("separation", 0)
-			rewards.add_child(tile)
-
-			var art_slot := Control.new()
-			art_slot.custom_minimum_size = Vector2(32, 30)
-			art_slot.mouse_filter = Control.MOUSE_FILTER_PASS
-			tile.add_child(art_slot)
-
+			mission_detail_rewards.add_child(tile)
 			var portrait := TextureRect.new()
-			portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			portrait.custom_minimum_size = Vector2(44, 40)
 			portrait.texture = _unit_icon(reward_unit.icon)
 			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			portrait.mouse_default_cursor_shape = Control.CURSOR_HELP
+			portrait.tooltip_text = "%s · %d%%" % [
+				reward_unit.name, roundi(float(option.chance) * 100.0)
+			]
 			if not OS.has_feature("mobile"):
-				# Hover details are desktop-only; on touch they would fire on
-				# every tap/scroll and linger as a stuck popup.
 				portrait.mouse_entered.connect(
 					_show_reward_details.bind(reward_unit.to_dict(), float(option.chance))
 				)
 				portrait.mouse_exited.connect(_hide_unit_details)
-			art_slot.add_child(portrait)
-
-			if is_unobtained:
-				var new_tag := Label.new()
-				new_tag.text = "NEW"
-				new_tag.position = Vector2(-2, -4)
-				new_tag.size = Vector2(28, 12)
-				new_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				new_tag.z_index = 2
-				new_tag.add_theme_font_size_override("font_size", 8)
-				new_tag.add_theme_color_override("font_color", Color("#8ee0a6"))
-				new_tag.add_theme_color_override("font_outline_color", Color("#102018"))
-				new_tag.add_theme_constant_override("outline_size", 2)
-				art_slot.add_child(new_tag)
-
+			tile.add_child(portrait)
 			var stars := Label.new()
 			stars.text = "★".repeat(reward_unit.stars)
-			stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			stars.add_theme_font_size_override("font_size", 9)
+			stars.add_theme_font_size_override("font_size", 8)
 			stars.add_theme_color_override("font_color", UIThemeScript.title_color())
 			tile.add_child(stars)
+	mission_scene_button.visible = complete and StoryDialogueCatalogScript.has_interlude(mission.id)
+	mission_launch_button.disabled = not available
+	mission_launch_button.text = (
+		"REDEPLOY SQUAD" if complete else (
+			"ASSEMBLE SQUAD" if available else "OPERATION LOCKED"
+		)
+	)
 
-		if complete and StoryDialogueCatalogScript.has_interlude(mission.id):
-			var reward_spacer := Control.new()
-			reward_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			rewards.add_child(reward_spacer)
-			var scene_button := Button.new()
-			scene_button.text = "VIEW SCENE"
-			scene_button.custom_minimum_size = Vector2(120, 36)
-			if OS.has_feature("mobile"):
-				scene_button.mouse_filter = Control.MOUSE_FILTER_PASS
-			scene_button.pressed.connect(_replay_interlude.bind(mission.id))
-			rewards.add_child(scene_button)
+func _launch_selected_mission() -> void:
+	_prepare_mission(mission_selected_id)
 
-		var divider := HSeparator.new()
-		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		entry.add_child(divider)
-		built += 1
-		if built % 6 == 0:
-			await get_tree().process_frame
-			if build_token != mission_list_build_token or not mission_overlay.visible:
-				return
-	if focus_button != null:
-		# The mission rows are built over several frames on mobile. Wait for the
-		# final container layout before asking the ScrollContainer to reveal the
-		# newly unlocked mission.
-		await get_tree().process_frame
-		if build_token == mission_list_build_token and mission_overlay.visible:
-			mission_scroll.ensure_control_visible(focus_button)
+func _view_selected_mission_scene() -> void:
+	if (
+		mission_selected_id in completed_missions
+		and StoryDialogueCatalogScript.has_interlude(mission_selected_id)
+	):
+		_replay_interlude(mission_selected_id)
 
 func _prepare_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):

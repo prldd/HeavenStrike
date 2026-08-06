@@ -319,26 +319,24 @@ func _run() -> void:
 	game.units.clear()
 	game.skip_animations = false
 	game._open_mission_select()
-	# The mission list builds progressively over several frames on open.
-	# 77 mission rows plus 15 chapter header labels.
 	var wait_frames := 0
-	while game.mission_list.get_child_count() < 92 and wait_frames < 120:
+	while game.mission_node_buttons.size() < 22 and wait_frames < 120:
 		await process_frame
 		wait_frames += 1
-	assert(game.mission_list.get_child_count() == 92)
-	assert(game.campaign_progress_label.text.contains("ACT 1"))
-	assert(game.campaign_progress_label.text.contains("ACT 2"))
-	assert(game.campaign_progress_label.text.contains("ACT 3"))
-	var first_header: Label = game.mission_list.get_child(0)
-	assert(first_header.text == "ACT 1 · THE SALVAGE")
-	var chapter_headers := 0
-	for child in game.mission_list.get_children():
-		if child is Label:
-			chapter_headers += 1
-	assert(chapter_headers == 15)
-	var first_entry: VBoxContainer = game.mission_list.get_child(1)
-	assert(first_entry.size_flags_horizontal == Control.SIZE_EXPAND_FILL)
-	assert(first_entry.get_child(1) is HBoxContainer)
+	assert(game.mission_node_buttons.size() == 22)
+	assert(game.mission_map_texture.texture.resource_path.ends_with(
+		"operations-map-tempest-front.png"
+	))
+	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
+	assert(game.mission_act_buttons.size() == 3)
+	assert(game.mission_map_act == 1)
+	assert(game.mission_selected_id == 0)
+	assert(game.mission_detail_kicker.text == "ACT 1 · THE SALVAGE · OPERATION 01")
+	assert(game.mission_detail_title.text == CampaignStoreScript.MISSIONS[0].short_title.to_upper())
+	assert(game.mission_detail_briefing.text == CampaignStoreScript.MISSIONS[0].briefing)
+	assert(game.mission_node_buttons[0].text == "01")
+	assert(game.mission_node_buttons[21].text == "22")
+	assert(game.mission_list.get_child_count() == 64)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
 	assert(result_buttons.size() == 3)
 	assert(game.result_primary_button.get_index() < game.result_continue_button.get_index())
@@ -595,26 +593,19 @@ func _run() -> void:
 	assert(game.mission_overlay.visible)
 	assert(not game.squad_overlay.visible)
 	await process_frame
-	var view_scene_button: Button = null
-	for candidate in game.mission_list.find_children("*", "Button", true, false):
-		if candidate.text == "VIEW SCENE":
-			view_scene_button = candidate
-			break
-	assert(view_scene_button != null)
-	view_scene_button.pressed.emit()
+	game._select_mission_on_map(0)
+	assert(game.mission_scene_button.visible)
+	game.mission_scene_button.pressed.emit()
 	assert(game.dialogue_overlay.visible)
 	assert(not game.mission_overlay.visible)
 	game._finish_interlude()
 	assert(game.mission_overlay.visible)
 	await process_frame
-	var next_mission_button: Button = null
-	for candidate in game.mission_list.find_children("*", "Button", true, false):
-		if candidate.text.contains("MISSION 02"):
-			next_mission_button = candidate
-			break
-	assert(next_mission_button != null)
-	assert(next_mission_button.text.contains(CampaignStoreScript.MISSIONS[1].briefing))
-	next_mission_button.pressed.emit()
+	await process_frame
+	game._select_mission_on_map(1)
+	assert(game.mission_detail_briefing.text == CampaignStoreScript.MISSIONS[1].briefing)
+	assert(not game.mission_launch_button.disabled)
+	game.mission_launch_button.pressed.emit()
 	assert(not game.mission_overlay.visible)
 	assert(game.squad_overlay.visible)
 	assert(game.squad_opened_for_mission)
@@ -649,16 +640,21 @@ func _run() -> void:
 		game.completed_missions.append(mission_id)
 	assert(game._latest_campaign_mission_id() == 61)
 	game._open_mission_select()
-	for frame in 16:
+	for frame in 4:
 		await process_frame
-	assert(game.mission_scroll.scroll_vertical > 0)
-	var frontier_button: Button = null
-	for candidate in game.mission_list.find_children("*", "Button", true, false):
-		if candidate.text.contains("ACT 2 · MISSION 40"):
-			frontier_button = candidate
-			break
-	assert(frontier_button != null)
-	assert(frontier_button.get_global_rect().intersects(game.mission_scroll.get_global_rect()))
+	assert(game.mission_map_act == 2)
+	assert(game.mission_node_buttons.size() == 40)
+	assert(game.mission_selected_id == 61)
+	assert(game.mission_node_buttons[61].text == "40")
+	assert(game.mission_detail_kicker.text.contains("ACT 2"))
+	assert(game.mission_detail_kicker.text.contains("OPERATION 40"))
+	game._switch_operations_act(3)
+	for frame in 3:
+		await process_frame
+	assert(game.mission_map_act == 3)
+	assert(game.mission_node_buttons.size() == 15)
+	assert(game.mission_selected_id == 62)
+	assert(game.mission_launch_button.disabled)
 	game.mission_overlay.visible = false
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://replay_history.json"))
 	var older_replay := BattleSimulatorScript.new()

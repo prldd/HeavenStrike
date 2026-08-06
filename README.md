@@ -58,7 +58,7 @@ assets required by the prototype.
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Post-battle 1–10 performance ratings with Conductor integrity, formation
   survival, and completion-tempo scoring
-- Main menu, mission selection, practice mode, and campaign briefings
+- Main menu, illustrated operations map, practice mode, and campaign briefings
 - Playable opening tutorial for deployment, locked Mana, eliminating blocking
   units, lane repositioning, Conductor powers, and direct Conductor attacks
 - Mission squad selection before campaign battles
