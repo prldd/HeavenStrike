@@ -4,7 +4,7 @@ This guide is written for AI coding agents. It describes the project layout, bui
 
 ## Project overview
 
-War of Resonance (formerly "Aether Engine Tactics") is a Godot 4 prototype of a lane-based, turn-based tactical RPG. The player builds a squad of up to eight units, deploys them onto a 3×7 board, and resolves battles automatically. The project contains a playable campaign, practice mode, squad builder, Kinetic Crucible progression, enemy AI, deterministic replay history, and synthesized battle audio.
+War of Resonance is a Godot 4 prototype of a lane-based, turn-based tactical RPG. The player builds a squad of up to eight units, deploys them onto a 3×7 board, and resolves battles automatically. The project contains a playable campaign, practice mode, squad builder, Kinetic Crucible progression, enemy AI, deterministic replay history, and synthesized battle audio.
 
 The prototype is intentionally a single-player, desktop-first Godot project. All game logic is written in GDScript. There is no server, no network code, and no external package manager.
 
@@ -55,14 +55,14 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Conductor-skill timing. |
 | `mission_rules.gd` | Normalizes authored encounter objectives and modifiers, formats mission intel, validates blocked/setup/reinforcement data, and evaluates deterministic win/loss conditions. |
-| `unit_catalog.gd` | Authoritative unit roster: 210 units as `UnitData` Resources with stats, class, race, skills, star rarity, and portrait/full-body art IDs. |
+| `unit_catalog.gd` | Authoritative original roster: 210 units as `UnitData` Resources with stats, class, chassis family, skills, star rarity, and portrait/full-body art IDs. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
 | `conductor_skills.gd` | Static resolution of the eight Conductor powers and effect expiration. |
 | `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Conductor-skill storage. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
-| `story_quest_catalog.gd` | Builds the 77-mission campaign from reference quest data, reward pools, authored enemy decks, and Conductor configurations. `MISSION_STORIES` holds authored per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number; uncovered missions get generated placeholder text. Missions 1–62 (Acts 1–2) are ported from the reference; missions 63–77 (Act 3, "Caelis") are original content. |
+| `story_quest_catalog.gd` | Builds the 77-mission original campaign from authored reward pools, enemy decks, and Conductor configurations. `MISSION_STORIES` holds per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number. |
 | `story_dialogue_catalog.gd` | Editable post-mission interludes. `INTERLUDES` is keyed by 1-based mission number and holds a scene title, location, and ordered speaker/text lines; `CHARACTERS` owns speaker roles, initials, and accent colors. `main.gd` owns only the dialogue presentation and return flow. |
 | `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Conductor HP). |
 | `kinetic_crucible.gd` | Per-copy unit progression: levels 1–5, merge point values, donor rules, level-based stat growth (`scaled_stat`), promotion conversion (`record_promotion`), inventory sync, and migration from older name-based saves. |
@@ -140,25 +140,23 @@ The project follows `.editorconfig` and `.gitattributes`:
 - **Mobile touch details:** touch has no hover, so detail popups must not be driven by `mouse_entered` on mobile (it fires on every tap/scroll and the popup tracks the last touch point). Cards show details via long-press instead: `SquadCard` emits `long_pressed`/`long_press_released` (0.45 s hold, cancelled by ~10 px of movement), wired through `main.gd:_connect_card_details`, and the card tap handlers bail out when `_touch_details_active` is set so the release that ends a long-press does not also fire the card's action (the Viewport delivers the release to the pressed button regardless of `mouse_filter`, so suppression must happen at the action level).
 - **Simulation vs. presentation:** keep deterministic combat rules in `BattleSimulator`, `BattleRules`, `BattleAI`, `UnitSkills`, and `ConductorSkills`. Keep drawing, animation, audio, and input in `BoardView` and `main.gd`. Do not add combat logic to `BoardView`.
 - **Authored encounter rules:** optional rules live in `StoryQuestCatalog.ENCOUNTER_RULES`, keyed as `"<1-based mission>:<0-based encounter>"`, and are normalized by `MissionRules`. Encounters without an entry must retain the standard defeat-the-Conductor behavior. Setup and reinforcement deployments must be recorded with their exact cell and mission-role metadata so version-one replays can reconstruct them without executing live rule setup.
-- **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards (applying `KineticCrucible.scaled_stat` for the card's level). Secondary skills scale with unit level: `UnitCatalog.RANK_VALUES` holds the five per-level rows ported from the unit reference, `SkillData` carries them as `rank_values` with `{0}`/`{1}` placeholder descriptions, and `UnitSkills.rank_value` reads the magnitudes at resolution time. Any new secondary skill needs a rank table (or flat fallback), a matching resolution branch in `UnitSkills`, and an AI consideration in `BattleAI` if relevant.
+- **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards (applying `KineticCrucible.scaled_stat` for the card's level). Secondary skills scale with unit level: `UnitCatalog.RANK_VALUES` holds the five authored per-level rows, `SkillData` carries them as `rank_values` with `{0}`/`{1}` placeholder descriptions, and `UnitSkills.rank_value` reads the magnitudes at resolution time. Any new secondary skill needs authored copy, a rank table (or flat fallback), a matching resolution branch in `UnitSkills`, and an AI consideration in `BattleAI` if relevant.
 - **Deterministic replays:** the simulator records events. Replays are saved to `user://last_replay.json` and archived newest-first to `user://replay_history.json` (limit 10). Keep replay serialization backward-compatible where possible; the tests already assert version 1 format.
 - **Persistence:** all player save data is written under `user://` via `ConfigFile` or `JSON`. Files include `user://player.cfg`, `user://campaign.cfg`, `user://mission_run.cfg`, and `user://kinetic_crucible.cfg`. Migration code is kept in the relevant store scripts, not in `main.gd`.
-- **Portraits:** generated from `assets/units/portrait_manifest.tsv` and the source sheets in `assets/units/portrait_sheets/`. The generator asserts exactly 1,048 portraits. Regenerate with:
+- **Original unit art:** the seven class atlases in `assets/units/original_sources/class_atlases/` are the only generative source for playable chassis. The builder asserts exactly 210 full-body sprites and 210 portraits. Regenerate with:
   ```bash
-  ./tools/godot-headless.sh --script res://tools/generate_unit_portraits.gd
+  ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
   ```
-  Generated outputs live in `assets/units/portraits/` and `assets/units/full/` and are committed.
-- **Faction sprite staging:** source art for the replacement pass lives under `assets/units/full_by_class/<Pool>/<Class>/`. Pools are Universal, Steam, Wind, Coal, Fusion, and Solar; class folders are Warden, Duelist, Strider, Artillerist, Channeler, and Lifebinder. Every pool contains every class. Promotion families must stay in one pool, filenames must remain their numeric art IDs, and assignments must stay synchronized with `documentation/Unit_Faction_and_Sprite_Staging.md`. Use `assets/IMAGEPROMPTS.md` for the matching pool/class generation blocks. The live game continues to load `assets/units/full/` until replacements are approved.
+  The builder writes per-unit provenance copies to `assets/units/original_sources/faction_chassis/` and committed runtime outputs to `assets/units/full/` and `assets/units/portraits/`. Promotion families must stay in one faction pool and numeric art IDs must remain stable.
 
 ## Data and assets
 
-- `assets/units/reference-units-*.png` — battlefield sprite sheets (6 units per sheet, 6 sheets committed).
-- `assets/units/portrait_sheets/` — high-resolution source sheets for portraits.
-- `assets/units/portraits/` — 160×160 generated portrait PNGs.
-- `assets/units/full/` — generated full-body sprites used on the battlefield.
-- `assets/units/full_by_class/<Pool>/<Class>/` — faction/class-organized source art for generating replacement full-body sprites; not yet loaded by the game.
-- `assets/units/portrait_manifest.tsv` — TSV mapping `art_id`, `sheet_name`, `slot`, `...` used by the generator.
-- `assets/IMAGEPROMPTS.md` — composable general, pool, and class prompts for the replacement-art pass.
+- `assets/units/original_sources/class_atlases/` — seven original mechanical class atlases.
+- `assets/units/original_sources/faction_chassis/` — the 210 derived per-unit provenance files, grouped by faction and class.
+- `assets/units/portraits/` — exactly 210 generated 160×160 portrait PNGs.
+- `assets/units/full/` — exactly 210 original full-body sprites used on the battlefield.
+- `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
+- `assets/IMAGEPROMPTS.md` — original generation briefs and provenance rules.
 - Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`). Practice battles use `assets/board-steampunk-training-hall.png` instead of the courtyard; `BoardView.set_practice_mode()` switches between them. The training-hall art is generated procedurally — regenerate with `python tools/generate_practice_background.py`.
 
 Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
@@ -218,79 +216,25 @@ If you add an export workflow, keep credentials out of the repository and write 
 - Avoid using `eval`, `OS.execute`, or `FileAccess` on arbitrary paths. If you need to load a user-provided file, validate the path and extension.
 - Save files are plain text ConfigFile/JSON. This is acceptable for a single-player prototype; do not treat them as authoritative for multiplayer.
 
-## Porting units and skills from the reference
+## Original unit and skill workflow
 
-The authoritative unit source is chainguardians.com (a Heavenstrike Rivals
-database). The project's roster, rank tables, and campaign drop lists are
-ported from it. Follow this workflow when adding more.
-
-### Extracting the reference database
-
-The site is an AngularJS app; HTML fetches return only the shell. The full unit
-database (1,052 units) is embedded as a JS literal in the app bundle:
-
-1. Fetch any page (e.g. `https://chainguardians.com/units`) and find the
-   `sky-app.min.<hash>.js` script name (the hash changes between deploys).
-2. Download that bundle, then in Node extract the array starting at
-   `function UnitData(){var e={units:[` with bracket matching and `eval()` it
-   into JSON (it is an unquoted JS literal, not strict JSON).
-
-Each unit record has: `numberId` (zero-padded string), `name`, `className`
-(defender/fighter/scout/gunner/mage/priest), `starCount`, `manaCost`,
-`maxAttack`, `maxHealth`, `race`, `promotionIds`, and `skill` with `name`,
-`type` (warcry/strike/chant/reaction/aura), `description` (with `{0}`/`{1}`
-placeholders), and `values` (five per-level rank rows). Drop sources are split
-into `storyQuests`, `events`, `raids`, `arenas`, and `gatcha` — **only
-`storyQuests` matter for campaign rewards** (`Act N Mission M - Title`, where M
-is the global 1–62 mission number used in `ADDITIONAL_DROPS`). Units with zero
-story quests are starting-Reserve cards instead of reward cards — with one
-documented exception: the 53-unit Regen-skills batch (icons 119–171) was added
-to `REWARD_UNITS` even though only Rescue Corps / Rescue Paramedic have story
-drops, by explicit owner decision; its units are reward-pool-only, not
-starting Reserves.
+All roster identities, descriptions, values, rewards, and art must be authored for War of Resonance. Do not import or adapt third-party databases, character names, text, designs, or assets. New content should extend the established chassis naming grammar, faction palette, and deterministic balance model.
 
 ### Art assets
 
-- **Portraits** (`assets/units/portraits/%03d.png`) are pre-generated for all
-  1,048 manifest units — no work needed for new units.
-  `assets/units/portrait_manifest.tsv` columns: art ID (= reference
-  `numberId`), portrait sheet, slot, full-body sheet, slot, unit name. The
-  960×160 six-slot portrait sheets live in `assets/units/portrait_sheets/`.
-- **Current full-body sprites** (`assets/units/full/%03d.png`) are the legacy
-  battlefield sources used until the faction replacement pass is approved.
-  The full-body sheets are *not* mirrored locally. Download
-  missing ones from `https://chainguardians.com/img/full/<numberId>.png`
-  (a `_hires` variant exists at `img/full_hires/<numberId>.png`). They are
-  roughly 415px-wide chibi PNGs. `smoke_test.gd` asserts both files exist for
-  every roster unit. Replacement-generation sources are organized separately
-  under `assets/units/full_by_class/<Pool>/<Class>/`; do not change their
-  numeric filenames or split promotion lineages across pools. Commit the
-  `.import` files Godot generates on the next run.
+- The seven class atlases under `assets/units/original_sources/class_atlases/` are original source assets.
+- `tools/build_original_unit_art.gd` chroma-keys those atlases, derives faction variants, and writes both provenance and runtime images.
+- Every active catalog art ID must have exactly one file in `assets/units/full/` and `assets/units/portraits/`; inactive art is not retained in production directories.
+- New source art must be created specifically for this project, recorded in `assets/IMAGEPROMPTS.md`, and must not use an external character or artwork as an image reference.
 
 ### Catalog conventions
 
-- Project `icon` IDs are project-local and do **not** equal reference
-  `numberId`s (e.g. Order Apostle is icon 25 but art 29). New units take the
-  next free project icon and an `ICON_ART_IDS` entry mapping it to the
-  reference `numberId`; `art_id()` defaults to identity when unmapped.
-- Class mapping: defender→Warden, fighter→Duelist, scout→Strider,
-  gunner→Artillerist, mage→Channeler, priest→Lifebinder. Movement/range by
-  class: Warden 2/1, Duelist 2/1, Strider 3/1, Artillerist 1/3, Channeler 1/3,
-  Lifebinder 1/2. Cost/ATK/HP are ported verbatim from `manaCost`/`maxAttack`/
-  `maxHealth`. Class ability text is a fixed string per class (see existing
-  entries).
-- Secondary skill description text is the reference description verbatim; the
-  five `values` rows go into `UnitCatalog.RANK_VALUES` keyed by skill name.
-- Race is ported from the reference `race` key (human/ogur/lambkin/felyne):
-  `UnitCatalog.UNIT_RACES` maps project icon → race for NON-human units only
-  and `_unit(...)` defaults the rest to `"human"` (via `UnitData.race`, which
-  `to_dict()` and `main.gd:_spawn_unit` carry onto card and runtime unit
-  Dictionaries). Race currently has no UI; it gates the Inspire Lambkin aura.
-- Promotions are declared pairwise via `promotion_of`, but chains can be three
-  tiers deep (Conjuring Clown → Harlequin → Jester, Flame Warden → Dissident →
-  Schematic). `KineticCrucible.record_promotion` promotes one step at a time
-  and `_promotion_root` walks the full chain with a guard loop, so no special
-  handling is needed beyond declaring each link.
+- Project `icon` IDs are stable gameplay identifiers. `ICON_ART_IDS` maps them to stable numeric filenames when the IDs differ.
+- Internal classes are Warden, Duelist, Strider, Artillerist, Channeler, and Lifebinder. Movement and range are authored per card, while class ability copy stays consistent within a class.
+- Secondary-skill copy lives in `SKILL_DESCRIPTIONS`; five level rows live in `RANK_VALUES`. Both are original project content and must change together.
+- `CHASSIS_FAMILIES` assigns optional `standard`, `bulwark`, `swift`, or `resonant` tuning families. Resonant Chorus is currently the only family-gated effect.
+- Promotions are declared pairwise via `promotion_of`; `KineticCrucible.record_promotion` safely walks multi-tier chains.
+- Retired public names are migrated only through hashes in `legacy_content_migration.gd`; never reintroduce retired strings into production files.
 
 ### Skill implementation checklist
 
@@ -299,9 +243,9 @@ starting Reserves.
    `resolve_strike`, `resolve_chants`, `resolve_reaction`, `refresh_auras` —
    all five timing hooks are live; auras are recomputed from living sources
    on every call, stripping each unit's `aura_hp`/`aura_atk` and re-applying,
-   so a buff disappears when its source dies). Auras so far: Moonlight (HP
-   only) and Inspire Lambkin (HP + ATK, gated on the target's
-   `race == "lambkin"`, source excluded); multiple sources of the same aura
+   so a buff disappears when its source dies). Auras so far: Lumen Shell (HP
+   only) and Resonant Chorus (HP + ATK, gated on the target's
+   `chassis_family == "resonant"`, source excluded); multiple sources of the same aura
    stack additively, and each change event carries a `stat` field ("HP"/"ATK")
    so `main.gd:_refresh_auras` can log it. The `target_id = -1` /
    `target_lane = -1` fallbacks are what the enemy AI uses — `BattleAI` itself
@@ -309,14 +253,14 @@ starting Reserves.
    `resolve_chants(side, units, phase, ...)` runs twice per side turn:
    `phase = "start"` for start-of-turn chants (and the Regen/Poison tick lives
    in `resolve_start_statuses`), `phase = "end"` for skills in
-   `END_TURN_CHANTS` (Impairing Joust, Galatine's Ground, Cattle of Ra) and the Sun Festival
-   buff countdown. Status mechanics ported from the reference: Regen (heal at
+   `END_TURN_CHANTS` (Lockdown Sweep, Grounding Wave, Dragnet) and the Solar Crescendo
+   buff countdown. Status mechanics authored for this project: Regen (heal at
    side-turn start, mirrors Poison), Stun (`stun_turns` blocks activation,
    traversal, and repositioning — see `BattleRules.is_stunned` and the
    `activation_order` filter), Haste (+1 move in `traversal_cells`), and doom
    (`doom_turns` countdown that sets HP to 0 when it expires, ticking on the
    opposing side's expiry pass). Silence (`silenced_turns`, applied by the
-   Divine Silence Warcry) is the game's skill-locking status: while the
+   Null Signal Warcry) is the game's skill-locking status: while the
    counter holds, `UnitSkills.is_silenced` gates all five timing hooks, so
    the unit's own Warcry, Strike, Chants (both phases, including the Roguish
    Snare pre-pass), and Reaction do not trigger, and it stops contributing
@@ -324,16 +268,16 @@ starting Reserves.
    expiry). It ticks down in the same `expire_statuses` pass as
    `immobilized_turns` — at the end of the silenced unit's own side turns —
    so the rank value N lasts N of the silenced unit's turns (the "enemy
-   turns" of the reference text, from the caster's perspective). Silence
+   turns" of the authored rules text, from the caster's perspective). Silence
    never blocks movement, attacks, or Conductor skills, and class abilities
-   are flavor text with no mechanics, so "Class Skills are silenced" from
-   the reference is a no-op here. The Divine Silence AI fallback
+   are flavor text with no mechanics, so a skill lock does not suppress the
+   unit's class behavior. The Null Signal AI fallback
    (`_skilled_enemy`) picks the highest-ATK enemy carrying a secondary
-   skill; skill-less enemies are never Silenced. Knockback (Caber Toss,
-   Tag-Team) shifts the
+   skill; skill-less enemies are never Silenced. Knockback (Kinetic Throw,
+   Paired Circuit) shifts the
    target one cell away from the attacker along its column, stopping at the
    board edge or an occupied cell, and is reported via `result.moved`.
-   Roguish Snare is a deployment-reactive trigger family: it fires at the
+   Deployment Snare is a deployment-reactive trigger family: it fires at the
    start of the OPPOSING side's turn from that side's living carriers, so
    `resolve_chants` takes a `last_placed_id` argument — the deploying side's
    most recently placed unit, tracked in `main.gd:last_deployed_unit_id`
@@ -342,18 +286,18 @@ starting Reserves.
    chance of permanent Poison (`PERMANENT_POISON_TURNS = 999`, which
    `resolve_start_statuses` never ticks down; `BoardView` and
    `ConductorSkills.effect_summary` special-case it for display).
-   Wrangle is column-relative and cross-lane ("Affects all lanes"): side 0
+   Frontline Relay is column-relative and cross-lane ("Affects all lanes"): side 0
    advances toward higher columns and side 1 toward lower ones, so allies
    on columns further from the enemy edge than the chanter are "behind"
    (gain Protect) and enemies on columns closer to it are "in front"
    (lose ATK via the `effects` debuff mechanism); units in the chanter's
    own column are neither.
-   Summon Forth and Quiet! share the damage-immunity core in
+   Retaliation Screen and Silent Cycle share the damage-immunity core in
    `BattleSimulator.apply_unit_damage(unit, amount, source)`: attack damage
-   (the direct hit in `main.gd:_activate_unit` and its Blast/Pierce riders in
+   (the direct hit in `main.gd:_activate_unit` and its Arc Burst/Rail Volley riders in
    `_apply_special_damage`) passes the attacking unit as `source`, while
    secondary-skill and Conductor damage passes no source and bypasses both
-   immunities. Summon Forth is a Warcry that sets `summon_forth_turns`
+   immunities. Retaliation Screen is a Warcry that sets `summon_forth_turns`
    (ticking on the opposing side's expiry pass, like `doom_turns`, so N
    covers exactly the next N enemy turns); while it holds, attack damage
    against the carrier is 0 and `main.gd` fires
@@ -362,10 +306,10 @@ starting Reserves.
    with ATK-tier ties at the cutoff broken by seeded RNG
    (`_highest_attack_enemies`). The result's `immunity` field names the
    immunity that zeroed the hit so the presentation layer can show IMMUNE
-   and trigger the retaliation. Quiet! is a countdown chant: `_spawn_unit`
+   and trigger the retaliation. Silent Cycle is a countdown chant: `_spawn_unit`
    initializes `quiet_triggers_left` from rank {0}, and the `_append_quiet`
    pre-pass in `resolve_chants` phase `"start"` (same opposing-side pattern
-   as Roguish Snare) fires when the opposing side's turn begins, Silencing
+   as Deployment Snare) fires when the opposing side's turn begins, Silencing
    the {1} highest-ATK living enemies for {2} turns (`silenced_turns`, max
    not stack). A Silenced carrier's trigger does not fire and does not
    spend a charge; its passive (0 attack damage from Silenced attackers,
@@ -376,13 +320,12 @@ starting Reserves.
    `pending_lane_actor_id` + `_lane_target_kinds()` pattern. Add the skill to
    the damage/heal/status audio and animation lists in `_resolve_warcry`.
 4. Rewards: add the unit to `ADDITIONAL_DROPS` in
-   `scripts/story_quest_catalog.gd` (missions from the reference `storyQuests`)
+   `scripts/story_quest_catalog.gd` (mission keys are authored)
    and to `REWARD_UNITS` in `scripts/campaign_store.gd`. Never edit
    `MISSION_ENEMY_SQUADS` for this — those decks are deliberately authored.
-   Live example: the Inspire Lambkin batch (icons 208–215) — Claw Minstrel,
-   Claw Rocker, Flame Warden, and Flame Dissident are reward units with
-   `ADDITIONAL_DROPS` entries; the other four carriers have no story drops
-   and are starting Reserves.
+   Live example: the Resonant Chorus batch (icons 208–215) — Zephyr Mender-208,
+   Zephyr Mender-209, Cinder Mender-213, and Cinder Mender-214 are reward units with
+   `ADDITIONAL_DROPS` entries; the other four carriers are starting Reserves.
 
 ### Updating the tests
 
@@ -406,7 +349,7 @@ Gotchas when running the Windows binary headless:
 
 ## Common tasks
 
-- **Add a unit:** add a `_unit(...)` entry to `UnitCatalog._build()` in `scripts/unit_catalog.gd`, add portrait/full-body art to `assets/units/`, map the art ID in `ICON_ART_IDS`, place its replacement-art source under the assigned `assets/units/full_by_class/<Pool>/<Class>/` folder, update `documentation/Unit_Faction_and_Sprite_Staging.md`, update `smoke_test.gd` counts if intentional, and run the three tests. Keep every promotion lineage in one pool. For reference-sourced units follow the full workflow in "Porting units and skills from the reference" above.
+- **Add a unit:** author a `_unit(...)` entry in `UnitCatalog._build()`, assign its faction in `FACTION_ICON_IDS`, add or extend original class-atlas art, map a stable art ID in `ICON_ART_IDS` when necessary, regenerate art with `tools/build_original_unit_art.gd`, update exact-count smoke assertions, and run all three tests. Keep every promotion lineage in one faction pool.
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
 - **Add a Conductor skill:** edit `scripts/conductor_skills.gd`, add the name to `ConductorSkills.SKILLS`, and update the description.
 - **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`. New missions must be appended at the end of `QUESTS` — never inserted mid-list — because `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`, and the balance test all key off mission index. Add story text to `MISSION_STORIES` and, when the mission has a character scene, add a 1-based entry to `scripts/story_dialogue_catalog.gd:INTERLUDES`. Follow `documentation/Resonance_War_Campaign_Narrative.md` (the narrative plan) and `documentation/Resonance_War_Narrative_Foundation.md` (the world rules).

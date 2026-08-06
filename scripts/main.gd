@@ -42,7 +42,7 @@ const OPERATIONS_CHAPTER_PATHS := {
 		"Fault Lines": [Vector2(0.27, 0.55), Vector2(0.32, 0.42), Vector2(0.39, 0.51), Vector2(0.43, 0.37)],
 		"Heroes and Costs": [Vector2(0.44, 0.33), Vector2(0.49, 0.20), Vector2(0.57, 0.28), Vector2(0.63, 0.20)],
 		"Cores": [Vector2(0.58, 0.71), Vector2(0.65, 0.61), Vector2(0.72, 0.70), Vector2(0.77, 0.57)],
-		"Breaking Point": [Vector2(0.77, 0.54), Vector2(0.84, 0.68), Vector2(0.89, 0.53), Vector2(0.85, 0.35), Vector2(0.93, 0.17)]
+		"Coalition Fracture": [Vector2(0.77, 0.54), Vector2(0.84, 0.68), Vector2(0.89, 0.53), Vector2(0.85, 0.35), Vector2(0.93, 0.17)]
 	},
 	3: {
 		"The Outer City": [Vector2(0.07, 0.84), Vector2(0.14, 0.75), Vector2(0.23, 0.67)],
@@ -82,20 +82,20 @@ const TUTORIAL_POWER := 9
 const TUTORIAL_FINAL_RESOLVE := 10
 const TUTORIAL_FINAL_WAIT := 11
 const TUTORIAL_COMPLETE := 12
-const TUTORIAL_UNIT_NAME := "Trinity Rusher"
-const TUTORIAL_TARGET_NAME := "Trinity Potshot"
-const TUTORIAL_REINFORCEMENT_NAME := "Pub Bouncer"
+const TUTORIAL_UNIT_NAME := "Relay Lancer-003"
+const TUTORIAL_TARGET_NAME := "Relay Battery-004"
+const TUTORIAL_REINFORCEMENT_NAME := "Relay Blade-002"
 const TUTORIAL_DEPLOYMENT_ROW := 1
 const TUTORIAL_REPOSITION_ROW := 0
 const TUTORIAL_TARGET_COL := 4
 const TUTORIAL_ENEMY_HP := 6
 const TUTORIAL_PLAYER_SQUAD := [
-	"Trinity Rusher", "Trinity Potshot", "Chain Initiate", "Apprentice Builder",
-	"LDF Peacekeeper", "Claw Caster", "Factory Markswoman", "Socialite Fencer"
+	"Relay Lancer-003", "Relay Battery-004", "Relay Mender-006", "Relay Bastion-013",
+	"Relay Bastion-007", "Relay Weaver-005", "Relay Battery-010", "Relay Bastion-001"
 ]
 const TUTORIAL_ENEMY_SQUAD := [
-	"Pub Bouncer", "Socialite Fencer", "Factory Markswoman", "Claw Caster",
-	"Trinity Potshot", "LDF Peacekeeper", "Apprentice Builder", "Trinity Rusher"
+	"Relay Blade-002", "Relay Bastion-001", "Relay Battery-010", "Relay Weaver-005",
+	"Relay Battery-004", "Relay Bastion-007", "Relay Bastion-013", "Relay Lancer-003"
 ]
 
 var board: BoardView
@@ -253,7 +253,7 @@ var pending_empower_actor_id := -1
 var pending_envenom_actor_id := -1
 var pending_lane_actor_id := -1
 var next_unit_id := 1
-## Most recently deployed unit id per side; Roguish Snare targets it when the
+## Most recently deployed unit id per side; Deployment Snare targets it when the
 ## deploying side's next turn starts. Reset by _start_new_match.
 var last_deployed_unit_id := {PLAYER: -1, ENEMY: -1}
 var round_number := 1
@@ -2506,25 +2506,25 @@ func _set_tutorial_step(next_step: int) -> void:
 			status_message = "Guided drill ready."
 		TUTORIAL_SELECT_CARD:
 			tutorial_progress_label.text = "LESSON 1 OF 5 · DEPLOYMENT"
-			tutorial_title_label.text = "SELECT TRINITY RUSHER"
+			tutorial_title_label.text = "SELECT RELAY LANCER-003"
 			tutorial_body_label.text = (
 				"Cards spend available Mana when deployed. Select the glowing 2◆ Strider card in your hand."
 			)
-			status_message = "Select Trinity Rusher in your hand."
+			status_message = "Select Relay Lancer-003 in your hand."
 		TUTORIAL_DEPLOY:
 			tutorial_progress_label.text = "LESSON 1 OF 5 · DEPLOYMENT"
 			tutorial_title_label.text = "DEPLOY TO THE CENTER LANE"
 			tutorial_body_label.text = (
 				"Your deployment edge is the cyan column on the left. Deploy in the "
-				+ "highlighted center lane to engage Trinity Potshot."
+				+ "highlighted center lane to engage Relay Battery-004."
 			)
-			status_message = "Deploy Trinity Rusher to the highlighted center lane."
+			status_message = "Deploy Relay Lancer-003 to the highlighted center lane."
 		TUTORIAL_MANA:
 			tutorial_progress_label.text = "LESSON 2 OF 5 · LOCKED MANA"
 			tutorial_title_label.text = "UNITS HOLD THEIR COST"
 			tutorial_body_label.text = (
 				"The 2 Mana you spent is now LOCKED under your Conductor. It remains committed while "
-				+ "Trinity Rusher is on the board and returns when that unit is defeated."
+				+ "Relay Lancer-003 is on the board and returns when that unit is defeated."
 			)
 			tutorial_continue_button.visible = true
 			status_message = "2 Mana is locked by your deployed unit."
@@ -2533,54 +2533,54 @@ func _set_tutorial_step(next_step: int) -> void:
 			tutorial_title_label.text = "ELIMINATE THE BLOCKER"
 			tutorial_body_label.text = (
 				"The cyan preview stops in attack range. Select the glowing → button; "
-				+ "Trinity Rusher's Double Strike will hit the 4-HP enemy twice."
+				+ "Relay Lancer-003's Twin Actuator will hit the 4-HP enemy twice."
 			)
-			status_message = "Resolve to eliminate Trinity Potshot with Double Strike."
+			status_message = "Resolve to eliminate Relay Battery-004 with Twin Actuator."
 		TUTORIAL_WAIT:
 			tutorial_progress_label.text = "LESSON 3 OF 5 · RESOLUTION"
 			tutorial_title_label.text = "WATCH THE BOARD"
 			tutorial_body_label.text = (
-				"Ready units act automatically: Trinity Rusher advances until the enemy "
+				"Ready units act automatically: Relay Lancer-003 advances until the enemy "
 				+ "blocks its path, then attacks twice."
 			)
-			status_message = "Trinity Rusher is advancing on Trinity Potshot..."
+			status_message = "Relay Lancer-003 is advancing on Relay Battery-004..."
 		TUTORIAL_ENEMY_TURN:
 			tutorial_progress_label.text = "LESSON 3 OF 5 · ENEMY TURN"
 			tutorial_title_label.text = "THE ENEMY RESPONDS"
 			tutorial_body_label.text = (
-				"Pub Bouncer will deploy into the same lane and attack for 3 damage. "
-				+ "Trinity Rusher survives, but the center route is blocked again."
+				"Relay Blade-002 will deploy into the same lane and attack for 3 damage. "
+				+ "Relay Lancer-003 survives, but the center route is blocked again."
 			)
-			status_message = "Enemy turn · Pub Bouncer is deploying to the center lane..."
+			status_message = "Enemy turn · Relay Blade-002 is deploying to the center lane..."
 		TUTORIAL_SELECT_UNIT:
 			tutorial_progress_label.text = "LESSON 4 OF 5 · REPOSITIONING"
 			tutorial_title_label.text = "SELECT YOUR STRIDER"
 			tutorial_body_label.text = (
-				"Trinity Rusher survived the counterattack, but Pub Bouncer blocks its "
+				"Relay Lancer-003 survived the counterattack, but Relay Blade-002 blocks its "
 				+ "route. Select your Strider to reveal legal lane shifts."
 			)
-			status_message = "Select Trinity Rusher on the battlefield."
+			status_message = "Select Relay Lancer-003 on the battlefield."
 		TUTORIAL_REPOSITION:
 			tutorial_progress_label.text = "LESSON 4 OF 5 · REPOSITIONING"
 			tutorial_title_label.text = "SHIFT TO THE TOP LANE"
 			tutorial_body_label.text = (
-				"The center lane leads into Pub Bouncer. Shift to the highlighted top-lane "
+				"The center lane leads into Relay Blade-002. Shift to the highlighted top-lane "
 				+ "tile to create an open route to the Conductor."
 			)
-			status_message = "Shift Trinity Rusher to the highlighted top lane."
+			status_message = "Shift Relay Lancer-003 to the highlighted top lane."
 		TUTORIAL_POWER:
 			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
 			tutorial_title_label.text = "USE RALLY"
 			tutorial_body_label.text = (
 				"Conductor powers do not cost Mana, but each can be used only once per battle. "
-				+ "Use RALLY to raise Trinity Rusher to 3 ATK."
+				+ "Use RALLY to raise Relay Lancer-003 to 3 ATK."
 			)
-			status_message = "Use Rally so Double Strike can deal 6 Conductor damage."
+			status_message = "Use Rally so Twin Actuator can deal 6 Conductor damage."
 		TUTORIAL_FINAL_RESOLVE:
 			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
 			tutorial_title_label.text = "STRIKE THE CONDUCTOR"
 			tutorial_body_label.text = (
-				"The top lane is clear. Resolve again: Trinity Rusher will advance to "
+				"The top lane is clear. Resolve again: Relay Lancer-003 will advance to "
 				+ "the enemy edge and its two 3-ATK hits will defeat the 6-HP Conductor."
 			)
 			status_message = "Resolve to strike the exposed enemy Conductor."
@@ -2588,10 +2588,10 @@ func _set_tutorial_step(next_step: int) -> void:
 			tutorial_progress_label.text = "LESSON 5 OF 5 · CONDUCTOR POWER"
 			tutorial_title_label.text = "WATCH THE FINAL ADVANCE"
 			tutorial_body_label.text = (
-				"With no enemy unit blocking this lane, Trinity Rusher can reach and "
+				"With no enemy unit blocking this lane, Relay Lancer-003 can reach and "
 				+ "attack the Conductor directly."
 			)
-			status_message = "Trinity Rusher is advancing on the enemy Conductor..."
+			status_message = "Relay Lancer-003 is advancing on the enemy Conductor..."
 		TUTORIAL_COMPLETE:
 			tutorial_progress_label.text = "GUIDED DRILL COMPLETE"
 			tutorial_title_label.text = "YOU HAVE COMMAND"
@@ -3989,7 +3989,7 @@ func _select_card(index: int) -> void:
 			tutorial_step != TUTORIAL_SELECT_CARD or index < 0
 			or index >= player_hand.size() or player_hand[index].name != TUTORIAL_UNIT_NAME
 		):
-			status_message = "Select the glowing Trinity Rusher card."
+			status_message = "Select the glowing Relay Lancer-003 card."
 			_refresh()
 			return
 	if (
@@ -4017,7 +4017,7 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 	if tutorial_mode:
 		if tutorial_step == TUTORIAL_SELECT_UNIT:
 			if clicked == null or clicked.side != PLAYER or clicked.name != TUTORIAL_UNIT_NAME:
-				status_message = "Select Trinity Rusher on the battlefield."
+				status_message = "Select Relay Lancer-003 on the battlefield."
 				_refresh()
 				return
 		elif tutorial_step == TUTORIAL_REPOSITION:
@@ -4026,7 +4026,7 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 				tutorial_unit == null or selected_board_unit_id != tutorial_unit.id
 				or row != TUTORIAL_REPOSITION_ROW or col != tutorial_unit.col
 			):
-				status_message = "Shift Trinity Rusher to the highlighted top-lane tile."
+				status_message = "Shift Relay Lancer-003 to the highlighted top-lane tile."
 				_refresh()
 				return
 		else:
@@ -4150,7 +4150,7 @@ func _on_deployment_clicked(row: int) -> void:
 		tutorial_step != TUTORIAL_DEPLOY or row != TUTORIAL_DEPLOYMENT_ROW
 		or player_hand[selected_hand_index].name != TUTORIAL_UNIT_NAME
 	):
-		status_message = "Deploy Trinity Rusher to the highlighted center lane."
+		status_message = "Deploy Relay Lancer-003 to the highlighted center lane."
 		_refresh()
 		return
 	if (
@@ -4209,7 +4209,7 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"max_hp": KineticCrucibleScript.scaled_stat(card.hp, unit_level),
 		"move": card.move,
 		"range": card.range,
-		"race": card.get("race", "human"),
+		"chassis_family": card.get("chassis_family", "standard"),
 		"skill": card.get("skill", {}).duplicate(true),
 		"instance_id": card.get("instance_id", ""),
 		"level": card.get("level", 1),
@@ -4239,9 +4239,9 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"fury_stacks": 0,
 		"effects": []
 	}
-	# Quiet! fires its Silence trigger at the start of the next {0} enemy
+	# Silent Cycle fires its Silence trigger at the start of the next {0} enemy
 	# turns after deployment.
-	if spawned.skill.get("name", "") == "Quiet!":
+	if spawned.skill.get("name", "") == "Silent Cycle":
 		spawned.quiet_triggers_left = UnitSkillsScript.rank_value(
 			spawned.skill, unit_level, 0, 1
 		)
@@ -4264,14 +4264,14 @@ func _resolve_warcry(
 	)
 	if (
 		actor.side == PLAYER
-		and skill.get("name", "") in ["Empower", "Protect", "Prune", "New Look", "Medic!", "Woolen Blanket"]
+		and skill.get("name", "") in ["Overclock Link", "Guard Link", "Purge Routine", "Refit Cycle", "Field Recovery", "Thermal Wrap"]
 		and target_id < 0
 		and has_other_ally
 	):
 		pending_empower_actor_id = actor.id
 		return "Choose another allied unit as %s's target." % skill.get("name", "")
 	if (
-		actor.side == PLAYER and skill.get("name", "") in ["Envenom", "Fireball", "Divine Silence"]
+		actor.side == PLAYER and skill.get("name", "") in ["Toxin Injector", "Thermal Burst", "Null Signal"]
 		and target_id < 0 and units.any(func(unit): return unit.side == ENEMY)
 	):
 		pending_envenom_actor_id = actor.id
@@ -4280,7 +4280,7 @@ func _resolve_warcry(
 	var lane_side := _lane_target_side(skill.get("name", ""))
 	if (
 		actor.side == PLAYER
-		and skill.get("name", "") in ["Demoralize", "Meteor Barrage", "Freeze!", "Royal Flush", "Shadowbind"]
+		and skill.get("name", "") in ["Suppression Field", "Meteor Pattern", "Cryo Lock", "Lane Bulwark", "Umbral Clamp"]
 		and target_lane < 0 and units.any(
 			func(unit): return (
 				unit.side == lane_side
@@ -4300,21 +4300,21 @@ func _resolve_warcry(
 				target.id, skill.get("name", "WARCRY").to_upper(), Color("#ffd166")
 			)
 			if skill.get("name", "") in [
-				"Bolt", "Heaven's Wrath", "Plague", "Pin Down", "Sunder Armour",
-				"Big Game Hunter", "Contagion", "Meteor Barrage", "Freeze!", "Fireball"
+				"Arc Lance", "Relay Storm", "Corrosion Bloom", "Anchor Shot", "Breach Charge",
+				"Heavy Target", "Chain Corrosion", "Meteor Pattern", "Cryo Lock", "Thermal Burst"
 			]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
 			elif skill.get("name", "") in [
-				"Fortify", "Empower", "Mend", "Protect", "Warrior's Vigour",
-				"Prune", "New Look", "Medic!", "Guard", "Sun Festival", "Royal Flush",
-				"Summon Forth", "Woolen Blanket"
+				"Brace Protocol", "Overclock Link", "Repair Pulse", "Guard Link", "Combat Surge",
+				"Purge Routine", "Refit Cycle", "Field Recovery", "Cover Matrix", "Solar Crescendo", "Lane Bulwark",
+				"Retaliation Screen", "Thermal Wrap"
 			]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
 			elif skill.get("name", "") in [
-				"Envenom", "Demoralize", "Punish", "Misfortune", "Divine Silence",
-				"Shadowbind"
+				"Toxin Injector", "Suppression Field", "Countermeasure", "Signal Jam", "Null Signal",
+				"Umbral Clamp"
 			]:
 				battle_audio.play("status")
 	if not result.message.is_empty():
@@ -4330,27 +4330,27 @@ func _resolve_warcry(
 ## other allied unit is a valid target.
 func _ally_target_kinds(skill_name: String) -> Array:
 	match skill_name:
-		"Prune":
+		"Purge Routine":
 			return ["Lifebinder", "Channeler"]
-		"New Look":
+		"Refit Cycle":
 			return ["Strider", "Artillerist"]
-		"Medic!":
+		"Field Recovery":
 			return ["Duelist", "Warden"]
 	return []
 
 ## Eligible enemy classes for lane-targeted Warcries. An empty list means any
 ## enemy unit makes its lane a valid target.
 func _lane_target_kinds(skill_name: String) -> Array:
-	if skill_name == "Demoralize":
+	if skill_name == "Suppression Field":
 		return ["Duelist", "Strider", "Warden"]
-	if skill_name == "Freeze!":
+	if skill_name == "Cryo Lock":
 		return ["Strider", "Duelist"]
 	return []
 
 ## Side whose units make a lane a valid target for a lane-targeted Warcry.
-## Royal Flush buffs allies; the other lane Warcries target enemies.
+## Lane Bulwark buffs allies; the other lane Warcries target enemies.
 func _lane_target_side(skill_name: String) -> int:
-	return PLAYER if skill_name == "Royal Flush" else ENEMY
+	return PLAYER if skill_name == "Lane Bulwark" else ENEMY
 
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
@@ -4458,7 +4458,7 @@ func _run_tutorial_enemy_turn() -> void:
 	})
 	enemy_energy -= card.cost
 	enemy_hand.remove_at(hand_index)
-	status_message = "Enemy deployed Pub Bouncer to the center lane."
+	status_message = "Enemy deployed Relay Blade-002 to the center lane."
 	_refresh()
 	battle_audio.play("deploy")
 	await board.animate_unit_move(
@@ -4710,7 +4710,7 @@ func _activate_unit(actor: Dictionary) -> void:
 			if target == null or target.hp <= 0:
 				target = _find_target(actor)
 			if target == null:
-				# Double Strike keeps its unused hit after defeating the last unit
+				# Twin Actuator keeps its unused hit after defeating the last unit
 				# between the Scout and the opposing Conductor.
 				if _commander_in_range(actor):
 					await _attack_commander(actor, strikes - hit)
@@ -4736,7 +4736,7 @@ func _activate_unit(actor: Dictionary) -> void:
 			elif not immunity.is_empty():
 				status_message = "%s's attack on %s is blocked by %s." % [
 					_actor_tag(actor), target.name,
-					"Summon Forth" if immunity == "summon_forth" else "Quiet!"
+					"Retaliation Screen" if immunity == "summon_forth" else "Silent Cycle"
 				]
 			else:
 				status_message = "%s hits %s for %d." % [
@@ -4765,7 +4765,7 @@ func _activate_unit(actor: Dictionary) -> void:
 				await board.animate_hit(secondary_id, _animation_duration(0.14))
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
-				status_message += " Taunting Strike locks %s for 2 turns." % target.name
+				status_message += " Anchor Blow locks %s for 2 turns." % target.name
 				battle_audio.play("status")
 				if not was_protected:
 					board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
@@ -4779,22 +4779,22 @@ func _activate_unit(actor: Dictionary) -> void:
 				var strike_label := "IMMOBILISED"
 				var strike_color := Color("#ffd166")
 				match strike_name:
-					"Poison Strike":
+					"Corrosive Edge":
 						strike_label = "POISONED"
 						strike_color = Color("#8ee36b")
-					"Weakening Strike", "Heartful Brother":
+					"Drain Strike", "Twin Dissonance":
 						strike_label = "-ATK"
 						strike_color = Color("#ff9d66")
-					"Caber Toss", "Slash Speed":
+					"Kinetic Throw", "Vector Flurry":
 						strike_label = "KNOCKBACK"
-					"Cannon Barrage":
+					"Saturation Fire":
 						strike_label = "BARRAGE"
-					"Pincer Drain":
+					"Clamp Drain":
 						strike_label = "DRAIN"
-					"Trisha's Prospect":
+					"Shield Exchange":
 						strike_label = "PROTECT"
 						strike_color = Color("#71e6f5")
-					"Hurtful Brother":
+					"Twin Resonance":
 						strike_label = "+HP"
 						strike_color = Color("#8ee36b")
 				if not was_protected:
@@ -4810,32 +4810,32 @@ func _activate_unit(actor: Dictionary) -> void:
 				status_message += " " + reaction_result.message
 				var reaction_name: String = target.get("skill", {}).get("name", "")
 				var buff_reactions := [
-					"Shield Wall", "Grit", "Ambient Pressure", "Tide Turn", "Yield!", "Tag-Team"
+					"Aegis Array", "Holdfast", "Pressure Sink", "Reversal Current", "Repulse Command", "Paired Circuit"
 				]
 				battle_audio.play("status" if reaction_name in buff_reactions else "hit")
 				var reaction_label := "COUNTER"
 				var reaction_color := Color("#ff8b9f")
 				match reaction_name:
-					"Shield Wall":
+					"Aegis Array":
 						reaction_label = "PROTECT"
 						reaction_color = Color("#71e6f5")
-					"Grit":
+					"Holdfast":
 						reaction_label = "REGEN"
 						reaction_color = Color("#8ee36b")
-					"Ambient Pressure", "Tag-Team":
+					"Pressure Sink", "Paired Circuit":
 						reaction_label = "+ATK"
 						reaction_color = Color("#ffd166")
-					"Tide Turn":
+					"Reversal Current":
 						reaction_label = "TAUNT"
 						reaction_color = Color("#ff9d66")
-					"Yield!":
+					"Repulse Command":
 						reaction_label = "KNOCKBACK"
 						reaction_color = Color("#ffd166")
 				for reaction_id in reaction_result.affected:
 					var reaction_target = _unit_by_id(reaction_id)
 					if reaction_target == null:
 						continue
-					if reaction_name == "Shield Wall" and was_protected:
+					if reaction_name == "Aegis Array" and was_protected:
 						continue
 					board.play_unit_effect(
 						reaction_target.id, reaction_label, reaction_color
@@ -4848,8 +4848,8 @@ func _activate_unit(actor: Dictionary) -> void:
 				await board.animate_unit_move(
 					moved.id, moved.row, moved.from_col, _animation_duration(0.2)
 				)
-			# A Summon Forth-immune defender retaliates once per blocked hit,
-			# animated like Hopping Mad's counter.
+			# A Retaliation Screen-immune defender retaliates once per blocked hit,
+			# animated like Reactor Leap's counter.
 			if immunity == "summon_forth":
 				var summon_result: Dictionary = UnitSkillsScript.resolve_summon_forth(
 					target, actor, units, battle_simulator.rng
@@ -4885,7 +4885,7 @@ func _activate_unit(actor: Dictionary) -> void:
 		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
 			actor.atk += 1
 			actor.fury_stacks = actor.get("fury_stacks", 0) + 1
-			status_message += " Fury grants +1 ATK."
+			status_message += " Momentum Core grants +1 ATK."
 		return
 
 func _attack_commander(actor: Dictionary, strikes: int) -> void:
@@ -4934,7 +4934,7 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 					board.play_unit_effect(other.id, "IMMUNE", Color("#a8b8ff"))
 				else:
 					board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
-		status_message += " Blast deals %d damage to adjacent enemies." % splash_damage
+		status_message += " Arc Burst deals %d damage to adjacent enemies." % splash_damage
 	elif actor.kind == "Artillerist":
 		var direction := 1 if actor.side == PLAYER else -1
 		var pierced: Array = []
@@ -4955,7 +4955,7 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 					board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
 				affected_ids.append(other.id)
 		if not pierced.is_empty():
-			status_message += " Piercing Shot also hits %s." % ", ".join(pierced)
+			status_message += " Rail Volley also hits %s." % ", ".join(pierced)
 	return affected_ids
 
 func _animate_defeated_units() -> void:

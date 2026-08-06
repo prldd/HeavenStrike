@@ -13,11 +13,17 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
+const LegacyContentMigrationScript = preload("res://scripts/legacy_content_migration.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
 	assert(roster.size() == 210, "The playable roster must contain 210 units.")
-	assert(UnitCatalogScript.by_name("Trinity Rusher").kind == "Strider")
+	var original_name_pattern := RegEx.new()
+	assert(original_name_pattern.compile(
+		"^(Relay|Cinder|Brass|Zephyr|Flux|Helio) (Lancer|Blade|Bastion|Battery|Weaver|Mender)-[0-9]{3}$"
+	) == OK)
+	assert(roster.all(func(unit): return original_name_pattern.search(unit.name) != null))
+	assert(UnitCatalogScript.by_name("Relay Lancer-003").kind == "Strider")
 	assert(UnitCatalogScript.display_class("Strider") == "Scout")
 	assert(UnitCatalogScript.display_class("Lifebinder") == "Priest")
 	assert(UnitCatalogScript.class_color("Strider") != UnitCatalogScript.class_color("Duelist"))
@@ -25,12 +31,15 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Missing") == null)
 	var retired_rank_word := "Cap" + "tain"
 	assert(roster.all(func(unit): return retired_rank_word.to_lower() not in unit.name.to_lower()))
-	assert(UnitCatalogScript.canonical_name(retired_rank_word + " Kerryson") == "Conductor Kerryson")
-	assert(UnitCatalogScript.canonical_name("Commune " + retired_rank_word) == "Commune Conductor")
-	assert(UnitCatalogScript.by_name(retired_rank_word + " Basilic").name == "Conductor Basilic")
+	assert(UnitCatalogScript.canonical_name(retired_rank_word + " Kerryson") == "Flux Bastion-053")
+	assert(UnitCatalogScript.canonical_name("Commune " + retired_rank_word) == "Brass Bastion-105")
+	assert(UnitCatalogScript.by_name(retired_rank_word + " Basilic").name == "Flux Battery-141")
 	assert(SquadStoreScript.sanitize(
 		[retired_rank_word + " Kerryson"], roster
-	) == ["Conductor Kerryson"])
+	) == ["Flux Bastion-053"])
+	assert(LegacyContentMigrationScript.UNIT_NAME_HASH_ALIASES.size() == 210)
+	var retired_roster_name := "Tri" + "nity Rusher"
+	assert(UnitCatalogScript.canonical_name(retired_roster_name) == "Relay Lancer-003")
 	var retired_skill_key := retired_rank_word.to_lower() + "_skill"
 	var retired_hp_key := retired_rank_word.to_lower() + "_hp"
 	var old_player_config := ConfigFile.new()
@@ -60,7 +69,7 @@ func _init() -> void:
 	])
 	assert(old_campaign_config.save(CampaignStoreScript.SAVE_PATH) == OK)
 	assert(CampaignStoreScript.load_reward_units(roster) == [
-		"Conductor Kerryson", "Commune Conductor"
+		"Flux Bastion-053", "Brass Bastion-105"
 	])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
 	var old_crucible_config := ConfigFile.new()
@@ -72,10 +81,26 @@ func _init() -> void:
 	}])
 	assert(old_crucible_config.save(KineticCrucibleScript.SAVE_PATH) == OK)
 	var migrated_instances := KineticCrucibleScript.sync_instances(
-		roster, {"Conductor Basilic": 1}
+		roster, {"Flux Battery-141": 1}
 	)
 	assert(migrated_instances.size() == 1)
-	assert(migrated_instances[0].name == "Conductor Basilic")
+	assert(migrated_instances[0].name == "Flux Battery-141")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
+	var old_shared_progress := ConfigFile.new()
+	old_shared_progress.set_value("meta", "instances_migrated", false)
+	old_shared_progress.set_value("collection", "next_id", 1)
+	old_shared_progress.set_value("collection", "instances", [])
+	old_shared_progress.set_value(
+		"progress", retired_roster_name, {"level": 3, "points": 2}
+	)
+	assert(old_shared_progress.save(KineticCrucibleScript.SAVE_PATH) == OK)
+	var shared_progress_instances := KineticCrucibleScript.sync_instances(
+		roster, {"Relay Lancer-003": 1}
+	)
+	assert(shared_progress_instances.size() == 1)
+	assert(shared_progress_instances[0].name == "Relay Lancer-003")
+	assert(shared_progress_instances[0].level == 3)
+	assert(shared_progress_instances[0].points == 2)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	assert(KineticCrucibleScript.LEVEL_COSTS == [3, 6, 12, 24])
 	assert(KineticCrucibleScript.apply_points(
@@ -97,20 +122,20 @@ func _init() -> void:
 		{"name": "A", "kind": "Warden"}, {"name": "A", "kind": "Warden"}
 	) == 5)
 	var instance_copies: Array = [
-		{"id": "copy_a", "name": "Trinity Rusher", "level": 3, "points": 1, "consumed": false},
-		{"id": "copy_b", "name": "Trinity Rusher", "level": 1, "points": 0, "consumed": false},
-		{"id": "copy_c", "name": "Pub Bouncer", "level": 2, "points": 0, "consumed": false}
+		{"id": "copy_a", "name": "Relay Lancer-003", "level": 3, "points": 1, "consumed": false},
+		{"id": "copy_b", "name": "Relay Lancer-003", "level": 1, "points": 0, "consumed": false},
+		{"id": "copy_c", "name": "Relay Blade-002", "level": 2, "points": 0, "consumed": false}
 	]
 	assert(KineticCrucibleScript.active_instances(instance_copies).size() == 3)
-	assert(KineticCrucibleScript.inventory_counts(instance_copies)["Trinity Rusher"] == 2)
+	assert(KineticCrucibleScript.inventory_counts(instance_copies)["Relay Lancer-003"] == 2)
 	var reserve_instances: Array = [
-		{"id": "unit_000004", "name": "Order Pupil", "level": 2, "points": 0, "consumed": false},
-		{"id": "unit_000002", "name": "LDF Bowgunner", "level": 1, "points": 0, "consumed": false},
-		{"id": "unit_000007", "name": "Order Pupil", "level": 5, "points": 0, "consumed": false},
-		{"id": "unit_000001", "name": "Trinity Rusher", "level": 1, "points": 0, "consumed": false},
-		{"id": "unit_000005", "name": "Order Scholar", "level": 1, "points": 0, "consumed": false},
-		{"id": "unit_000006", "name": "Order Pupil", "level": 5, "points": 0, "consumed": false},
-		{"id": "unit_000003", "name": "LDF Bolt Slinger", "level": 1, "points": 0, "consumed": false}
+		{"id": "unit_000004", "name": "Relay Weaver-021", "level": 2, "points": 0, "consumed": false},
+		{"id": "unit_000002", "name": "Brass Battery-083", "level": 1, "points": 0, "consumed": false},
+		{"id": "unit_000007", "name": "Relay Weaver-021", "level": 5, "points": 0, "consumed": false},
+		{"id": "unit_000001", "name": "Relay Lancer-003", "level": 1, "points": 0, "consumed": false},
+		{"id": "unit_000005", "name": "Relay Weaver-022", "level": 1, "points": 0, "consumed": false},
+		{"id": "unit_000006", "name": "Relay Weaver-021", "level": 5, "points": 0, "consumed": false},
+		{"id": "unit_000003", "name": "Brass Battery-084", "level": 1, "points": 0, "consumed": false}
 	]
 	var sorted_reserves := KineticCrucibleScript.sort_reserves(reserve_instances, roster)
 	assert(sorted_reserves.map(func(instance): return instance.id) == [
@@ -213,377 +238,377 @@ func _init() -> void:
 	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 32)
 	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 39)
 	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 42)
-	assert(UnitCatalogScript.by_name("Apprentice Builder").stars == 2)
-	assert(UnitCatalogScript.by_name("Rage Brute").cost == 2)
-	assert(UnitCatalogScript.by_name("LDF Gunner").range == 3)
-	assert(UnitCatalogScript.by_name("Apprentice Builder").skill.name == "Fortify")
-	assert(UnitCatalogScript.by_name("Claw Skirmisher").skill.type == "Strike")
-	assert(UnitCatalogScript.by_name("Order Apostle").skill.name == "Heaven's Wrath")
-	assert(UnitCatalogScript.by_name("Trinity Messenger").skill.name == "Bolt")
-	assert(UnitCatalogScript.by_name("Minerva the Brave").skill.name == "Fortify")
-	assert(UnitCatalogScript.by_name("Naruku the Lookout").skill.name == "Empower")
-	assert(UnitCatalogScript.by_name("Whirling Ragnr").skill.name == "Bolt")
-	assert(UnitCatalogScript.by_name("Master Builder").promotion_of == "Apprentice Builder")
-	assert(UnitCatalogScript.by_name("Claw Ambusher").skill.name == "Pinning Strike")
-	assert(UnitCatalogScript.by_name("Order Missionary").skill.name == "Heaven's Wrath")
-	assert(UnitCatalogScript.by_name("Farsight Naruku").skill.name == "Empower")
-	assert(UnitCatalogScript.by_name("Macewielder Ragnr").stars == 5)
-	assert(UnitCatalogScript.by_name("Talon Scratcher").skill.name == "Pinning Slice")
-	assert(UnitCatalogScript.by_name("Talon Slasher").promotion_of == "Talon Scratcher")
-	assert(UnitCatalogScript.by_name("Innocent Gretel").kind == "Artillerist")
-	assert(UnitCatalogScript.by_name("Witchkiller Gretel").hp == 7)
-	assert(UnitCatalogScript.by_name("Talon Slicer").promotion_of == "Talon Slasher")
-	assert(UnitCatalogScript.by_name("Street Urchin").skill.name == "Misfortune")
-	assert(UnitCatalogScript.by_name("Street Hoodlum").promotion_of == "Street Urchin")
-	assert(UnitCatalogScript.by_name("LDF Crowd Mage").stars == 2)
-	assert(UnitCatalogScript.by_name("LDF Riot Mage").promotion_of == "LDF Crowd Mage")
-	assert(UnitCatalogScript.by_name("Fortune Teller").kind == "Channeler")
-	assert(UnitCatalogScript.by_name("Fortune Diviner").hp == 7)
-	assert(UnitCatalogScript.by_name("Street Nurse").skill.name == "Mend")
-	assert(UnitCatalogScript.by_name("Kerryson the Stoic").atk == 4)
-	assert(UnitCatalogScript.by_name("Blight Doctor").skill.name == "Plague")
-	assert(UnitCatalogScript.by_name("Dart Shooter").skill.name == "Envenom")
-	assert(UnitCatalogScript.by_name("Lizard-Licker Keru").promotion_of == "Frog-Hopper Keru")
-	assert(UnitCatalogScript.by_name("Toxic Shot").stars == 5)
-	assert(UnitCatalogScript.by_name("Garrett Talon").skill.name == "Pin Down")
-	assert(UnitCatalogScript.by_name("Garrett the Raider").promotion_of == "Garrett the Claw")
-	assert(UnitCatalogScript.by_name("Precision Trigger").promotion_of == "Precision Sniper")
-	assert(UnitCatalogScript.by_name("Greyson the Shifty").skill.name == "Demoralize")
-	assert(UnitCatalogScript.by_name("The Telecommunicator").stars == 5)
-	assert(UnitCatalogScript.by_name("Pierrot the Deciever").promotion_of == "Vicious Pierrot")
-	assert(UnitCatalogScript.by_name("LDF Flight Officer").skill.name == "Punish")
-	assert(UnitCatalogScript.by_name("Prison Guv'nor").promotion_of == "Prison Warden")
-	assert(UnitCatalogScript.by_name("The Bard").promotion_of == "Shakespeare")
-	assert(UnitCatalogScript.by_name("Claw Chopper").skill.name == "Poison Strike")
-	assert(UnitCatalogScript.by_name("LDF Mastersword").skill.name == "Sunder Armour")
-	assert(UnitCatalogScript.by_name("Haven Trapper").skill.name == "Big Game Hunter")
-	assert(UnitCatalogScript.by_name("Haven Huntsman").promotion_of == "Haven Trapper")
-	assert(UnitCatalogScript.by_name("Macabre Embalmer").skill.name == "Contagion")
-	assert(UnitCatalogScript.by_name("Macabre Undertaker").promotion_of == "Macabre Embalmer")
-	assert(UnitCatalogScript.by_name("Devout Mage").skill.name == "Meteor Barrage")
-	assert(UnitCatalogScript.by_name("Devout Warlock").promotion_of == "Devout Mage")
-	assert(UnitCatalogScript.by_name("Bartok Loco").skill.name == "Sundering Smash")
-	assert(UnitCatalogScript.by_name("Bartok Loco").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("Derailed Bartok").promotion_of == "Bartok Loco")
-	assert(UnitCatalogScript.by_name("Geartron Prototype").kind == "Warden")
-	assert(UnitCatalogScript.by_name("Geartron-5000").promotion_of == "Geartron Prototype")
-	assert(UnitCatalogScript.by_name("Bethany").skill.name == "Hopping Mad")
-	assert(UnitCatalogScript.by_name("Bethany").skill.type == "Reaction")
-	assert(UnitCatalogScript.by_name("Bunnybot Bethany").promotion_of == "Bethany")
-	assert(UnitCatalogScript.by_name("Final Empress").skill.name == "Moonlight")
-	assert(UnitCatalogScript.by_name("Final Empress").skill.type == "Aura")
-	assert(UnitCatalogScript.by_name("Awoken Final Empress").promotion_of == "Final Empress")
-	assert(UnitCatalogScript.by_name("Opelle").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Glowing Opelle").promotion_of == "Opelle")
-	assert(UnitCatalogScript.by_name("Commune Defender").skill.name == "Shield Wall")
-	assert(UnitCatalogScript.by_name("Commune Defender").skill.type == "Reaction")
-	assert(UnitCatalogScript.by_name("Commune Conductor").promotion_of == "Commune Defender")
-	assert(UnitCatalogScript.by_name("Commune Commander").promotion_of == "Commune Conductor")
-	assert(UnitCatalogScript.by_name("Commune Commander").stars == 5)
-	assert(UnitCatalogScript.by_name("Frost-Kid Kokori").skill.name == "Freeze!")
-	assert(UnitCatalogScript.by_name("Frost-Kid Kokori").skill.type == "Warcry")
-	assert(UnitCatalogScript.by_name("Ice-Prince Kokori").promotion_of == "Frost-Kid Kokori")
-	assert(UnitCatalogScript.by_name("Mata Swiftblade").skill.name == "Weakening Strike")
-	assert(UnitCatalogScript.by_name("Mata Swiftblade").skill.type == "Strike")
-	assert(UnitCatalogScript.by_name("Swiftblade Heroine").promotion_of == "Mata Swiftblade")
+	assert(UnitCatalogScript.by_name("Relay Bastion-013").stars == 2)
+	assert(UnitCatalogScript.by_name("Cinder Blade-015").cost == 2)
+	assert(UnitCatalogScript.by_name("Flux Battery-019").range == 3)
+	assert(UnitCatalogScript.by_name("Relay Bastion-013").skill.name == "Brace Protocol")
+	assert(UnitCatalogScript.by_name("Cinder Lancer-017").skill.type == "Strike")
+	assert(UnitCatalogScript.by_name("Flux Lancer-025").skill.name == "Relay Storm")
+	assert(UnitCatalogScript.by_name("Helio Weaver-026").skill.name == "Arc Lance")
+	assert(UnitCatalogScript.by_name("Flux Mender-027").skill.name == "Brace Protocol")
+	assert(UnitCatalogScript.by_name("Brass Weaver-028").skill.name == "Overclock Link")
+	assert(UnitCatalogScript.by_name("Relay Blade-029").skill.name == "Arc Lance")
+	assert(UnitCatalogScript.by_name("Relay Bastion-014").promotion_of == "Relay Bastion-013")
+	assert(UnitCatalogScript.by_name("Cinder Lancer-018").skill.name == "Locking Strike")
+	assert(UnitCatalogScript.by_name("Flux Lancer-031").skill.name == "Relay Storm")
+	assert(UnitCatalogScript.by_name("Brass Weaver-034").skill.name == "Overclock Link")
+	assert(UnitCatalogScript.by_name("Relay Blade-035").stars == 5)
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-037").skill.name == "Sever Drive")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-038").promotion_of == "Zephyr Lancer-037")
+	assert(UnitCatalogScript.by_name("Zephyr Battery-039").kind == "Artillerist")
+	assert(UnitCatalogScript.by_name("Zephyr Battery-040").hp == 7)
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-041").promotion_of == "Zephyr Lancer-038")
+	assert(UnitCatalogScript.by_name("Brass Lancer-043").skill.name == "Signal Jam")
+	assert(UnitCatalogScript.by_name("Brass Lancer-044").promotion_of == "Brass Lancer-043")
+	assert(UnitCatalogScript.by_name("Flux Weaver-045").stars == 2)
+	assert(UnitCatalogScript.by_name("Flux Weaver-046").promotion_of == "Flux Weaver-045")
+	assert(UnitCatalogScript.by_name("Helio Weaver-055").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Helio Weaver-056").hp == 7)
+	assert(UnitCatalogScript.by_name("Helio Mender-049").skill.name == "Repair Pulse")
+	assert(UnitCatalogScript.by_name("Flux Bastion-054").atk == 4)
+	assert(UnitCatalogScript.by_name("Brass Mender-051").skill.name == "Corrosion Bloom")
+	assert(UnitCatalogScript.by_name("Helio Battery-057").skill.name == "Toxin Injector")
+	assert(UnitCatalogScript.by_name("Zephyr Weaver-060").promotion_of == "Zephyr Weaver-059")
+	assert(UnitCatalogScript.by_name("Helio Battery-062").stars == 5)
+	assert(UnitCatalogScript.by_name("Cinder Battery-063").skill.name == "Anchor Shot")
+	assert(UnitCatalogScript.by_name("Cinder Battery-065").promotion_of == "Cinder Battery-064")
+	assert(UnitCatalogScript.by_name("Cinder Battery-068").promotion_of == "Cinder Battery-067")
+	assert(UnitCatalogScript.by_name("Cinder Lancer-069").skill.name == "Suppression Field")
+	assert(UnitCatalogScript.by_name("Zephyr Mender-072").stars == 5)
+	assert(UnitCatalogScript.by_name("Flux Blade-074").promotion_of == "Flux Blade-073")
+	assert(UnitCatalogScript.by_name("Zephyr Blade-075").skill.name == "Countermeasure")
+	assert(UnitCatalogScript.by_name("Brass Lancer-078").promotion_of == "Brass Lancer-077")
+	assert(UnitCatalogScript.by_name("Flux Lancer-080").promotion_of == "Flux Lancer-079")
+	assert(UnitCatalogScript.by_name("Helio Blade-081").skill.name == "Corrosive Edge")
+	assert(UnitCatalogScript.by_name("Relay Blade-087").skill.name == "Breach Charge")
+	assert(UnitCatalogScript.by_name("Zephyr Battery-088").skill.name == "Heavy Target")
+	assert(UnitCatalogScript.by_name("Zephyr Battery-089").promotion_of == "Zephyr Battery-088")
+	assert(UnitCatalogScript.by_name("Cinder Weaver-090").skill.name == "Chain Corrosion")
+	assert(UnitCatalogScript.by_name("Cinder Weaver-091").promotion_of == "Cinder Weaver-090")
+	assert(UnitCatalogScript.by_name("Flux Weaver-092").skill.name == "Meteor Pattern")
+	assert(UnitCatalogScript.by_name("Flux Weaver-093").promotion_of == "Flux Weaver-092")
+	assert(UnitCatalogScript.by_name("Relay Blade-094").skill.name == "Breaker Impact")
+	assert(UnitCatalogScript.by_name("Relay Blade-094").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Relay Blade-095").promotion_of == "Relay Blade-094")
+	assert(UnitCatalogScript.by_name("Brass Bastion-096").kind == "Warden")
+	assert(UnitCatalogScript.by_name("Brass Bastion-097").promotion_of == "Brass Bastion-096")
+	assert(UnitCatalogScript.by_name("Brass Battery-098").skill.name == "Reactor Leap")
+	assert(UnitCatalogScript.by_name("Brass Battery-098").skill.type == "Reaction")
+	assert(UnitCatalogScript.by_name("Brass Battery-099").promotion_of == "Brass Battery-098")
+	assert(UnitCatalogScript.by_name("Relay Blade-100").skill.name == "Lumen Shell")
+	assert(UnitCatalogScript.by_name("Relay Blade-100").skill.type == "Aura")
+	assert(UnitCatalogScript.by_name("Relay Blade-101").promotion_of == "Relay Blade-100")
+	assert(UnitCatalogScript.by_name("Helio Mender-102").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Helio Mender-103").promotion_of == "Helio Mender-102")
+	assert(UnitCatalogScript.by_name("Brass Bastion-104").skill.name == "Aegis Array")
+	assert(UnitCatalogScript.by_name("Brass Bastion-104").skill.type == "Reaction")
+	assert(UnitCatalogScript.by_name("Brass Bastion-105").promotion_of == "Brass Bastion-104")
+	assert(UnitCatalogScript.by_name("Brass Bastion-106").promotion_of == "Brass Bastion-105")
+	assert(UnitCatalogScript.by_name("Brass Bastion-106").stars == 5)
+	assert(UnitCatalogScript.by_name("Flux Weaver-107").skill.name == "Cryo Lock")
+	assert(UnitCatalogScript.by_name("Flux Weaver-107").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Flux Weaver-108").promotion_of == "Flux Weaver-107")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-109").skill.name == "Drain Strike")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-109").skill.type == "Strike")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-110").promotion_of == "Zephyr Lancer-109")
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Mend"
+		func(unit): return unit.skill != null and unit.skill.name == "Repair Pulse"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Plague"
+		func(unit): return unit.skill != null and unit.skill.name == "Corrosion Bloom"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Envenom"
+		func(unit): return unit.skill != null and unit.skill.name == "Toxin Injector"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Pin Down"
+		func(unit): return unit.skill != null and unit.skill.name == "Anchor Shot"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Demoralize"
+		func(unit): return unit.skill != null and unit.skill.name == "Suppression Field"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Punish"
+		func(unit): return unit.skill != null and unit.skill.name == "Countermeasure"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Poison Strike"
+		func(unit): return unit.skill != null and unit.skill.name == "Corrosive Edge"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Sunder Armour"
+		func(unit): return unit.skill != null and unit.skill.name == "Breach Charge"
 	).size() == 5)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Big Game Hunter"
+		func(unit): return unit.skill != null and unit.skill.name == "Heavy Target"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Contagion"
+		func(unit): return unit.skill != null and unit.skill.name == "Chain Corrosion"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Meteor Barrage"
+		func(unit): return unit.skill != null and unit.skill.name == "Meteor Pattern"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Sundering Smash"
+		func(unit): return unit.skill != null and unit.skill.name == "Breaker Impact"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Hopping Mad"
+		func(unit): return unit.skill != null and unit.skill.name == "Reactor Leap"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Moonlight"
+		func(unit): return unit.skill != null and unit.skill.name == "Lumen Shell"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Shield Wall"
+		func(unit): return unit.skill != null and unit.skill.name == "Aegis Array"
 	).size() == 3)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Freeze!"
+		func(unit): return unit.skill != null and unit.skill.name == "Cryo Lock"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Weakening Strike"
+		func(unit): return unit.skill != null and unit.skill.name == "Drain Strike"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Protect"
+		func(unit): return unit.skill != null and unit.skill.name == "Guard Link"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Fireball"
+		func(unit): return unit.skill != null and unit.skill.name == "Thermal Burst"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Warrior's Vigour"
+		func(unit): return unit.skill != null and unit.skill.name == "Combat Surge"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Grit"
+		func(unit): return unit.skill != null and unit.skill.name == "Holdfast"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Prune"
+		func(unit): return unit.skill != null and unit.skill.name == "Purge Routine"
 	).size() == 3)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Medic!"
+		func(unit): return unit.skill != null and unit.skill.name == "Field Recovery"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "New Look"
+		func(unit): return unit.skill != null and unit.skill.name == "Refit Cycle"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Lifestream"
+		func(unit): return unit.skill != null and unit.skill.name == "Renewal Current"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Caber Toss"
+		func(unit): return unit.skill != null and unit.skill.name == "Kinetic Throw"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Impairing Joust"
+		func(unit): return unit.skill != null and unit.skill.name == "Lockdown Sweep"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Ambient Pressure"
+		func(unit): return unit.skill != null and unit.skill.name == "Pressure Sink"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Cannon Barrage"
+		func(unit): return unit.skill != null and unit.skill.name == "Saturation Fire"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Guard"
+		func(unit): return unit.skill != null and unit.skill.name == "Cover Matrix"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Pincer Drain"
+		func(unit): return unit.skill != null and unit.skill.name == "Clamp Drain"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Slash Speed"
+		func(unit): return unit.skill != null and unit.skill.name == "Vector Flurry"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Mighty Guard"
+		func(unit): return unit.skill != null and unit.skill.name == "Lasting Aegis"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Ocean's Reclaim"
+		func(unit): return unit.skill != null and unit.skill.name == "Tidal Reset"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Tide Turn"
+		func(unit): return unit.skill != null and unit.skill.name == "Reversal Current"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Yield!"
+		func(unit): return unit.skill != null and unit.skill.name == "Repulse Command"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Galatine's Ground"
+		func(unit): return unit.skill != null and unit.skill.name == "Grounding Wave"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Blossom's Bloom"
+		func(unit): return unit.skill != null and unit.skill.name == "Growth Pulse"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Sun Festival"
+		func(unit): return unit.skill != null and unit.skill.name == "Solar Crescendo"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Trisha's Prospect"
+		func(unit): return unit.skill != null and unit.skill.name == "Shield Exchange"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Tag-Team"
+		func(unit): return unit.skill != null and unit.skill.name == "Paired Circuit"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Hurtful Brother"
+		func(unit): return unit.skill != null and unit.skill.name == "Twin Resonance"
 	).size() == 1)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Heartful Brother"
+		func(unit): return unit.skill != null and unit.skill.name == "Twin Dissonance"
 	).size() == 1)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Royal Flush"
+		func(unit): return unit.skill != null and unit.skill.name == "Lane Bulwark"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Hydroblast"
+		func(unit): return unit.skill != null and unit.skill.name == "Pressure Jet"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Roguish Snare"
+		func(unit): return unit.skill != null and unit.skill.name == "Deployment Snare"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Wrangle"
+		func(unit): return unit.skill != null and unit.skill.name == "Frontline Relay"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Cattle of Ra"
+		func(unit): return unit.skill != null and unit.skill.name == "Dragnet"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Divine Silence"
+		func(unit): return unit.skill != null and unit.skill.name == "Null Signal"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Stone Gaze"
+		func(unit): return unit.skill != null and unit.skill.name == "Petrify Loop"
 	).size() == 2)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Summon Forth"
+		func(unit): return unit.skill != null and unit.skill.name == "Retaliation Screen"
 	).size() == 4)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Quiet!"
+		func(unit): return unit.skill != null and unit.skill.name == "Silent Cycle"
 	).size() == 1)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Woolen Blanket"
+		func(unit): return unit.skill != null and unit.skill.name == "Thermal Wrap"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Shadowbind"
+		func(unit): return unit.skill != null and unit.skill.name == "Umbral Clamp"
 	).size() == 6)
 	assert(roster.filter(
-		func(unit): return unit.skill != null and unit.skill.name == "Inspire Lambkin"
+		func(unit): return unit.skill != null and unit.skill.name == "Resonant Chorus"
 	).size() == 8)
-	assert(UnitCatalogScript.by_name("LDF Sergeant").promotion_of == "LDF Constable")
-	assert(UnitCatalogScript.by_name("Pompous Joe Wonder").promotion_of == "Joe Wonder")
-	assert(UnitCatalogScript.by_name("Blazing Dragon").promotion_of == "Raging Dragon")
-	assert(UnitCatalogScript.by_name("Royal Beefeater").promotion_of == "Royal Yeoman")
-	assert(UnitCatalogScript.by_name("Pub Landlord").promotion_of == "Pub Barman")
-	assert(UnitCatalogScript.by_name("The Biologist").promotion_of == "The Ecologist")
-	assert(UnitCatalogScript.by_name("Rescue Paramedic").promotion_of == "Rescue Corps")
-	assert(UnitCatalogScript.by_name("The Earth Whisperer").stars == 6)
-	assert(UnitCatalogScript.by_name("Sakuya Le Bel Shirogane").promotion_of == "Sakuya (Fantail Pigeon)")
-	assert(UnitCatalogScript.by_name("Yuuya Sakazaki").promotion_of == "Yuuya (Fantail Pigeon)")
-	assert(UnitCatalogScript.by_name("José Decomposé").promotion_of == "José")
-	assert(UnitCatalogScript.by_name("Three of Hearts").skill.name == "Royal Flush")
-	assert(UnitCatalogScript.by_name("Three of Hearts").skill.type == "Warcry")
-	assert(UnitCatalogScript.by_name("Ace of Hearts").promotion_of == "Three of Hearts")
-	assert(UnitCatalogScript.by_name("Ace of Hearts").stars == 5)
-	assert(UnitCatalogScript.by_name("Philippa Trot").kind == "Duelist")
-	assert(UnitCatalogScript.by_name("Galloping Philippa").promotion_of == "Philippa Trot")
-	assert(UnitCatalogScript.by_name("The Aquanaut").skill.name == "Hydroblast")
-	assert(UnitCatalogScript.by_name("The Aquanaut").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("The Hydronaut").promotion_of == "The Aquanaut")
-	assert(UnitCatalogScript.by_name("The Hydronaut").stars == 6)
-	assert(UnitCatalogScript.by_name("Thief").skill.name == "Roguish Snare")
-	assert(UnitCatalogScript.by_name("Thief").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("Cutpurse").promotion_of == "Thief")
-	assert(UnitCatalogScript.by_name("Present Verdandi").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Verdandi Norn").promotion_of == "Present Verdandi")
-	assert(UnitCatalogScript.by_name("Frontier Rider").skill.name == "Wrangle")
-	assert(UnitCatalogScript.by_name("Frontier Rider").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("Frontier Rider").kind == "Artillerist")
-	assert(UnitCatalogScript.by_name("Frontier Protector").promotion_of == "Frontier Rider")
-	assert(UnitCatalogScript.by_name("Frontier Protector").stars == 6)
-	assert(UnitCatalogScript.by_name("Lunnain Oracle").skill.name == "Divine Silence")
-	assert(UnitCatalogScript.by_name("Lunnain Oracle").skill.type == "Warcry")
-	assert(UnitCatalogScript.by_name("Lunnain Oracle").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Lunnain Divine").promotion_of == "Lunnain Oracle")
-	assert(UnitCatalogScript.by_name("Lunnain Divine").stars == 6)
-	assert(UnitCatalogScript.by_name("Ra").skill.name == "Cattle of Ra")
-	assert(UnitCatalogScript.by_name("Ra").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("Ra").kind == "Warden")
-	assert(UnitCatalogScript.by_name("Ra, Creator").promotion_of == "Ra")
-	assert(UnitCatalogScript.by_name("Ra, Creator").stars == 6)
-	assert(UnitCatalogScript.by_name("Rydia of Mist").skill.name == "Summon Forth")
-	assert(UnitCatalogScript.by_name("Rydia of Mist").skill.type == "Warcry")
-	assert(UnitCatalogScript.by_name("Rydia of Mist").kind == "Channeler")
-	assert(UnitCatalogScript.by_name("Summoner Rydia").promotion_of == "Rydia of Mist")
-	assert(UnitCatalogScript.by_name("Summoner Rydia").stars == 6)
-	assert(UnitCatalogScript.by_name("Booth").skill.name == "Summon Forth")
-	assert(UnitCatalogScript.by_name("Booth").kind == "Artillerist")
-	assert(UnitCatalogScript.by_name("Booth Kavar").promotion_of == "Booth")
-	assert(UnitCatalogScript.by_name("Booth Kavar").stars == 6)
-	assert(UnitCatalogScript.by_name("Medusa").skill.name == "Stone Gaze")
-	assert(UnitCatalogScript.by_name("Medusa").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("Medusa").kind == "Channeler")
-	assert(UnitCatalogScript.by_name("Gorgon Medusa").promotion_of == "Medusa")
-	assert(UnitCatalogScript.by_name("Gorgon Medusa").stars == 6)
-	assert(UnitCatalogScript.by_name("Nageki (Mourning Dove)").skill == null)
-	assert(UnitCatalogScript.by_name("Nageki (Mourning Dove)").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Nageki Fujishiro").skill.name == "Quiet!")
-	assert(UnitCatalogScript.by_name("Nageki Fujishiro").skill.type == "Chant")
-	assert(UnitCatalogScript.by_name("Nageki Fujishiro").promotion_of == "Nageki (Mourning Dove)")
-	assert(UnitCatalogScript.by_name("Nageki Fujishiro").stars == 6)
-	assert(UnitCatalogScript.by_name("Jimimi the Shepherd").skill.name == "Woolen Blanket")
-	assert(UnitCatalogScript.by_name("Jimimi the Shepherd").skill.type == "Warcry")
-	assert(UnitCatalogScript.by_name("Jimimi the Shepherd").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Jimimi the Shepherd").stars == 4)
-	assert(UnitCatalogScript.by_name("Jimimi the Herder").promotion_of == "Jimimi the Shepherd")
-	assert(UnitCatalogScript.by_name("Jimimi the Herder").stars == 5)
-	assert(UnitCatalogScript.by_name("Hookie").skill.name == "Woolen Blanket")
-	assert(UnitCatalogScript.by_name("Hookie").kind == "Channeler")
-	assert(UnitCatalogScript.by_name("Beautifly Hookie").promotion_of == "Hookie")
-	assert(UnitCatalogScript.by_name("Beautifly Hookie").stars == 5)
-	assert(UnitCatalogScript.by_name("Winter Harding").skill.name == "Woolen Blanket")
-	assert(UnitCatalogScript.by_name("Winter Harding").kind == "Warden")
-	assert(UnitCatalogScript.by_name("Winter Harding").hp == 9)
-	assert(UnitCatalogScript.by_name("Happy Elf Harding").promotion_of == "Winter Harding")
-	assert(UnitCatalogScript.by_name("Happy Elf Harding").stars == 5)
-	assert(UnitCatalogScript.by_name("Edge").skill.name == "Shadowbind")
-	assert(UnitCatalogScript.by_name("Edge").skill.type == "Warcry")
-	assert(UnitCatalogScript.by_name("Edge").kind == "Strider")
-	assert(UnitCatalogScript.by_name("Edge").stars == 5)
-	assert(UnitCatalogScript.by_name("Ninja Edge").promotion_of == "Edge")
-	assert(UnitCatalogScript.by_name("Ninja Edge").stars == 6)
-	assert(UnitCatalogScript.by_name("Explorer Gatling").skill.name == "Shadowbind")
-	assert(UnitCatalogScript.by_name("Explorer Gatling").kind == "Strider")
-	assert(UnitCatalogScript.by_name("Raider Gatling").promotion_of == "Explorer Gatling")
-	assert(UnitCatalogScript.by_name("Raider Gatling").stars == 6)
-	assert(UnitCatalogScript.by_name("Belladonna").skill.name == "Shadowbind")
-	assert(UnitCatalogScript.by_name("Belladonna").kind == "Channeler")
-	assert(UnitCatalogScript.by_name("The Twilight Queen").promotion_of == "Belladonna")
-	assert(UnitCatalogScript.by_name("The Twilight Queen").stars == 6)
-	assert(UnitCatalogScript.by_name("The Twilight Queen").atk == 6)
-	assert(UnitCatalogScript.by_name("Claw Minstrel").skill.name == "Inspire Lambkin")
-	assert(UnitCatalogScript.by_name("Claw Minstrel").skill.type == "Aura")
-	assert(UnitCatalogScript.by_name("Claw Minstrel").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Claw Minstrel").stars == 2)
-	assert(UnitCatalogScript.by_name("Claw Minstrel").cost == 3)
-	assert(UnitCatalogScript.by_name("Claw Minstrel").atk == 2)
-	assert(UnitCatalogScript.by_name("Claw Minstrel").hp == 3)
-	assert(UnitCatalogScript.by_name("Claw Rocker").promotion_of == "Claw Minstrel")
-	assert(UnitCatalogScript.by_name("Claw Rocker").stars == 3)
-	assert(UnitCatalogScript.by_name("Claw Rocker").hp == 5)
-	assert(UnitCatalogScript.by_name("Conjuring Clown").kind == "Channeler")
-	assert(UnitCatalogScript.by_name("Conjuring Clown").skill.name == "Inspire Lambkin")
-	assert(UnitCatalogScript.by_name("Conjuring Clown").atk == 4)
-	assert(UnitCatalogScript.by_name("Conjuring Harlequin").promotion_of == "Conjuring Clown")
-	assert(UnitCatalogScript.by_name("Conjuring Harlequin").stars == 4)
-	assert(UnitCatalogScript.by_name("Conjuring Jester").promotion_of == "Conjuring Harlequin")
-	assert(UnitCatalogScript.by_name("Conjuring Jester").stars == 5)
-	assert(UnitCatalogScript.by_name("Conjuring Jester").atk == 6)
-	assert(UnitCatalogScript.by_name("Flame Warden").kind == "Lifebinder")
-	assert(UnitCatalogScript.by_name("Flame Warden").skill.name == "Inspire Lambkin")
-	assert(UnitCatalogScript.by_name("Flame Warden").cost == 2)
-	assert(UnitCatalogScript.by_name("Flame Dissident").promotion_of == "Flame Warden")
-	assert(UnitCatalogScript.by_name("Flame Dissident").stars == 4)
-	assert(UnitCatalogScript.by_name("Flame Schematic").promotion_of == "Flame Dissident")
-	assert(UnitCatalogScript.by_name("Flame Schematic").stars == 5)
-	assert(UnitCatalogScript.by_name("Flame Schematic").hp == 5)
-	# Races are ported from the reference database; units default to human.
-	assert(UnitCatalogScript.by_name("Trinity Rusher").race == "human")
-	assert(UnitCatalogScript.by_name("Socialite Fencer").race == "human")
-	assert(UnitCatalogScript.by_name("Three of Hearts").race == "ogur")
-	assert(UnitCatalogScript.by_name("Pub Bouncer").race == "ogur")
-	assert(UnitCatalogScript.by_name("Thief").race == "felyne")
-	assert(UnitCatalogScript.by_name("Claw Slicer").race == "felyne")
-	assert(UnitCatalogScript.by_name("Chain Initiate").race == "lambkin")
-	assert(UnitCatalogScript.by_name("Opelle").race == "lambkin")
-	assert(UnitCatalogScript.by_name("Thief").to_dict().race == "felyne")
-	assert(UnitCatalogScript.by_name("Trinity Rusher").to_dict().race == "human")
-	for lambkin_name in [
-		"Claw Minstrel", "Claw Rocker", "Conjuring Clown", "Conjuring Harlequin",
-		"Conjuring Jester", "Flame Warden", "Flame Dissident", "Flame Schematic"
+	assert(UnitCatalogScript.by_name("Brass Bastion-112").promotion_of == "Brass Bastion-111")
+	assert(UnitCatalogScript.by_name("Zephyr Bastion-114").promotion_of == "Zephyr Bastion-113")
+	assert(UnitCatalogScript.by_name("Cinder Weaver-116").promotion_of == "Cinder Weaver-115")
+	assert(UnitCatalogScript.by_name("Brass Blade-118").promotion_of == "Brass Blade-117")
+	assert(UnitCatalogScript.by_name("Cinder Bastion-120").promotion_of == "Cinder Bastion-119")
+	assert(UnitCatalogScript.by_name("Helio Mender-125").promotion_of == "Helio Mender-124")
+	assert(UnitCatalogScript.by_name("Helio Mender-127").promotion_of == "Helio Mender-126")
+	assert(UnitCatalogScript.by_name("Helio Mender-133").stars == 6)
+	assert(UnitCatalogScript.by_name("Zephyr Weaver-169").promotion_of == "Zephyr Weaver-168")
+	assert(UnitCatalogScript.by_name("Cinder Battery-171").promotion_of == "Cinder Battery-170")
+	assert(UnitCatalogScript.by_name("Relay Blade-165").promotion_of == "Relay Blade-164")
+	assert(UnitCatalogScript.by_name("Helio Bastion-172").skill.name == "Lane Bulwark")
+	assert(UnitCatalogScript.by_name("Helio Bastion-172").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Helio Bastion-173").promotion_of == "Helio Bastion-172")
+	assert(UnitCatalogScript.by_name("Helio Bastion-173").stars == 5)
+	assert(UnitCatalogScript.by_name("Relay Blade-174").kind == "Duelist")
+	assert(UnitCatalogScript.by_name("Relay Blade-175").promotion_of == "Relay Blade-174")
+	assert(UnitCatalogScript.by_name("Cinder Battery-176").skill.name == "Pressure Jet")
+	assert(UnitCatalogScript.by_name("Cinder Battery-176").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Cinder Battery-177").promotion_of == "Cinder Battery-176")
+	assert(UnitCatalogScript.by_name("Cinder Battery-177").stars == 6)
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-178").skill.name == "Deployment Snare")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-178").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-179").promotion_of == "Zephyr Lancer-178")
+	assert(UnitCatalogScript.by_name("Brass Mender-180").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Brass Mender-181").promotion_of == "Brass Mender-180")
+	assert(UnitCatalogScript.by_name("Cinder Battery-182").skill.name == "Frontline Relay")
+	assert(UnitCatalogScript.by_name("Cinder Battery-182").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Cinder Battery-182").kind == "Artillerist")
+	assert(UnitCatalogScript.by_name("Cinder Battery-183").promotion_of == "Cinder Battery-182")
+	assert(UnitCatalogScript.by_name("Cinder Battery-183").stars == 6)
+	assert(UnitCatalogScript.by_name("Flux Mender-184").skill.name == "Null Signal")
+	assert(UnitCatalogScript.by_name("Flux Mender-184").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Flux Mender-184").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Flux Mender-185").promotion_of == "Flux Mender-184")
+	assert(UnitCatalogScript.by_name("Flux Mender-185").stars == 6)
+	assert(UnitCatalogScript.by_name("Brass Bastion-186").skill.name == "Dragnet")
+	assert(UnitCatalogScript.by_name("Brass Bastion-186").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Brass Bastion-186").kind == "Warden")
+	assert(UnitCatalogScript.by_name("Brass Bastion-187").promotion_of == "Brass Bastion-186")
+	assert(UnitCatalogScript.by_name("Brass Bastion-187").stars == 6)
+	assert(UnitCatalogScript.by_name("Flux Weaver-188").skill.name == "Retaliation Screen")
+	assert(UnitCatalogScript.by_name("Flux Weaver-188").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Flux Weaver-188").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Flux Weaver-189").promotion_of == "Flux Weaver-188")
+	assert(UnitCatalogScript.by_name("Flux Weaver-189").stars == 6)
+	assert(UnitCatalogScript.by_name("Cinder Battery-190").skill.name == "Retaliation Screen")
+	assert(UnitCatalogScript.by_name("Cinder Battery-190").kind == "Artillerist")
+	assert(UnitCatalogScript.by_name("Cinder Battery-191").promotion_of == "Cinder Battery-190")
+	assert(UnitCatalogScript.by_name("Cinder Battery-191").stars == 6)
+	assert(UnitCatalogScript.by_name("Flux Weaver-192").skill.name == "Petrify Loop")
+	assert(UnitCatalogScript.by_name("Flux Weaver-192").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Flux Weaver-192").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Flux Weaver-193").promotion_of == "Flux Weaver-192")
+	assert(UnitCatalogScript.by_name("Flux Weaver-193").stars == 6)
+	assert(UnitCatalogScript.by_name("Flux Mender-194").skill == null)
+	assert(UnitCatalogScript.by_name("Flux Mender-194").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Flux Mender-195").skill.name == "Silent Cycle")
+	assert(UnitCatalogScript.by_name("Flux Mender-195").skill.type == "Chant")
+	assert(UnitCatalogScript.by_name("Flux Mender-195").promotion_of == "Flux Mender-194")
+	assert(UnitCatalogScript.by_name("Flux Mender-195").stars == 6)
+	assert(UnitCatalogScript.by_name("Brass Mender-196").skill.name == "Thermal Wrap")
+	assert(UnitCatalogScript.by_name("Brass Mender-196").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Brass Mender-196").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Brass Mender-196").stars == 4)
+	assert(UnitCatalogScript.by_name("Brass Mender-197").promotion_of == "Brass Mender-196")
+	assert(UnitCatalogScript.by_name("Brass Mender-197").stars == 5)
+	assert(UnitCatalogScript.by_name("Cinder Weaver-198").skill.name == "Thermal Wrap")
+	assert(UnitCatalogScript.by_name("Cinder Weaver-198").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Cinder Weaver-199").promotion_of == "Cinder Weaver-198")
+	assert(UnitCatalogScript.by_name("Cinder Weaver-199").stars == 5)
+	assert(UnitCatalogScript.by_name("Brass Bastion-200").skill.name == "Thermal Wrap")
+	assert(UnitCatalogScript.by_name("Brass Bastion-200").kind == "Warden")
+	assert(UnitCatalogScript.by_name("Brass Bastion-200").hp == 9)
+	assert(UnitCatalogScript.by_name("Brass Bastion-201").promotion_of == "Brass Bastion-200")
+	assert(UnitCatalogScript.by_name("Brass Bastion-201").stars == 5)
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-202").skill.name == "Umbral Clamp")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-202").skill.type == "Warcry")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-202").kind == "Strider")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-202").stars == 5)
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-203").promotion_of == "Zephyr Lancer-202")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-203").stars == 6)
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-204").skill.name == "Umbral Clamp")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-204").kind == "Strider")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-205").promotion_of == "Zephyr Lancer-204")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-205").stars == 6)
+	assert(UnitCatalogScript.by_name("Flux Weaver-206").skill.name == "Umbral Clamp")
+	assert(UnitCatalogScript.by_name("Flux Weaver-206").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Flux Weaver-207").promotion_of == "Flux Weaver-206")
+	assert(UnitCatalogScript.by_name("Flux Weaver-207").stars == 6)
+	assert(UnitCatalogScript.by_name("Flux Weaver-207").atk == 6)
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").skill.name == "Resonant Chorus")
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").skill.type == "Aura")
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").stars == 2)
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").cost == 3)
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").atk == 2)
+	assert(UnitCatalogScript.by_name("Zephyr Mender-208").hp == 3)
+	assert(UnitCatalogScript.by_name("Zephyr Mender-209").promotion_of == "Zephyr Mender-208")
+	assert(UnitCatalogScript.by_name("Zephyr Mender-209").stars == 3)
+	assert(UnitCatalogScript.by_name("Zephyr Mender-209").hp == 5)
+	assert(UnitCatalogScript.by_name("Flux Weaver-210").kind == "Channeler")
+	assert(UnitCatalogScript.by_name("Flux Weaver-210").skill.name == "Resonant Chorus")
+	assert(UnitCatalogScript.by_name("Flux Weaver-210").atk == 4)
+	assert(UnitCatalogScript.by_name("Flux Weaver-211").promotion_of == "Flux Weaver-210")
+	assert(UnitCatalogScript.by_name("Flux Weaver-211").stars == 4)
+	assert(UnitCatalogScript.by_name("Flux Weaver-212").promotion_of == "Flux Weaver-211")
+	assert(UnitCatalogScript.by_name("Flux Weaver-212").stars == 5)
+	assert(UnitCatalogScript.by_name("Flux Weaver-212").atk == 6)
+	assert(UnitCatalogScript.by_name("Cinder Mender-213").kind == "Lifebinder")
+	assert(UnitCatalogScript.by_name("Cinder Mender-213").skill.name == "Resonant Chorus")
+	assert(UnitCatalogScript.by_name("Cinder Mender-213").cost == 2)
+	assert(UnitCatalogScript.by_name("Cinder Mender-214").promotion_of == "Cinder Mender-213")
+	assert(UnitCatalogScript.by_name("Cinder Mender-214").stars == 4)
+	assert(UnitCatalogScript.by_name("Cinder Mender-215").promotion_of == "Cinder Mender-214")
+	assert(UnitCatalogScript.by_name("Cinder Mender-215").stars == 5)
+	assert(UnitCatalogScript.by_name("Cinder Mender-215").hp == 5)
+	# Chassis families are authored mechanical traits; units default to standard.
+	assert(UnitCatalogScript.by_name("Relay Lancer-003").chassis_family == "standard")
+	assert(UnitCatalogScript.by_name("Relay Bastion-001").chassis_family == "standard")
+	assert(UnitCatalogScript.by_name("Helio Bastion-172").chassis_family == "bulwark")
+	assert(UnitCatalogScript.by_name("Relay Blade-002").chassis_family == "bulwark")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-178").chassis_family == "swift")
+	assert(UnitCatalogScript.by_name("Relay Lancer-009").chassis_family == "swift")
+	assert(UnitCatalogScript.by_name("Relay Mender-006").chassis_family == "resonant")
+	assert(UnitCatalogScript.by_name("Helio Mender-102").chassis_family == "resonant")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-178").to_dict().chassis_family == "swift")
+	assert(UnitCatalogScript.by_name("Relay Lancer-003").to_dict().chassis_family == "standard")
+	for resonant_name in [
+		"Zephyr Mender-208", "Zephyr Mender-209", "Flux Weaver-210", "Flux Weaver-211",
+		"Flux Weaver-212", "Cinder Mender-213", "Cinder Mender-214", "Cinder Mender-215"
 	]:
-		assert(UnitCatalogScript.by_name(lambkin_name).race == "lambkin")
+		assert(UnitCatalogScript.by_name(resonant_name).chassis_family == "resonant")
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
 	assert(UnitCatalogScript.art_id(27) == 83)
@@ -675,23 +700,53 @@ func _init() -> void:
 		assert(FileAccess.get_file_as_string(full_art_import_path).contains(
 			"mipmaps/generate=true"
 		))
+	var full_files := Array(DirAccess.get_files_at("res://assets/units/full")).filter(
+		func(file_name): return file_name.ends_with(".png")
+	)
+	var portrait_files := Array(DirAccess.get_files_at("res://assets/units/portraits")).filter(
+		func(file_name): return file_name.ends_with(".png")
+	)
+	var provenance_files: Array = []
+	for faction in ["Coal", "Steam", "Wind", "Fusion", "Solar", "Universal"]:
+		for unit_class in ["Warden", "Duelist", "Strider", "Artillerist", "Channeler", "Lifebinder"]:
+			provenance_files.append_array(Array(DirAccess.get_files_at(
+				"res://assets/units/original_sources/faction_chassis/%s/%s" % [
+					faction, unit_class
+				]
+			)).filter(func(file_name): return file_name.ends_with(".png")))
+	assert(full_files.size() == 210)
+	assert(portrait_files.size() == 210)
+	assert(provenance_files.size() == 210)
+	full_files.sort()
+	portrait_files.sort()
+	provenance_files.sort()
+	assert(full_files == portrait_files)
+	assert(full_files == provenance_files)
+	assert(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(
+		"res://assets/units/portrait_sheets"
+	)))
+	assert(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(
+		"res://assets/units/full_by_class"
+	)))
+	assert(not FileAccess.file_exists("res://assets/units/portrait_manifest.tsv"))
+	assert(not FileAccess.file_exists("res://tools/generate_unit_portraits.gd"))
 	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 103)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
 	assert(default_squad.size() == 8)
-	var repaired_squad: Array = SquadStoreScript.sanitize(["Trinity Rusher", "Trinity Rusher", "Trinity Rusher", "Missing"], roster)
+	var repaired_squad: Array = SquadStoreScript.sanitize(["Relay Lancer-003", "Relay Lancer-003", "Relay Lancer-003", "Missing"], roster)
 	assert(repaired_squad.size() == 2)
-	assert(repaired_squad.count("Trinity Rusher") == 2)
+	assert(repaired_squad.count("Relay Lancer-003") == 2)
 	assert(SquadStoreScript.build_deck(repaired_squad, roster).size() == 2)
 	var ordered_deck: Array = SquadStoreScript.build_deck(
-		["Trinity Rusher", "Pub Bouncer", "Socialite Fencer", "Trinity Potshot"],
+		["Relay Lancer-003", "Relay Blade-002", "Relay Bastion-001", "Relay Battery-004"],
 		roster
 	)
 	var deck_rng := RandomNumberGenerator.new()
 	deck_rng.seed = 42
 	var shuffled_deck: Array = SquadStoreScript.shuffle_for_battle(ordered_deck, deck_rng)
-	assert(shuffled_deck[0].name == "Trinity Rusher")
+	assert(shuffled_deck[0].name == "Relay Lancer-003")
 	assert(shuffled_deck.map(func(card): return card.name).duplicate().size() == ordered_deck.size())
 	var ordered_names: Array = ordered_deck.map(func(card): return card.name)
 	var shuffled_names: Array = shuffled_deck.map(func(card): return card.name)
@@ -700,25 +755,25 @@ func _init() -> void:
 	assert(shuffled_names == ordered_names)
 	assert(SquadStoreScript.sanitize([], roster).size() == 8)
 	var inventory := CampaignStoreScript.inventory_counts(
-		roster, ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"]
+		roster, ["Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006"]
 	)
-	assert(inventory["Trinity Rusher"] == 3)
-	assert(inventory["Chain Initiate"] == 1)
-	assert(inventory["LDF Medic"] == 0)
+	assert(inventory["Relay Lancer-003"] == 3)
+	assert(inventory["Relay Mender-006"] == 1)
+	assert(inventory["Relay Mender-012"] == 0)
 	var owned_squad: Array = SquadStoreScript.sanitize_owned(
-		["Trinity Rusher", "Trinity Rusher", "Trinity Rusher", "Chain Initiate", "LDF Medic"],
+		["Relay Lancer-003", "Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006", "Relay Mender-012"],
 		roster,
 		inventory
 	)
-	assert(owned_squad == ["Trinity Rusher", "Trinity Rusher", "Chain Initiate"])
+	assert(owned_squad == ["Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006"])
 	assert(ConductorSkillsScript.SKILLS.size() == 8)
 	assert(CampaignStoreScript.SAVE_VERSION == 1)
 	assert(SquadStoreScript.SAVE_VERSION == 3)
 
 	assert(CampaignStoreScript.MISSIONS.size() == 77)
-	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - Training Day")
-	assert(CampaignStoreScript.MISSIONS[61].title == "Act 2 Mission 62 - The Showdown")
-	assert(CampaignStoreScript.MISSIONS[76].title == "Act 3 Mission 77 - Accord")
+	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - First Synchrony")
+	assert(CampaignStoreScript.MISSIONS[61].title == "Act 2 Mission 62 - Caelis Approach")
+	assert(CampaignStoreScript.MISSIONS[76].title == "Act 3 Mission 77 - The Caelis Accord")
 	assert(CampaignStoreScript.MISSIONS[0].enemy_hp == 8)
 	assert(CampaignStoreScript.MISSIONS[61].enemy_hp == 20)
 	assert(CampaignStoreScript.MISSIONS[76].enemy_hp == 20)
@@ -734,16 +789,16 @@ func _init() -> void:
 			assert(encounter.opponent_name == mission.opponent_name)
 			assert(encounter.opponent_affiliation == mission.opponent_affiliation)
 	assert(CampaignStoreScript.MISSIONS[8].opponent_affiliation == "Scavenger Clans")
-	assert(CampaignStoreScript.MISSIONS[28].opponent_name == "Minerva")
+	assert(CampaignStoreScript.MISSIONS[28].opponent_name == "Asha Vale")
 	assert(CampaignStoreScript.MISSIONS[76].opponent_affiliation == "Accord Rejectionists")
 	assert(StoryDialogueCatalogScript.INTERLUDES.size() == 46)
-	assert(StoryDialogueCatalogScript.PORTRAITS.size() == 9)
+	assert(StoryDialogueCatalogScript.PORTRAITS.size() == 10)
 	for portrait_path in StoryDialogueCatalogScript.PORTRAITS.values():
 		var portrait_texture: Texture2D = load(portrait_path)
 		assert(portrait_texture != null)
 		assert(portrait_texture.get_image().has_mipmaps())
 	assert(StoryDialogueCatalogScript.CHARACTERS.Conductor.portrait.ends_with("Conductor.png"))
-	assert(StoryDialogueCatalogScript.CHARACTERS["The Rook"].portrait_kind == "android")
+	assert(StoryDialogueCatalogScript.CHARACTERS["Brass Bastion-136"].portrait_kind == "android")
 	assert(StoryDialogueCatalogScript.CHARACTERS["First Conductor"].portrait_kind == "android")
 	for character in StoryDialogueCatalogScript.CHARACTERS.values():
 		assert(character.get("portrait_kind", "") in ["human", "android"])
@@ -770,13 +825,13 @@ func _init() -> void:
 			assert(not dialogue_line.get("speaker", "").is_empty())
 			assert(not dialogue_line.get("text", "").is_empty())
 			assert(StoryDialogueCatalogScript.CHARACTERS.has(dialogue_line.speaker))
-	assert("The Rook" in CampaignStoreScript.MISSIONS[62].reward_pool)
-	assert("Sterling Knight" in CampaignStoreScript.MISSIONS[62].reward_pool)
-	assert("Shining Inti" in CampaignStoreScript.MISSIONS[76].reward_pool)
+	assert("Brass Bastion-136" in CampaignStoreScript.MISSIONS[62].reward_pool)
+	assert("Brass Bastion-137" in CampaignStoreScript.MISSIONS[62].reward_pool)
+	assert("Helio Mender-161" in CampaignStoreScript.MISSIONS[76].reward_pool)
 	assert(CampaignStoreScript.CAMPAIGN_EPILOGUE.contains("THE RESONANCE WAR"))
 	assert(CampaignStoreScript.encounter_count(3) == 1)
 	assert(CampaignStoreScript.encounter_count(31) == 3)
-	assert(CampaignStoreScript.encounter(31, 2).title == "Peace and Quiet")
+	assert(CampaignStoreScript.encounter(31, 2).title == "Summit Breach")
 	assert(CampaignStoreScript.encounter(999, 0).is_empty())
 	var default_mission_rules: Dictionary = MissionRulesScript.default_rules()
 	assert(default_mission_rules.objective.type == "defeat_conductor")
@@ -839,128 +894,128 @@ func _init() -> void:
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
 	assert(starting_unlocks.size() == 85)
-	assert("Chain Initiate" not in starting_unlocks)
-	assert("Claw Minstrel" not in starting_unlocks)
-	assert("Conjuring Clown" in starting_unlocks)
-	assert("Conjuring Jester" in starting_unlocks)
-	assert("Flame Schematic" in starting_unlocks)
+	assert("Relay Mender-006" not in starting_unlocks)
+	assert("Zephyr Mender-208" not in starting_unlocks)
+	assert("Flux Weaver-210" in starting_unlocks)
+	assert("Flux Weaver-212" in starting_unlocks)
+	assert("Cinder Mender-215" in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
-		roster, ["Chain Initiate", "LDF Medic"]
+		roster, ["Relay Mender-006", "Relay Mender-012"]
 	)
 	assert(earned_unlocks.size() == 87)
-	assert("Claw Minstrel" in CampaignStoreScript.REWARD_UNITS)
-	assert("Claw Rocker" in CampaignStoreScript.REWARD_UNITS)
-	assert("Flame Warden" in CampaignStoreScript.REWARD_UNITS)
-	assert("Flame Dissident" in CampaignStoreScript.REWARD_UNITS)
-	assert("Conjuring Clown" not in CampaignStoreScript.REWARD_UNITS)
-	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Trinity Rusher")
-	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Trinity Potshot")
-	assert(CampaignStoreScript.reward_summary(2) == "Random: Street Nurse, Rage Brute")
-	assert(CampaignStoreScript.reward_summary(3) == "Random: Talon Scratcher")
-	assert(CampaignStoreScript.reward_summary(7) == "Random: Claw Caster, Claw Slicer, Rage Brute, Claw Skirmisher, Claw Ambusher, Claw Minstrel, Claw Rocker")
+	assert("Zephyr Mender-208" in CampaignStoreScript.REWARD_UNITS)
+	assert("Zephyr Mender-209" in CampaignStoreScript.REWARD_UNITS)
+	assert("Cinder Mender-213" in CampaignStoreScript.REWARD_UNITS)
+	assert("Cinder Mender-214" in CampaignStoreScript.REWARD_UNITS)
+	assert("Flux Weaver-210" not in CampaignStoreScript.REWARD_UNITS)
+	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Relay Lancer-003")
+	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Relay Battery-004")
+	assert(CampaignStoreScript.reward_summary(2) == "Random: Helio Mender-049, Cinder Blade-015")
+	assert(CampaignStoreScript.reward_summary(3) == "Random: Zephyr Lancer-037")
+	assert(CampaignStoreScript.reward_summary(7) == "Random: Relay Weaver-005, Relay Lancer-009, Cinder Blade-015, Cinder Lancer-017, Cinder Lancer-018, Zephyr Mender-208, Zephyr Mender-209")
 	var training_rewards: Array = CampaignStoreScript.reward_options(0, roster)
 	assert(training_rewards.size() == 2)
 	assert(is_equal_approx(training_rewards[0].chance, 0.5))
 	assert(is_equal_approx(training_rewards[1].chance, 0.5))
 	assert(CampaignStoreScript.reward_options(3, roster).size() == 1)
 	assert(is_equal_approx(CampaignStoreScript.reward_options(3, roster)[0].chance, 1.0))
-	assert(CampaignStoreScript.reward_summary(6) == "Random: Talon Scratcher, LDF Crowd Mage")
-	assert("Master Builder" in CampaignStoreScript.MISSIONS[10].reward_pool)
-	assert("Claw Ambusher" in CampaignStoreScript.MISSIONS[7].reward_pool)
-	assert("Order Missionary" in CampaignStoreScript.MISSIONS[27].reward_pool)
-	assert("Street Nurse" in CampaignStoreScript.MISSIONS[2].reward_pool)
-	assert("Street Matron" in CampaignStoreScript.MISSIONS[9].reward_pool)
-	assert("Conductor Kerryson" in CampaignStoreScript.MISSIONS[17].reward_pool)
-	assert("Kerryson the Stoic" in CampaignStoreScript.MISSIONS[17].reward_pool)
-	assert("Garrett Talon" in CampaignStoreScript.MISSIONS[8].reward_pool)
-	assert("Garrett the Claw" in CampaignStoreScript.MISSIONS[49].reward_pool)
-	assert("Precision Shooter" in CampaignStoreScript.MISSIONS[52].reward_pool)
-	assert("Precision Sniper" in CampaignStoreScript.MISSIONS[60].reward_pool)
-	assert("Greyson the Shifty" in CampaignStoreScript.MISSIONS[13].reward_pool)
-	assert("LDF Flight Officer" in CampaignStoreScript.MISSIONS[18].reward_pool)
-	assert("LDF Flight Commander" in CampaignStoreScript.MISSIONS[14].reward_pool)
-	assert("Haven Trapper" in CampaignStoreScript.MISSIONS[9].reward_pool)
-	assert("Haven Huntsman" in CampaignStoreScript.MISSIONS[22].reward_pool)
-	assert("Macabre Embalmer" in CampaignStoreScript.MISSIONS[26].reward_pool)
-	assert("Macabre Undertaker" in CampaignStoreScript.MISSIONS[28].reward_pool)
-	assert("Devout Mage" in CampaignStoreScript.MISSIONS[20].reward_pool)
-	assert("Devout Warlock" in CampaignStoreScript.MISSIONS[55].reward_pool)
-	assert("Commune Defender" in CampaignStoreScript.MISSIONS[37].reward_pool)
-	assert("Commune Conductor" in CampaignStoreScript.MISSIONS[37].reward_pool)
-	assert("LDF Constable" in CampaignStoreScript.MISSIONS[9].reward_pool)
-	assert("LDF Constable" in CampaignStoreScript.MISSIONS[61].reward_pool)
-	assert("LDF Sergeant" in CampaignStoreScript.MISSIONS[18].reward_pool)
-	assert("Joe Wonder" in CampaignStoreScript.MISSIONS[19].reward_pool)
-	assert("Pompous Joe Wonder" in CampaignStoreScript.MISSIONS[43].reward_pool)
-	assert("Raging Dragon" in CampaignStoreScript.MISSIONS[35].reward_pool)
-	assert("Blazing Dragon" in CampaignStoreScript.MISSIONS[35].reward_pool)
-	assert("Royal Yeoman" in CampaignStoreScript.MISSIONS[15].reward_pool)
-	assert("Royal Beefeater" in CampaignStoreScript.MISSIONS[32].reward_pool)
-	assert("Rescue Corps" in CampaignStoreScript.MISSIONS[41].reward_pool)
-	assert("Rescue Paramedic" in CampaignStoreScript.MISSIONS[41].reward_pool)
-	assert("Claw Minstrel" in CampaignStoreScript.MISSIONS[7].reward_pool)
-	assert("Claw Minstrel" in CampaignStoreScript.MISSIONS[44].reward_pool)
-	assert("Claw Rocker" in CampaignStoreScript.MISSIONS[47].reward_pool)
-	assert("Flame Warden" in CampaignStoreScript.MISSIONS[10].reward_pool)
-	assert("Flame Warden" in CampaignStoreScript.MISSIONS[46].reward_pool)
-	assert("Flame Dissident" in CampaignStoreScript.MISSIONS[46].reward_pool)
+	assert(CampaignStoreScript.reward_summary(6) == "Random: Zephyr Lancer-037, Flux Weaver-045")
+	assert("Relay Bastion-014" in CampaignStoreScript.MISSIONS[10].reward_pool)
+	assert("Cinder Lancer-018" in CampaignStoreScript.MISSIONS[7].reward_pool)
+	assert("Flux Lancer-031" in CampaignStoreScript.MISSIONS[27].reward_pool)
+	assert("Helio Mender-049" in CampaignStoreScript.MISSIONS[2].reward_pool)
+	assert("Helio Mender-050" in CampaignStoreScript.MISSIONS[9].reward_pool)
+	assert("Flux Bastion-053" in CampaignStoreScript.MISSIONS[17].reward_pool)
+	assert("Flux Bastion-054" in CampaignStoreScript.MISSIONS[17].reward_pool)
+	assert("Cinder Battery-063" in CampaignStoreScript.MISSIONS[8].reward_pool)
+	assert("Cinder Battery-064" in CampaignStoreScript.MISSIONS[49].reward_pool)
+	assert("Cinder Battery-066" in CampaignStoreScript.MISSIONS[52].reward_pool)
+	assert("Cinder Battery-067" in CampaignStoreScript.MISSIONS[60].reward_pool)
+	assert("Cinder Lancer-069" in CampaignStoreScript.MISSIONS[13].reward_pool)
+	assert("Zephyr Blade-075" in CampaignStoreScript.MISSIONS[18].reward_pool)
+	assert("Zephyr Blade-076" in CampaignStoreScript.MISSIONS[14].reward_pool)
+	assert("Zephyr Battery-088" in CampaignStoreScript.MISSIONS[9].reward_pool)
+	assert("Zephyr Battery-089" in CampaignStoreScript.MISSIONS[22].reward_pool)
+	assert("Cinder Weaver-090" in CampaignStoreScript.MISSIONS[26].reward_pool)
+	assert("Cinder Weaver-091" in CampaignStoreScript.MISSIONS[28].reward_pool)
+	assert("Flux Weaver-092" in CampaignStoreScript.MISSIONS[20].reward_pool)
+	assert("Flux Weaver-093" in CampaignStoreScript.MISSIONS[55].reward_pool)
+	assert("Brass Bastion-104" in CampaignStoreScript.MISSIONS[37].reward_pool)
+	assert("Brass Bastion-105" in CampaignStoreScript.MISSIONS[37].reward_pool)
+	assert("Brass Bastion-111" in CampaignStoreScript.MISSIONS[9].reward_pool)
+	assert("Brass Bastion-111" in CampaignStoreScript.MISSIONS[61].reward_pool)
+	assert("Brass Bastion-112" in CampaignStoreScript.MISSIONS[18].reward_pool)
+	assert("Zephyr Bastion-113" in CampaignStoreScript.MISSIONS[19].reward_pool)
+	assert("Zephyr Bastion-114" in CampaignStoreScript.MISSIONS[43].reward_pool)
+	assert("Cinder Weaver-115" in CampaignStoreScript.MISSIONS[35].reward_pool)
+	assert("Cinder Weaver-116" in CampaignStoreScript.MISSIONS[35].reward_pool)
+	assert("Brass Blade-117" in CampaignStoreScript.MISSIONS[15].reward_pool)
+	assert("Brass Blade-118" in CampaignStoreScript.MISSIONS[32].reward_pool)
+	assert("Helio Mender-126" in CampaignStoreScript.MISSIONS[41].reward_pool)
+	assert("Helio Mender-127" in CampaignStoreScript.MISSIONS[41].reward_pool)
+	assert("Zephyr Mender-208" in CampaignStoreScript.MISSIONS[7].reward_pool)
+	assert("Zephyr Mender-208" in CampaignStoreScript.MISSIONS[44].reward_pool)
+	assert("Zephyr Mender-209" in CampaignStoreScript.MISSIONS[47].reward_pool)
+	assert("Cinder Mender-213" in CampaignStoreScript.MISSIONS[10].reward_pool)
+	assert("Cinder Mender-213" in CampaignStoreScript.MISSIONS[46].reward_pool)
+	assert("Cinder Mender-214" in CampaignStoreScript.MISSIONS[46].reward_pool)
 	# Campaign reward rolls can grant the four new reward units.
-	assert(CampaignStoreScript.roll_reward(7, roster, 0.85) == "Claw Minstrel")
-	assert(CampaignStoreScript.roll_reward(7, roster, 0.99) == "Claw Rocker")
-	assert(CampaignStoreScript.roll_reward(46, roster, 0.95) == "Flame Warden")
-	assert(CampaignStoreScript.roll_reward(46, roster, 0.99) == "Flame Dissident")
-	assert("Rescue Corps" in CampaignStoreScript.MISSIONS[53].reward_pool)
-	assert("Rescue Paramedic" in CampaignStoreScript.MISSIONS[53].reward_pool)
+	assert(CampaignStoreScript.roll_reward(7, roster, 0.85) == "Zephyr Mender-208")
+	assert(CampaignStoreScript.roll_reward(7, roster, 0.99) == "Zephyr Mender-209")
+	assert(CampaignStoreScript.roll_reward(46, roster, 0.95) == "Cinder Mender-213")
+	assert(CampaignStoreScript.roll_reward(46, roster, 0.99) == "Cinder Mender-214")
+	assert("Helio Mender-126" in CampaignStoreScript.MISSIONS[53].reward_pool)
+	assert("Helio Mender-127" in CampaignStoreScript.MISSIONS[53].reward_pool)
 	for mission in CampaignStoreScript.MISSIONS:
-		assert("Farsight Naruku" not in mission.reward_pool)
-		assert("Macewielder Ragnr" not in mission.reward_pool)
-		assert("Innocent Gretel" not in mission.reward_pool)
-		assert("Witchkiller Gretel" not in mission.reward_pool)
-		assert("Talon Slicer" not in mission.reward_pool)
-		assert("Fortune Teller" not in mission.reward_pool)
-		assert("Fortune Diviner" not in mission.reward_pool)
-		assert("Blight Doctor" not in mission.reward_pool)
-		assert("Blight Physician" not in mission.reward_pool)
-		assert("Dart Shooter" not in mission.reward_pool)
-		assert("Dart Sharpshooter" not in mission.reward_pool)
-		assert("Frog-Hopper Keru" not in mission.reward_pool)
-		assert("Lizard-Licker Keru" not in mission.reward_pool)
-		assert("Blightshot" not in mission.reward_pool)
-		assert("Toxic Shot" not in mission.reward_pool)
-		assert("Garrett the Raider" not in mission.reward_pool)
-		assert("Precision Trigger" not in mission.reward_pool)
-		assert("Greyson the Shrewd" not in mission.reward_pool)
-		assert("Communicator Ripley" not in mission.reward_pool)
-		assert("The Telecommunicator" not in mission.reward_pool)
-		assert("Vicious Pierrot" not in mission.reward_pool)
-		assert("Pierrot the Deciever" not in mission.reward_pool)
-		assert("Prison Warden" not in mission.reward_pool)
-		assert("Prison Guv'nor" not in mission.reward_pool)
-		assert("Shakespeare" not in mission.reward_pool)
-		assert("The Bard" not in mission.reward_pool)
-		assert("Bartok Loco" not in mission.reward_pool)
-		assert("Derailed Bartok" not in mission.reward_pool)
-		assert("Geartron Prototype" not in mission.reward_pool)
-		assert("Geartron-5000" not in mission.reward_pool)
-		assert("Bethany" not in mission.reward_pool)
-		assert("Bunnybot Bethany" not in mission.reward_pool)
-		assert("Final Empress" not in mission.reward_pool)
-		assert("Awoken Final Empress" not in mission.reward_pool)
-		assert("Opelle" not in mission.reward_pool)
-		assert("Glowing Opelle" not in mission.reward_pool)
-		assert("Commune Commander" not in mission.reward_pool)
-		assert("Frost-Kid Kokori" not in mission.reward_pool)
-		assert("Ice-Prince Kokori" not in mission.reward_pool)
-		assert("Mata Swiftblade" not in mission.reward_pool)
-		assert("Swiftblade Heroine" not in mission.reward_pool)
-		assert("Rydia of Mist" not in mission.reward_pool)
-		assert("Summoner Rydia" not in mission.reward_pool)
-		assert("Booth" not in mission.reward_pool)
-		assert("Booth Kavar" not in mission.reward_pool)
-		assert("Medusa" not in mission.reward_pool)
-		assert("Gorgon Medusa" not in mission.reward_pool)
-		assert("Nageki (Mourning Dove)" not in mission.reward_pool)
-		assert("Nageki Fujishiro" not in mission.reward_pool)
+		assert("Brass Weaver-034" not in mission.reward_pool)
+		assert("Relay Blade-035" not in mission.reward_pool)
+		assert("Zephyr Battery-039" not in mission.reward_pool)
+		assert("Zephyr Battery-040" not in mission.reward_pool)
+		assert("Zephyr Lancer-041" not in mission.reward_pool)
+		assert("Helio Weaver-055" not in mission.reward_pool)
+		assert("Helio Weaver-056" not in mission.reward_pool)
+		assert("Brass Mender-051" not in mission.reward_pool)
+		assert("Brass Mender-052" not in mission.reward_pool)
+		assert("Helio Battery-057" not in mission.reward_pool)
+		assert("Helio Battery-058" not in mission.reward_pool)
+		assert("Zephyr Weaver-059" not in mission.reward_pool)
+		assert("Zephyr Weaver-060" not in mission.reward_pool)
+		assert("Helio Battery-061" not in mission.reward_pool)
+		assert("Helio Battery-062" not in mission.reward_pool)
+		assert("Cinder Battery-065" not in mission.reward_pool)
+		assert("Cinder Battery-068" not in mission.reward_pool)
+		assert("Cinder Lancer-070" not in mission.reward_pool)
+		assert("Zephyr Mender-071" not in mission.reward_pool)
+		assert("Zephyr Mender-072" not in mission.reward_pool)
+		assert("Flux Blade-073" not in mission.reward_pool)
+		assert("Flux Blade-074" not in mission.reward_pool)
+		assert("Brass Lancer-077" not in mission.reward_pool)
+		assert("Brass Lancer-078" not in mission.reward_pool)
+		assert("Flux Lancer-079" not in mission.reward_pool)
+		assert("Flux Lancer-080" not in mission.reward_pool)
+		assert("Relay Blade-094" not in mission.reward_pool)
+		assert("Relay Blade-095" not in mission.reward_pool)
+		assert("Brass Bastion-096" not in mission.reward_pool)
+		assert("Brass Bastion-097" not in mission.reward_pool)
+		assert("Brass Battery-098" not in mission.reward_pool)
+		assert("Brass Battery-099" not in mission.reward_pool)
+		assert("Relay Blade-100" not in mission.reward_pool)
+		assert("Relay Blade-101" not in mission.reward_pool)
+		assert("Helio Mender-102" not in mission.reward_pool)
+		assert("Helio Mender-103" not in mission.reward_pool)
+		assert("Brass Bastion-106" not in mission.reward_pool)
+		assert("Flux Weaver-107" not in mission.reward_pool)
+		assert("Flux Weaver-108" not in mission.reward_pool)
+		assert("Zephyr Lancer-109" not in mission.reward_pool)
+		assert("Zephyr Lancer-110" not in mission.reward_pool)
+		assert("Flux Weaver-188" not in mission.reward_pool)
+		assert("Flux Weaver-189" not in mission.reward_pool)
+		assert("Cinder Battery-190" not in mission.reward_pool)
+		assert("Cinder Battery-191" not in mission.reward_pool)
+		assert("Flux Weaver-192" not in mission.reward_pool)
+		assert("Flux Weaver-193" not in mission.reward_pool)
+		assert("Flux Mender-194" not in mission.reward_pool)
+		assert("Flux Mender-195" not in mission.reward_pool)
 	var rarity_candidates := [
 		{"name": "One Star", "stars": 1},
 		{"name": "Five Star", "stars": 5}
@@ -1087,9 +1142,9 @@ func _init() -> void:
 	assert(firestorm.success and skill_enemy.hp == 4)
 
 	var builder := {
-		"id": 30, "side": 0, "name": "Apprentice Builder", "atk": 2,
+		"id": 30, "side": 0, "name": "Relay Bastion-013", "atk": 2,
 		"hp": 4, "max_hp": 4, "effects": [],
-		"skill": {"name": "Fortify", "type": "Warcry"}
+		"skill": {"name": "Brace Protocol", "type": "Warcry"}
 	}
 	var fortify_ally := {
 		"id": 31, "side": 0, "name": "Ally", "atk": 2,
@@ -1108,9 +1163,9 @@ func _init() -> void:
 	assert(fortify_ally.hp == 5 and fortify_ally.max_hp == 5)
 
 	var brute := {
-		"id": 33, "side": 0, "name": "Rage Brute", "atk": 2,
+		"id": 33, "side": 0, "name": "Cinder Blade-015", "atk": 2,
 		"hp": 4, "max_hp": 4, "effects": [],
-		"skill": {"name": "Empower", "type": "Warcry"}
+		"skill": {"name": "Overclock Link", "type": "Warcry"}
 	}
 	assert(not UnitSkillsScript.resolve_warcry(brute, [brute, fortify_ally]).message.is_empty())
 	assert(fortify_ally.atk == 3)
@@ -1123,16 +1178,16 @@ func _init() -> void:
 	).message.is_empty())
 	assert(empower_target.atk == 2)
 	var gunner := {
-		"id": 34, "side": 0, "name": "LDF Gunner", "atk": 3,
+		"id": 34, "side": 0, "name": "Flux Battery-019", "atk": 3,
 		"hp": 2, "max_hp": 2, "effects": [],
-		"skill": {"name": "Bolt", "type": "Warcry"}
+		"skill": {"name": "Arc Lance", "type": "Warcry"}
 	}
 	assert(not UnitSkillsScript.resolve_warcry(gunner, [gunner, warcry_enemy]).message.is_empty())
 	assert(warcry_enemy.hp == 5)
 	var misfortune_actor := {
-		"id": 37, "side": 0, "name": "Street Urchin", "atk": 2,
+		"id": 37, "side": 0, "name": "Brass Lancer-043", "atk": 2,
 		"hp": 2, "max_hp": 2, "effects": [],
-		"skill": {"name": "Misfortune", "type": "Warcry"}
+		"skill": {"name": "Signal Jam", "type": "Warcry"}
 	}
 	var enemy_scout := {
 		"id": 38, "side": 1, "name": "Enemy Scout", "kind": "Strider",
@@ -1159,9 +1214,9 @@ func _init() -> void:
 	ConductorSkillsScript.expire_effects(misfortune_units, 1)
 	assert(enemy_scout.atk == 5)
 	var mend_actor := {
-		"id": 41, "side": 0, "name": "Street Nurse", "kind": "Lifebinder",
+		"id": 41, "side": 0, "name": "Helio Mender-049", "kind": "Lifebinder",
 		"atk": 2, "hp": 3, "max_hp": 3, "effects": [],
-		"skill": {"name": "Mend", "type": "Warcry"}
+		"skill": {"name": "Repair Pulse", "type": "Warcry"}
 	}
 	var mend_target := {
 		"id": 42, "side": 0, "name": "Wounded Ally", "kind": "Duelist",
@@ -1173,9 +1228,9 @@ func _init() -> void:
 	assert(not mend_result.message.is_empty())
 	assert(mend_target.hp == 5)
 	var plague_actor := {
-		"id": 43, "side": 0, "name": "Blight Doctor", "kind": "Lifebinder",
+		"id": 43, "side": 0, "name": "Brass Mender-051", "kind": "Lifebinder",
 		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Plague", "type": "Warcry"}
+		"skill": {"name": "Corrosion Bloom", "type": "Warcry"}
 	}
 	var plague_ally := {
 		"id": 44, "side": 0, "name": "Plagued Ally", "kind": "Duelist",
@@ -1196,9 +1251,9 @@ func _init() -> void:
 	assert(UnitSkillsScript.resolve_start_statuses(1, plague_units).size() == 1)
 	assert(plague_enemy.hp == 2 and plague_enemy.poison_turns == 0)
 	var envenom_actor := {
-		"id": 46, "side": 0, "name": "Dart Shooter", "kind": "Artillerist",
+		"id": 46, "side": 0, "name": "Helio Battery-057", "kind": "Artillerist",
 		"atk": 4, "hp": 3, "max_hp": 3, "effects": [],
-		"skill": {"name": "Envenom", "type": "Warcry"}
+		"skill": {"name": "Toxin Injector", "type": "Warcry"}
 	}
 	var envenom_target := {
 		"id": 47, "side": 1, "name": "Chosen Enemy", "kind": "Channeler",
@@ -1215,9 +1270,9 @@ func _init() -> void:
 	assert(envenom_target.poison_turns == 2)
 	assert(not envenom_other.has("poison_turns"))
 	var pin_actor := {
-		"id": 49, "side": 0, "name": "Garrett Talon", "kind": "Artillerist",
+		"id": 49, "side": 0, "name": "Cinder Battery-063", "kind": "Artillerist",
 		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Pin Down", "type": "Warcry"}
+		"skill": {"name": "Anchor Shot", "type": "Warcry"}
 	}
 	var pin_result := UnitSkillsScript.resolve_warcry(
 		pin_actor, [pin_actor, envenom_target, envenom_other]
@@ -1225,9 +1280,9 @@ func _init() -> void:
 	assert(pin_result.affected == [48])
 	assert(envenom_other.hp == 7 and envenom_other.immobilized_turns == 1)
 	var demoralize_actor := {
-		"id": 50, "side": 0, "name": "Greyson the Shifty", "kind": "Strider",
+		"id": 50, "side": 0, "name": "Cinder Lancer-069", "kind": "Strider",
 		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Demoralize", "type": "Warcry"}
+		"skill": {"name": "Suppression Field", "type": "Warcry"}
 	}
 	var lane_fighter := {
 		"id": 51, "side": 1, "name": "Lane Fighter", "kind": "Duelist",
@@ -1270,9 +1325,9 @@ func _init() -> void:
 	assert(blocked_deploy_preview.traversal == [Vector2i(1, 0)])
 	assert(blocked_deploy_preview.attack == [Vector2i(2, 0)])
 	var punish_actor := {
-		"id": 54, "side": 0, "name": "LDF Flight Officer", "kind": "Duelist",
+		"id": 54, "side": 0, "name": "Zephyr Blade-075", "kind": "Duelist",
 		"atk": 4, "hp": 4, "max_hp": 4, "effects": [],
-		"skill": {"name": "Punish", "type": "Warcry"}
+		"skill": {"name": "Countermeasure", "type": "Warcry"}
 	}
 	var punish_result := UnitSkillsScript.resolve_warcry(
 		punish_actor, debuff_units + [punish_actor]
@@ -1283,32 +1338,32 @@ func _init() -> void:
 	ConductorSkillsScript.expire_effects(debuff_units, 1)
 	assert(lane_fighter.atk == 5 and lane_mage.atk == 6)
 	var pupil := {
-		"id": 36, "side": 0, "name": "Order Pupil", "atk": 3,
+		"id": 36, "side": 0, "name": "Relay Weaver-021", "atk": 3,
 		"hp": 2, "max_hp": 2, "effects": [],
-		"skill": {"name": "Heaven's Wrath", "type": "Warcry"}
+		"skill": {"name": "Relay Storm", "type": "Warcry"}
 	}
 	assert(not UnitSkillsScript.resolve_warcry(pupil, [pupil, warcry_enemy]).message.is_empty())
 	assert(warcry_enemy.hp == 4)
 	var skirmisher := {
-		"id": 35, "side": 0, "name": "Claw Skirmisher", "atk": 2,
+		"id": 35, "side": 0, "name": "Cinder Lancer-017", "atk": 2,
 		"hp": 3, "max_hp": 3, "effects": [],
-		"skill": {"name": "Pinning Strike", "type": "Strike"}
+		"skill": {"name": "Locking Strike", "type": "Strike"}
 	}
 	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.29).message.is_empty())
 	assert(warcry_enemy.immobilized_turns == 1)
 	UnitSkillsScript.expire_statuses([warcry_enemy], 1)
 	assert(warcry_enemy.immobilized_turns == 0)
 	var poison_striker := {
-		"id": 91, "side": 0, "name": "Claw Chopper",
-		"skill": {"name": "Poison Strike", "type": "Strike"}
+		"id": 91, "side": 0, "name": "Helio Blade-081",
+		"skill": {"name": "Corrosive Edge", "type": "Strike"}
 	}
 	assert(not UnitSkillsScript.resolve_strike(
 		poison_striker, warcry_enemy, [], 0.49
 	).message.is_empty())
 	assert(warcry_enemy.poison_turns == 2)
 	var sunder_actor := {
-		"id": 92, "side": 0, "name": "LDF Bowgunner",
-		"skill": {"name": "Sunder Armour", "type": "Warcry"}
+		"id": 92, "side": 0, "name": "Brass Battery-083",
+		"skill": {"name": "Breach Charge", "type": "Warcry"}
 	}
 	var sunder_defender := {
 		"id": 93, "side": 1, "name": "Armoured Target", "kind": "Warden",
@@ -1345,9 +1400,9 @@ func _init() -> void:
 	assert(sunder_defender.vulnerable_turns == 0)
 	assert(sunder_defender.vulnerable_stacks == 0)
 	var hunter_actor := {
-		"id": 95, "side": 0, "name": "Haven Trapper", "kind": "Artillerist",
+		"id": 95, "side": 0, "name": "Zephyr Battery-088", "kind": "Artillerist",
 		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
-		"skill": {"name": "Big Game Hunter", "type": "Warcry"}
+		"skill": {"name": "Heavy Target", "type": "Warcry"}
 	}
 	var hunter_big := {
 		"id": 96, "side": 1, "name": "Big Target", "kind": "Strider",
@@ -1365,9 +1420,9 @@ func _init() -> void:
 	assert(hunter_big.vulnerable_stacks == 1)
 	assert(not hunter_small.has("vulnerable_turns"))
 	var contagion_actor := {
-		"id": 98, "side": 0, "name": "Macabre Embalmer", "kind": "Channeler",
+		"id": 98, "side": 0, "name": "Cinder Weaver-090", "kind": "Channeler",
 		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
-		"skill": {"name": "Contagion", "type": "Warcry"}
+		"skill": {"name": "Chain Corrosion", "type": "Warcry"}
 	}
 	var contagion_mage := {
 		"id": 99, "side": 1, "name": "Enemy Mage", "kind": "Channeler",
@@ -1390,9 +1445,9 @@ func _init() -> void:
 	assert(contagion_priest.hp == 5 and contagion_priest.poison_damage == 1)
 	assert(contagion_fighter.hp == 7 and not contagion_fighter.has("poison_turns"))
 	var meteor_actor := {
-		"id": 102, "side": 0, "name": "Devout Mage", "kind": "Channeler",
+		"id": 102, "side": 0, "name": "Flux Weaver-092", "kind": "Channeler",
 		"row": 0, "atk": 5, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Meteor Barrage", "type": "Warcry"}
+		"skill": {"name": "Meteor Pattern", "type": "Warcry"}
 	}
 	var meteor_lane_one := {
 		"id": 103, "side": 1, "name": "Lane One Target", "kind": "Duelist",
@@ -1411,17 +1466,17 @@ func _init() -> void:
 	var meteor_fallback := UnitSkillsScript.resolve_warcry(meteor_actor, meteor_units)
 	assert(meteor_fallback.affected == [103])
 	assert(meteor_lane_one.hp == 4)
-	skirmisher.skill = {"name": "Pinning Slice", "type": "Strike"}
+	skirmisher.skill = {"name": "Sever Drive", "type": "Strike"}
 	assert(not UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.59).message.is_empty())
 	warcry_enemy.immobilized_turns = 0
 	assert(UnitSkillsScript.resolve_strike(skirmisher, warcry_enemy, [], 0.60).message.is_empty())
 
-	# Chant: Sundering Smash hits every enemy in the chanter's lane at the
+	# Chant: Breaker Impact hits every enemy in the chanter's lane at the
 	# start of the chanter's turn and makes survivors Vulnerable.
 	var bartok := {
-		"id": 105, "side": 0, "name": "Bartok Loco", "kind": "Duelist",
+		"id": 105, "side": 0, "name": "Relay Blade-094", "kind": "Duelist",
 		"row": 1, "atk": 5, "hp": 8, "max_hp": 8, "effects": [],
-		"skill": {"name": "Sundering Smash", "type": "Chant"}
+		"skill": {"name": "Breaker Impact", "type": "Chant"}
 	}
 	var chant_lane_foe := {
 		"id": 106, "side": 1, "name": "Lane Foe", "kind": "Warden",
@@ -1439,15 +1494,15 @@ func _init() -> void:
 	assert(chant_lane_foe.vulnerable_stacks == 1)
 	assert(chant_other_lane.hp == 6 and not chant_other_lane.has("vulnerable_turns"))
 	assert(UnitSkillsScript.resolve_chants(1, chant_units).is_empty())
-	# Re-applying Vulnerable stacks, mirroring Sunder Armour, and last turn's
+	# Re-applying Vulnerable stacks, mirroring Breach Charge, and last turn's
 	# Vulnerable amplifies this turn's chant damage (1 + 1 stack).
 	UnitSkillsScript.resolve_chants(0, chant_units)
 	assert(chant_lane_foe.hp == 3 and chant_lane_foe.vulnerable_stacks == 2)
 	# Level scaling: a level-5 chanter hits for 3 damage over 4 turns.
 	var veteran_geartron := {
-		"id": 114, "side": 0, "name": "Geartron-5000", "kind": "Warden",
+		"id": 114, "side": 0, "name": "Brass Bastion-097", "kind": "Warden",
 		"row": 0, "atk": 3, "hp": 13, "max_hp": 13, "effects": [], "level": 5,
-		"skill": UnitCatalogScript.by_name("Geartron-5000").skill.to_dict()
+		"skill": UnitCatalogScript.by_name("Brass Bastion-097").skill.to_dict()
 	}
 	var veteran_lane_foe := {
 		"id": 115, "side": 1, "name": "Veteran Lane Foe", "kind": "Duelist",
@@ -1459,15 +1514,15 @@ func _init() -> void:
 	assert(veteran_chants.size() == 1)
 	assert(veteran_lane_foe.hp == 6 and veteran_lane_foe.vulnerable_turns == 4)
 
-	# Chant: Hydroblast debuffs the ATK of every enemy in the chanter's lane
+	# Chant: Pressure Jet debuffs the ATK of every enemy in the chanter's lane
 	# until the end of the enemy's next turn and Knocks them Back away from
 	# the chanter, stopping at the board edge or an occupied cell.
 	var aquanaut := {
-		"id": 404, "side": 0, "name": "The Aquanaut", "kind": "Artillerist",
+		"id": 404, "side": 0, "name": "Cinder Battery-176", "kind": "Artillerist",
 		"row": 1, "col": 2, "atk": 3, "hp": 5, "max_hp": 5, "effects": [],
 		"skill": {
-			"name": "Hydroblast", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Hydroblast"]
+			"name": "Pressure Jet", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Pressure Jet"]
 		}
 	}
 	var hydro_foe := {
@@ -1498,9 +1553,9 @@ func _init() -> void:
 	assert(hydro_foe.atk == 4 and hydro_blocker.atk == 3)
 	# Level scaling: a level-5 chanter debuffs 3 ATK and Knocks Back 3 spaces.
 	var hydronaut := {
-		"id": 408, "side": 0, "name": "The Hydronaut", "kind": "Artillerist",
+		"id": 408, "side": 0, "name": "Cinder Battery-177", "kind": "Artillerist",
 		"row": 0, "col": 0, "atk": 4, "hp": 7, "max_hp": 7, "effects": [], "level": 5,
-		"skill": UnitCatalogScript.by_name("The Hydronaut").skill.to_dict()
+		"skill": UnitCatalogScript.by_name("Cinder Battery-177").skill.to_dict()
 	}
 	var hydro_veteran_foe := {
 		"id": 409, "side": 1, "name": "Veteran Hydro Foe", "kind": "Warden",
@@ -1512,24 +1567,24 @@ func _init() -> void:
 	assert(hydro_veteran_results.size() == 1)
 	assert(hydro_veteran_foe.atk == 2 and hydro_veteran_foe.col == 6)
 
-	# Chant: Roguish Snare is a deployment trap that fires at the start of
+	# Chant: Deployment Snare is a deployment trap that fires at the start of
 	# the OPPOSING side's turn, Stunning that side's most recently deployed
 	# unit (the `last_placed_id` argument) for 2 turns with a rank-scaled
 	# chance of permanent Poison. Only the first living carrier triggers.
 	var thief := {
-		"id": 410, "side": 0, "name": "Thief", "kind": "Strider",
+		"id": 410, "side": 0, "name": "Zephyr Lancer-178", "kind": "Strider",
 		"row": 0, "col": 1, "atk": 2, "hp": 5, "max_hp": 5, "effects": [],
 		"skill": {
-			"name": "Roguish Snare", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Roguish Snare"]
+			"name": "Deployment Snare", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Deployment Snare"]
 		}
 	}
 	var cutpurse := {
-		"id": 411, "side": 0, "name": "Cutpurse", "kind": "Strider",
+		"id": 411, "side": 0, "name": "Zephyr Lancer-179", "kind": "Strider",
 		"row": 1, "col": 1, "atk": 2, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Roguish Snare", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Roguish Snare"]
+			"name": "Deployment Snare", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Deployment Snare"]
 		}
 	}
 	var snare_fresh := {
@@ -1537,7 +1592,7 @@ func _init() -> void:
 		"row": 0, "col": 5, "atk": 3, "hp": 8, "max_hp": 8, "effects": []
 	}
 	var snare_veteran := {
-		"id": 413, "side": 1, "name": "Old Guard", "kind": "Duelist",
+		"id": 413, "side": 1, "name": "Old Cover Matrix", "kind": "Duelist",
 		"row": 1, "col": 4, "atk": 4, "hp": 7, "max_hp": 7, "effects": []
 	}
 	var snare_units := [thief, cutpurse, snare_fresh, snare_veteran]
@@ -1589,17 +1644,17 @@ func _init() -> void:
 		1, snare_units, "start", null, 0.0, 412
 	).is_empty())
 
-	# Chant: Wrangle grants Protect to every ally behind the chanter and
+	# Chant: Frontline Relay grants Protect to every ally behind the chanter and
 	# debuffs the ATK of every enemy in front of it, across all lanes.
 	# "Behind"/"in front" are column-relative: side 0 advances toward
 	# higher columns, so behind = lower column, in front = higher column;
 	# units in the chanter's own column are neither.
 	var frontier_rider := {
-		"id": 420, "side": 0, "name": "Frontier Rider", "kind": "Artillerist",
+		"id": 420, "side": 0, "name": "Cinder Battery-182", "kind": "Artillerist",
 		"row": 1, "col": 3, "atk": 2, "hp": 5, "max_hp": 5, "effects": [],
 		"skill": {
-			"name": "Wrangle", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Wrangle"]
+			"name": "Frontline Relay", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Frontline Relay"]
 		}
 	}
 	var wrangle_ally_behind := {
@@ -1638,14 +1693,14 @@ func _init() -> void:
 	assert(wrangle_foe_behind.atk == 3 and wrangle_foe_behind.effects.is_empty())
 	assert(UnitSkillsScript.resolve_chants(1, wrangle_units).is_empty())
 	assert(UnitSkillsScript.resolve_chants(0, wrangle_units, "end").is_empty())
-	# The level-1 debuff lasts one enemy turn, mirroring Hydroblast.
+	# The level-1 debuff lasts one enemy turn, mirroring Pressure Jet.
 	ConductorSkillsScript.expire_effects(wrangle_units, 1)
 	assert(wrangle_foe_front.atk == 4 and wrangle_foe_front.effects.is_empty())
 	# Level scaling: the level-5 rank row is 2-turn Protect, -3 ATK, 2 turns.
 	var frontier_protector := {
-		"id": 426, "side": 0, "name": "Frontier Protector", "kind": "Artillerist",
+		"id": 426, "side": 0, "name": "Cinder Battery-183", "kind": "Artillerist",
 		"row": 0, "col": 2, "atk": 3, "hp": 5, "max_hp": 5, "effects": [], "level": 5,
-		"skill": UnitCatalogScript.by_name("Frontier Protector").skill.to_dict()
+		"skill": UnitCatalogScript.by_name("Cinder Battery-183").skill.to_dict()
 	}
 	var wrangle_veteran_ally := {
 		"id": 427, "side": 0, "name": "Veteran Rear Ally", "kind": "Warden",
@@ -1674,25 +1729,25 @@ func _init() -> void:
 	frontier_protector.hp = 0
 	assert(UnitSkillsScript.resolve_chants(0, wrangle_veteran_units).is_empty())
 
-	# Warcry: Divine Silence locks a target enemy's secondary skill for a
+	# Warcry: Null Signal locks a target enemy's secondary skill for a
 	# rank-scaled number of that unit's side turns (the "enemy turns" of the
-	# reference text, counted from the caster's perspective). While Silenced,
+	# authored text, counted from the caster's perspective). While Silenced,
 	# none of the unit's skill timing hooks fire; movement, attacks, and
 	# Conductor skills are unaffected.
 	var lunnain_oracle := {
-		"id": 440, "side": 0, "name": "Lunnain Oracle", "kind": "Lifebinder",
+		"id": 440, "side": 0, "name": "Flux Mender-184", "kind": "Lifebinder",
 		"row": 1, "col": 0, "atk": 2, "hp": 5, "max_hp": 5, "effects": [], "level": 3,
 		"skill": {
-			"name": "Divine Silence", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Divine Silence"]
+			"name": "Null Signal", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Null Signal"]
 		}
 	}
 	var silenced_chanter := {
 		"id": 441, "side": 1, "name": "Silenced Chanter", "kind": "Channeler",
 		"row": 0, "col": 5, "atk": 2, "hp": 4, "max_hp": 4, "effects": [],
 		"skill": {
-			"name": "Sundering Smash", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Sundering Smash"]
+			"name": "Breaker Impact", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Breaker Impact"]
 		}
 	}
 	var silence_smash_target := {
@@ -1707,10 +1762,10 @@ func _init() -> void:
 		lunnain_oracle, silenced_chanter, silence_smash_target, silence_plain_foe
 	]
 	assert(UnitSkillsScript.rank_value(
-		UnitCatalogScript.by_name("Lunnain Oracle").skill.to_dict(), 1, 0, 1
+		UnitCatalogScript.by_name("Flux Mender-184").skill.to_dict(), 1, 0, 1
 	) == 1)
 	assert(UnitSkillsScript.rank_value(
-		UnitCatalogScript.by_name("Lunnain Oracle").skill.to_dict(), 5, 0, 1
+		UnitCatalogScript.by_name("Flux Mender-184").skill.to_dict(), 5, 0, 1
 	) == 5)
 	# Level 3 reads the third rank row: 3 turns.
 	var silence_result := UnitSkillsScript.resolve_warcry(
@@ -1751,7 +1806,7 @@ func _init() -> void:
 	var silenced_striker := {
 		"id": 444, "side": 1, "name": "Silenced Striker", "kind": "Strider",
 		"atk": 3, "hp": 4, "max_hp": 4, "effects": [], "silenced_turns": 1,
-		"skill": {"name": "Poison Strike", "type": "Strike"}
+		"skill": {"name": "Corrosive Edge", "type": "Strike"}
 	}
 	assert(UnitSkillsScript.resolve_strike(
 		silenced_striker, silence_smash_target, silence_units, 0.0
@@ -1765,7 +1820,7 @@ func _init() -> void:
 	var silenced_reactor := {
 		"id": 445, "side": 1, "name": "Silenced Reactor", "kind": "Warden",
 		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "silenced_turns": 1,
-		"skill": {"name": "Shield Wall", "type": "Reaction"}
+		"skill": {"name": "Aegis Array", "type": "Reaction"}
 	}
 	var silence_attacker := {
 		"id": 446, "side": 0, "name": "Attacker", "kind": "Duelist",
@@ -1784,7 +1839,7 @@ func _init() -> void:
 	var silenced_medic := {
 		"id": 447, "side": 1, "name": "Silenced Medic", "kind": "Lifebinder",
 		"atk": 1, "hp": 3, "max_hp": 3, "effects": [], "silenced_turns": 1,
-		"skill": {"name": "Mend", "type": "Warcry"}
+		"skill": {"name": "Repair Pulse", "type": "Warcry"}
 	}
 	assert(UnitSkillsScript.resolve_warcry(
 		silenced_medic, silence_units + [silenced_medic]
@@ -1794,7 +1849,7 @@ func _init() -> void:
 	var silenced_empress := {
 		"id": 448, "side": 0, "name": "Silenced Empress", "kind": "Duelist",
 		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Moonlight", "type": "Aura"}
+		"skill": {"name": "Lumen Shell", "type": "Aura"}
 	}
 	var silence_aura_ally := {
 		"id": 449, "side": 0, "name": "Aura Ally", "kind": "Warden",
@@ -1811,14 +1866,14 @@ func _init() -> void:
 	silenced_empress.silenced_turns = 0
 	UnitSkillsScript.refresh_auras(silence_aura_units, silence_aura_events)
 	assert(silence_aura_ally.max_hp == 8)
-	# A Silenced Roguish Snare carrier does not spring the trap.
+	# A Silenced Deployment Snare carrier does not spring the trap.
 	var silenced_thief := {
-		"id": 450, "side": 1, "name": "Silenced Thief", "kind": "Strider",
+		"id": 450, "side": 1, "name": "Silenced Zephyr Lancer-178", "kind": "Strider",
 		"row": 0, "col": 4, "atk": 2, "hp": 5, "max_hp": 5, "effects": [],
 		"silenced_turns": 1,
 		"skill": {
-			"name": "Roguish Snare", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Roguish Snare"]
+			"name": "Deployment Snare", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Deployment Snare"]
 		}
 	}
 	var snare_silence_victim := {
@@ -1836,15 +1891,15 @@ func _init() -> void:
 	).size() == 1)
 	assert(snare_silence_victim.stun_turns == 2)
 
-	# Chant (end): Cattle of Ra Knocks Back every Taunted enemy, Immobilises
+	# Chant (end): Dragnet Knocks Back every Taunted enemy, Immobilises
 	# it and debuffs its ATK for 1 enemy turn; non-Taunted and allied units
 	# are ignored.
 	var ra := {
-		"id": 430, "side": 0, "name": "Ra", "kind": "Warden",
+		"id": 430, "side": 0, "name": "Brass Bastion-186", "kind": "Warden",
 		"row": 0, "col": 3, "atk": 2, "hp": 10, "max_hp": 10, "effects": [],
 		"skill": {
-			"name": "Cattle of Ra", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Cattle of Ra"]
+			"name": "Dragnet", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Dragnet"]
 		}
 	}
 	var cattle_taunted_foe := {
@@ -1892,10 +1947,10 @@ func _init() -> void:
 	# Level scaling: the level-5 rank row Knocks Back 3 spaces and debuffs
 	# 3 ATK.
 	var ra_creator := {
-		"id": 434, "side": 0, "name": "Ra, Creator", "kind": "Warden",
+		"id": 434, "side": 0, "name": "Brass Bastion-187", "kind": "Warden",
 		"row": 0, "col": 2, "atk": 3, "hp": 11, "max_hp": 11, "effects": [],
 		"level": 5,
-		"skill": UnitCatalogScript.by_name("Ra, Creator").skill.to_dict()
+		"skill": UnitCatalogScript.by_name("Brass Bastion-187").skill.to_dict()
 	}
 	var cattle_veteran_foe := {
 		"id": 435, "side": 1, "name": "Veteran Taunted Foe", "kind": "Warden",
@@ -1910,26 +1965,26 @@ func _init() -> void:
 	assert(cattle_veteran_foe.atk == 2)
 	assert(cattle_veteran_foe.immobilized_turns == 1)
 
-	# Chant (start): Stone Gaze Poisons one random living non-Poisoned enemy
+	# Chant (start): Petrify Loop Poisons one random living non-Poisoned enemy
 	# for a rank-scaled number of enemy turns, then Stuns up to {1} Poisoned
-	# enemies in front of the chanter (the Wrangle column rule, cross-lane) for
+	# enemies in front of the chanter (the Frontline Relay column rule, cross-lane) for
 	# 1 enemy turn. An enemy Poisoned by the first part can be Stunned by the
 	# second.
 	assert(UnitSkillsScript.rank_value(
-		UnitCatalogScript.by_name("Medusa").skill.to_dict(), 1, 0, 1
+		UnitCatalogScript.by_name("Flux Weaver-192").skill.to_dict(), 1, 0, 1
 	) == 1)
 	assert(UnitSkillsScript.rank_value(
-		UnitCatalogScript.by_name("Medusa").skill.to_dict(), 5, 0, 1
+		UnitCatalogScript.by_name("Flux Weaver-192").skill.to_dict(), 5, 0, 1
 	) == 3)
 	assert(UnitSkillsScript.rank_value(
-		UnitCatalogScript.by_name("Medusa").skill.to_dict(), 5, 1, 1
+		UnitCatalogScript.by_name("Flux Weaver-192").skill.to_dict(), 5, 1, 1
 	) == 3)
 	var medusa := {
-		"id": 460, "side": 0, "name": "Medusa", "kind": "Channeler",
+		"id": 460, "side": 0, "name": "Flux Weaver-192", "kind": "Channeler",
 		"row": 0, "col": 3, "atk": 3, "hp": 9, "max_hp": 9, "effects": [],
 		"skill": {
-			"name": "Stone Gaze", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Stone Gaze"]
+			"name": "Petrify Loop", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Petrify Loop"]
 		}
 	}
 	var gaze_fresh_foe := {
@@ -2005,10 +2060,10 @@ func _init() -> void:
 	# Level scaling: the level-5 rank row Poisons for 3 enemy turns and Stuns
 	# up to 3 in-front Poisoned enemies.
 	var gorgon_medusa := {
-		"id": 466, "side": 0, "name": "Gorgon Medusa", "kind": "Channeler",
+		"id": 466, "side": 0, "name": "Flux Weaver-193", "kind": "Channeler",
 		"row": 1, "col": 3, "atk": 4, "hp": 10, "max_hp": 10, "effects": [],
 		"level": 5,
-		"skill": UnitCatalogScript.by_name("Gorgon Medusa").skill.to_dict()
+		"skill": UnitCatalogScript.by_name("Flux Weaver-193").skill.to_dict()
 	}
 	var gaze_vet_fresh := {
 		"id": 467, "side": 1, "name": "Veteran Fresh Foe", "kind": "Duelist",
@@ -2034,12 +2089,12 @@ func _init() -> void:
 	assert(gaze_vet_poisoned_a.stun_turns == 1)
 	assert(gaze_vet_poisoned_b.stun_turns == 1)
 
-	# Reaction: Hopping Mad counters the attacker for fixed damage, but only
+	# Reaction: Reactor Leap counters the attacker for fixed damage, but only
 	# while the defender survives the attack.
 	var bethany := {
-		"id": 108, "side": 1, "name": "Bethany", "kind": "Artillerist",
+		"id": 108, "side": 1, "name": "Brass Battery-098", "kind": "Artillerist",
 		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Hopping Mad", "type": "Reaction"}
+		"skill": {"name": "Reactor Leap", "type": "Reaction"}
 	}
 	var reaction_attacker := {
 		"id": 109, "side": 0, "name": "Attacker", "kind": "Duelist",
@@ -2060,14 +2115,14 @@ func _init() -> void:
 	).message.is_empty())
 	assert(reaction_attacker.hp == 4)
 
-	# Reaction: Shield Wall has a level-based chance to grant the defender
+	# Reaction: Aegis Array has a level-based chance to grant the defender
 	# Protect, which blocks all damage until it expires.
 	var shield_waller := {
-		"id": 116, "side": 1, "name": "Commune Defender", "kind": "Warden",
+		"id": 116, "side": 1, "name": "Brass Bastion-104", "kind": "Warden",
 		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
 		"skill": {
-			"name": "Shield Wall", "type": "Reaction",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Shield Wall"]
+			"name": "Aegis Array", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Aegis Array"]
 		}
 	}
 	var wall_attacker := {
@@ -2079,7 +2134,7 @@ func _init() -> void:
 	)
 	assert(wall_result.affected == [116])
 	assert(shield_waller.protect_turns == 2)
-	assert("Protect" in wall_result.message)
+	assert("Aegis Array" in wall_result.message)
 	assert(UnitSkillsScript.resolve_reaction(
 		shield_waller, wall_attacker, [shield_waller, wall_attacker], 0.40
 	).message.is_empty())
@@ -2093,14 +2148,14 @@ func _init() -> void:
 	assert(BattleSimulatorScript.apply_unit_damage(shield_waller, 3).damage == 3)
 	assert(shield_waller.hp == 5)
 
-	# Warcry: Freeze! damages and Immobilises enemy Scouts and Fighters in the
+	# Warcry: Cryo Lock damages and Immobilises enemy Scouts and Fighters in the
 	# target lane; other classes and lanes are untouched.
 	var frost_mage := {
-		"id": 118, "side": 0, "name": "Frost-Kid Kokori", "kind": "Channeler",
+		"id": 118, "side": 0, "name": "Flux Weaver-107", "kind": "Channeler",
 		"row": 0, "atk": 3, "hp": 7, "max_hp": 7, "effects": [],
 		"skill": {
-			"name": "Freeze!", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Freeze!"]
+			"name": "Cryo Lock", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Cryo Lock"]
 		}
 	}
 	var frost_scout := {
@@ -2142,14 +2197,14 @@ func _init() -> void:
 	UnitSkillsScript.resolve_warcry(frost_mage, frost_units, -1, null, 2)
 	assert(frost_scout.hp == 0 and frost_scout.immobilized_turns == 0)
 
-	# Strike: Weakening Strike has a level-based chance to cut the attacked
+	# Strike: Drain Strike has a level-based chance to cut the attacked
 	# enemy's ATK for a few turns.
 	var swiftblade := {
-		"id": 123, "side": 0, "name": "Mata Swiftblade", "kind": "Strider",
+		"id": 123, "side": 0, "name": "Zephyr Lancer-109", "kind": "Strider",
 		"atk": 3, "hp": 4, "max_hp": 4, "effects": [],
 		"skill": {
-			"name": "Weakening Strike", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Weakening Strike"]
+			"name": "Drain Strike", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Drain Strike"]
 		}
 	}
 	var weaken_target := {
@@ -2168,15 +2223,15 @@ func _init() -> void:
 	ConductorSkillsScript.expire_effects([weaken_target], 1)
 	assert(weaken_target.atk == 5)
 
-	# Warcry: Protect grants a chosen allied unit Protect for a level-scaled
+	# Warcry: Guard Link grants a chosen allied unit Protect for a level-scaled
 	# duration; without a chosen target the AI fallback shields the lowest-HP
 	# ally, and Protect blocks all damage while it lasts.
 	var protector := {
-		"id": 130, "side": 0, "name": "LDF Constable", "kind": "Warden",
+		"id": 130, "side": 0, "name": "Brass Bastion-111", "kind": "Warden",
 		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
 		"skill": {
-			"name": "Protect", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Protect"]
+			"name": "Guard Link", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Guard Link"]
 		}
 	}
 	var protect_ally := {
@@ -2191,7 +2246,7 @@ func _init() -> void:
 	var protect_result := UnitSkillsScript.resolve_warcry(protector, protect_units, 132)
 	assert(protect_result.affected == [132])
 	assert(protect_other.protect_turns == 2)
-	assert("Protect" in protect_result.message)
+	assert("Guard Link" in protect_result.message)
 	var protect_fallback := UnitSkillsScript.resolve_warcry(protector, protect_units)
 	assert(protect_fallback.affected == [131])
 	assert(protect_ally.protect_turns == 2)
@@ -2200,15 +2255,15 @@ func _init() -> void:
 	UnitSkillsScript.expire_statuses(protect_units, 0)
 	assert(protect_ally.protect_turns == 1)
 
-	# Warcry: Royal Flush grants every allied unit in the chosen lane Protect
+	# Warcry: Lane Bulwark grants every allied unit in the chosen lane Protect
 	# for a level-scaled duration; the AI fallback picks the lane holding the
 	# most living allies, and enemies in the lane are ignored.
 	var hearts := {
-		"id": 400, "side": 0, "name": "Three of Hearts", "kind": "Warden",
+		"id": 400, "side": 0, "name": "Helio Bastion-172", "kind": "Warden",
 		"row": 0, "atk": 1, "hp": 8, "max_hp": 8, "effects": [], "level": 5,
 		"skill": {
-			"name": "Royal Flush", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Royal Flush"]
+			"name": "Lane Bulwark", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Lane Bulwark"]
 		}
 	}
 	var flush_mate := {
@@ -2237,16 +2292,16 @@ func _init() -> void:
 	assert(BattleSimulatorScript.apply_unit_damage(flush_mate, 3).protected)
 	assert(flush_mate.hp == 6)
 
-	# Warcry: Woolen Blanket heals the chosen ally for a level-scaled amount
-	# (overhealing like Mend) and grants it Protect for a level-scaled
+	# Warcry: Thermal Wrap heals the chosen ally for a level-scaled amount
+	# (overhealing like Repair Pulse) and grants it Protect for a level-scaled
 	# duration; the AI fallback picks the lowest-HP ally, and a Silenced
 	# caster does not trigger.
 	var shepherd := {
-		"id": 500, "side": 0, "name": "Jimimi the Shepherd", "kind": "Lifebinder",
+		"id": 500, "side": 0, "name": "Brass Mender-196", "kind": "Lifebinder",
 		"row": 0, "atk": 3, "hp": 4, "max_hp": 4, "effects": [], "level": 5,
 		"skill": {
-			"name": "Woolen Blanket", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Woolen Blanket"]
+			"name": "Thermal Wrap", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Thermal Wrap"]
 		}
 	}
 	var blanket_hurt := {
@@ -2265,7 +2320,7 @@ func _init() -> void:
 	assert(blanket_result.affected == [501])
 	assert(blanket_hurt.hp == 6 and blanket_hurt.protect_turns == 3)
 	assert(not blanket_full.has("protect_turns"))
-	# The heal overheals past max HP, mirroring Mend.
+	# The heal overheals past max HP, mirroring Repair Pulse.
 	var blanket_overheal := UnitSkillsScript.resolve_warcry(
 		shepherd, blanket_units, 502
 	)
@@ -2275,7 +2330,7 @@ func _init() -> void:
 	var blanket_fallback := UnitSkillsScript.resolve_warcry(shepherd, blanket_units)
 	assert(blanket_fallback.affected == [501])
 	assert(blanket_hurt.hp == 10)
-	# A Silenced caster's Woolen Blanket does not trigger.
+	# A Silenced caster's Thermal Wrap does not trigger.
 	shepherd.silenced_turns = 1
 	var blanket_silenced := UnitSkillsScript.resolve_warcry(
 		shepherd, blanket_units, 501
@@ -2284,16 +2339,16 @@ func _init() -> void:
 	assert(blanket_hurt.hp == 10)
 	shepherd.silenced_turns = 0
 
-	# Warcry: Shadowbind cuts the ATK of every living enemy in the target lane
+	# Warcry: Umbral Clamp cuts the ATK of every living enemy in the target lane
 	# and Immobilises them for a level-scaled duration; other lanes are
 	# untouched, the AI fallback picks the highest-value enemy lane, and a
 	# Silenced caster does not trigger.
 	var edge := {
-		"id": 510, "side": 0, "name": "Edge", "kind": "Strider",
+		"id": 510, "side": 0, "name": "Zephyr Lancer-202", "kind": "Strider",
 		"row": 0, "atk": 2, "hp": 5, "max_hp": 5, "effects": [], "level": 5,
 		"skill": {
-			"name": "Shadowbind", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Shadowbind"]
+			"name": "Umbral Clamp", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Umbral Clamp"]
 		}
 	}
 	var bind_foe_a := {
@@ -2317,7 +2372,7 @@ func _init() -> void:
 	assert(bind_foe_a.atk == 0 and bind_foe_a.immobilized_turns == 3)
 	assert(bind_foe_b.atk == 1 and bind_foe_b.immobilized_turns == 3)
 	assert(bind_other_lane.atk == 5 and not bind_other_lane.has("immobilized_turns"))
-	assert("Shadowbind" in bind_result.message)
+	assert("Umbral Clamp" in bind_result.message)
 	# The Immobilise ticks down on the enemy side's expiry pass and the ATK
 	# debuff expires with its effect timer.
 	UnitSkillsScript.expire_statuses(bind_units, 1)
@@ -2327,7 +2382,7 @@ func _init() -> void:
 	ConductorSkillsScript.expire_effects(bind_units, 1)
 	assert(bind_foe_a.atk == 4 and bind_foe_b.atk == 5)
 	assert(bind_foe_a.effects.is_empty())
-	# A Silenced caster's Shadowbind does not trigger.
+	# A Silenced caster's Umbral Clamp does not trigger.
 	edge.silenced_turns = 1
 	var bind_silenced := UnitSkillsScript.resolve_warcry(edge, bind_units, -1, null, 1)
 	assert(bind_silenced.affected.is_empty() and bind_silenced.message.is_empty())
@@ -2341,14 +2396,14 @@ func _init() -> void:
 	assert(bind_foe_a.atk == 0 and bind_foe_a.immobilized_turns == 3)
 	assert(bind_other_lane.atk == 5 and not bind_other_lane.has("immobilized_turns"))
 
-	# Warcry: Fireball damages a chosen enemy and splashes orthogonally
+	# Warcry: Thermal Burst damages a chosen enemy and splashes orthogonally
 	# adjacent enemies; the AI fallback hits the highest-HP enemy.
 	var dragon := {
-		"id": 133, "side": 0, "name": "Raging Dragon", "kind": "Channeler",
+		"id": 133, "side": 0, "name": "Cinder Weaver-115", "kind": "Channeler",
 		"row": 0, "col": 0, "atk": 5, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Fireball", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Fireball"]
+			"name": "Thermal Burst", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Thermal Burst"]
 		}
 	}
 	var fire_target := {
@@ -2373,14 +2428,14 @@ func _init() -> void:
 	assert(fire_fallback.affected[0] == 134)
 	assert(fire_target.hp == 6)
 
-	# Warcry: Warrior's Vigour buffs the lowest-HP allied Defender or Fighter;
+	# Warcry: Combat Surge buffs the lowest-HP allied Defender or Fighter;
 	# other classes are ignored and the buff expires with its timer.
 	var yeoman := {
-		"id": 137, "side": 0, "name": "Royal Yeoman", "kind": "Duelist",
+		"id": 137, "side": 0, "name": "Brass Blade-117", "kind": "Duelist",
 		"atk": 2, "hp": 4, "max_hp": 4, "effects": [],
 		"skill": {
-			"name": "Warrior's Vigour", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Warrior's Vigour"]
+			"name": "Combat Surge", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Combat Surge"]
 		}
 	}
 	var vigour_warden := {
@@ -2416,17 +2471,17 @@ func _init() -> void:
 	assert(regen_results.size() == 1 and regen_results[0].label == "REGEN")
 	assert(regen_carrier.hp == 4 and regen_carrier.regen_turns == 1)
 
-	# Reaction: Grit has a level-based chance to grant Regen after being attacked.
+	# Reaction: Holdfast has a level-based chance to grant Regen after being attacked.
 	var gritter := {
-		"id": 141, "side": 1, "name": "Pub Barman", "kind": "Warden",
+		"id": 141, "side": 1, "name": "Cinder Bastion-119", "kind": "Warden",
 		"atk": 2, "hp": 7, "max_hp": 7, "effects": [],
 		"skill": {
-			"name": "Grit", "type": "Reaction",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Grit"]
+			"name": "Holdfast", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Holdfast"]
 		}
 	}
 	var grit_attacker := {
-		"id": 142, "side": 0, "name": "Grit Attacker", "kind": "Duelist",
+		"id": 142, "side": 0, "name": "Holdfast Attacker", "kind": "Duelist",
 		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
 	}
 	var grit_result := UnitSkillsScript.resolve_reaction(
@@ -2438,14 +2493,14 @@ func _init() -> void:
 		gritter, grit_attacker, [gritter, grit_attacker], 0.40
 	).message.is_empty())
 
-	# Warcry: Prune/New Look/Medic! cleanse Immobilise from a class-matched ally
+	# Warcry: Purge Routine/Refit Cycle/Field Recovery cleanse Immobilise from a class-matched ally
 	# and grant Regen; the AI fallback picks the lowest-HP ally of the class.
 	var prune_actor := {
-		"id": 143, "side": 0, "name": "The Botanist", "kind": "Lifebinder",
+		"id": 143, "side": 0, "name": "Helio Mender-123", "kind": "Lifebinder",
 		"atk": 2, "hp": 4, "max_hp": 4, "effects": [],
 		"skill": {
-			"name": "Prune", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Prune"]
+			"name": "Purge Routine", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Purge Routine"]
 		}
 	}
 	var prune_mage := {
@@ -2465,11 +2520,11 @@ func _init() -> void:
 	var prune_wrong := UnitSkillsScript.resolve_warcry(prune_actor, prune_units, 145)
 	assert(prune_wrong.affected == [144])
 	var medic_actor := {
-		"id": 146, "side": 0, "name": "Rescue Corps", "kind": "Lifebinder",
+		"id": 146, "side": 0, "name": "Helio Mender-126", "kind": "Lifebinder",
 		"atk": 3, "hp": 4, "max_hp": 4, "effects": [],
 		"skill": {
-			"name": "Medic!", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Medic!"]
+			"name": "Field Recovery", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Field Recovery"]
 		}
 	}
 	var medic_result := UnitSkillsScript.resolve_warcry(
@@ -2478,11 +2533,11 @@ func _init() -> void:
 	assert(medic_result.affected == [145])
 	assert(prune_warden.immobilized_turns == 0 and prune_warden.regen_turns == 2)
 	var stylist_actor := {
-		"id": 147, "side": 0, "name": "Selina the Stylist", "kind": "Strider",
+		"id": 147, "side": 0, "name": "Helio Lancer-130", "kind": "Strider",
 		"atk": 2, "hp": 4, "max_hp": 4, "effects": [],
 		"skill": {
-			"name": "New Look", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["New Look"]
+			"name": "Refit Cycle", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Refit Cycle"]
 		}
 	}
 	var pinned_gunner := {
@@ -2495,13 +2550,13 @@ func _init() -> void:
 	assert(look_result.affected == [148])
 	assert(pinned_gunner.immobilized_turns == 0 and pinned_gunner.regen_turns == 2)
 
-	# Chant (start): Lifestream grants all allies Regen and cleanses Immobilise.
+	# Chant (start): Renewal Current grants all allies Regen and cleanses Immobilise.
 	var witch_doctor := {
-		"id": 149, "side": 0, "name": "The Witch Doctor", "kind": "Lifebinder",
+		"id": 149, "side": 0, "name": "Helio Mender-132", "kind": "Lifebinder",
 		"atk": 2, "hp": 7, "max_hp": 7, "effects": [],
 		"skill": {
-			"name": "Lifestream", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Lifestream"]
+			"name": "Renewal Current", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Renewal Current"]
 		}
 	}
 	var lifestream_ally := {
@@ -2515,14 +2570,14 @@ func _init() -> void:
 	assert(witch_doctor.regen_turns == 2 and lifestream_ally.regen_turns == 2)
 	assert(lifestream_ally.immobilized_turns == 0)
 
-	# Strike: Caber Toss knocks the target back, stopping at the board edge and
+	# Strike: Kinetic Throw knocks the target back, stopping at the board edge and
 	# at occupied cells.
 	var hamish := {
-		"id": 151, "side": 0, "name": "Hamish Highlander", "kind": "Warden",
+		"id": 151, "side": 0, "name": "Helio Bastion-134", "kind": "Warden",
 		"row": 0, "col": 2, "atk": 1, "hp": 7, "max_hp": 7, "effects": [],
 		"skill": {
-			"name": "Caber Toss", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Caber Toss"]
+			"name": "Kinetic Throw", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Kinetic Throw"]
 		}
 	}
 	var caber_target := {
@@ -2544,13 +2599,13 @@ func _init() -> void:
 		hamish, caber_target, [hamish, caber_target, caber_blocker], 0.30
 	).message.is_empty() or hamish.regen_turns == 1)
 
-	# Reaction: Ambient Pressure can grant permanent ATK and Regen.
+	# Reaction: Pressure Sink can grant permanent ATK and Regen.
 	var barney := {
-		"id": 154, "side": 1, "name": "Deep Sea Barney", "kind": "Warden",
+		"id": 154, "side": 1, "name": "Brass Bastion-138", "kind": "Warden",
 		"atk": 0, "hp": 8, "max_hp": 8, "effects": [],
 		"skill": {
-			"name": "Ambient Pressure", "type": "Reaction",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Ambient Pressure"]
+			"name": "Pressure Sink", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Pressure Sink"]
 		}
 	}
 	var pressure_result := UnitSkillsScript.resolve_reaction(
@@ -2562,13 +2617,13 @@ func _init() -> void:
 		barney, grit_attacker, [barney, grit_attacker], 0.60
 	).message.is_empty())
 
-	# Strike: Cannon Barrage hits enemies outside the attacker's lane.
+	# Strike: Saturation Fire hits enemies outside the attacker's lane.
 	var basilic := {
-		"id": 155, "side": 0, "name": "Crewman Basilic", "kind": "Artillerist",
+		"id": 155, "side": 0, "name": "Flux Battery-140", "kind": "Artillerist",
 		"row": 0, "col": 1, "atk": 4, "hp": 9, "max_hp": 9, "effects": [],
 		"skill": {
-			"name": "Cannon Barrage", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Cannon Barrage"]
+			"name": "Saturation Fire", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Saturation Fire"]
 		}
 	}
 	var barrage_lane_foe := {
@@ -2586,17 +2641,17 @@ func _init() -> void:
 	assert(barrage_far_foe.hp == 3 and barrage_lane_foe.hp == 8)
 	assert(basilic.regen_turns == 2)
 
-	# Warcry: Guard Protects the whole team; at max rank it always adds Regen.
+	# Warcry: Cover Matrix Protects the whole team; at max rank it always adds Regen.
 	var oro := {
-		"id": 158, "side": 0, "name": "Oro the Enlightened", "kind": "Lifebinder",
+		"id": 158, "side": 0, "name": "Helio Mender-143", "kind": "Lifebinder",
 		"atk": 2, "hp": 4, "max_hp": 4, "effects": [], "level": 5,
 		"skill": {
-			"name": "Guard", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Guard"]
+			"name": "Cover Matrix", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Cover Matrix"]
 		}
 	}
 	var guard_ally := {
-		"id": 159, "side": 0, "name": "Guard Ally", "kind": "Duelist",
+		"id": 159, "side": 0, "name": "Cover Matrix Ally", "kind": "Duelist",
 		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
 	}
 	var guard_result := UnitSkillsScript.resolve_warcry(oro, [oro, guard_ally])
@@ -2604,13 +2659,13 @@ func _init() -> void:
 	assert(oro.protect_turns == 3 and guard_ally.protect_turns == 3)
 	assert(oro.regen_turns == 2 and guard_ally.regen_turns == 2)
 
-	# Strike: Pincer Drain only fires against an Immobilised target.
+	# Strike: Clamp Drain only fires against an Immobilised target.
 	var cara := {
-		"id": 160, "side": 0, "name": "Cara Pace", "kind": "Strider",
+		"id": 160, "side": 0, "name": "Zephyr Lancer-144", "kind": "Strider",
 		"atk": 0, "hp": 5, "max_hp": 5, "effects": [],
 		"skill": {
-			"name": "Pincer Drain", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Pincer Drain"]
+			"name": "Clamp Drain", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Clamp Drain"]
 		}
 	}
 	var pincer_target := {
@@ -2630,13 +2685,13 @@ func _init() -> void:
 		cara, free_target, [cara, free_target], 0.29
 	).message.is_empty())
 
-	# Strike: Slash Speed knocks back the target plus the highest-ATK other enemy.
+	# Strike: Vector Flurry knocks back the target plus the highest-ATK other enemy.
 	var clair := {
-		"id": 163, "side": 0, "name": "Clair", "kind": "Duelist",
+		"id": 163, "side": 0, "name": "Relay Blade-146", "kind": "Duelist",
 		"row": 1, "col": 2, "atk": 4, "hp": 5, "max_hp": 5, "effects": [],
 		"skill": {
-			"name": "Slash Speed", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Slash Speed"]
+			"name": "Vector Flurry", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Vector Flurry"]
 		}
 	}
 	var slash_target := {
@@ -2659,14 +2714,14 @@ func _init() -> void:
 	assert(slash_weak.col == 3)
 	assert(clair.regen_turns == 1)
 
-	# Chant (start): Mighty Guard Protects and Regens the team, then the doom
+	# Chant (start): Lasting Aegis Protects and Regens the team, then the doom
 	# timer defeats the caster after the listed number of enemy turns.
 	var white_mage := {
-		"id": 167, "side": 0, "name": "White Mage", "kind": "Lifebinder",
+		"id": 167, "side": 0, "name": "Cinder Mender-148", "kind": "Lifebinder",
 		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Mighty Guard", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Mighty Guard"]
+			"name": "Lasting Aegis", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Lasting Aegis"]
 		}
 	}
 	var mighty_units := [white_mage, guard_ally]
@@ -2679,14 +2734,14 @@ func _init() -> void:
 	UnitSkillsScript.expire_statuses(mighty_units, 1)
 	assert(white_mage.hp == 0)
 
-	# Chant (start): Ocean's Reclaim cleanses Immobilise and Stun from random
+	# Chant (start): Tidal Reset cleanses Immobilise and Stun from random
 	# other allies and grants Regen.
 	var steph := {
-		"id": 168, "side": 0, "name": "Steph Lopod", "kind": "Channeler",
+		"id": 168, "side": 0, "name": "Zephyr Weaver-150", "kind": "Channeler",
 		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Ocean's Reclaim", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Ocean's Reclaim"]
+			"name": "Tidal Reset", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Tidal Reset"]
 		}
 	}
 	var reclaim_ally := {
@@ -2699,13 +2754,13 @@ func _init() -> void:
 	assert(reclaim_ally.immobilized_turns == 0 and reclaim_ally.stun_turns == 0)
 	assert(reclaim_ally.regen_turns == 2)
 
-	# Reaction: Tide Turn Taunts the attacker and can grant Regen.
+	# Reaction: Reversal Current Taunts the attacker and can grant Regen.
 	var ant := {
-		"id": 170, "side": 1, "name": "Ant Lantis", "kind": "Warden",
+		"id": 170, "side": 1, "name": "Zephyr Bastion-152", "kind": "Warden",
 		"atk": 1, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Tide Turn", "type": "Reaction",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Tide Turn"]
+			"name": "Reversal Current", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Reversal Current"]
 		}
 	}
 	var tide_result := UnitSkillsScript.resolve_reaction(
@@ -2718,13 +2773,13 @@ func _init() -> void:
 	UnitSkillsScript.resolve_reaction(ant, grit_attacker, [ant, grit_attacker], 0.20)
 	assert(ant.regen_turns == 0)
 
-	# Reaction: Yield! knocks the attacker back and Immobilises it.
+	# Reaction: Repulse Command knocks the attacker back and Immobilises it.
 	var ki := {
-		"id": 171, "side": 1, "name": "Ki", "kind": "Warden",
+		"id": 171, "side": 1, "name": "Flux Bastion-154", "kind": "Warden",
 		"row": 0, "col": 3, "atk": 2, "hp": 7, "max_hp": 7, "effects": [],
 		"skill": {
-			"name": "Yield!", "type": "Reaction",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Yield!"]
+			"name": "Repulse Command", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Repulse Command"]
 		}
 	}
 	var yield_attacker := {
@@ -2739,22 +2794,22 @@ func _init() -> void:
 	assert(yield_attacker.immobilized_turns == 2)
 	assert(ki.regen_turns == 1)
 
-	# Chant (end): Impairing Joust and Galatine's Ground only resolve in the end
-	# phase; Galatine's Ground Stuns, and Stun blocks activation and movement.
+	# Chant (end): Lockdown Sweep and Grounding Wave only resolve in the end
+	# phase; Grounding Wave Stuns, and Stun blocks activation and movement.
 	var rook := {
-		"id": 173, "side": 0, "name": "The Rook", "kind": "Warden",
+		"id": 173, "side": 0, "name": "Brass Bastion-136", "kind": "Warden",
 		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
 		"skill": {
-			"name": "Impairing Joust", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Impairing Joust"]
+			"name": "Lockdown Sweep", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Lockdown Sweep"]
 		}
 	}
 	var gawain := {
-		"id": 174, "side": 0, "name": "Gawain the Just", "kind": "Duelist",
+		"id": 174, "side": 0, "name": "Relay Blade-156", "kind": "Duelist",
 		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Galatine's Ground", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Galatine's Ground"]
+			"name": "Grounding Wave", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Grounding Wave"]
 		}
 	}
 	var taunted_foe := {
@@ -2776,13 +2831,13 @@ func _init() -> void:
 	UnitSkillsScript.expire_statuses(joust_units, 1)
 	assert(taunted_foe.stun_turns == 0)
 
-	# Chant (start): Blossom's Bloom buffs only allies carrying Regen, for 1 turn.
+	# Chant (start): Growth Pulse buffs only allies carrying Regen, for 1 turn.
 	var sakura := {
-		"id": 176, "side": 0, "name": "Sakura", "kind": "Channeler",
+		"id": 176, "side": 0, "name": "Brass Weaver-158", "kind": "Channeler",
 		"atk": 2, "hp": 7, "max_hp": 7, "effects": [],
 		"skill": {
-			"name": "Blossom's Bloom", "type": "Chant",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Blossom's Bloom"]
+			"name": "Growth Pulse", "type": "Chant",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Growth Pulse"]
 		}
 	}
 	var bloom_ally := {
@@ -2800,15 +2855,15 @@ func _init() -> void:
 	ConductorSkillsScript.expire_effects(bloom_units, 0)
 	assert(bloom_ally.atk == 2)
 
-	# Warcry + end phase: Sun Festival counts down, then heals all allies and
+	# Warcry + end phase: Solar Crescendo counts down, then heals all allies and
 	# grants Regen carriers ATK and Haste (Haste adds +1 movement).
 	var inti := {
-		"id": 179, "side": 0, "name": "Inti Chihuan", "kind": "Lifebinder",
+		"id": 179, "side": 0, "name": "Helio Mender-160", "kind": "Lifebinder",
 		"row": 0, "col": 0, "move": 1, "range": 2, "atk": 1, "hp": 3, "max_hp": 4,
 		"effects": [],
 		"skill": {
-			"name": "Sun Festival", "type": "Warcry",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Sun Festival"]
+			"name": "Solar Crescendo", "type": "Warcry",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Solar Crescendo"]
 		}
 	}
 	var festival_ally := {
@@ -2831,13 +2886,13 @@ func _init() -> void:
 	UnitSkillsScript.expire_statuses(festival_units, 0)
 	assert(festival_ally.haste_turns == 0)
 
-	# Strike: Trisha's Prospect steals Protect from the enemy team for its allies.
+	# Strike: Shield Exchange steals Protect from the enemy team for its allies.
 	var hohenheim := {
-		"id": 181, "side": 0, "name": "Van Hohenheim", "kind": "Lifebinder",
+		"id": 181, "side": 0, "name": "Helio Mender-162", "kind": "Lifebinder",
 		"atk": 1, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Trisha's Prospect", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Trisha's Prospect"]
+			"name": "Shield Exchange", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Shield Exchange"]
 		}
 	}
 	var prospect_target := {
@@ -2860,13 +2915,13 @@ func _init() -> void:
 		hohenheim, prospect_target, prospect_units
 	).message.is_empty())
 
-	# Reaction: Tag-Team buffs the highest-ATK other ally and can self-Regen.
+	# Reaction: Paired Circuit buffs the highest-ATK other ally and can self-Regen.
 	var furia := {
-		"id": 184, "side": 0, "name": "Furia Rojo", "kind": "Warden",
+		"id": 184, "side": 0, "name": "Cinder Bastion-166", "kind": "Warden",
 		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
 		"skill": {
-			"name": "Tag-Team", "type": "Reaction",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Tag-Team"]
+			"name": "Paired Circuit", "type": "Reaction",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Paired Circuit"]
 		}
 	}
 	var tag_partner := {
@@ -2879,62 +2934,62 @@ func _init() -> void:
 	assert(tag_result.affected.has(185))
 	assert(tag_partner.atk == 6 and furia.regen_turns == 1)
 
-	# Strike: the Brother skills check the board for their sibling by name.
-	var yuuya := {
-		"id": 186, "side": 0, "name": "Yuuya Sakazaki", "kind": "Artillerist",
+	# The paired Strike skills detect one another by skill identity.
+	var resonance_unit := {
+		"id": 186, "side": 0, "name": "Cinder Battery-171", "kind": "Artillerist",
 		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Hurtful Brother", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Hurtful Brother"]
+			"name": "Twin Resonance", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Twin Resonance"]
 		}
 	}
-	var sakuya := {
-		"id": 187, "side": 0, "name": "Sakuya Le Bel Shirogane", "kind": "Channeler",
+	var dissonance_unit := {
+		"id": 187, "side": 0, "name": "Zephyr Weaver-169", "kind": "Channeler",
 		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
 		"skill": {
-			"name": "Heartful Brother", "type": "Strike",
-			"rank_values": UnitCatalogScript.RANK_VALUES["Heartful Brother"]
+			"name": "Twin Dissonance", "type": "Strike",
+			"rank_values": UnitCatalogScript.RANK_VALUES["Twin Dissonance"]
 		}
 	}
 	var brother_foe := {
 		"id": 188, "side": 1, "name": "Brother Foe", "kind": "Warden",
 		"atk": 3, "hp": 8, "max_hp": 8, "effects": []
 	}
-	# Hurtful Brother: allies gain HP; the Regen rider needs Sakuya on the board.
-	var hurtful_result := UnitSkillsScript.resolve_strike(
-		yuuya, brother_foe, [yuuya, brother_foe]
+	# Twin Resonance: allies gain HP; its paired skill enables the Regen rider.
+	var resonance_result := UnitSkillsScript.resolve_strike(
+		resonance_unit, brother_foe, [resonance_unit, brother_foe]
 	)
-	assert(hurtful_result.affected == [186])
-	assert(yuuya.hp == 7 and yuuya.max_hp == 7)
-	assert(yuuya.get("regen_turns", 0) == 0)
-	var hurtful_sakuya := UnitSkillsScript.resolve_strike(
-		yuuya, brother_foe, [yuuya, sakuya, brother_foe]
+	assert(resonance_result.affected == [186])
+	assert(resonance_unit.hp == 7 and resonance_unit.max_hp == 7)
+	assert(resonance_unit.get("regen_turns", 0) == 0)
+	var paired_resonance_result := UnitSkillsScript.resolve_strike(
+		resonance_unit, brother_foe, [resonance_unit, dissonance_unit, brother_foe]
 	)
-	assert(hurtful_sakuya.affected == [186, 187])
-	assert(yuuya.regen_turns == 2 and sakuya.regen_turns == 2)
-	ConductorSkillsScript.expire_effects([yuuya, sakuya], 0)
-	assert(yuuya.max_hp == 8) # both +1 HP stacks still active
-	ConductorSkillsScript.expire_effects([yuuya, sakuya], 0)
-	assert(yuuya.max_hp == 6 and yuuya.hp == 6) # both stacks expired together
-	# Heartful Brother: enemies lose ATK; the Vulnerable rider needs Yuuya.
-	yuuya.hp = 6
-	var heartful_result := UnitSkillsScript.resolve_strike(
-		sakuya, brother_foe, [sakuya, brother_foe]
+	assert(paired_resonance_result.affected == [186, 187])
+	assert(resonance_unit.regen_turns == 2 and dissonance_unit.regen_turns == 2)
+	ConductorSkillsScript.expire_effects([resonance_unit, dissonance_unit], 0)
+	assert(resonance_unit.max_hp == 8) # both +1 HP stacks still active
+	ConductorSkillsScript.expire_effects([resonance_unit, dissonance_unit], 0)
+	assert(resonance_unit.max_hp == 6 and resonance_unit.hp == 6) # both stacks expired together
+	# Twin Dissonance: enemies lose ATK; its paired skill enables Vulnerable.
+	resonance_unit.hp = 6
+	var dissonance_result := UnitSkillsScript.resolve_strike(
+		dissonance_unit, brother_foe, [dissonance_unit, brother_foe]
 	)
-	assert(heartful_result.affected == [188])
+	assert(dissonance_result.affected == [188])
 	assert(brother_foe.atk == 2)
 	assert(brother_foe.get("vulnerable_turns", 0) == 0)
-	var heartful_yuuya := UnitSkillsScript.resolve_strike(
-		sakuya, brother_foe, [sakuya, yuuya, brother_foe]
+	var paired_dissonance_result := UnitSkillsScript.resolve_strike(
+		dissonance_unit, brother_foe, [dissonance_unit, resonance_unit, brother_foe]
 	)
 	assert(brother_foe.atk == 1 and brother_foe.vulnerable_turns == 2)
-	assert("Yuuya" in heartful_yuuya.message)
+	assert("linked counterpart" in paired_dissonance_result.message)
 
-	# Aura: Moonlight raises allied current and max HP while the source lives.
+	# Aura: Lumen Shell raises allied current and max HP while the source lives.
 	var empress := {
-		"id": 110, "side": 0, "name": "Final Empress", "kind": "Duelist",
+		"id": 110, "side": 0, "name": "Relay Blade-100", "kind": "Duelist",
 		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
-		"skill": {"name": "Moonlight", "type": "Aura"}
+		"skill": {"name": "Lumen Shell", "type": "Aura"}
 	}
 	var moonlit_ally := {
 		"id": 111, "side": 0, "name": "Moonlit Ally", "kind": "Warden",
@@ -2949,7 +3004,7 @@ func _init() -> void:
 	UnitSkillsScript.refresh_auras(aura_units, aura_events)
 	assert(aura_events.size() == 1)
 	assert(aura_events[0].unit_id == 111 and aura_events[0].delta == 4)
-	assert(aura_events[0].label == "Moonlight")
+	assert(aura_events[0].label == "Lumen Shell")
 	assert(moonlit_ally.hp == 8 and moonlit_ally.max_hp == 12)
 	assert(empress.hp == 6 and empress.max_hp == 6)
 	assert(moonlit_foe.hp == 5 and moonlit_foe.max_hp == 5)
@@ -2962,7 +3017,7 @@ func _init() -> void:
 	UnitSkillsScript.refresh_auras([moonlit_ally, moonlit_foe], aura_events)
 	assert(aura_events.size() == 1)
 	assert(aura_events[0].unit_id == 111 and aura_events[0].delta == -4)
-	assert(aura_events[0].label == "Moonlight")
+	assert(aura_events[0].label == "Lumen Shell")
 	assert(moonlit_ally.hp == 4 and moonlit_ally.max_hp == 8)
 	# Losing the aura never kills: HP bottoms out at 1.
 	UnitSkillsScript.refresh_auras(aura_units)
@@ -2971,80 +3026,80 @@ func _init() -> void:
 	assert(moonlit_ally.hp == 1 and moonlit_ally.max_hp == 8)
 	# Two sources stack, aura units buff each other, and level scales the aura.
 	var opelle := {
-		"id": 113, "side": 0, "name": "Opelle", "kind": "Lifebinder",
+		"id": 113, "side": 0, "name": "Helio Mender-102", "kind": "Lifebinder",
 		"atk": 3, "hp": 5, "max_hp": 5, "effects": [], "level": 2,
-		"skill": UnitCatalogScript.by_name("Opelle").skill.to_dict()
+		"skill": UnitCatalogScript.by_name("Helio Mender-102").skill.to_dict()
 	}
 	UnitSkillsScript.refresh_auras(aura_units + [opelle])
 	assert(moonlit_ally.hp == 10 and moonlit_ally.max_hp == 17)
 	assert(empress.max_hp == 11 and opelle.max_hp == 9)
 
-	# Aura: Inspire Lambkin grants OTHER allied Lambkin +{0} max HP and +{1}
-	# ATK; non-Lambkin allies and the source itself are unaffected.
-	var inspire_skill: Dictionary = UnitCatalogScript.by_name("Claw Minstrel").skill.to_dict()
+	# Aura: Resonant Chorus grants OTHER allied resonant-frame +{0} max HP and +{1}
+	# ATK; non-resonant-frame allies and the source itself are unaffected.
+	var inspire_skill: Dictionary = UnitCatalogScript.by_name("Zephyr Mender-208").skill.to_dict()
 	assert(UnitSkillsScript.rank_value(inspire_skill, 1, 0, 1) == 1)
 	assert(UnitSkillsScript.rank_value(inspire_skill, 1, 1, 1) == 1)
 	assert(UnitSkillsScript.rank_value(inspire_skill, 5, 0, 1) == 4)
 	assert(UnitSkillsScript.rank_value(inspire_skill, 5, 1, 1) == 2)
 	var minstrel := {
-		"id": 120, "side": 0, "name": "Claw Minstrel", "kind": "Lifebinder",
-		"atk": 2, "hp": 3, "max_hp": 3, "effects": [], "race": "lambkin",
+		"id": 120, "side": 0, "name": "Zephyr Mender-208", "kind": "Lifebinder",
+		"atk": 2, "hp": 3, "max_hp": 3, "effects": [], "chassis_family": "resonant",
 		"skill": inspire_skill
 	}
-	var lambkin_ally := {
-		"id": 121, "side": 0, "name": "Flame Warden", "kind": "Lifebinder",
-		"atk": 2, "hp": 3, "max_hp": 5, "effects": [], "race": "lambkin"
+	var resonant_ally := {
+		"id": 121, "side": 0, "name": "Cinder Mender-213", "kind": "Lifebinder",
+		"atk": 2, "hp": 3, "max_hp": 5, "effects": [], "chassis_family": "resonant"
 	}
-	var human_ally := {
+	var standard_ally := {
 		"id": 122, "side": 0, "name": "Human Ally", "kind": "Warden",
-		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "race": "human"
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "chassis_family": "standard"
 	}
-	var inspire_units := [minstrel, lambkin_ally, human_ally]
+	var inspire_units := [minstrel, resonant_ally, standard_ally]
 	var inspire_events: Array = []
 	UnitSkillsScript.refresh_auras(inspire_units, inspire_events)
 	assert(inspire_events.size() == 2)
 	assert(inspire_events[0].unit_id == 121 and inspire_events[0].delta == 1)
-	assert(inspire_events[0].label == "Inspire Lambkin")
+	assert(inspire_events[0].label == "Resonant Chorus")
 	assert(inspire_events[0].stat == "HP")
 	assert(inspire_events[1].unit_id == 121 and inspire_events[1].delta == 1)
 	assert(inspire_events[1].stat == "ATK")
-	assert(lambkin_ally.max_hp == 6 and lambkin_ally.hp == 4)
-	assert(lambkin_ally.atk == 3)
+	assert(resonant_ally.max_hp == 6 and resonant_ally.hp == 4)
+	assert(resonant_ally.atk == 3)
 	assert(minstrel.max_hp == 3 and minstrel.atk == 2)
-	assert(human_ally.max_hp == 6 and human_ally.atk == 3)
+	assert(standard_ally.max_hp == 6 and standard_ally.atk == 3)
 	# Refreshing while the source lives is idempotent.
 	inspire_events.clear()
 	UnitSkillsScript.refresh_auras(inspire_units, inspire_events)
 	assert(inspire_events.is_empty())
-	assert(lambkin_ally.max_hp == 6 and lambkin_ally.atk == 3)
+	assert(resonant_ally.max_hp == 6 and resonant_ally.atk == 3)
 	# Both buffs drop when the source dies.
 	minstrel.hp = 0
 	UnitSkillsScript.refresh_auras(inspire_units, inspire_events)
-	assert(lambkin_ally.max_hp == 5 and lambkin_ally.atk == 2)
+	assert(resonant_ally.max_hp == 5 and resonant_ally.atk == 2)
 	# Both buffs drop while the source is Silenced and return when it expires.
 	minstrel.hp = 3
 	minstrel.silenced_turns = 1
 	UnitSkillsScript.refresh_auras(inspire_units, inspire_events)
-	assert(lambkin_ally.max_hp == 5 and lambkin_ally.atk == 2)
+	assert(resonant_ally.max_hp == 5 and resonant_ally.atk == 2)
 	minstrel.silenced_turns = 0
 	UnitSkillsScript.refresh_auras(inspire_units, inspire_events)
-	assert(lambkin_ally.max_hp == 6 and lambkin_ally.atk == 3)
-	# Two sources stack (like Moonlight), and carriers buff each other.
+	assert(resonant_ally.max_hp == 6 and resonant_ally.atk == 3)
+	# Two sources stack (like Lumen Shell), and carriers buff each other.
 	var harlequin := {
-		"id": 123, "side": 0, "name": "Conjuring Harlequin", "kind": "Channeler",
-		"atk": 5, "hp": 4, "max_hp": 4, "effects": [], "race": "lambkin", "level": 5,
-		"skill": UnitCatalogScript.by_name("Conjuring Harlequin").skill.to_dict()
+		"id": 123, "side": 0, "name": "Flux Weaver-211", "kind": "Channeler",
+		"atk": 5, "hp": 4, "max_hp": 4, "effects": [], "chassis_family": "resonant", "level": 5,
+		"skill": UnitCatalogScript.by_name("Flux Weaver-211").skill.to_dict()
 	}
 	UnitSkillsScript.refresh_auras(inspire_units + [harlequin])
-	assert(lambkin_ally.max_hp == 10 and lambkin_ally.atk == 5)
+	assert(resonant_ally.max_hp == 10 and resonant_ally.atk == 5)
 	assert(minstrel.max_hp == 7 and minstrel.atk == 4)
 	assert(harlequin.max_hp == 5 and harlequin.atk == 6)
-	assert(human_ally.max_hp == 6 and human_ally.atk == 3)
+	assert(standard_ally.max_hp == 6 and standard_ally.atk == 3)
 
-	# Warcry: Summon Forth makes the carrier take 0 damage from attacks for
+	# Warcry: Retaliation Screen makes the carrier take 0 damage from attacks for
 	# {0} enemy turns; each blocked hit retaliates against the {2} highest-ATK
 	# living enemies for {1}% of the attacker's ATK (min 1, rounded down).
-	var summon_skill: Dictionary = UnitCatalogScript.by_name("Rydia of Mist").skill.to_dict()
+	var summon_skill: Dictionary = UnitCatalogScript.by_name("Flux Weaver-188").skill.to_dict()
 	assert(UnitSkillsScript.rank_value(summon_skill, 1, 0, 1) == 1)
 	assert(UnitSkillsScript.rank_value(summon_skill, 1, 1, 50) == 50)
 	assert(UnitSkillsScript.rank_value(summon_skill, 1, 2, 1) == 1)
@@ -3052,7 +3107,7 @@ func _init() -> void:
 	assert(UnitSkillsScript.rank_value(summon_skill, 5, 1, 50) == 100)
 	assert(UnitSkillsScript.rank_value(summon_skill, 5, 2, 1) == 3)
 	var rydia := {
-		"id": 500, "side": 0, "name": "Rydia of Mist", "kind": "Channeler",
+		"id": 500, "side": 0, "name": "Flux Weaver-188", "kind": "Channeler",
 		"row": 0, "col": 1, "atk": 3, "hp": 7, "max_hp": 7, "effects": [], "level": 1,
 		"skill": summon_skill
 	}
@@ -3072,7 +3127,7 @@ func _init() -> void:
 	var summon_warcry := UnitSkillsScript.resolve_warcry(rydia, summon_units)
 	assert(summon_warcry.affected == [500])
 	assert(rydia.summon_forth_turns == 1)
-	assert("Summon Forth (1 turns)" in ConductorSkillsScript.effect_summary(rydia))
+	assert("Retaliation Screen (1 turns)" in ConductorSkillsScript.effect_summary(rydia))
 	# The level-1 row blocks the attack and deals 50% of 4 ATK = 2 damage to
 	# the single highest-ATK enemy (the 6-ATK Brute, not the attacker).
 	var summon_hit: Dictionary = BattleSimulatorScript.apply_unit_damage(
@@ -3123,7 +3178,7 @@ func _init() -> void:
 		"atk": 5, "hp": 5, "max_hp": 5, "effects": []
 	}
 	var tie_b := {
-		"id": 511, "side": 1, "name": "Tie Edge", "kind": "Duelist",
+		"id": 511, "side": 1, "name": "Tie Zephyr Lancer-202", "kind": "Duelist",
 		"atk": 5, "hp": 5, "max_hp": 5, "effects": []
 	}
 	rydia.level = 1
@@ -3147,11 +3202,11 @@ func _init() -> void:
 		rydia, tie_a, [rydia, tie_a, tie_b], tie_rng
 	).affected.is_empty())
 
-	# Chant: Quiet! fires at the start of the OPPOSING side's turn exactly
+	# Chant: Silent Cycle fires at the start of the OPPOSING side's turn exactly
 	# {0} times after deployment, Silencing the {1} highest-ATK living
 	# enemies for {2} enemy turns; the carrier takes 0 attack damage from
 	# Silenced attackers for as long as it lives.
-	var quiet_skill: Dictionary = UnitCatalogScript.by_name("Nageki Fujishiro").skill.to_dict()
+	var quiet_skill: Dictionary = UnitCatalogScript.by_name("Flux Mender-195").skill.to_dict()
 	assert(UnitSkillsScript.rank_value(quiet_skill, 1, 0, 1) == 1)
 	assert(UnitSkillsScript.rank_value(quiet_skill, 1, 1, 1) == 1)
 	assert(UnitSkillsScript.rank_value(quiet_skill, 1, 2, 1) == 1)
@@ -3159,7 +3214,7 @@ func _init() -> void:
 	assert(UnitSkillsScript.rank_value(quiet_skill, 5, 1, 1) == 3)
 	assert(UnitSkillsScript.rank_value(quiet_skill, 5, 2, 1) == 3)
 	var nageki := {
-		"id": 520, "side": 0, "name": "Nageki Fujishiro", "kind": "Lifebinder",
+		"id": 520, "side": 0, "name": "Flux Mender-195", "kind": "Lifebinder",
 		"row": 0, "col": 1, "atk": 2, "hp": 5, "max_hp": 5, "effects": [], "level": 3,
 		"quiet_triggers_left": 2,
 		"skill": quiet_skill
@@ -3328,18 +3383,18 @@ func _init() -> void:
 	assert(KineticCrucibleScript.scaled_stat(0, 5) == 0)
 	assert(KineticCrucibleScript.scaled_stat(3, 3) == 4)
 
-	# Secondary skills scale with unit level via the reference rank tables.
-	var mend_skill: Dictionary = UnitCatalogScript.by_name("Street Nurse").skill.to_dict()
+	# Secondary skills scale with unit level via authored rank tables.
+	var mend_skill: Dictionary = UnitCatalogScript.by_name("Helio Mender-049").skill.to_dict()
 	assert(mend_skill.has("rank_values"))
 	assert(UnitSkillsScript.rank_value(mend_skill, 1, 0, 3) == 3)
 	assert(UnitSkillsScript.rank_value(mend_skill, 5, 0, 3) == 7)
 	assert(UnitSkillsScript.rank_value(mend_skill, 99, 0, 3) == 7)
-	assert(UnitSkillsScript.rank_value({"name": "Mend"}, 5, 0, 3) == 3)
-	var nurse_skill: SkillData = UnitCatalogScript.by_name("Street Nurse").skill
-	assert(nurse_skill.format_text(1) == "Restore 3 HP to the allied unit with the lowest HP.")
-	assert(nurse_skill.format_text(5) == "Restore 7 HP to the allied unit with the lowest HP.")
+	assert(UnitSkillsScript.rank_value({"name": "Repair Pulse"}, 5, 0, 3) == 3)
+	var nurse_skill: SkillData = UnitCatalogScript.by_name("Helio Mender-049").skill
+	assert(nurse_skill.format_text(1) == "On deployment, restore 3 HP to the allied unit with the lowest HP.")
+	assert(nurse_skill.format_text(5) == "On deployment, restore 7 HP to the allied unit with the lowest HP.")
 	var veteran_nurse := {
-		"id": 95, "side": 0, "name": "Street Nurse", "kind": "Lifebinder",
+		"id": 95, "side": 0, "name": "Helio Mender-049", "kind": "Lifebinder",
 		"atk": 2, "hp": 3, "max_hp": 3, "effects": [], "level": 5,
 		"skill": mend_skill
 	}
@@ -3351,9 +3406,9 @@ func _init() -> void:
 		veteran_nurse, [veteran_nurse, veteran_patient]
 	).message.is_empty())
 	assert(veteran_patient.hp == 8)
-	var apostle_skill: Dictionary = UnitCatalogScript.by_name("Order Apostle").skill.to_dict()
+	var apostle_skill: Dictionary = UnitCatalogScript.by_name("Flux Lancer-025").skill.to_dict()
 	var veteran_apostle := {
-		"id": 97, "side": 0, "name": "Order Apostle", "atk": 2,
+		"id": 97, "side": 0, "name": "Flux Lancer-025", "atk": 2,
 		"hp": 4, "max_hp": 4, "effects": [], "level": 5, "skill": apostle_skill
 	}
 	var wrath_enemy := {
@@ -3368,8 +3423,8 @@ func _init() -> void:
 	assert(wrath_enemy.hp == 4)
 	assert("split between random enemy units" in wrath_result.message)
 	var veteran_skirmisher := {
-		"id": 99, "side": 0, "name": "Claw Skirmisher", "level": 5,
-		"skill": UnitCatalogScript.by_name("Claw Skirmisher").skill.to_dict()
+		"id": 99, "side": 0, "name": "Cinder Lancer-017", "level": 5,
+		"skill": UnitCatalogScript.by_name("Cinder Lancer-017").skill.to_dict()
 	}
 	var strike_target := {
 		"id": 100, "side": 1, "name": "Strike Target",
@@ -3384,50 +3439,50 @@ func _init() -> void:
 	assert(strike_target.immobilized_turns == 2)
 
 	# Promotion conversion: a level-5 copy becomes its promoted form at level 1.
-	assert(KineticCrucibleScript.promotion_target("Apprentice Builder", roster).name == "Master Builder")
-	assert(KineticCrucibleScript.promotion_target("Master Builder", roster) == null)
+	assert(KineticCrucibleScript.promotion_target("Relay Bastion-013", roster).name == "Relay Bastion-014")
+	assert(KineticCrucibleScript.promotion_target("Relay Bastion-014", roster) == null)
 	# Three-tier promotion chains resolve one step at a time, and the reserve
 	# sort's root resolver walks the full chain back to the base form.
-	assert(KineticCrucibleScript.promotion_target("Conjuring Clown", roster).name == "Conjuring Harlequin")
-	assert(KineticCrucibleScript.promotion_target("Conjuring Harlequin", roster).name == "Conjuring Jester")
-	assert(KineticCrucibleScript.promotion_target("Conjuring Jester", roster) == null)
-	assert(KineticCrucibleScript.promotion_target("Flame Warden", roster).name == "Flame Dissident")
-	assert(KineticCrucibleScript.promotion_target("Flame Dissident", roster).name == "Flame Schematic")
-	assert(KineticCrucibleScript.promotion_target("Flame Schematic", roster) == null)
+	assert(KineticCrucibleScript.promotion_target("Flux Weaver-210", roster).name == "Flux Weaver-211")
+	assert(KineticCrucibleScript.promotion_target("Flux Weaver-211", roster).name == "Flux Weaver-212")
+	assert(KineticCrucibleScript.promotion_target("Flux Weaver-212", roster) == null)
+	assert(KineticCrucibleScript.promotion_target("Cinder Mender-213", roster).name == "Cinder Mender-214")
+	assert(KineticCrucibleScript.promotion_target("Cinder Mender-214", roster).name == "Cinder Mender-215")
+	assert(KineticCrucibleScript.promotion_target("Cinder Mender-215", roster) == null)
 	var chain_by_name := {}
 	for unit in roster:
 		chain_by_name[unit.name] = unit
 	assert(KineticCrucibleScript._promotion_root(
-		"Conjuring Jester", chain_by_name, {}
-	) == "Conjuring Clown")
+		"Flux Weaver-212", chain_by_name, {}
+	) == "Flux Weaver-210")
 	assert(KineticCrucibleScript._promotion_root(
-		"Flame Schematic", chain_by_name, {}
-	) == "Flame Warden")
+		"Cinder Mender-215", chain_by_name, {}
+	) == "Cinder Mender-213")
 	var promo_config := ConfigFile.new()
 	promo_config.set_value("meta", "instances_migrated", true)
 	promo_config.set_value("collection", "next_id", 11)
 	promo_config.set_value("collection", "instances", [
-		{"id": "unit_000001", "name": "Apprentice Builder", "level": 5, "points": 0, "consumed": false},
-		{"id": "unit_000010", "name": "Trinity Rusher", "level": 5, "points": 0, "consumed": false}
+		{"id": "unit_000001", "name": "Relay Bastion-013", "level": 5, "points": 0, "consumed": false},
+		{"id": "unit_000010", "name": "Relay Lancer-003", "level": 5, "points": 0, "consumed": false}
 	])
 	promo_config.save(KineticCrucibleScript.SAVE_PATH)
-	var promo_counts := {"Apprentice Builder": 1, "Trinity Rusher": 1}
+	var promo_counts := {"Relay Bastion-013": 1, "Relay Lancer-003": 1}
 	var promoted: Dictionary = KineticCrucibleScript.record_promotion(
 		"unit_000001", roster, promo_counts
 	)
-	assert(promoted.ok and promoted.to == "Master Builder")
+	assert(promoted.ok and promoted.to == "Relay Bastion-014")
 	var after_promotion: Array = KineticCrucibleScript.sync_instances(roster, promo_counts)
 	var promoted_copy := KineticCrucibleScript.instance_by_id(
 		after_promotion, "unit_000001"
 	)
-	assert(promoted_copy.name == "Master Builder")
+	assert(promoted_copy.name == "Relay Bastion-014")
 	assert(promoted_copy.level == 1 and promoted_copy.points == 0)
 	assert(after_promotion.filter(
-		func(instance): return instance.name == "Apprentice Builder"
+		func(instance): return instance.name == "Relay Bastion-013"
 	).size() == 1)
 	assert(not KineticCrucibleScript.record_promotion("unit_000010", roster, promo_counts).ok)
 	assert(not KineticCrucibleScript.record_promotion("unit_000001", roster, promo_counts).ok)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 
-	print("Aether Engine smoke tests passed.")
+	print("War of Resonance smoke tests passed.")
 	quit()

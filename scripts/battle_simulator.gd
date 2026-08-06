@@ -172,17 +172,17 @@ static func unit_by_id(units: Array, unit_id: int):
 static func class_skill(kind: String) -> String:
 	match kind:
 		"Strider":
-			return "Double Strike"
+			return "Twin Actuator"
 		"Duelist":
-			return "Fury"
+			return "Momentum Core"
 		"Warden":
-			return "Taunting Strike"
+			return "Anchor Blow"
 		"Artillerist":
-			return "Piercing Shot"
+			return "Rail Volley"
 		"Channeler":
-			return "Blast"
+			return "Arc Burst"
 		"Lifebinder":
-			return "Heal"
+			return "Repair Field"
 	return ""
 
 static func estimate_squad_power(cards: Array) -> float:
@@ -200,12 +200,12 @@ static func estimate_squad_power(cards: Array) -> float:
 	return score
 
 ## The single damage gate. Attack damage (a normal attack hit and its
-## Blast/Pierce riders) passes the attacking unit as `source`; secondary-skill
+## Arc Burst/Rail Volley riders) passes the attacking unit as `source`; secondary-skill
 ## and Conductor damage passes no source and therefore bypasses both damage
-## immunities: Summon Forth (0 damage when attacked while its counter holds)
-## and Quiet! (0 damage from Silenced attackers while the carrier lives).
+## immunities: Retaliation Screen (0 damage while its counter holds) and
+## Silent Cycle (0 damage from Silenced attackers while the carrier lives).
 ## The returned `immunity` names the immunity that zeroed the hit ("" when
-## none) so callers can message it and fire the Summon Forth retaliation.
+## none) so callers can message it and fire Retaliation Screen's response.
 static func apply_unit_damage(
 	unit: Dictionary, amount: int, source: Dictionary = {}
 ) -> Dictionary:
@@ -219,7 +219,7 @@ static func apply_unit_damage(
 		if unit.get("summon_forth_turns", 0) > 0:
 			immunity = "summon_forth"
 		elif (
-			unit.get("skill", {}).get("name", "") == "Quiet!"
+			unit.get("skill", {}).get("name", "") == "Silent Cycle"
 			and source.get("silenced_turns", 0) > 0
 		):
 			immunity = "quiet"

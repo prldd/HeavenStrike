@@ -165,7 +165,7 @@ static func effect_summary(unit: Dictionary) -> String:
 	if unit.get("doom_turns", 0) > 0:
 		labels.append("Doom (%d turns)" % unit.doom_turns)
 	if unit.get("summon_forth_turns", 0) > 0:
-		labels.append("Summon Forth (%d turns)" % unit.summon_forth_turns)
+		labels.append("Retaliation Screen (%d turns)" % unit.summon_forth_turns)
 	return ", ".join(labels)
 
 static func _add_attack_effect(unit: Dictionary, effect_name: String, amount: int, turns: int) -> void:

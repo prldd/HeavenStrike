@@ -12,6 +12,7 @@ func _init() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	BattleSettingsScript.save_settings({
 		"speed": 1.0,
 		"volume": 2,
@@ -266,8 +267,8 @@ func _run() -> void:
 	assert(game.board.has_method("shake"))
 	assert(game.board.has_method("set_practice_mode"))
 	assert(game.board.has_method("set_opponent_identity"))
-	game.board.set_opponent_identity("Minerva", "Grand Circuit Champion")
-	assert(game.board.opponent_name == "Minerva")
+	game.board.set_opponent_identity("Asha Vale", "Grand Circuit Champion")
+	assert(game.board.opponent_name == "Asha Vale")
 	assert(game.board.opponent_affiliation == "Grand Circuit Champion")
 	game.board.set_opponent_identity("", "")
 	game.board.set_practice_mode(true)
@@ -290,25 +291,25 @@ func _run() -> void:
 	assert(preview_unit.silenced_turns == 2)
 	assert(preview_unit.summon_forth_turns == 0)
 	assert(preview_unit.quiet_triggers_left == 0)
-	# Deployment initializes the Quiet! trigger countdown from the rank table.
-	var quiet_card: Dictionary = UnitCatalogScript.by_name("Nageki Fujishiro").to_dict()
+	# Deployment initializes the Silent Cycle trigger countdown from the rank table.
+	var quiet_card: Dictionary = UnitCatalogScript.by_name("Flux Mender-195").to_dict()
 	var quiet_unit: Dictionary = game._spawn_unit(quiet_card, 0, 1, 0)
 	assert(quiet_unit.quiet_triggers_left == 1)
 	assert(quiet_unit.summon_forth_turns == 0)
-	var summon_card: Dictionary = UnitCatalogScript.by_name("Booth").to_dict()
+	var summon_card: Dictionary = UnitCatalogScript.by_name("Cinder Battery-190").to_dict()
 	var summon_unit: Dictionary = game._spawn_unit(summon_card, 0, 2, 0)
 	assert(summon_unit.quiet_triggers_left == 0)
 	game.units.clear()
-	# A Scout that defeats the final blocking unit with its first Double Strike
+	# A Scout that defeats the final blocking unit with its first Twin Actuator strike
 	# spends the remaining strike on the newly exposed enemy Conductor.
 	game.skip_animations = true
-	var scout_card: Dictionary = UnitCatalogScript.by_name("Trinity Rusher").to_dict()
+	var scout_card: Dictionary = UnitCatalogScript.by_name("Relay Lancer-003").to_dict()
 	var scout: Dictionary = game._spawn_unit(scout_card, 0, 0, 5)
 	scout.atk = 2
 	scout.move = 0
 	scout.range = 1
 	scout.skill = {}
-	var blocker_card: Dictionary = UnitCatalogScript.by_name("Pub Bouncer").to_dict()
+	var blocker_card: Dictionary = UnitCatalogScript.by_name("Relay Blade-002").to_dict()
 	var blocker: Dictionary = game._spawn_unit(blocker_card, 1, 0, 6)
 	blocker.hp = 1
 	blocker.max_hp = 1
@@ -366,12 +367,12 @@ func _run() -> void:
 	assert(game.overlay_detail.mouse_filter == Control.MOUSE_FILTER_IGNORE)
 	assert(not game.result_continue_button.visible)
 	assert(not game.result_menu_button.visible)
-	game._show_card_reward("Chain Initiate", true)
+	game._show_card_reward("Relay Mender-006", true)
 	assert(game.reward_reveal.visible)
 	assert(game.reward_portrait.texture != null)
 	assert(game.reward_stars_label.text == "★")
 	assert(game.reward_new_label.visible)
-	game._show_card_reward("Chain Initiate", false)
+	game._show_card_reward("Relay Mender-006", false)
 	assert(not game.reward_new_label.visible)
 	game._open_kinetic_crucible()
 	await process_frame
@@ -432,15 +433,15 @@ func _run() -> void:
 	extras_config.set_value("collection", "next_id", 4)
 	extras_config.set_value("collection", "instances", [
 		{
-			"id": "unit_000001", "name": "Apprentice Builder",
+			"id": "unit_000001", "name": "Relay Bastion-013",
 			"level": 1, "points": 0, "consumed": false
 		},
 		{
-			"id": "unit_000002", "name": "Apprentice Builder",
+			"id": "unit_000002", "name": "Relay Bastion-013",
 			"level": 5, "points": 0, "consumed": false
 		},
 		{
-			"id": "unit_000003", "name": "Apprentice Builder",
+			"id": "unit_000003", "name": "Relay Bastion-013",
 			"level": 3, "points": 0, "consumed": false
 		}
 	])
@@ -465,7 +466,7 @@ func _run() -> void:
 	promo_config.set_value("collection", "next_id", 2)
 	promo_config.set_value("collection", "instances", [
 		{
-			"id": "unit_000001", "name": "Apprentice Builder",
+			"id": "unit_000001", "name": "Relay Bastion-013",
 			"level": 5, "points": 0, "consumed": false
 		}
 	])
@@ -475,12 +476,12 @@ func _run() -> void:
 	game._select_crucible_unit("unit_000001")
 	assert(game.crucible_target_id == "unit_000001")
 	assert(not game.crucible_promote_button.disabled)
-	assert(game.crucible_detail_label.text.contains("MASTER BUILDER"))
+	assert(game.crucible_detail_label.text.contains("RELAY BASTION-014"))
 	game._promote_crucible_unit()
 	var promoted_copy := KineticCrucibleScript.instance_by_id(
 		game.collection_instances, "unit_000001"
 	)
-	assert(promoted_copy.name == "Master Builder")
+	assert(promoted_copy.name == "Relay Bastion-014")
 	assert(promoted_copy.level == 1 and promoted_copy.points == 0)
 	assert(game.crucible_notice.contains("promoted"))
 	assert(game.crucible_promote_button.disabled)
@@ -579,7 +580,7 @@ func _run() -> void:
 	game.completed_missions = [0]
 	game.mission_finished = true
 	game.mission_interlude_pending = true
-	game.recent_reward_name = "Chain Initiate"
+	game.recent_reward_name = "Relay Mender-006"
 	game.overlay.visible = true
 	game.squad_overlay.visible = false
 	game._continue_campaign()
@@ -647,7 +648,7 @@ func _run() -> void:
 	assert(game.mission_intel_label.get_global_rect().end.x
 		<= game.mission_intel_panel.get_global_rect().end.x + 0.5)
 	assert(game.reward_carry_label.visible)
-	assert(game.reward_carry_label.text.contains("CHAIN INITIATE"))
+	assert(game.reward_carry_label.text.contains("RELAY MENDER-006"))
 	game.squad_overlay.visible = false
 	game.squad_opened_for_mission = false
 	game.pending_mission_id = -1
@@ -667,7 +668,7 @@ func _run() -> void:
 	assert(game.mission_selected_id == 61)
 	assert(game.mission_node_buttons[61].text == "40")
 	assert(game.mission_node_buttons[22].get_meta("operation_region") == "The Arena")
-	assert(game.mission_node_buttons[61].get_meta("operation_region") == "Breaking Point")
+	assert(game.mission_node_buttons[61].get_meta("operation_region") == "Coalition Fracture")
 	assert(game.mission_detail_kicker.text.contains("ACT 2"))
 	assert(game.mission_detail_kicker.text.contains("OPERATION 40"))
 	game._switch_operations_act(3)
@@ -714,7 +715,7 @@ func _run() -> void:
 	game._start_new_match()
 	game.round_number = 2
 	await game._deploy_mission_reinforcements(1)
-	assert(game.units.any(func(unit): return unit.name == "Dart Shooter"))
+	assert(game.units.any(func(unit): return unit.name == "Helio Battery-057"))
 	assert(game.battle_simulator.events.any(func(event): return (
 		event.type == "mission_rule_triggered"
 		and event.get("kind", "") == "reinforcement"
@@ -733,14 +734,14 @@ func _run() -> void:
 	replay.record("battle_started", {
 		"player_hp": 20,
 		"enemy_hp": 20,
-		"player_squad": ["Trinity Rusher", "Pub Bouncer"],
-		"enemy_squad": ["Chain Initiate", "Socialite Fencer"],
+		"player_squad": ["Relay Lancer-003", "Relay Blade-002"],
+		"enemy_squad": ["Relay Mender-006", "Relay Bastion-001"],
 		"mission_rules": {
 			"objective": {"type": "survive", "rounds": 3, "title": "Replay Hold"}
 		}
 	})
 	replay.record("deploy", {
-		"side": 0, "unit_id": 1, "card": "Trinity Rusher", "row": 1,
+		"side": 0, "unit_id": 1, "card": "Relay Lancer-003", "row": 1,
 		"col": 2, "mission_role": "priority", "locks_mana": false
 	})
 	replay.record("battle_finished", {
@@ -791,5 +792,5 @@ func _run() -> void:
 	game.queue_free()
 	await process_frame
 	await process_frame
-	print("Aether Engine UI smoke tests passed.")
+	print("War of Resonance UI smoke tests passed.")
 	quit()

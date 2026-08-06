@@ -1,10 +1,8 @@
 # War of Resonance
 
-*(Formerly titled "Aether Engine Tactics.")*
+War of Resonance is an original compact, turn-based strategy RPG. Players assemble a squad of autonomous chassis, deploy them across a three-lane battlefield, and use class behaviors and abilities to defeat the enemy Conductor.
 
-War of Resonance is a compact, turn-based strategy RPG that draws tactical inspiration from the lane-based battles of *Heavenstrike Rivals* and narrative inspiration from *Final Fantasy Tactics: War of the Lions*, *Tactics Ogre*, and *Triangle Strategy*. Players assemble a squad of units, deploy them onto a small battlefield, and use their class behaviors and abilities to defeat the enemy Conductor.
-
-This is a spiritual successor, not a remake. Its setting, characters, artwork, audio, story, terminology, interface, and progression will be original.
+Its setting, characters, artwork, audio, story, terminology, interface, and progression are created specifically for this project.
 
 ## Narrative Foundation
 
@@ -553,7 +551,7 @@ The contradictions previously flagged between this canon and existing prototype 
 
 - **Conductor is the single term.** The leader each side protects — and its once-per-battle power — is a Conductor across the fiction, interface, and documentation. Ordinary military ranks and proper unit names remain distinct from this gameplay role.
 - **Classes and affinity pools.** All six gameplay classes (Scout, Fighter, Defender, Gunner, Mage, Priest) exist within each of the five political factions. Content and sprite production use six 35-unit pools: Universal/Fighter, Steam/Defender, Wind/Scout, Coal/Gunner, Fusion/Mage, and Solar/Priest. Universal is a neutral shared pool, not a sixth political faction. Every pool contains at least two units of every class, while its affinity class is the largest group and retains its strongest promotion lineages. Promotion families never cross pools. The twelve standalone 1-star units are Universal and available to every faction. Runtime faction metadata and faction-restricted NPC squad enforcement remain a follow-up; the current allocation is authoritative in `documentation/Unit_Faction_and_Sprite_Staging.md`.
-- **Story structure is implemented.** The campaign is now 77 missions in three acts matching the structure above: Act 1 "Reclamation" (missions 1–22), Act 2 "The Crisis" (missions 23–62), and Act 3 "Caelis" (missions 63–77, original content). Every mission carries authored briefing/debriefing text (`MISSION_STORIES` in `scripts/story_quest_catalog.gd`) written to `documentation/Resonance_War_Campaign_Narrative.md`, which supersedes the old two-act framing. The older reference-mission titles are retained as cast and beat anchors.
+- **Story structure is implemented.** The campaign is 77 original missions in three acts: Act 1 "Reclamation" (missions 1–22), Act 2 "The Crisis" (missions 23–62), and Act 3 "Caelis" (missions 63–77). Every mission carries authored briefing/debriefing text in `MISSION_STORIES`, mirrored in `documentation/Resonance_War_Campaign_Narrative.md`.
 - **Sky premise de-emphasized.** The earlier sky-island backdrop is legacy atmosphere art only, not setting canon; see the Presentation section.
 
 ### Unresolved Story Decisions
@@ -565,7 +563,7 @@ These should be addressed before campaign and quest design begins:
 3. Which alternative endings are implemented alongside Accord, how the final choice is expressed mechanically, and how endings are named/numbered (Accord is currently designated "Ending B" with no confirmed Ending A).
 4. Cassian's surname, if one becomes necessary.
 
-Resolved by `documentation/Resonance_War_Campaign_Narrative.md` and the implemented 77-mission campaign: the Caelis late-game sequence (Act 3, missions 63–77), the placement of every reference mission within the three acts, and the relay experiment's authorship (a Caelian continuity test run by the wardens through expendable intermediaries).
+Resolved by `documentation/Resonance_War_Campaign_Narrative.md` and the implemented 77-mission campaign: the Caelis late-game sequence, the placement of every mission within the three acts, and the relay experiment's authorship as a Caelian continuity test run through expendable intermediaries.
 
 ## The Player Experience
 
@@ -614,11 +612,11 @@ Before battle, each side prepares a squad of up to 8 units:
 - PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
 - Each campaign encounter defines its own eight-card enemy squad and Conductor skill.
 
-Every unit has a deployment cost, attack, health, movement distance, attack range, class, a race (Human, Ogur, Lambkin, or Felyne), and one or more abilities. Race is a data trait ported from the reference database with no battlefield presence of its own; aura skills such as Inspire Lambkin key off it.
+Every unit has a deployment cost, attack, health, movement distance, attack range, class, chassis family, and one or more abilities. Chassis families are original mechanical tuning groups; aura skills such as Resonant Chorus can key off them.
 
 The current prototype roster contains 210 units: 107 promotion roots or standalone units and 103 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
 
-Campaign missions only award implemented cards listed for that exact story quest in the reference data. Cards listed solely for events, raids, arenas, or gacha are not inserted into campaign pools.
+Campaign missions award cards from authored mission pools. Reward composition and rarity weighting are deterministic game data.
 
 ### Mana
 
@@ -675,7 +673,7 @@ The match continues until a Conductor reaches zero health. If both Conductors ar
 - Newly deployed units move and attack during the resolution phase of the turn in which they are placed.
 - Deployed units may reposition any number of times during the Command phase without losing their normal activation. They may cross friendly units, but cannot cross enemies or finish on an occupied cell.
 - A lane change may cross multiple rows, but every crossed tile must be unoccupied.
-- A unit hit by a Defender's Taunting Strike cannot change lanes for its next two turns.
+- A unit hit by a Defender's Anchor Blow cannot change lanes for its next two turns.
 - Effects with the same timing resolve in board order, from the enemy side toward the acting side, then from the top lane downward.
 
 Secondary unit skills use five timing keywords:
@@ -694,12 +692,12 @@ Board order and targeting are deterministic except where an ability explicitly s
 
 | Class | Movement | Range | Battlefield role |
 | --- | ---: | ---: | --- |
-| Scout | 3 | 1 | **Double Strike:** attacks twice each attack action |
-| Fighter | 2 | 1 | **Fury:** permanently gains +1 ATK after attacking a unit or Conductor |
-| Defender | 2 | 1 | **Taunting Strike:** prevents its target from changing lanes for two turns |
-| Gunner | 1 | 3 | **Piercing Shot:** damages every enemy in range along its lane |
-| Mage | 1 | 3 | **Blast:** adjacent enemies take half the Mage's ATK as splash damage |
-| Priest | 1 | 2 | **Heal:** gives 2 HP to the lowest-health other ally before moving |
+| Scout | 3 | 1 | **Twin Actuator:** attacks twice each attack action |
+| Fighter | 2 | 1 | **Momentum Core:** permanently gains +1 ATK after attacking a unit or Conductor |
+| Defender | 2 | 1 | **Anchor Blow:** prevents its target from changing lanes for two turns |
+| Gunner | 1 | 3 | **Rail Volley:** damages every enemy in range along its lane |
+| Mage | 1 | 3 | **Arc Burst:** adjacent enemies take half the Mage's ATK as splash damage |
+| Priest | 1 | 2 | **Repair Field:** gives 2 HP to the lowest-health other ally before moving |
 
 Classes define basic behavior, while individual abilities give each unit a distinct purpose.
 
@@ -713,7 +711,7 @@ Level thresholds are 3, 6, 12, and 24 points. An unrelated donor
 grants 1 point, a donor of the same class grants 2 points, and another copy of the
 same unit grants 5 points. Overflow carries into the next level. Each level
 raises the copy's ATK and max HP by 10% of its base value (level 5 ≈ 1.4×),
-and its secondary skill uses the matching rank of the reference value table:
+and its secondary skill uses the matching rank of the authored value table:
 level 1 is the base effect and level 5 is the strongest rank.
 
 Level-5 units with an implemented next form are promotion-ready. Promoting
@@ -738,7 +736,7 @@ For development, the Crucible also exposes a clearly labeled debug inventory
 button that grants enough copies to leave at least four active copies of every
 implemented unit without resetting existing levels or merge progress.
 
-The implemented roster contains 210 cards spanning one- to six-star rarity, including unpromoted units and their promoted forms. Mend restores 3 HP to the most-wounded other ally when its unit is deployed. Plague deals 1 damage to every other unit and Poisons each survivor for two turns, dealing 1 additional damage at the start of its side's turns. Envenom lets the player select an enemy to Poison for two turns, while Poison Strike can apply the same damage-over-time pressure during an attack. Pin Down deals 1 damage to the highest-ATK enemy Defender, Fighter, or Scout and Immobilises it for one turn. Demoralize weakens eligible melee enemies in a player-selected lane, Shadowbind saps the ATK of every enemy in a player-selected lane and Immobilises them for a few turns, Punish weakens the highest-ATK enemy Fighter or Mage, and Sunder Armour damages the highest-HP enemy Fighter or Defender before making it Vulnerable to +1 damage for two turns. Big Game Hunter damages the highest-HP enemy and makes it Vulnerable, Contagion damages and Poisons every enemy Mage and Priest, and Meteor Barrage damages every enemy in a player-selected lane. Protect shields a player-selected ally from all damage for a few turns, Royal Flush grants every ally in a player-selected lane Protect for a few turns, Woolen Blanket heals a player-selected ally and grants it Protect for a few turns, Fireball damages a player-selected enemy and splashes orthogonally adjacent enemies, and Warrior's Vigour grants the lowest-HP allied Defender or Fighter bonus HP and ATK for a few turns. Regen restores 1 HP at the start of the unit's side turns and anchors a ported skill family: Guard shields every ally and can also grant them Regen, Prune / Medic! / New Look cleanse Immobilise from a player-selected Priest or Mage / Fighter or Defender / Scout or Gunner and grant the target Regen, and Sun Festival gives every Regen-bearing ally bonus ATK, Haste, and healing after a countdown. The chants Lifestream and Ocean's Reclaim grant Regen while cleansing Immobilise and Stun, Mighty Guard grants the team Protect and Regen at the cost of the caster's life, and Blossom's Bloom empowers allies already carrying Regen, while Hydroblast saps the ATK of every enemy in the chanter's lane and Knocks them Back at the start of each of its side's turns, Wrangle grants Protect to every ally behind the chanter and saps the ATK of every enemy in front of it across all lanes, Roguish Snare springs a deployment trap at the start of each opposing side's turn that Stuns that side's most recently deployed unit for two turns with a rank-scaled chance to Poison it permanently, and the end-of-turn chants Impairing Joust and Galatine's Ground escalate enemy Taunt into Immobilise and Immobilise into Stun. The end-of-turn chant Cattle of Ra Knocks every Taunted enemy Back, Immobilises it, and saps its ATK for one enemy turn; Divine Silence Silences a player-selected enemy for a rank-scaled number of enemy turns, locking its secondary skill — a Silenced unit's Warcry, Strike, Chant, Reaction, and Aura do not trigger while the Silence holds, though it can still move, attack, and use Conductor skills. The start-of-turn chant Stone Gaze Poisons one random non-Poisoned enemy for a rank-scaled number of enemy turns and Stuns up to a rank-scaled number of Poisoned enemies in front of the chanter (the same cross-lane column rule as Wrangle) for one enemy turn. The Summon Forth Warcry makes its carrier take 0 damage when attacked for a rank-scaled number of enemy turns, and each blocked hit retaliates against a rank-scaled number of the highest-ATK enemies for a rank-scaled percentage of the attacker's ATK (minimum 1, rounded down); skill damage bypasses the shield. The Quiet! chant Silences a rank-scaled number of the highest-ATK enemies for a rank-scaled number of enemy turns at the start of each of the first rank-scaled few enemy turns after deployment, and its carrier takes 0 attack damage from Silenced attackers for as long as it lives. On attack, Caber Toss and Slash Speed knock enemies back, Cannon Barrage shells every enemy outside the attacker's lane, Pincer Drain drains ATK from Immobilised targets, and Trisha's Prospect steals Protect from the enemy team, while Hurtful Brother and Heartful Brother grow stronger when Sakuya or Yuuya share the board. Grit, Ambient Pressure, Tide Turn, Yield!, and Tag-Team are reactions that answer enemy attacks with Regen, Taunt, knockback, or team buffs. Stunned units cannot act, move, or reposition; Silenced units keep acting but their secondary skill does not trigger; Haste grants +1 movement; Doom defeats its victim when its countdown ends. The Inspire Lambkin aura, carried by the eight Lambkin minstrels, conjurers, and flame wardens of the latest roster wave, grants every other allied Lambkin bonus max HP and ATK while its source lives and is not Silenced; multiple carriers stack, and carriers bolster each other. Two of its families are the game's first three-tier promotion chains (Conjuring Clown → Conjuring Harlequin → Conjuring Jester and Flame Warden → Flame Dissident → Flame Schematic). Units beyond the starting set are earned as mission rewards; the Regen-skills batch is reward-pool-only even where the reference lists no story-quest source.
+The implemented roster contains 210 original chassis cards spanning one- to six-star rarity, including 103 promotion forms. Six class abilities define each unit’s baseline role: Twin Actuator, Momentum Core, Anchor Blow, Rail Volley, Arc Burst, and Repair Field. Authored secondary skills cover deployment effects, strikes, chants, reactions, auras, healing, damage, protection, movement control, Poison, Regen, Stun, Haste, Doom, and Silence. Skill magnitudes scale across five Kinetic Crucible levels through `UnitCatalog.RANK_VALUES`; their player-facing copy lives in `UnitCatalog.SKILL_DESCRIPTIONS`. Resonant Chorus is the sole chassis-family synergy and strengthens other allied resonant frames while its source remains active. Units beyond the starting set are earned through authored mission reward pools.
 
 ## Example Turn
 
@@ -767,7 +765,7 @@ Conductor selection changes a squad's strategy without adding another unit to th
 - Full 77-mission, three-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 88 reference units across all six classes
+- 210 original chassis units across all six classes
 - Three Conductors
 
 ### Later Possibilities
@@ -781,7 +779,7 @@ Conductor selection changes a squad's strategy without adding another unit to th
 
 Online play and live-service systems are outside the first release. The battle simulation must be complete and reliable before multiplayer is considered.
 
-Campaign mission selection flows from three illustrated, Act-tabbed regional maps into squad selection and then one to three consecutive battles. Each chapter's route is anchored to its narrative territory: Act I crosses the Reclamation frontier from the relay excavation to Sanctuary, Act II runs from the Grand Circuit through the crisis regions to the Gate of Caelis, and Act III moves inward through Caelis from the Outer City to the Source. All 62 reference story missions are present across the first two acts. The battlefield, decks, Mana, and Conductor-skill use reset between encounters, while the player's Conductor carries remaining HP forward. In-progress runs can be resumed.
+Campaign mission selection flows from three illustrated, Act-tabbed regional maps into squad selection and then one to three consecutive battles. Each chapter's route is anchored to its narrative territory: Act I crosses the Reclamation frontier from the relay excavation to Sanctuary, Act II runs from the Grand Circuit through the crisis regions to the Gate of Caelis, and Act III moves inward through Caelis from the Outer City to the Source. The battlefield, decks, Mana, and Conductor-skill use reset between encounters, while the player's Conductor carries remaining HP forward. In-progress runs can be resumed.
 
 The campaign map reports completion by Act and any active run. Each mission has its own briefing, completion debriefing, authored enemy squad, and Conductor configuration. Before deployment, squad selection previews the upcoming enemy cards, Conductor skill, and HP. Continuing after a mission victory opens the next mission's workshop and marks the newly awarded card in Barracks.
 
@@ -822,8 +820,8 @@ The visual direction combines:
 
 Combat information must remain readable even when several abilities resolve in sequence.
 
-The current prototype uses its official unit illustrations as the visual source of
-truth. Its interface should feel like a richly illustrated chibi fantasy strategy
+The current prototype uses its original unit illustrations as the visual source of
+truth. Its interface should feel like a richly illustrated industrial-fantasy strategy
 game presented through an ornate, tactile storybook:
 
 - Deep ink navy and charcoal establish field and panel surfaces.
@@ -837,13 +835,10 @@ game presented through an ornate, tactile storybook:
 - Portrait sprites appear in menus, rewards, decks, and workshop cards. Full-body
   sprites remain exclusive to the battlefield.
 
-Faction-specific replacement art is staged under
-`assets/units/full_by_class/<Pool>/<Class>/`, using the pool and internal class
-names documented in `documentation/Unit_Faction_and_Sprite_Staging.md`.
-`assets/IMAGEPROMPTS.md` supplies the matching generation blocks. Numeric art-ID
-filenames and whole promotion lineages must remain stable. Until the replacement
-pass is approved, the game continues loading battlefield sprites from
-`assets/units/full/`.
+Original class atlases live in `assets/units/original_sources/class_atlases/`.
+`tools/build_original_unit_art.gd` derives faction-colored provenance copies,
+all 210 runtime full-body sprites, and all 210 portraits. Numeric art-ID
+filenames and whole promotion lineages remain stable.
 
 ## Technical Direction
 
@@ -851,9 +846,9 @@ The project will use Godot 4 and target desktop first at a touch-friendly 16:9 r
 
 Battle activation planning is separated from animation and interface code in `BattleSimulator`. It owns seeded randomness, activation order, projected movement, target selection, skill timing metadata, structured event records, and deterministic replay serialization. The presentation layer consumes those decisions for animation and audio, while a headless balance harness audits every configured campaign encounter.
 
-The current presentation layer previews each side's upcoming activation order before resolution, identifies unit class and secondary-skill timing in the combat log, animates combat results, and displays persistent counters for Taunt, Immobilise, Fury, buffs, and debuffs.
+The current presentation layer previews each side's upcoming activation order before resolution, identifies unit class and secondary-skill timing in the combat log, animates combat results, and displays persistent counters for Taunt, Immobilise, Momentum, buffs, and debuffs.
 
-Combat presentation uses eased movement and class-specific actions: melee lunges, ranged projectiles, healing pulses, hit recoil, sequential Double Strikes, multi-target Blast and Piercing feedback, and a defeat dissolve before defeated units leave the board.
+Combat presentation uses eased movement and class-specific actions: melee lunges, ranged projectiles, repair pulses, hit recoil, sequential Twin Actuator strikes, Arc Burst and Rail Volley feedback, and a defeat dissolve before defeated units leave the board.
 
 Battle audio is synthesized locally and synchronized with deployment, movement, class attacks, healing, status application, shields, impacts, and defeat. Players can select full volume, half volume, or mute; Conductor impacts also apply a brief screen shake.
 
@@ -892,4 +887,4 @@ The milestone is successful when a player can finish a full five-to-eight-minute
 
 ## Intellectual Property Boundary
 
-The project may draw inspiration from compact lane-based tactical combat, but it must not use the *Heavenstrike Rivals* name, characters, factions, story, dialogue, unit designs, artwork, audio, extracted assets, branding, or copied interface. All production content will be created specifically for War of Resonance.
+Production content must be original or properly licensed. Do not introduce third-party names, characters, factions, story, dialogue, unit designs, artwork, audio, extracted assets, branding, or copied interface elements. All committed game content is created specifically for War of Resonance.

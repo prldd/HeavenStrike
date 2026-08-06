@@ -19,7 +19,7 @@ assets required by the prototype.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Select a deployed unit, then a reachable tile in any other row to reposition it; friendly units may be crossed, but enemies block the path.
-- A unit can reposition any number of times during its Command phase unless a Defender's Taunting Strike has locked it for two turns. Friendly units may be crossed, but enemies block the path.
+- A unit can reposition any number of times during its Command phase unless a Defender's Anchor Blow has locked it for two turns. Friendly units may be crossed, but enemies block the path.
 - Hover or select a deployed unit to preview its cyan traversal path and coral attack reach.
 - Attack reach is projected from the unit's destination after earlier allied movement is simulated.
 - Units stop before the opposing deployment column and attack into it; they never enter the opposing edge.
@@ -56,7 +56,7 @@ assets required by the prototype.
   per-encounter Mana parameters
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Conductor information
-- Reference-accurate story-quest card pools with Star-Rarity weighting and persistent unlocks
+- Authored mission reward pools with Star-Rarity weighting and persistent unlocks
 - 107 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Post-battle 1–10 performance ratings with Conductor integrity, formation
@@ -67,16 +67,12 @@ assets required by the prototype.
 - Mission squad selection before campaign battles
 - Six-unit bench and persistent locked-Mana economy
 - Automatic movement, targeting, attacks, healing, splash, and piercing
-- Mend Warcries that restore 3 HP to the most-wounded ally
-- Plague Warcries that damage every other unit and Poison them for two turns
-- Envenom Warcries with explicit enemy targeting and two-turn Poison
-- Pin Down Warcries that damage and Immobilise the strongest eligible melee enemy
-- Lane-targeted Demoralize Warcries and automatic Punish attack debuffs
-- Poison Strike attacks and Sunder Armour vulnerability setup
+- Deployment skills for repair, corrosion, targeted status effects, and lane control
+- Strike skills for damage-over-time pressure, vulnerability, knockback, and suppression
 - Persistent per-copy Kinetic Crucible progression with five unit levels, donor merging,
   collection consumption, level-scaled stats and skills, and promotion into the next form
 - Full-body sprites on the battlefield and unit-list portraits throughout menus and progression screens
-- A reference-only library of all 1,048 source portraits used during the original-art replacement pass
+- Original full-body and portrait art for every playable unit
 - Enemy deployment AI
 - Finite 8-card enemy squads with hand, draw, and deck exhaustion rules
 - Visible hand and remaining-deck counters for both sides
@@ -93,14 +89,14 @@ assets required by the prototype.
   visible new-reward marker
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
 - Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
-- Player-selected targets for Empower Warcries
+- Player-selected ally, enemy, and lane targets for authored Warcries
 - Conductor health, Rally powers, victory, defeat, and replay
 - Persistent selection of eight Conductor skills
 - Timed attack effects, healing, direct damage, area damage, and Conductor shields
 - Active-effect names and remaining duration in unit hover cards
-- Persistent battlefield badges show Taunt, Immobilise, Fury stacks, and timed stat changes.
+- Persistent battlefield badges show Taunt, Immobilise, Momentum stacks, and timed stat changes.
 - Floating combat feedback calls out damage, healing, status application, and Conductor hits.
-- Class-specific combat animation includes melee lunges, Gunner trails, Mage projectiles, Priest healing pulses, hit recoil, distinct Double Strike impacts, and defeat dissolves.
+- Class-specific combat animation includes melee lunges, Gunner trails, Mage projectiles, Priest repair pulses, hit recoil, distinct Twin Actuator impacts, and defeat dissolves.
 - Synthesized battle audio distinguishes deployment, movement, class attacks, healing, statuses, shields, Conductor hits, and defeats; Conductor damage also triggers subtle screen shake.
 - Victory triggers a dedicated ascending multi-note fanfare before the battle result is presented.
 - Each resolution begins with a compact ordered movement/attack preview; the combat log names unit classes and secondary-skill timing.
@@ -111,18 +107,18 @@ assets required by the prototype.
 
 ## Unit Art Production
 
-Replacement full-body art is organized under
-`assets/units/full_by_class/<Pool>/<Class>/`. The six production pools and
-their primary affinities are Universal/Fighter, Steam/Defender, Wind/Scout,
-Coal/Gunner, Fusion/Mage, and Solar/Priest. Universal is neutral rather than a
-sixth political faction. Every pool contains all six classes, and promotion
-lineages remain together.
+All 210 live unit sprites and portraits are derived from the original class
+atlases in `assets/units/original_sources/class_atlases/`. The reproducible
+builder applies faction palettes, writes per-unit provenance copies, and emits
+the runtime files:
 
-Use [the faction and sprite staging reference](documentation/Unit_Faction_and_Sprite_Staging.md)
-for exact unit assignments and [the image prompt guide](assets/IMAGEPROMPTS.md)
-for matching pool/class generation instructions. Keep numeric art-ID filenames
-unchanged. The game continues to load `assets/units/full/` until the new sprite
-set is complete and approved.
+```bash
+./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
+```
+
+See [the original-art matrix](documentation/Unit_Faction_and_Sprite_Staging.md)
+and [the prompt/provenance guide](assets/IMAGEPROMPTS.md). Numeric art IDs and
+promotion lineages remain stable for saves and catalog lookups.
 
 ## Validation
 

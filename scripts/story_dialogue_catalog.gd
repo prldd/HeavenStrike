@@ -7,6 +7,7 @@ extends RefCounted
 ## or campaign-flow code.
 
 const PORTRAIT_ROOT := "res://assets/Unused Explorations/Talking Heads/"
+const ORIGINAL_PORTRAIT_ROOT := "res://assets/dialogue/portraits/"
 const PORTRAITS := {
 	"conductor": PORTRAIT_ROOT + "Conductor.png",
 	"nara": PORTRAIT_ROOT + "ComfyUI_00110_.png",
@@ -15,8 +16,9 @@ const PORTRAITS := {
 	"cassian": PORTRAIT_ROOT + "ComfyUI_00160_.png",
 	"rook": PORTRAIT_ROOT + "ComfyUI_00167_.png",
 	"first_conductor": PORTRAIT_ROOT + "ComfyUI_00169_.png",
-	"adele": PORTRAIT_ROOT + "ComfyUI_00172_.png",
-	"garrett": PORTRAIT_ROOT + "ComfyUI_00198_.png"
+	"lysa": ORIGINAL_PORTRAIT_ROOT + "lysa-vey.png",
+	"asha": ORIGINAL_PORTRAIT_ROOT + "asha-vale.png",
+	"dax": ORIGINAL_PORTRAIT_ROOT + "dax-calder.png"
 }
 
 const BACKGROUNDS := {
@@ -43,11 +45,11 @@ const CHARACTERS := {
 		"portrait": PORTRAITS.cassian,
 		"portrait_kind": "human"
 	},
-	"Adele Voss": {
+	"Lysa Vey": {
 		"role": "Salvage-rights assessor",
-		"initials": "AV",
+		"initials": "LV",
 		"accent": "#e8a87c",
-		"portrait": PORTRAITS.adele,
+		"portrait": PORTRAITS.lysa,
 		"portrait_kind": "human"
 	},
 	"The Stranger": {
@@ -64,21 +66,21 @@ const CHARACTERS := {
 		"portrait": PORTRAITS.serin,
 		"portrait_kind": "human"
 	},
-	"Minerva": {
+	"Asha Vale": {
 		"role": "Grand Circuit champion",
-		"initials": "MI",
+		"initials": "AV",
 		"accent": "#ef8d8d",
-		"portrait": PORTRAITS.adele,
+		"portrait": PORTRAITS.asha,
 		"portrait_kind": "human"
 	},
-	"Garrett": {
-		"role": "Claw clan negotiator",
-		"initials": "GA",
+	"Dax Calder": {
+		"role": "Ember-district negotiator",
+		"initials": "DC",
 		"accent": "#e3b778",
-		"portrait": PORTRAITS.garrett,
+		"portrait": PORTRAITS.dax,
 		"portrait_kind": "human"
 	},
-	"The Rook": {
+	"Brass Bastion-136": {
 		"role": "Reclaimed Caelian automaton",
 		"initials": "RK",
 		"accent": "#9db7cf",
@@ -123,7 +125,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "Two intact machines, one functioning Relay, and no injuries. That is either excellent work or an accounting error."},
 			{"speaker": "Conductor", "text": "The left one anticipated my signal before I sent it."},
 			{"speaker": "Cassian", "text": "Then do me a favor and leave that detail out of the inventory sheet."},
-			{"speaker": "The Rook", "text": "Formation retained. Awaiting shared purpose."}
+			{"speaker": "Brass Bastion-136", "text": "Formation retained. Awaiting shared purpose."}
 		]
 	},
 	3: {
@@ -151,11 +153,11 @@ const INTERLUDES := {
 		"title": "What the Assessor Saw",
 		"location": "Salvage Depot · Records Office",
 		"lines": [
-			{"speaker": "Adele Voss", "text": "Your machine crossed three lanes to shield my surveyor. You did not order it."},
+			{"speaker": "Lysa Vey", "text": "Your machine crossed three lanes to shield my surveyor. You did not order it."},
 			{"speaker": "Conductor", "text": "No."},
-			{"speaker": "Adele Voss", "text": "Good. A rehearsed lie takes longer than that."},
+			{"speaker": "Lysa Vey", "text": "Good. A rehearsed lie takes longer than that."},
 			{"speaker": "Cassian", "text": "And what exactly will your report say?"},
-			{"speaker": "Adele Voss", "text": "What happened. You two can decide how frightened that should make you."}
+			{"speaker": "Lysa Vey", "text": "What happened. You two can decide how frightened that should make you."}
 		]
 	},
 	7: {
@@ -192,14 +194,14 @@ const INTERLUDES := {
 	},
 	14: {
 		"title": "Truth and Leverage",
-		"location": "Adele's Safehouse · Back Room",
+		"location": "Lysa's Safehouse · Back Room",
 		"lines": [
-			{"speaker": "Adele Voss", "text": "The informant identified the contractors. He also took money, crossed a border illegally, and lied under oath."},
+			{"speaker": "Lysa Vey", "text": "The informant identified the contractors. He also took money, crossed a border illegally, and lied under oath."},
 			{"speaker": "Conductor", "text": "But he told the truth to us."},
 			{"speaker": "Cassian", "text": "Truth is what happened. Evidence is what can survive a room full of interested people."},
-			{"speaker": "Adele Voss", "text": "I dislike him when he sounds reasonable."},
+			{"speaker": "Lysa Vey", "text": "I dislike him when he sounds reasonable."},
 			{"speaker": "Cassian", "text": "Most people do."},
-			{"speaker": "Adele Voss", "text": "Save the admiration. A township bridge just called for every available machine, and we are the closest team."}
+			{"speaker": "Lysa Vey", "text": "Save the admiration. A township bridge just called for every available machine, and we are the closest team."}
 		]
 	},
 	18: {
@@ -209,7 +211,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "The squad was still moving. I could have finished the last exercise."},
 			{"speaker": "Cassian", "text": "You lost six minutes and woke asking whether the machines were hurt."},
 			{"speaker": "Conductor", "text": "Were they?"},
-			{"speaker": "The Rook", "text": "Formation intact. Conductor condition unacceptable."},
+			{"speaker": "Brass Bastion-136", "text": "Formation intact. Conductor condition unacceptable."},
 			{"speaker": "Cassian", "text": "For once, the machine and I are in complete agreement."}
 		]
 	},
@@ -221,7 +223,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "It also needs a legal identity before someone decides the land is empty."},
 			{"speaker": "Conductor", "text": "Can a charter stop rain?"},
 			{"speaker": "Cassian", "text": "No. It can make stealing the roof more expensive."},
-			{"speaker": "Adele Voss", "text": "Then finish it tonight. I decoded the Stranger's coordinates, and they point to an Order sanctuary beyond the eastern border."},
+			{"speaker": "Lysa Vey", "text": "Then finish it tonight. I decoded the Stranger's coordinates, and they point to an Order sanctuary beyond the eastern border."},
 			{"speaker": "Conductor", "text": "Then we leave at dawn."}
 		]
 	},
@@ -230,7 +232,7 @@ const INTERLUDES := {
 		"location": "Sanctuary · Sealed Archive",
 		"lines": [
 			{"speaker": "Archivist Serin", "text": "This transport manifest was filed forty-three years after the Empire supposedly collapsed."},
-			{"speaker": "Adele Voss", "text": "Cargo?"},
+			{"speaker": "Lysa Vey", "text": "Cargo?"},
 			{"speaker": "Archivist Serin", "text": "People. Records. Conductor equipment. All routed to Caelis."},
 			{"speaker": "Conductor", "text": "Caelis was destroyed."},
 			{"speaker": "Cassian", "text": "No. Caelis was removed from the story."}
@@ -241,7 +243,7 @@ const INTERLUDES := {
 		"location": "Coal Embassy · Exhibition Week",
 		"lines": [
 			{"speaker": "Conductor", "text": "Every delegation offered support. Every offer ends with their officers controlling deployment."},
-			{"speaker": "Adele Voss", "text": "An auction is flattering if nobody tells the lot what the paddles mean."},
+			{"speaker": "Lysa Vey", "text": "An auction is flattering if nobody tells the lot what the paddles mean."},
 			{"speaker": "Cassian", "text": "Let them bid. Competing claims are the nearest thing we have to independence."},
 			{"speaker": "Conductor", "text": "You enjoy this."},
 			{"speaker": "Cassian", "text": "I enjoy watching powerful people discover they are not alone in the room."}
@@ -251,38 +253,38 @@ const INTERLUDES := {
 		"title": "The Champion's Table",
 		"location": "Grand Circuit · Empty Arena",
 		"lines": [
-			{"speaker": "Minerva", "text": "You fight like a mechanic. Every motion repairs the position left by the one before it."},
+			{"speaker": "Asha Vale", "text": "You fight like a mechanic. Every motion repairs the position left by the one before it."},
 			{"speaker": "Conductor", "text": "You say that like an insult."},
-			{"speaker": "Minerva", "text": "I lost. It would be a poor one."},
+			{"speaker": "Asha Vale", "text": "I lost. It would be a poor one."},
 			{"speaker": "Cassian", "text": "Listen to them applaud. Every patron out there still thinks your victory belongs to them."},
-			{"speaker": "Minerva", "text": "Then sit carefully. The arena is more honest than the table."}
+			{"speaker": "Asha Vale", "text": "Then sit carefully. The arena is more honest than the table."}
 		]
 	},
 	30: {
 		"title": "Old Employment",
 		"location": "Border Camp · Captured Pay Office",
 		"lines": [
-			{"speaker": "Adele Voss", "text": "I know this guild seal because I used to carry it."},
+			{"speaker": "Lysa Vey", "text": "I know this guild seal because I used to carry it."},
 			{"speaker": "Cassian", "text": "You neglected to include that in your professional history."},
-			{"speaker": "Adele Voss", "text": "You neglected to ask questions whose answers you could not use."},
+			{"speaker": "Lysa Vey", "text": "You neglected to ask questions whose answers you could not use."},
 			{"speaker": "Conductor", "text": "Can you get us inside?"},
-			{"speaker": "Adele Voss", "text": "Yes. That is the part I was hoping you wouldn't ask."}
+			{"speaker": "Lysa Vey", "text": "Yes. That is the part I was hoping you wouldn't ask."}
 		]
 	},
 	32: {
 		"title": "The Hall Is Coming Down",
 		"location": "Ceasefire Hall · Moments After Detonation",
 		"lines": [
-			{"speaker": "Adele Voss", "text": "DOWN! Away from the windows—there may be a second charge!"},
+			{"speaker": "Lysa Vey", "text": "DOWN! Away from the windows—there may be a second charge!"},
 			{"speaker": "Conductor", "text": "The west arch is folding. Rook, brace it! There are people under that gallery."},
 			{"speaker": "Cassian", "text": "The aides were stationed there. I put them at those doors."},
-			{"speaker": "Adele Voss", "text": "Cassian, eyes on me. The delegates are bleeding, the exits may be trapped, and the attackers could still be inside."},
+			{"speaker": "Lysa Vey", "text": "Cassian, eyes on me. The delegates are bleeding, the exits may be trapped, and the attackers could still be inside."},
 			{"speaker": "Cassian", "text": "They left the principals alive and murdered the people who made this summit possible. They wanted five witnesses to carry terror home."},
 			{"speaker": "Conductor", "text": "They don't get to choose what survives. We clear the smoke, pull out everyone we can, then find who lit the fuse."}
 		]
 	},
 	36: {
-		"title": "Mission Accomplished",
+		"title": "Terms in Hand",
 		"location": "Capital Broadcast Hall · Service Tunnel",
 		"lines": [
 			{"speaker": "Conductor", "text": "They announced the grid is stable while we were carrying batteries into the hospital."},
@@ -296,7 +298,7 @@ const INTERLUDES := {
 		"location": "Riverside Township · Festival Square",
 		"lines": [
 			{"speaker": "Caretaker Mara", "text": "We called that one Rook. It stood outside the school through every storm."},
-			{"speaker": "The Rook", "text": "Caretaker Mara. Evacuation count: thirty-seven. All accounted for."},
+			{"speaker": "Brass Bastion-136", "text": "Caretaker Mara. Evacuation count: thirty-seven. All accounted for."},
 			{"speaker": "Caretaker Mara", "text": "That was sixty years ago."},
 			{"speaker": "Conductor", "text": "It did not forget. It just had no one left to tell."}
 		]
@@ -306,7 +308,7 @@ const INTERLUDES := {
 		"location": "Narrow Pass · Coalition Camp",
 		"lines": [
 			{"speaker": "Conductor", "text": "The Relay still reaches for them when I close my eyes."},
-			{"speaker": "The Rook", "text": "Formation reports one position absent."},
+			{"speaker": "Brass Bastion-136", "text": "Formation reports one position absent."},
 			{"speaker": "Cassian", "text": "The salvagers will reach the pass at dawn."},
 			{"speaker": "Conductor", "text": "Then we leave before dawn."},
 			{"speaker": "Cassian", "text": "I already ordered the transports."}
@@ -316,9 +318,9 @@ const INTERLUDES := {
 		"title": "No One Left as Salvage",
 		"location": "Depot Workshop · Recovery Bay",
 		"lines": [
-			{"speaker": "Adele Voss", "text": "The chassis cannot be restored. Not the way it was."},
+			{"speaker": "Lysa Vey", "text": "The chassis cannot be restored. Not the way it was."},
 			{"speaker": "Conductor", "text": "I know."},
-			{"speaker": "The Rook", "text": "Recovery acknowledged. Formation remembers."},
+			{"speaker": "Brass Bastion-136", "text": "Recovery acknowledged. Formation remembers."},
 			{"speaker": "Cassian", "text": "Was the second operation worth the risk?"},
 			{"speaker": "Conductor", "text": "Ask the ones who watched us come back for them."}
 		]
@@ -328,7 +330,7 @@ const INTERLUDES := {
 		"location": "Coalition Headquarters · Cartography Room",
 		"lines": [
 			{"speaker": "Archivist Serin", "text": "Every founding faction signed the deletion order. Different seals, same ink formula, same day."},
-			{"speaker": "Adele Voss", "text": "Five enemies agreeing to erase one city."},
+			{"speaker": "Lysa Vey", "text": "Five enemies agreeing to erase one city."},
 			{"speaker": "Cassian", "text": "Which means the lie was once more valuable than their rivalry."},
 			{"speaker": "Conductor", "text": "Put Caelis back on the map."},
 			{"speaker": "Archivist Serin", "text": "The map just answered. A dormant transit frequency is broadcasting coordinates signed by your Stranger."}
@@ -342,18 +344,18 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "I know these names. I have eaten at their tables."},
 			{"speaker": "Conductor", "text": "Did they know I might die?"},
 			{"speaker": "The Stranger", "text": "They made certain they would never need to ask."},
-			{"speaker": "Cassian", "text": "Then we will ask for them publicly—but not while they can hire every scavenger clan between here and the capital. I need Garrett first."}
+			{"speaker": "Cassian", "text": "Then we will ask for them publicly—but not while they can hire every scavenger clan between here and the capital. I need Dax Calder first."}
 		]
 	},
 	44: {
-		"title": "Unfinished Business",
+		"title": "Open Ledger",
 		"location": "Guildhall Steps · Public Record Bell",
 		"lines": [
-			{"speaker": "Adele Voss", "text": "My resignation is entered. My credentials are suspended. My former guild would like me arrested."},
+			{"speaker": "Lysa Vey", "text": "My resignation is entered. My credentials are suspended. My former guild would like me arrested."},
 			{"speaker": "Cassian", "text": "The coalition needs an independent assessor."},
-			{"speaker": "Adele Voss", "text": "You mean an assessor no respectable office will hire."},
+			{"speaker": "Lysa Vey", "text": "You mean an assessor no respectable office will hire."},
 			{"speaker": "Conductor", "text": "We were never especially respectable."},
-			{"speaker": "Adele Voss", "text": "That is the first convincing offer I've heard all day."}
+			{"speaker": "Lysa Vey", "text": "That is the first convincing offer I've heard all day."}
 		]
 	},
 	45: {
@@ -362,7 +364,7 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Conductor", "text": "We took the core so no faction could turn it into a weapon."},
 			{"speaker": "Cassian", "text": "And now every faction sees a weapon guarded by our troops."},
-			{"speaker": "Adele Voss", "text": "Intent does not show up on an inventory."},
+			{"speaker": "Lysa Vey", "text": "Intent does not show up on an inventory."},
 			{"speaker": "Conductor", "text": "Then the vault needs five locks and five different keys."},
 			{"speaker": "Cassian", "text": "That may be the first political solution you have ever proposed. I will present it at Unity Day, where every faction must answer in front of the public."}
 		]
@@ -371,10 +373,10 @@ const INTERLUDES := {
 		"title": "The Ground We Surrendered",
 		"location": "Evacuated Township · Western Ridge",
 		"lines": [
-			{"speaker": "Minerva", "text": "By sunset, each army will claim we abandoned the town to the other two."},
+			{"speaker": "Asha Vale", "text": "By sunset, each army will claim we abandoned the town to the other two."},
 			{"speaker": "Conductor", "text": "They can keep the streets."},
 			{"speaker": "Cassian", "text": "I will make certain the record distinguishes ground surrendered from lives saved."},
-			{"speaker": "Minerva", "text": "Records will not stop the next army."},
+			{"speaker": "Asha Vale", "text": "Records will not stop the next army."},
 			{"speaker": "Conductor", "text": "No. People might."}
 		]
 	},
@@ -382,11 +384,11 @@ const INTERLUDES := {
 		"title": "Terms of Respect",
 		"location": "Truce Line · Shared Command Tent",
 		"lines": [
-			{"speaker": "Garrett", "text": "My people held the eastern sector. Yours made a dramatic amount of noise in the west."},
+			{"speaker": "Dax Calder", "text": "My people held the eastern sector. Yours made a dramatic amount of noise in the west."},
 			{"speaker": "Conductor", "text": "Is that a compliment?"},
-			{"speaker": "Garrett", "text": "It is an invoice with the total removed."},
+			{"speaker": "Dax Calder", "text": "It is an invoice with the total removed."},
 			{"speaker": "Cassian", "text": "The truce needs a joint patrol commander."},
-			{"speaker": "Garrett", "text": "Then I accept, provided the mechanic promises not to repair my personality."}
+			{"speaker": "Dax Calder", "text": "Then I accept, provided the mechanic promises not to repair my personality."}
 		]
 	},
 	51: {
@@ -394,7 +396,7 @@ const INTERLUDES := {
 		"location": "Forward Depot · Resonance Bay",
 		"lines": [
 			{"speaker": "Conductor", "text": "They ignored the attack order. Then they moved to shield the medics."},
-			{"speaker": "The Rook", "text": "Purpose conflict. Destruction unnecessary. Protection retained."},
+			{"speaker": "Brass Bastion-136", "text": "Purpose conflict. Destruction unnecessary. Protection retained."},
 			{"speaker": "Cassian", "text": "An army that can refuse its commander will terrify every government."},
 			{"speaker": "Conductor", "text": "Good. It terrifies me less than one that cannot."}
 		]
@@ -416,7 +418,7 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Archivist Serin", "text": "The fragments synchronized in response to battlefield loads. No operator issued the command."},
 			{"speaker": "Conductor", "text": "It felt like the Relay when the machines search for one another."},
-			{"speaker": "Adele Voss", "text": "You are suggesting the power grid is frightened."},
+			{"speaker": "Lysa Vey", "text": "You are suggesting the power grid is frightened."},
 			{"speaker": "Conductor", "text": "I am suggesting we stop assuming only people can notice a war."}
 		]
 	},
@@ -436,9 +438,9 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Cassian", "text": "The doctors have refused clearance for another deployment."},
 			{"speaker": "Conductor", "text": "The western front would have broken."},
-			{"speaker": "The Rook", "text": "Conductor survival priority elevated. Formation will interpose."},
+			{"speaker": "Brass Bastion-136", "text": "Conductor survival priority elevated. Formation will interpose."},
 			{"speaker": "Conductor", "text": "I never gave that order."},
-			{"speaker": "The Rook", "text": "Shared purpose does not require order."}
+			{"speaker": "Brass Bastion-136", "text": "Shared purpose does not require order."}
 		]
 	},
 	56: {
@@ -448,7 +450,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "These are informants, couriers, sympathetic clerks, and people owed favors by people owed favors."},
 			{"speaker": "Conductor", "text": "How long have you had this network?"},
 			{"speaker": "Cassian", "text": "Long enough that telling you earlier would have made you responsible for it."},
-			{"speaker": "Adele Voss", "text": "That is not how responsibility works."},
+			{"speaker": "Lysa Vey", "text": "That is not how responsibility works."},
 			{"speaker": "Cassian", "text": "No. It is how plausible deniability works."}
 		]
 	},
@@ -466,11 +468,11 @@ const INTERLUDES := {
 		"title": "Former Opponents",
 		"location": "Conduit Route · Joint Strike Camp",
 		"lines": [
-			{"speaker": "Minerva", "text": "I assembled the people you defeated in the Circuit. They already know you can win."},
+			{"speaker": "Asha Vale", "text": "I assembled the people you defeated in the Circuit. They already know you can win."},
 			{"speaker": "Conductor", "text": "Do they know how to take an order from me?"},
-			{"speaker": "Minerva", "text": "No. They know how to understand the objective. It is usually better."},
+			{"speaker": "Asha Vale", "text": "No. They know how to understand the objective. It is usually better."},
 			{"speaker": "Cassian", "text": "The coalition appears to have acquired an army."},
-			{"speaker": "Minerva", "text": "Call it a team until you learn to deserve the other word."}
+			{"speaker": "Asha Vale", "text": "Call it a team until you learn to deserve the other word."}
 		]
 	},
 	61: {
@@ -490,7 +492,7 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Warden Ilyra", "text": "No foreign delegation has crossed this threshold in two hundred years."},
 			{"speaker": "Cassian", "text": "Then it is fortunate we came as a coalition rather than a foreign power."},
-			{"speaker": "Adele Voss", "text": "That sentence should not have worked."},
+			{"speaker": "Lysa Vey", "text": "That sentence should not have worked."},
 			{"speaker": "Cassian", "text": "It worked because everyone here wants a reason not to start shooting."},
 			{"speaker": "Conductor", "text": "The machines know this place."}
 		]
@@ -502,7 +504,7 @@ const INTERLUDES := {
 			{"speaker": "Warden Ilyra", "text": "You could have seized the district machines through the Relay."},
 			{"speaker": "Conductor", "text": "They already had work and a purpose. They did not need mine."},
 			{"speaker": "Warden Ilyra", "text": "The old Conductors would call that restraint."},
-			{"speaker": "The Rook", "text": "Correction. Recognition."}
+			{"speaker": "Brass Bastion-136", "text": "Correction. Recognition."}
 		]
 	},
 	67: {
@@ -510,7 +512,7 @@ const INTERLUDES := {
 		"location": "Imperial Archive · Founding Galleries",
 		"lines": [
 			{"speaker": "Archivist Serin", "text": "Each faction preserved one honest fragment: discipline, industry, faith, freedom, ambition."},
-			{"speaker": "Adele Voss", "text": "And each built a complete history around its favorite piece."},
+			{"speaker": "Lysa Vey", "text": "And each built a complete history around its favorite piece."},
 			{"speaker": "Cassian", "text": "A lie can be made entirely from truths arranged for the wrong purpose."},
 			{"speaker": "Conductor", "text": "Then we show them the pieces fit together."}
 		]
@@ -534,7 +536,7 @@ const INTERLUDES := {
 			{"speaker": "First Conductor", "text": "They taught your age that we commanded machines because command is easier to regulate than companionship."},
 			{"speaker": "Conductor", "text": "The Relay is hurting me."},
 			{"speaker": "First Conductor", "text": "Yes. Sharing purpose means sharing weight. The old Empire praised the gift and hid the bill."},
-			{"speaker": "The Rook", "text": "Weight shared. Conductor not alone."},
+			{"speaker": "Brass Bastion-136", "text": "Weight shared. Conductor not alone."},
 			{"speaker": "First Conductor", "text": "Nor were you chosen by chance. Ask the Warden council why it needed a new Conductor badly enough to gamble with your life."}
 		]
 	},
@@ -565,8 +567,8 @@ const INTERLUDES := {
 		"location": "Caelis Council Hall · Coalition Table",
 		"lines": [
 			{"speaker": "Warden Ilyra", "text": "Caelis petitions to resume stewardship of the Source."},
-			{"speaker": "Garrett", "text": "A polite word for ownership."},
-			{"speaker": "Minerva", "text": "Then counter it with terms, not weapons."},
+			{"speaker": "Dax Calder", "text": "A polite word for ownership."},
+			{"speaker": "Asha Vale", "text": "Then counter it with terms, not weapons."},
 			{"speaker": "Cassian", "text": "For the first time, everyone who claims the Source is in one room. Keeping them here is the victory."},
 			{"speaker": "Conductor", "text": "Then I will keep the doors standing."}
 		]
@@ -596,8 +598,8 @@ const INTERLUDES := {
 		"title": "The War Gets a Name",
 		"location": "Source Approach · Allied Field Line",
 		"lines": [
-			{"speaker": "Minerva", "text": "Coal holds the center. Wind scouts the conduits. Solar medics are treating Fusion troops."},
-			{"speaker": "Garrett", "text": "A week ago each of those sentences would start a riot."},
+			{"speaker": "Asha Vale", "text": "Coal holds the center. Wind scouts the conduits. Solar medics are treating Fusion troops."},
+			{"speaker": "Dax Calder", "text": "A week ago each of those sentences would start a riot."},
 			{"speaker": "Warden Ilyra", "text": "Caelis will record this as the Resonance War, in memory of all five factions' dead."},
 			{"speaker": "Conductor", "text": "Record who stood together, too."}
 		]
@@ -607,9 +609,9 @@ const INTERLUDES := {
 		"location": "Caelis · Accord Hall at Dawn",
 		"lines": [
 			{"speaker": "Cassian", "text": "Remarkably quiet, for the end of a war."},
-			{"speaker": "Adele Voss", "text": "You have been smiling at the filing clauses for ten minutes."},
+			{"speaker": "Lysa Vey", "text": "You have been smiling at the filing clauses for ten minutes."},
 			{"speaker": "Warden Ilyra", "text": "The Source is reconnecting. It recognizes no single master."},
-			{"speaker": "The Rook", "text": "Formation expanded. Purpose shared."},
+			{"speaker": "Brass Bastion-136", "text": "Formation expanded. Purpose shared."},
 			{"speaker": "Conductor", "text": "Good. Now we fix what the war left broken."},
 			{"speaker": "Cassian", "text": "And this time, we leave instructions someone else can use."}
 		]

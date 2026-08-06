@@ -6,7 +6,7 @@ extends Resource
 ## Negative means the skill has no explicit chance (the resolver default applies).
 @export var chance: float = -1.0
 @export var description: String = ""
-## Per-level magnitudes ported from the unit reference. Row index is unit
+## Per-level authored magnitudes. Row index is unit
 ## level - 1; each row holds the values substituted into the {0}/{1}
 ## placeholders of the description.
 @export var rank_values: Array = []

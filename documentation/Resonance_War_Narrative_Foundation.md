@@ -6,10 +6,8 @@
 
 # Vision
 
-Resonance War is a tactical RPG inspired by the strategic gameplay of
-Heavenstrike Rivals, but its narrative tone is closer to **Final Fantasy
-Tactics: War of the Lions**, **Tactics Ogre**, and **Triangle
-Strategy**.
+Resonance War is an original tactical RPG about infrastructure, political
+legitimacy, and the costs of rebuilding after collapse.
 
 The story is driven by political consequences rather than chosen-one
 mythology. The player solves practical problems while others determine

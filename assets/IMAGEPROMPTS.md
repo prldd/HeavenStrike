@@ -1,93 +1,49 @@
-# Full-Body Unit Prompts for FLUX.2 Klein 4B Distilled
+# Original Art Briefs and Provenance
 
-FLUX.2 Klein image editing responds best to one short, concrete instruction. Paste the selected sentences as one paragraph. Do not paste headings, explanations, unused choices, or negative-prompt lists.
+All production images in this project must be original or properly licensed.
+Generation prompts must describe War of Resonance's own visual language and
+must not name, upload, transform, or imitate a third-party character, sprite,
+game, artist, or franchise.
 
-For normal replacement art, use Section 1 plus one pool sentence from Section 2 and one class sentence from Section 3.
+## Playable chassis atlases
 
-For a promotion made from an already generated replacement sprite, use Section 4 by itself. The input sprite already supplies its style, pool, and class.
+The seven committed atlases in `assets/units/original_sources/class_atlases/`
+were generated as new work without image references. Their shared brief was:
 
-## Assignment and file workflow
+> Six distinct autonomous industrial-fantasy combat machines on a 3×2 atlas;
+> compact readable tactical-game silhouettes; pale blue enamel, silver steel,
+> antique brass, cyan power light, dark ink outlines; exactly one machine per
+> cell; flat pure-magenta background; no humans, text, logos, borders, shadows,
+> known characters, or franchise-specific motifs.
 
-The source sprite's staging path is authoritative:
+Each class added its own silhouette requirements:
 
-`assets/units/full_by_class/<Pool>/<Class>/<art_id>.png`
+- Warden: shields, broad armor, planted defensive stance.
+- Duelist: paired melee implements and agile close-combat posture.
+- Strider: long legs, light armor, scouting tools, forward motion.
+- Artillerist: integrated cannon, recoil brace, ammunition mechanism.
+- Channeler: arc coils, suspended vanes, luminous control core.
+- Lifebinder: repair manipulators, reservoirs, protective halo shapes.
 
-Keep the numeric art-ID filename unchanged on the generated replacement. Keep every promotion family in one pool and consult `documentation/Unit_Faction_and_Sprite_Staging.md` before moving source art.
+Two Strider atlases provide twelve base silhouettes; every other class has six.
+`tools/build_original_unit_art.gd` removes the magenta matte, derives controlled
+faction hue variants, flips later variants for formation variety, and creates
+the 210 committed full-body and portrait outputs.
 
-| Pool folder | Section 2 sentence |
-|---|---|
-| `Universal` | Universal |
-| `Steam` | Steam |
-| `Wind` | Wind |
-| `Coal` | Coal |
-| `Fusion` | Fusion |
-| `Solar` | Solar |
+## Supporting-cast atlas
 
-| Class folder | Gameplay class | Section 3 sentence |
-|---|---|---|
-| `Warden` | Defender | Defender |
-| `Duelist` | Fighter | Fighter |
-| `Strider` | Scout | Scout |
-| `Artillerist` | Gunner | Gunner |
-| `Channeler` | Mage | Mage |
-| `Lifebinder` | Priest | Priest |
+`assets/dialogue/original_sources/campaign-supporting-cast.png` was generated
+without image references as a three-column atlas for Lysa Vey, Asha Vale, and
+Dax Calder. The brief specified original industrial-fantasy field clothing,
+distinct ages and silhouettes, a cohesive brass/teal/coral palette, flat
+magenta backgrounds, and no text, logos, known characters, or franchise motifs.
+The same builder extracts transparent portraits into `assets/dialogue/portraits/`.
 
-## Section 1: Normal unit instruction
+## Adding art
 
-Transform the attached character into the same recognizable mechanical automaton at its current power tier. Preserve its face, body, pose, clothing, armor, helmet, colors, size, canvas occupancy, and exact equipment categories and counts. Keep an unarmed source empty-handed. Replace any cat ears and horns with smooth source-colored head or helmet surfaces. Render one complete three-quarter-view cel-shaded ink-and-gouache full-body unit on a transparent 1024×1024 canvas.
-
-## Section 2: Pool sentence (choose one)
-
-### Solar
-
-Apply clean white-gold enamel, blue-black photovoltaic panels, amber illumination, and bold geometric sun motifs.
-
-### Steam
-
-Apply polished brass and copper, green verdigris, readable gears and gauges, dark-steel accents, and clean white steam.
-
-### Coal
-
-Apply blackened iron, a body-integrated coal firebox, soot, heat staining, heavy smoke, and furnace-orange ember light.
-
-### Wind
-
-Apply pale-blue, silver, and white aerodynamic panels, compact turbines or vanes, controlled airflow trails, and pale-blue illumination.
-
-### Fusion
-
-Apply matte graphite panels, one compact body-integrated reactor, restrained neon-green circuits, contained conduits, and limited green plasma light.
-
-### Universal
-
-Apply the source palette to clean modular automaton panels with steel, charcoal, ivory, muted-blue accents, and soft-white utility lights.
-
-## Section 3: Class sentence (choose one)
-
-### Scout
-
-Keep the Scout agile and lightly built with a fitted costume, minimal armor, and a fast readable silhouette.
-
-### Fighter
-
-Keep the Fighter balanced and melee-oriented with moderate armor while preserving any existing melee equipment exactly.
-
-### Defender
-
-Keep the Defender broad, grounded, and protective with substantial source-derived panels while matching the source character's exact equipment count.
-
-### Gunner
-
-Keep the Gunner precise and lightly armored while preserving a visible source weapon, or keep the Gunner empty-handed when the source is unarmed.
-
-### Mage
-
-Keep the Mage lightly dressed and energy-focused while preserving a visible source casting implement, or keep both hands empty when none exists.
-
-### Priest
-
-Keep the Priest calm, lightly dressed, benevolent, and support-oriented while preserving the source character's exact equipment count.
-
-## Section 4: Promotion edit instruction (use by itself)
-
-Substantially redesign the attached character into its next-tier promotion. Keep the face, body type, class, colors, height, and exact equipment categories and counts. Make changes obvious at thumbnail size: rebuild the head, shoulders, torso, and back with larger layered shapes; add one large faction component; enlarge a motif; and strengthen energy accents. Keep an unarmed source empty-handed. Replace cat ears and horns with smooth source-colored head or helmet surfaces. Return one full-body three-quarter-view cel-shaded ink-and-gouache automaton on a transparent 1024×1024 canvas.
+1. Write a project-specific visual brief and record it here.
+2. Generate without external images or named stylistic imitation.
+3. Keep the untouched generated source under an `original_sources/` directory.
+4. Derive runtime assets through a committed reproducible tool.
+5. Verify transparent edges, target-size readability, exact file counts, and
+   absence of inactive or unlicensed source material.

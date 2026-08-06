@@ -4,14 +4,6 @@ extends Control
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
-const UNIT_SPRITES_1 := preload("res://assets/units/reference-units-001-006.png")
-const UNIT_SPRITES_2 := preload("res://assets/units/reference-units-007-012.png")
-const UNIT_SPRITES_3 := preload("res://assets/units/reference-units-013-018.png")
-const UNIT_SPRITES_4 := preload("res://assets/units/reference-units-019-024.png")
-const UNIT_SPRITES_5 := preload("res://assets/units/reference-units-025-030.png")
-const UNIT_SPRITES_6 := preload("res://assets/units/reference-units-031-036.png")
-const UNIT_SPRITES_7 := preload("res://assets/units/reference-units-037-042.png")
-const UNIT_SPRITES_8 := preload("res://assets/units/reference-units-043-048.png")
 const BOARD_BACKGROUND := preload("res://assets/board-steampunk-courtyard.png")
 const PRACTICE_BACKGROUND := preload("res://assets/board-steampunk-training-hall.png")
 
@@ -965,7 +957,7 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	if unit.get("immobilized_turns", 0) > 0:
 		badges.append({"label": "I%d" % unit.immobilized_turns, "color": Color("#c99cff")})
 	if unit.get("poison_turns", 0) > 0:
-		# Permanent Poison (Roguish Snare) shows no countdown, like ST/H.
+		# Permanent Poison (Deployment Snare) shows no countdown, like ST/H.
 		var poison_label := "P%d" % unit.poison_turns
 		if unit.poison_turns >= UnitSkillsScript.PERMANENT_POISON_TURNS:
 			poison_label = "P"
@@ -1015,26 +1007,6 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 			badges[index].color
 		)
 
-func _draw_unit_icon(unit: Dictionary, center: Vector2, size: float) -> void:
-	var icon_id: int = unit.get("icon", 0)
-	if icon_id < 1 or icon_id > 48:
-		return
-	var sheets: Array[Texture2D] = [
-		UNIT_SPRITES_1, UNIT_SPRITES_2, UNIT_SPRITES_3, UNIT_SPRITES_4,
-		UNIT_SPRITES_5, UNIT_SPRITES_6, UNIT_SPRITES_7, UNIT_SPRITES_8
-	]
-	var texture: Texture2D = sheets[int((icon_id - 1) / 6)]
-	var slot := (icon_id - 1) % 6
-	var source := Rect2(slot * 100, 0, 100, 100)
-	var scale_x := -1.0 if unit.side == 0 else 1.0
-	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
-	draw_texture_rect_region(
-		texture,
-		Rect2(Vector2(-size * 0.5, -size * 0.5), Vector2(size, size)),
-		source
-	)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
 func _idle_bob_offset(unit: Dictionary) -> float:
 	if reduced_motion or not idle_bob_enabled or unit_defeat_strength.has(unit.id) or int(unit.get("hp", 1)) <= 0:
 		return 0.0
@@ -1061,7 +1033,7 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
 		return
 	var texture: Texture2D = _full_unit_texture(icon_id)
 	if texture == null:
-		_draw_unit_icon(unit, rect.get_center() + Vector2(0, bob), minf(rect.size.x, rect.size.y) * 0.68)
+		_draw_missing_unit_art(unit, rect, bob)
 		return
 	# Use the full generated canvas so deliberately small characters remain
 	# relatively small instead of being normalized by alpha-bound cropping.
@@ -1093,6 +1065,14 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
 		Rect2(content_rect.position, Vector2(content_size.x, split_source_y + overlap_source))
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_missing_unit_art(unit: Dictionary, rect: Rect2, bob: float) -> void:
+	var center := rect.get_center() + Vector2(0, bob)
+	var size := minf(rect.size.x, rect.size.y) * 0.27
+	var color: Color = UnitCatalogScript.class_color(unit.get("kind", "Warden"))
+	draw_circle(center, size, Color(color, 0.22))
+	draw_arc(center, size, 0.0, TAU, 6, color, 3.0)
+	draw_line(center - Vector2(size * 0.45, 0), center + Vector2(size * 0.45, 0), color, 2.0)
 
 func _full_unit_texture(icon_id: int) -> Texture2D:
 	if full_unit_texture_cache.has(icon_id):

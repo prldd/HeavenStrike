@@ -52,23 +52,38 @@ static func sync_instances(roster: Array, base_counts: Dictionary) -> Array:
 
 	# One-time migration from the earlier shared-by-name prototype.
 	if not bool(config.get_value("meta", "instances_migrated", false)):
+		var migrated_consumed := {}
+		var consumed_keys: PackedStringArray = (
+			config.get_section_keys("consumed")
+			if config.has_section("consumed") else PackedStringArray()
+		)
+		for saved_name in consumed_keys:
+			var canonical_consumed := UnitCatalogScript.canonical_name(saved_name)
+			migrated_consumed[canonical_consumed] = maxi(
+				int(migrated_consumed.get(canonical_consumed, 0)),
+				int(config.get_value("consumed", saved_name, 0))
+			)
+		var migrated_progress := {}
+		var progress_keys: PackedStringArray = (
+			config.get_section_keys("progress")
+			if config.has_section("progress") else PackedStringArray()
+		)
+		for saved_name in progress_keys:
+			var canonical_progress := UnitCatalogScript.canonical_name(saved_name)
+			var saved_progress = config.get_value("progress", saved_name, {})
+			if saved_progress is Dictionary:
+				migrated_progress[canonical_progress] = saved_progress
 		for unit in roster:
-			var old_name := UnitCatalogScript.legacy_name(unit.name)
 			var matching: Array = instances.filter(
 				func(instance): return instance.name == unit.name
 			)
 			var consumed_count := mini(
 				matching.size(),
-				maxi(0, int(config.get_value(
-					"consumed", unit.name,
-					config.get_value("consumed", old_name, 0)
-				)))
+				maxi(0, int(migrated_consumed.get(unit.name, 0)))
 			)
 			for index in consumed_count:
 				matching[index].consumed = true
-			var legacy_progress = config.get_value(
-				"progress", unit.name, config.get_value("progress", old_name, {})
-			)
+			var legacy_progress = migrated_progress.get(unit.name, {})
 			var active: Array = matching.filter(
 				func(instance): return not instance.consumed
 			)
