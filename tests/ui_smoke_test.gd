@@ -94,6 +94,7 @@ func _run() -> void:
 	assert(game.tutorial_step == game.TUTORIAL_INTRO)
 	assert(game.tutorial_panel.visible)
 	assert(game.tutorial_continue_button.has_meta("tutorial_pulse"))
+	assert(not game.tutorial_menu_button.visible)
 	assert(game.player_conductor_skill == "Rally")
 	assert(game.player_hand[0].name == game.TUTORIAL_UNIT_NAME)
 	assert(game.enemy_hp == game.TUTORIAL_ENEMY_HP)
@@ -105,6 +106,7 @@ func _run() -> void:
 	assert(tutorial_target.hp == 4)
 	game._on_tutorial_continue()
 	assert(game.tutorial_step == game.TUTORIAL_SELECT_CARD)
+	assert(not game.tutorial_menu_button.visible)
 	var tutorial_card_index := -1
 	for index in game.player_hand.size():
 		if game.player_hand[index].name == game.TUTORIAL_UNIT_NAME:
@@ -184,8 +186,11 @@ func _run() -> void:
 		func(event): return event.type == "commander_attack" and event.side == game.ENEMY
 	).size() == 2)
 	assert(game.tutorial_step == game.TUTORIAL_COMPLETE)
-	assert(game.tutorial_continue_button.has_meta("tutorial_pulse"))
-	game._skip_tutorial()
+	assert(not game.tutorial_continue_button.visible)
+	assert(game.tutorial_menu_button.visible)
+	assert(game.tutorial_menu_button.text == "MENU")
+	assert(game.tutorial_menu_button.has_meta("tutorial_pulse"))
+	game._finish_tutorial_to_menu()
 	assert(not game.tutorial_mode)
 	assert(game.tutorial_pulse_buttons.is_empty())
 	assert(not game.board._has_guidance_pulse())
@@ -325,7 +330,7 @@ func _run() -> void:
 		wait_frames += 1
 	assert(game.mission_node_buttons.size() == 22)
 	assert(game.mission_map_texture.texture.resource_path.ends_with(
-		"operations-map-tempest-front.png"
+		"operations-map-act-1-reclamation.png"
 	))
 	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
 	assert(game.mission_act_buttons.size() == 3)
@@ -336,7 +341,13 @@ func _run() -> void:
 	assert(game.mission_detail_briefing.text == CampaignStoreScript.MISSIONS[0].briefing)
 	assert(game.mission_node_buttons[0].text == "01")
 	assert(game.mission_node_buttons[21].text == "22")
-	assert(game.mission_list.get_child_count() == 64)
+	assert(game.mission_node_buttons[0].get_meta("operation_region") == "The Salvage")
+	assert(game.mission_node_buttons[21].get_meta("operation_region") == "Sanctuary")
+	assert(game.mission_list.find_children(
+		"RegionLabel*", "Label", false, false
+	).size() == 5)
+	assert(game.mission_node_buttons[21].position.x > game.mission_node_buttons[0].position.x)
+	assert(game.mission_node_buttons[21].position.y < game.mission_node_buttons[0].position.y)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
 	assert(result_buttons.size() == 3)
 	assert(game.result_primary_button.get_index() < game.result_continue_button.get_index())
@@ -644,8 +655,14 @@ func _run() -> void:
 		await process_frame
 	assert(game.mission_map_act == 2)
 	assert(game.mission_node_buttons.size() == 40)
+	assert(game.mission_map_texture.texture.resource_path.ends_with(
+		"operations-map-act-2-crisis.png"
+	))
+	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
 	assert(game.mission_selected_id == 61)
 	assert(game.mission_node_buttons[61].text == "40")
+	assert(game.mission_node_buttons[22].get_meta("operation_region") == "The Arena")
+	assert(game.mission_node_buttons[61].get_meta("operation_region") == "Breaking Point")
 	assert(game.mission_detail_kicker.text.contains("ACT 2"))
 	assert(game.mission_detail_kicker.text.contains("OPERATION 40"))
 	game._switch_operations_act(3)
@@ -653,7 +670,13 @@ func _run() -> void:
 		await process_frame
 	assert(game.mission_map_act == 3)
 	assert(game.mission_node_buttons.size() == 15)
+	assert(game.mission_map_texture.texture.resource_path.ends_with(
+		"operations-map-act-3-caelis.png"
+	))
+	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
 	assert(game.mission_selected_id == 62)
+	assert(game.mission_node_buttons[62].get_meta("operation_region") == "The Outer City")
+	assert(game.mission_node_buttons[76].get_meta("operation_region") == "The Source")
 	assert(game.mission_launch_button.disabled)
 	game.mission_overlay.visible = false
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://replay_history.json"))

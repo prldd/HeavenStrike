@@ -20,7 +20,43 @@ const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
-const OPERATIONS_MAP_BACKGROUND := preload("res://assets/operations-map-tempest-front.png")
+const OPERATIONS_MAP_BACKGROUNDS := {
+	1: preload("res://assets/operations-map-act-1-reclamation.png"),
+	2: preload("res://assets/operations-map-act-2-crisis.png"),
+	3: preload("res://assets/operations-map-act-3-caelis.png")
+}
+
+# Each chapter follows landmarks authored into its Act map. Missions are spaced
+# along these polylines, keeping every operation inside its narrative region.
+const OPERATIONS_CHAPTER_PATHS := {
+	1: {
+		"The Salvage": [Vector2(0.08, 0.82), Vector2(0.12, 0.70), Vector2(0.19, 0.62)],
+		"The Aftermath": [Vector2(0.20, 0.59), Vector2(0.27, 0.48), Vector2(0.35, 0.58)],
+		"Claims": [Vector2(0.37, 0.61), Vector2(0.45, 0.70), Vector2(0.53, 0.60)],
+		"The Proving": [Vector2(0.55, 0.56), Vector2(0.61, 0.46), Vector2(0.69, 0.39), Vector2(0.77, 0.42)],
+		"Sanctuary": [Vector2(0.78, 0.34), Vector2(0.88, 0.16)]
+	},
+	2: {
+		"The Arena": [Vector2(0.07, 0.76), Vector2(0.14, 0.66), Vector2(0.22, 0.72), Vector2(0.26, 0.59)],
+		"Fault Lines": [Vector2(0.27, 0.55), Vector2(0.32, 0.42), Vector2(0.39, 0.51), Vector2(0.43, 0.37)],
+		"Heroes and Costs": [Vector2(0.44, 0.33), Vector2(0.49, 0.20), Vector2(0.57, 0.28), Vector2(0.63, 0.20)],
+		"Cores": [Vector2(0.58, 0.71), Vector2(0.65, 0.61), Vector2(0.72, 0.70), Vector2(0.77, 0.57)],
+		"Breaking Point": [Vector2(0.77, 0.54), Vector2(0.84, 0.68), Vector2(0.89, 0.53), Vector2(0.85, 0.35), Vector2(0.93, 0.17)]
+	},
+	3: {
+		"The Outer City": [Vector2(0.07, 0.84), Vector2(0.14, 0.75), Vector2(0.23, 0.67)],
+		"The Imperial Archive": [Vector2(0.25, 0.58), Vector2(0.29, 0.42), Vector2(0.34, 0.27)],
+		"The Conductor Vault": [Vector2(0.40, 0.58), Vector2(0.50, 0.66), Vector2(0.57, 0.52)],
+		"The Civic Core": [Vector2(0.64, 0.51), Vector2(0.73, 0.61), Vector2(0.78, 0.43)],
+		"The Source": [Vector2(0.79, 0.34), Vector2(0.86, 0.24), Vector2(0.92, 0.15)]
+	}
+}
+
+const OPERATIONS_CHAPTER_LABEL_POSITIONS := {
+	1: [Vector2(0.04, 0.90), Vector2(0.19, 0.35), Vector2(0.40, 0.79), Vector2(0.61, 0.27), Vector2(0.76, 0.06)],
+	2: [Vector2(0.04, 0.86), Vector2(0.25, 0.58), Vector2(0.43, 0.07), Vector2(0.57, 0.82), Vector2(0.76, 0.04)],
+	3: [Vector2(0.03, 0.91), Vector2(0.18, 0.08), Vector2(0.42, 0.75), Vector2(0.66, 0.72), Vector2(0.78, 0.05)]
+}
 
 const PLAYER := 0
 const ENEMY := 1
@@ -176,7 +212,7 @@ var tutorial_progress_label: Label
 var tutorial_title_label: Label
 var tutorial_body_label: Label
 var tutorial_continue_button: Button
-var tutorial_skip_button: Button
+var tutorial_menu_button: Button
 
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
@@ -532,10 +568,11 @@ func _build_tutorial_panel() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_END
 	actions.add_theme_constant_override("separation", 8)
 	layout.add_child(actions)
-	tutorial_skip_button = Button.new()
-	tutorial_skip_button.text = "SKIP TUTORIAL"
-	tutorial_skip_button.pressed.connect(_skip_tutorial)
-	actions.add_child(tutorial_skip_button)
+	tutorial_menu_button = Button.new()
+	tutorial_menu_button.text = "MENU"
+	tutorial_menu_button.visible = false
+	tutorial_menu_button.pressed.connect(_finish_tutorial_to_menu)
+	actions.add_child(tutorial_menu_button)
 	tutorial_continue_button = Button.new()
 	tutorial_continue_button.text = "CONTINUE"
 	tutorial_continue_button.pressed.connect(_on_tutorial_continue)
@@ -1653,7 +1690,7 @@ func _build_mission_select() -> void:
 	map_frame.add_child(map_stack)
 	mission_map_texture = TextureRect.new()
 	mission_map_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mission_map_texture.texture = OPERATIONS_MAP_BACKGROUND
+	mission_map_texture.texture = OPERATIONS_MAP_BACKGROUNDS[mission_map_act]
 	mission_map_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	mission_map_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	mission_map_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
@@ -2450,7 +2487,7 @@ func _set_tutorial_step(next_step: int) -> void:
 	tutorial_panel.visible = tutorial_mode
 	tutorial_continue_button.visible = false
 	tutorial_continue_button.text = "CONTINUE"
-	tutorial_skip_button.text = "SKIP TUTORIAL"
+	tutorial_menu_button.visible = false
 	match tutorial_step:
 		TUTORIAL_INTRO:
 			tutorial_progress_label.text = "GUIDED DRILL · 5 LESSONS"
@@ -2556,12 +2593,12 @@ func _set_tutorial_step(next_step: int) -> void:
 				"You eliminated an enemy unit, changed lanes, and defeated the enemy "
 				+ "Conductor. Units block attacks in their lane; an open lane creates a path to victory."
 			)
-			tutorial_continue_button.text = "START PRACTICE"
-			tutorial_continue_button.visible = true
-			tutorial_skip_button.text = "MENU"
+			tutorial_menu_button.visible = true
 			status_message = "Guided drill complete."
 	if tutorial_continue_button.visible:
 		tutorial_continue_button.grab_focus()
+	elif tutorial_menu_button.visible:
+		tutorial_menu_button.grab_focus()
 	_refresh()
 
 func _on_tutorial_continue() -> void:
@@ -2570,12 +2607,7 @@ func _on_tutorial_continue() -> void:
 			_set_tutorial_step(TUTORIAL_SELECT_CARD)
 		TUTORIAL_MANA:
 			_set_tutorial_step(TUTORIAL_RESOLVE)
-		TUTORIAL_COMPLETE:
-			TutorialStoreScript.mark_completed()
-			_leave_tutorial()
-			_begin_practice()
-
-func _skip_tutorial() -> void:
+func _finish_tutorial_to_menu() -> void:
 	TutorialStoreScript.mark_completed()
 	_show_main_menu()
 
@@ -2902,6 +2934,7 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 	)
 	if act_missions.is_empty():
 		return
+	mission_map_texture.texture = OPERATIONS_MAP_BACKGROUNDS[mission_map_act]
 	mission_selected_id = focus_mission_id
 	if not act_missions.any(func(mission): return mission.id == mission_selected_id):
 		mission_selected_id = _latest_available_mission_in_act(mission_map_act)
@@ -2911,7 +2944,8 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 	await get_tree().process_frame
 	if not mission_overlay.visible:
 		return
-	var positions := _operations_route_positions(act_missions.size(), mission_list.size)
+	var positions := _operations_region_positions(act_missions, mission_list.size)
+	_add_operations_region_labels(act_missions, mission_list.size)
 	for index in range(1, act_missions.size()):
 		var previous: Dictionary = act_missions[index - 1]
 		var mission: Dictionary = act_missions[index]
@@ -2940,44 +2974,96 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 		node.tooltip_text = "ACT %d · MISSION %02d\n%s" % [
 			mission.act, mission.act_mission, mission.short_title
 		]
-		node.custom_minimum_size = Vector2(42, 42)
-		node.size = Vector2(42, 42)
-		node.position = positions[index] - Vector2(21, 21)
+		var node_size := 34.0 if mission_map_act == 2 else 38.0
+		node.custom_minimum_size = Vector2(node_size, node_size)
+		node.size = Vector2(node_size, node_size)
+		node.position = positions[index] - Vector2.ONE * node_size * 0.5
 		node.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		node.add_theme_font_size_override("font_size", 12)
 		node.set_meta("mission_id", mission.id)
+		node.set_meta("operation_region", mission.chapter)
 		node.pressed.connect(_select_mission_on_map.bind(mission.id))
 		mission_list.add_child(node)
 		mission_node_buttons[mission.id] = node
 	_refresh_mission_node_styles()
 	_refresh_operation_dossier()
 
-func _operations_route_positions(count: int, map_size: Vector2) -> Array:
-	var columns := 6
-	if count > 30:
-		columns = 8
-	elif count <= 15:
-		columns = 5
-	var rows := int(ceil(float(count) / float(columns)))
-	var left := 46.0
-	var right := maxf(left + 1.0, map_size.x - 46.0)
-	var top := 48.0
-	var bottom := maxf(top + 1.0, map_size.y - 48.0)
+func _operations_region_positions(act_missions: Array, map_size: Vector2) -> Array:
 	var positions: Array = []
-	for index in count:
-		var row := index / columns
-		var column := index % columns
-		if row % 2 == 1:
-			column = columns - 1 - column
-		var x_ratio := float(column) / float(maxi(1, columns - 1))
-		var y_ratio := float(row) / float(maxi(1, rows - 1))
-		var position := Vector2(
-			lerpf(left, right, x_ratio),
-			lerpf(top, bottom, y_ratio)
-		)
-		position.y += sin(float(column) * 1.35 + float(row)) * 8.0
-		positions.append(position)
+	var paths: Dictionary = OPERATIONS_CHAPTER_PATHS.get(mission_map_act, {})
+	var chapter_missions := {}
+	for mission in act_missions:
+		if not chapter_missions.has(mission.chapter):
+			chapter_missions[mission.chapter] = []
+		chapter_missions[mission.chapter].append(mission)
+	var positions_by_id := {}
+	for chapter in chapter_missions:
+		var chapter_path: Array = paths.get(chapter, [])
+		var missions: Array = chapter_missions[chapter]
+		for index in missions.size():
+			var ratio := (
+				0.5 if missions.size() == 1
+				else float(index) / float(missions.size() - 1)
+			)
+			var normalized := _point_along_operations_path(chapter_path, ratio)
+			positions_by_id[missions[index].id] = Vector2(
+				normalized.x * map_size.x,
+				normalized.y * map_size.y
+			)
+	for mission in act_missions:
+		positions.append(positions_by_id.get(mission.id, map_size * 0.5))
 	return positions
+
+func _point_along_operations_path(path: Array, ratio: float) -> Vector2:
+	if path.is_empty():
+		return Vector2(0.5, 0.5)
+	if path.size() == 1:
+		return path[0]
+	var lengths: Array[float] = []
+	var total_length := 0.0
+	for index in range(1, path.size()):
+		var length: float = path[index - 1].distance_to(path[index])
+		lengths.append(length)
+		total_length += length
+	var distance := clampf(ratio, 0.0, 1.0) * total_length
+	for index in lengths.size():
+		if distance <= lengths[index] or index == lengths.size() - 1:
+			var segment_ratio := distance / maxf(lengths[index], 0.0001)
+			return path[index].lerp(path[index + 1], segment_ratio)
+		distance -= lengths[index]
+	return path.back()
+
+func _add_operations_region_labels(act_missions: Array, map_size: Vector2) -> void:
+	var chapters: Array[String] = []
+	for mission in act_missions:
+		if mission.chapter not in chapters:
+			chapters.append(mission.chapter)
+	var label_positions: Array = OPERATIONS_CHAPTER_LABEL_POSITIONS.get(
+		mission_map_act, []
+	)
+	var first_chapter_number := 1 if mission_map_act == 1 else (6 if mission_map_act == 2 else 11)
+	for index in chapters.size():
+		var label := Label.new()
+		label.name = "RegionLabel%02d" % (index + 1)
+		label.text = "CH. %d  ·  %s" % [
+			index + first_chapter_number,
+			chapters[index].to_upper()
+		]
+		label.size = Vector2(210, 24)
+		var normalized: Vector2 = label_positions[index]
+		label.position = Vector2(
+			clampf(normalized.x * map_size.x, 8.0, map_size.x - label.size.x - 8.0),
+			clampf(normalized.y * map_size.y, 5.0, map_size.y - label.size.y - 5.0)
+		)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.add_theme_font_size_override("font_size", 10)
+		label.add_theme_color_override("font_color", UIThemeScript.BRASS_LIGHT)
+		label.add_theme_color_override(
+			"font_outline_color", Color(0.02, 0.025, 0.035, 0.96)
+		)
+		label.add_theme_constant_override("outline_size", 5)
+		label.set_meta("operation_region", chapters[index])
+		mission_list.add_child(label)
 
 func _refresh_operations_act_buttons(completed_counts: Array) -> void:
 	var totals := [22, 40, 15]
@@ -3504,7 +3590,7 @@ func _refresh() -> void:
 			(not input_enabled and tutorial_step != TUTORIAL_COMPLETE)
 			or tutorial_step == TUTORIAL_WAIT
 		)
-		tutorial_skip_button.disabled = tutorial_action_locked
+		tutorial_menu_button.disabled = tutorial_action_locked
 		tutorial_continue_button.disabled = tutorial_action_locked
 
 	var selected := {}
@@ -3576,6 +3662,10 @@ func _refresh() -> void:
 	_set_tutorial_button_highlight(
 		tutorial_continue_button,
 		tutorial_mode and tutorial_continue_button.visible
+	)
+	_set_tutorial_button_highlight(
+		tutorial_menu_button,
+		tutorial_mode and tutorial_menu_button.visible
 	)
 	_rebuild_hand()
 

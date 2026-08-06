@@ -781,7 +781,7 @@ Conductor selection changes a squad's strategy without adding another unit to th
 
 Online play and live-service systems are outside the first release. The battle simulation must be complete and reliable before multiplayer is considered.
 
-Campaign mission selection flows from the illustrated, Act-tabbed operations map into squad selection and then one to three consecutive battles. All 62 reference story missions are present across two acts. The battlefield, decks, Mana, and Conductor-skill use reset between encounters, while the player's Conductor carries remaining HP forward. In-progress runs can be resumed.
+Campaign mission selection flows from three illustrated, Act-tabbed regional maps into squad selection and then one to three consecutive battles. Each chapter's route is anchored to its narrative territory: Act I crosses the Reclamation frontier from the relay excavation to Sanctuary, Act II runs from the Grand Circuit through the crisis regions to the Gate of Caelis, and Act III moves inward through Caelis from the Outer City to the Source. All 62 reference story missions are present across the first two acts. The battlefield, decks, Mana, and Conductor-skill use reset between encounters, while the player's Conductor carries remaining HP forward. In-progress runs can be resumed.
 
 The campaign map reports completion by Act and any active run. Each mission has its own briefing, completion debriefing, authored enemy squad, and Conductor configuration. Before deployment, squad selection previews the upcoming enemy cards, Conductor skill, and HP. Continuing after a mission victory opens the next mission's workshop and marks the newly awarded card in Barracks.
 
