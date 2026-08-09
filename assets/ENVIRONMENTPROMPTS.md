@@ -1,57 +1,52 @@
-# Environment Prompts for FLUX.2 Klein 4B Distilled
+# Environment Prompts
 
-FLUX.2 Klein responds best to one concrete scene description. Paste Section 1, one faction sentence from Section 2, and one scene-type sentence from Section 3 as a single paragraph. Do not paste headings, explanations, unused choices, or negative-prompt lists.
+Composition reference: `assets/boards/reference-playboard.png`. Preserve its
+clear floor footprint; vary only the setting and palette around it.
 
-Environment generation is text-to-image; do not attach unit sprites.
+Current stage examples: training hall, Relay excavation, proving circuit,
+faction crossroads, coalition front, and Caelis sanctum under `assets/boards/`.
 
-## Section 1: Environment instruction
+Use the Ink and Cell guidance in `ARTSTYLES.md`: strong ink contours, broad
+matte gouache shapes, crisp cel shading, restrained texture, simplified
+construction, and the same detail level as the unit sprites.
 
-Create an empty wide tactical RPG environment in cel-shaded ink-and-gouache techno-fantasy style. Use strong contours, broad matte colors, crisp lighting, moderate detail, an elevated three-quarter camera, stable horizon, and clear depth layers. Keep the scene unoccupied, text-free, grid-free, and border-free. Return one opaque full-bleed 1024×576 background.
+## Playboard prompt
 
-## Section 2: Faction sentence (choose one)
+Create an empty panoramic tactical arena as one opaque full-bleed 2167×726 RGB
+PNG. Use an elevated three-quarter camera, level horizon, and centered floor.
 
-### Solar
+The protected play area is this trapezoid:
 
-Build a radiant white-gold solar citadel with blue-black photovoltaic roofs, amber-lit seams, geometric sun motifs, elevated bridges, and orderly ceremonial plazas.
+- top-left `(341,247)`
+- top-right `(1826,247)`
+- bottom-right `(1947,708)`
+- bottom-left `(220,708)`
 
-### Steam
+Keep it flat, matte, evenly lit, and visually quiet. Add no raised objects,
+architecture, rails, steps, cables, strong seams, shadows, glow, fog, symbols,
+or baked-in grid. At most six tiny low-contrast scuffs or flat debris pieces
+under 24×14 pixels may appear, away from cell centers and grid seams.
 
-Build a polished brass-and-copper pressure city with green verdigris, riveted walkways, readable gears and gauges, pipe networks, workshops, and clean white steam.
+Place sparse architecture and props beyond the play area using a few large
+silhouettes. Keep the central background low contrast and the bottom edge
+unobstructed. No characters, units, text, logos, UI, cropping, padding,
+letterboxing, stretching, or border. Nothing may compete with the runtime 3×7
+grid or unit sprites.
 
-### Coal
+## Faction palette
 
-Build a blackened iron combustion district with coal furnaces, ember-red seams, soot, ash, smoke stacks, slag structures, and restrained orange firelight.
+- **Solar:** white-gold, blue-black roofs, amber light.
+- **Steam:** brass, copper, verdigris, clean steam.
+- **Coal:** black iron, soot, ash, ember orange.
+- **Wind:** pale blue, silver, turbines, open sky.
+- **Fusion:** graphite, compact green core, restrained circuits.
+- **Caelis:** ivory, silver-gold, dormant relay machinery.
+- **Neutral:** stone, timber, plain metal, soft daylight.
 
-### Wind
+## Other environments
 
-Build a pale-blue, silver, and white high-altitude district with aerodynamic towers, turbines, rotors, sky bridges, open sky, and controlled airflow trails.
+Use 1672×941 with the same style and palette. Reserve broad low-detail space for
+UI; the playboard safe zone is not required.
 
-### Fusion
-
-Build a dark graphite reactor facility with one compact green-lit core, restrained neon-green circuits, contained conduits, smooth panels, and limited holographic accents.
-
-### Caelis
-
-Build an intact ancient imperial capital with monumental ivory plazas, muted silver-gold halls, sealed advanced machinery, dormant relay spires, and soft white-violet resonance light.
-
-### Neutral
-
-Build a welcoming unaligned civic space from stone, brick, timber, plain metal, canvas, and rope under soft neutral daylight with practical widely spaced props.
-
-### All Factions
-
-Place equal Solar, Steam, Coal, Wind, and Fusion regions across one horizon, each with its signature architecture, materials, atmosphere, and glow. Join them through gradual terrain transitions beneath a shared sky and consistent lighting. Keep the foreground neutral.
-
-## Section 3: Scene-type sentence (choose one)
-
-### Main Menu
-
-Use a neutral low-contrast terrace across the bottom third, place faction regions along the middle horizon, and leave one broad quiet side area for title and menu overlays.
-
-### Battle Board
-
-Use a broad flat evenly lit central floor as the low-detail gameplay zone, place tall architecture around its perimeter and background, and keep props outside the play area.
-
-### Menu Backdrop
-
-Use one strong midground landmark, atmospheric depth, a calm darker bottom third, and one broad low-detail side area for readable menu overlays.
+Reject any playboard with the wrong size or anything raised, bright,
+high-contrast, grid-like, or interactive-looking inside the protected area.

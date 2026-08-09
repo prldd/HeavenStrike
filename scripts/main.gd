@@ -3263,7 +3263,7 @@ func _begin_mission(mission_id: int) -> void:
 		return
 	_leave_tutorial()
 	campaign_battle = true
-	board.set_practice_mode(false)
+	board.set_campaign_mission(mission_id)
 	current_mission_id = mission_id
 	current_encounter_index = 0
 	mission_run_conductor_hp = STARTING_HP
@@ -3284,7 +3284,7 @@ func _resume_mission() -> void:
 		return
 	_leave_tutorial()
 	campaign_battle = true
-	board.set_practice_mode(false)
+	board.set_campaign_mission(saved_run.mission_id)
 	current_mission_id = saved_run.mission_id
 	current_encounter_index = saved_run.encounter_index
 	mission_run_conductor_hp = saved_run.conductor_hp

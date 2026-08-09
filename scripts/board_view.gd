@@ -4,8 +4,12 @@ extends Control
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
-const BOARD_BACKGROUND := preload("res://assets/board-steampunk-courtyard.png")
-const PRACTICE_BACKGROUND := preload("res://assets/board-steampunk-training-hall.png")
+const TRAINING_BACKGROUND := preload("res://assets/boards/stage-training.png")
+const RELAY_BACKGROUND := preload("res://assets/boards/stage-relay-excavation.png")
+const PROVING_BACKGROUND := preload("res://assets/boards/stage-proving-circuit.png")
+const FACTION_BACKGROUND := preload("res://assets/boards/stage-faction-crossroads.png")
+const COALITION_BACKGROUND := preload("res://assets/boards/stage-coalition-front.png")
+const CAELIS_BACKGROUND := preload("res://assets/boards/stage-caelis-sanctum.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -24,10 +28,15 @@ const ROW_DEPTHS := [0.0, 0.28, 0.62, 1.0]
 const UNIT_ART_CELL_SCALE := 1.82
 const UNIT_FOOT_INSET := 8.0
 const READY_PULSE_FREQUENCY := 0.32
-const GRID_INK := Color("#28231f")
 const GRID_BRASS := Color("#b99a64")
 const GRID_PLAYER_ENAMEL := Color("#78b9c2")
 const GRID_ENEMY_ENAMEL := Color("#bd7675")
+const STAGE_TRAINING := "training"
+const STAGE_RELAY := "relay_excavation"
+const STAGE_PROVING := "proving_circuit"
+const STAGE_FACTION := "faction_crossroads"
+const STAGE_COALITION := "coalition_front"
+const STAGE_CAELIS := "caelis_sanctum"
 var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
@@ -49,6 +58,7 @@ var blocked_cells: Array = []
 var mission_objective_text := ""
 var enabled := true
 var practice_mode := false
+var background_stage := STAGE_RELAY
 var hover_row := -1
 var hover_col := -1
 var hover_unit_id := -1
@@ -102,10 +112,45 @@ func _clear_hover() -> void:
 	queue_redraw()
 
 func set_practice_mode(enabled_flag: bool) -> void:
-	if practice_mode == enabled_flag:
+	var next_stage := STAGE_TRAINING if enabled_flag else (
+		STAGE_RELAY if background_stage == STAGE_TRAINING else background_stage
+	)
+	if practice_mode == enabled_flag and background_stage == next_stage:
 		return
 	practice_mode = enabled_flag
+	background_stage = next_stage
 	queue_redraw()
+
+func set_campaign_mission(mission_id: int) -> void:
+	practice_mode = false
+	background_stage = campaign_stage_for_mission(mission_id)
+	queue_redraw()
+
+static func campaign_stage_for_mission(mission_id: int) -> String:
+	if mission_id < 14:
+		return STAGE_RELAY
+	if mission_id < 29:
+		return STAGE_PROVING
+	if mission_id < 45:
+		return STAGE_FACTION
+	if mission_id < 62:
+		return STAGE_COALITION
+	return STAGE_CAELIS
+
+func _background_texture() -> Texture2D:
+	match background_stage:
+		STAGE_TRAINING:
+			return TRAINING_BACKGROUND
+		STAGE_PROVING:
+			return PROVING_BACKGROUND
+		STAGE_FACTION:
+			return FACTION_BACKGROUND
+		STAGE_COALITION:
+			return COALITION_BACKGROUND
+		STAGE_CAELIS:
+			return CAELIS_BACKGROUND
+		_:
+			return RELAY_BACKGROUND
 
 func set_opponent_identity(name: String, affiliation: String) -> void:
 	opponent_name = name
@@ -531,69 +576,75 @@ func _draw_cell_shape(
 	outline.append(polygon[0])
 	draw_polyline(outline, border, width, true)
 
+func _draw_deployment_option(row: int, hovered: bool) -> void:
+	var polygon := _cell_polygon(row, 0, 0.055)
+	draw_colored_polygon(
+		polygon,
+		Color(0.18, 0.72, 0.82, 0.15 if hovered else 0.055)
+	)
+	if hovered:
+		var outline := polygon.duplicate()
+		outline.append(polygon[0])
+		draw_polyline(outline, Color(0.66, 0.93, 0.96, 0.58), 1.4, true)
+
 func _draw_board_grid() -> void:
-	# The grid is part of the deck construction: broad cel-shaded plates sit
-	# beneath recessed ink seams and a restrained enamel/brass inlay. Faction
-	# color stays in the two deployment edges instead of tinting whole zones.
+	# Default cells are only a faint positional guide. The generated floor stays
+	# visually dominant, and the outer edge is deliberately left unlined so it
+	# cannot cut across the environment at the top of the play area.
 	for row in ROWS:
 		for col in COLS:
-			var polygon := _cell_polygon(row, col, 0.018)
+			var polygon := _cell_polygon(row, col)
 			var fill := (
-				Color(0.80, 0.77, 0.67, 0.055)
+				Color(0.80, 0.77, 0.67, 0.018)
 				if (row + col) % 2 == 0
-				else Color(0.075, 0.09, 0.10, 0.065)
+				else Color(0.075, 0.09, 0.10, 0.024)
 			)
 			if col == 0:
-				fill = Color(0.24, 0.54, 0.57, 0.07)
+				fill = Color(0.24, 0.54, 0.57, 0.025)
 			elif col == COLS - 1:
-				fill = Color(0.58, 0.27, 0.27, 0.065)
+				fill = Color(0.58, 0.27, 0.27, 0.022)
 			draw_colored_polygon(polygon, fill)
 
-	for row in ROWS:
-		for col in COLS:
-			var polygon := _cell_polygon(row, col, 0.018)
-			var outline := polygon.duplicate()
-			outline.append(polygon[0])
-			var inlay := GRID_BRASS
-			if col == 0:
-				inlay = GRID_PLAYER_ENAMEL
-			elif col == COLS - 1:
-				inlay = GRID_ENEMY_ENAMEL
-			draw_polyline(outline, Color(GRID_INK, 0.78), 3.4, true)
-			draw_polyline(outline, Color(inlay, 0.72), 1.15, true)
-
-	var outer := PackedVector2Array([
-		_cell_polygon(0, 0, 0.018)[0],
-		_cell_polygon(0, COLS - 1, 0.018)[1],
-		_cell_polygon(ROWS - 1, COLS - 1, 0.018)[2],
-		_cell_polygon(ROWS - 1, 0, 0.018)[3],
-	])
-	outer.append(outer[0])
-	draw_polyline(outer, Color(GRID_INK, 0.90), 5.0, true)
-	draw_polyline(outer, Color(GRID_BRASS, 0.82), 1.7, true)
+	# Draw each internal seam exactly once. Small endpoint insets keep the faint
+	# lines from visually reconnecting into an implied perimeter border.
+	for col in range(1, COLS):
+		var top := _cell_polygon(0, col - 1)[1]
+		var bottom := _cell_polygon(ROWS - 1, col - 1)[2]
+		var seam_color := GRID_BRASS
+		if col == 1:
+			seam_color = GRID_PLAYER_ENAMEL
+		elif col == COLS - 1:
+			seam_color = GRID_ENEMY_ENAMEL
+		draw_line(
+			top.lerp(bottom, 0.022), bottom.lerp(top, 0.008),
+			Color(seam_color, 0.24), 0.85, true
+		)
+	for row in range(1, ROWS):
+		var left := _cell_polygon(row - 1, 0)[3]
+		var right := _cell_polygon(row - 1, COLS - 1)[2]
+		draw_line(
+			left.lerp(right, 0.012), right.lerp(left, 0.012),
+			Color(GRID_BRASS, 0.22), 0.85, true
+		)
 
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
-	draw_texture_rect(PRACTICE_BACKGROUND if practice_mode else BOARD_BACKGROUND, panel, false)
+	draw_texture_rect(_background_texture(), panel, false)
 	# A light cool glaze seats the background behind the units without muting
 	# the painted enamel values or turning the scene uniformly brown.
 	draw_rect(panel, Color(0.035, 0.045, 0.055, 0.08))
-	draw_style_box(_box(Color.TRANSPARENT, Color("#a98956"), 12, 2), panel.grow(-2))
-	draw_style_box(_box(Color.TRANSPARENT, Color("#312b27"), 10, 1), panel.grow(-6))
 
 	var grid := _grid_rect()
 	_draw_board_grid()
-	for row in ROWS:
-		for col in COLS:
+	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
+		for row in ROWS:
 			if (
-				row == hover_row and hover_col == 0 and col == 0
-				and enabled and not selected_card.is_empty()
+				not _occupied(row, 0)
 				and (guided_deployment_row < 0 or row == guided_deployment_row)
 			):
-				_draw_cell_shape(
-					row, col, Color(0.12, 0.62, 0.70, 0.22),
-					Color("#a8edf2"), 2.2, 0.045
-				)
+				_draw_deployment_option(row, hover_row == row and hover_col == 0)
+	for row in ROWS:
+		for col in COLS:
 			if BattleRulesScript.is_cell_blocked(blocked_cells, row, col):
 				_draw_blocked_cell(row, col)
 	if guided_deployment_row >= 0:
@@ -709,18 +760,6 @@ func _draw() -> void:
 			12,
 			Color("#fff0c2")
 		)
-
-	if not selected_card.is_empty() and enabled and targetable_unit_ids.is_empty():
-		for row in ROWS:
-			if not _occupied(row, 0) and (guided_deployment_row < 0 or row == guided_deployment_row):
-				var deploy := _cell_polygon(row, 0, 0.09)
-				draw_dashed_line(
-					deploy[3],
-					deploy[2],
-					Color("#61e8ff"),
-					2,
-					6
-				)
 
 	var selected_unit: Variant = _unit_by_id(selected_unit_id)
 	if (

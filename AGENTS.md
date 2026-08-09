@@ -157,7 +157,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 - `assets/units/full/` — exactly 210 original full-body sprites used on the battlefield.
 - `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
 - `assets/IMAGEPROMPTS.md` — original generation briefs and provenance rules.
-- Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`). Practice battles use `assets/board-steampunk-training-hall.png` instead of the courtyard; `BoardView.set_practice_mode()` switches between them. The two battlefield backgrounds are normalized from the Ink and Cell sources in `assets/boards/original_sources/` — regenerate them with `./tools/godot-headless.sh --script res://tools/build_board_background_art.gd`.
+- Menu and operations-map backgrounds are at the repository root under `assets/`. Battlefield stage art lives under `assets/boards/`: practice/tutorial uses the training hall, while `BoardView.set_campaign_mission()` selects Relay excavation, proving circuit, faction crossroads, coalition front, or Caelis sanctum by mission range. Normalize all runtime boards from `assets/boards/original_sources/` with `./tools/godot-headless.sh --script res://tools/build_board_background_art.gd`.
 
 Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 

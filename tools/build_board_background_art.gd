@@ -5,7 +5,14 @@ const SOURCE_ROOT := "res://assets/boards/original_sources"
 const OUTPUT_ROOT := "res://assets"
 const BOARDS := {
 	"courtyard-ink-cell.png": "board-steampunk-courtyard.png",
-	"training-hall-ink-cell.png": "board-steampunk-training-hall.png"
+	"training-hall-ink-cell.png": "board-steampunk-training-hall.png",
+	"reference-playboard.png": "boards/reference-playboard.png",
+	"stage-training.png": "boards/stage-training.png",
+	"stage-relay-excavation.png": "boards/stage-relay-excavation.png",
+	"stage-proving-circuit.png": "boards/stage-proving-circuit.png",
+	"stage-faction-crossroads.png": "boards/stage-faction-crossroads.png",
+	"stage-coalition-front.png": "boards/stage-coalition-front.png",
+	"stage-caelis-sanctum.png": "boards/stage-caelis-sanctum.png"
 }
 
 func _init() -> void:

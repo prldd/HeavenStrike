@@ -119,6 +119,15 @@ and cyan/coral side-dais accents. The training variant replaces the skyline
 with broad steel arches, clerestory light, pale wall panels, and a minimal
 equipment wall while retaining the same gameplay footprint and palette.
 
+The reference-derived mission-stage set keeps one uninterrupted matte floor
+while changing only the perimeter inspiration: orderly training hall, ancient
+Relay excavation, civic proving circuit, five-faction industrial crossroads,
+fortified coalition front, and intact Caelian sanctum. All six used
+`assets/boards/reference-playboard.png` as the composition and safe-floor edit
+reference; prompts excluded floor props, authored grids, text, characters, and
+UI. Untouched generated sources are retained beside the reference in
+`assets/boards/original_sources/`.
+
 Regenerate the normalized 2167x726 runtime copies with:
 
 ```bash
