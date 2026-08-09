@@ -39,6 +39,40 @@ distinct ages and silhouettes, a cohesive brass/teal/coral palette, flat
 magenta backgrounds, and no text, logos, known characters, or franchise motifs.
 The same builder extracts transparent portraits into `assets/dialogue/portraits/`.
 
+## Campaign operations maps
+
+The three Act maps in `assets/operations_maps/original_sources/` were generated
+as original 1672x941 environment illustrations, without external image
+references. The existing map layouts were used only as project-owned edit
+targets so their geography, landmark positions, negative space, and campaign
+route logic would remain stable.
+
+Their shared brief was:
+
+> A deliberately simplified, cel-shaded ink-and-gouache operations map with
+> confident varied dark contours, broad opaque matte color shapes, two or three
+> crisp value groups, restrained dry-brush texture, sparse internal linework,
+> and five large readable industrial-fantasy landmark silhouettes; pale enamel,
+> silver steel, antique brass, muted earth, and restrained cyan power light;
+> broad quiet terrain behind mission buttons and labels; roughly one fifth the
+> visual detail of a painted environment; no mission nodes, route overlays,
+> text, people, logos, or watermark.
+
+Each Act preserved its authored progression:
+
+- Act I: relay excavation, salvage arena, tented settlement, monumental bridge,
+  and upper-right Sanctuary along a lower-left to upper-right frontier route.
+- Act II: coast and arena, circular excavation, civic highlands, amber industrial
+  core, and the fortified cyan Gate of Caelis across five crisis regions.
+- Act III: outer gate, Imperial Archive, Conductor Vault, Civic Core, and radiant
+  Source linked by the broad circular platforms and bridges of Caelis.
+
+Regenerate the runtime copies with:
+
+```bash
+./tools/godot-headless.sh --script res://tools/build_operations_map_art.gd
+```
+
 ## Adding art
 
 1. Write a project-specific visual brief and record it here.
