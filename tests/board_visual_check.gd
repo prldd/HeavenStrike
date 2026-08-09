@@ -21,13 +21,16 @@ func _render() -> void:
 	board.opponent_name = "RELAY INSPECTOR"
 	board.opponent_affiliation = "CAELIAN CIVIC GRID"
 	board.mission_objective_text = "Protect the survey chassis through round 5."
+	# These art IDs cover the source-atlas cells whose authored orientation is
+	# normalized by build_original_unit_art.gd. Render each on both sides so a
+	# visual pass catches either source normalization or board mirroring errors.
 	board.units = [
-		_unit(1, 0, 63, "Artillerist", 0, 1, 4, 3),
-		_unit(2, 0, 113, "Warden", 1, 2, 8, 2),
-		_unit(3, 0, 169, "Channeler", 2, 1, 6, 4),
-		_unit(4, 1, 102, "Lifebinder", 0, 5, 5, 2),
-		_unit(5, 1, 79, "Strider", 1, 4, 4, 3),
-		_unit(6, 1, 117, "Duelist", 2, 5, 7, 3),
+		_unit(1, 0, 64, "Artillerist", 0, 1, 4, 3),
+		_unit(2, 0, 67, "Artillerist", 1, 1, 8, 2),
+		_unit(3, 0, 179, "Strider", 2, 1, 6, 4),
+		_unit(4, 1, 64, "Artillerist", 0, 5, 4, 3),
+		_unit(5, 1, 67, "Artillerist", 1, 5, 8, 2),
+		_unit(6, 1, 179, "Strider", 2, 5, 6, 4),
 	]
 	board.queue_redraw()
 	await process_frame

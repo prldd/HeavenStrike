@@ -20,6 +20,13 @@ const CLASS_ATLASES := {
 	"Lifebinder": SOURCE_ROOT + "/class_atlases/lifebinder.png"
 }
 
+# Runtime unit art has one canonical orientation: every source faces right.
+# BoardView mirrors that art only for units deployed on the enemy side.
+const LEFT_FACING_TEMPLATE_CELLS := {
+	"Artillerist": [1, 4],
+	"Strider": [8]
+}
+
 const FACTION_HUES := {
 	"Coal": 0.035,
 	"Steam": 0.47,
@@ -59,8 +66,6 @@ func _build_roster_originals() -> int:
 		_remove_magenta(cell)
 		var canvas := _fit_to_canvas(cell)
 		_recolor_for_faction(canvas, faction, variant)
-		if int(variant / _template_count(unit.kind)) % 2 == 1:
-			canvas.flip_x()
 		var source_dir := "%s/%s/%s" % [FACTION_SOURCE_ROOT, faction, unit.kind]
 		_make_dir(source_dir)
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
@@ -71,15 +76,22 @@ func _build_roster_originals() -> int:
 	return built
 
 func _class_template(unit_class: String, variant: int) -> Image:
+	var template_index := variant % _template_count(unit_class)
+	var cell: Image
 	if unit_class == "Strider":
 		var atlas_path := (
 			SOURCE_ROOT + "/class_atlases/strider-a.png"
-			if variant % 12 < 6
+			if template_index < 6
 			else SOURCE_ROOT + "/class_atlases/strider-b.png"
 		)
-		return _atlas_cell(_cached_atlas(atlas_path), variant % 6)
-	var atlas_path: String = CLASS_ATLASES[unit_class]
-	return _atlas_cell(_cached_atlas(atlas_path), variant % 6)
+		cell = _atlas_cell(_cached_atlas(atlas_path), template_index % 6)
+	else:
+		var atlas_path: String = CLASS_ATLASES[unit_class]
+		cell = _atlas_cell(_cached_atlas(atlas_path), template_index)
+	var left_facing_cells: Array = LEFT_FACING_TEMPLATE_CELLS.get(unit_class, [])
+	if template_index in left_facing_cells:
+		cell.flip_x()
+	return cell
 
 func _template_count(unit_class: String) -> int:
 	return 12 if unit_class == "Strider" else 6

@@ -1042,7 +1042,9 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
 	var art_scale := minf(rect.size.x / content_size.x, rect.size.y / content_size.y)
 	var draw_size := (content_size * art_scale).round()
 	var center := rect.get_center().round()
-	var scale_x := -1.0 if unit.side == 0 else 1.0
+	# Generated runtime sprites face right; mirror the enemy so both sides face
+	# toward the opposing Conductor.
+	var scale_x := 1.0 if unit.side == 0 else -1.0
 	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
 	# Draw the sprite in two slices: everything below the knees stays planted
 	# so the unit keeps its footing, while the upper body carries the idle bob
