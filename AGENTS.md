@@ -31,7 +31,7 @@ The prototype is intentionally a single-player, desktop-first Godot project. All
 ├── scripts/               # All GDScript source (Resource classes live in scripts/resources/)
 ├── tests/                 # Headless Godot test scripts
 ├── tools/                 # Development utilities
-├── documentation/         # Narrative plans and unit faction/sprite assignment reference
+├── documentation/         # Narrative plans, consolidated narrative script, and unit faction/sprite reference
 ├── assets/                # Spritesheets, generated portraits, generated full-body sprites, backgrounds
 ├── export_templates/      # Empty in source; Godot export templates live here when installed
 ├── feature_profiles/      # Empty in source
@@ -157,7 +157,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 - `assets/units/full/` — exactly 210 original full-body sprites used on the battlefield.
 - `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
 - `assets/IMAGEPROMPTS.md` — original generation briefs and provenance rules.
-- Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`). Practice battles use `assets/board-steampunk-training-hall.png` instead of the courtyard; `BoardView.set_practice_mode()` switches between them. The training-hall art is generated procedurally — regenerate with `python tools/generate_practice_background.py`.
+- Background images are at the repository root under `assets/` (e.g. `board-steampunk-courtyard.png`, `main-menu-steampunk-deck.png`). Practice battles use `assets/board-steampunk-training-hall.png` instead of the courtyard; `BoardView.set_practice_mode()` switches between them. The two battlefield backgrounds are normalized from the Ink and Cell sources in `assets/boards/original_sources/` — regenerate them with `./tools/godot-headless.sh --script res://tools/build_board_background_art.gd`.
 
 Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 
@@ -353,6 +353,7 @@ Gotchas when running the Windows binary headless:
 - **Add a skill timing:** add a branch in `scripts/unit_skills.gd` and wire it into the battle resolution in `main.gd`. Add an AI consideration in `scripts/battle_ai.gd` if the enemy should use it.
 - **Add a Conductor skill:** edit `scripts/conductor_skills.gd`, add the name to `ConductorSkills.SKILLS`, and update the description.
 - **Add a mission:** edit `scripts/story_quest_catalog.gd` (`QUESTS`, `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`), then run `balance_simulation.gd`. New missions must be appended at the end of `QUESTS` — never inserted mid-list — because `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`, and the balance test all key off mission index. Add story text to `MISSION_STORIES` and, when the mission has a character scene, add a 1-based entry to `scripts/story_dialogue_catalog.gd:INTERLUDES`. Follow `documentation/Resonance_War_Campaign_Narrative.md` (the narrative plan) and `documentation/Resonance_War_Narrative_Foundation.md` (the world rules).
+- **Edit campaign narrative text:** change `MISSION_STORIES`/`ENCOUNTER_RULES` in `scripts/story_quest_catalog.gd` or `INTERLUDES`/`CHARACTERS` in `scripts/story_dialogue_catalog.gd`, then regenerate the consolidated reading copy `documentation/Campaign_Narrative_Script.md` with `./tools/godot-headless.sh --script res://tools/generate_campaign_narrative.gd`. Never edit the digest directly; it is generated.
 - **Change UI theme:** edit `scripts/ui_theme.gd`; the theme is generated programmatically and applied to the root control in `main.gd`.
 - **Change audio:** edit `scripts/battle_audio.gd`; the sounds are generated from wave functions.
 

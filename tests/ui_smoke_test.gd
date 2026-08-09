@@ -90,7 +90,7 @@ func _run() -> void:
 	assert(not game.win_button.visible)
 	assert(game.hand_row.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	game.skip_animations = true
-	game.board.idle_bob_enabled = false
+	game.board.idle_animation_enabled = false
 	game._begin_tutorial()
 	assert(game.tutorial_mode)
 	assert(game.tutorial_step == game.TUTORIAL_INTRO)
@@ -198,7 +198,7 @@ func _run() -> void:
 	assert(not game.board._has_guidance_pulse())
 	assert(game.main_menu_overlay.visible)
 	game.skip_animations = false
-	game.board.idle_bob_enabled = true
+	game.board.idle_animation_enabled = true
 	game.units.clear()
 	game._refresh()
 	game._cycle_resolution_speed()

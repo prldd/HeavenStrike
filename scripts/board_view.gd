@@ -15,16 +15,19 @@ signal unit_hover_ended
 const ROWS := 3
 const COLS := 7
 const GRID_BOTTOM_MARGIN := 18.0
-const GRID_MAX_TOP := 132.0
-const GRID_MIN_TOP := 92.0
+const GRID_MAX_TOP := 250.0
+const GRID_MIN_TOP := 118.0
 const GRID_SIDE_GUTTER := 260.0
 const CELL_WIDTH_TO_DEPTH := 1.04
 const PERSPECTIVE_TOP_SCALE := 0.86
 const ROW_DEPTHS := [0.0, 0.28, 0.62, 1.0]
 const UNIT_ART_CELL_SCALE := 1.82
 const UNIT_FOOT_INSET := 8.0
-const IDLE_BOB_AMPLITUDE := 2.6
-const IDLE_BOB_FREQUENCY := 1.1
+const READY_PULSE_FREQUENCY := 0.32
+const GRID_INK := Color("#28231f")
+const GRID_BRASS := Color("#b99a64")
+const GRID_PLAYER_ENAMEL := Color("#78b9c2")
+const GRID_ENEMY_ENAMEL := Color("#bd7675")
 var units: Array = []
 var selected_card: Dictionary = {}
 var selected_unit_id := -1
@@ -67,7 +70,7 @@ var projectile_progress := 0.0
 var projectile_kind := ""
 var shake_tween: Tween
 var reduced_motion := false
-var idle_bob_enabled := true
+var idle_animation_enabled := true
 var idle_time := 0.0
 
 func _ready() -> void:
@@ -76,11 +79,11 @@ func _ready() -> void:
 	mouse_exited.connect(_clear_hover)
 
 func _process(delta: float) -> void:
-	if reduced_motion or not idle_bob_enabled or not is_visible_in_tree():
+	if reduced_motion or not idle_animation_enabled or not is_visible_in_tree():
 		return
 	var redraw := false
 	if not units.is_empty():
-		idle_time += delta
+		idle_time += delta / maxf(Engine.time_scale, 0.001)
 		redraw = true
 	if _has_guidance_pulse():
 		guidance_pulse_time = fmod(
@@ -133,7 +136,7 @@ func _has_guidance_pulse() -> bool:
 	)
 
 func _guidance_pulse_amount() -> float:
-	if reduced_motion or not idle_bob_enabled:
+	if reduced_motion or not idle_animation_enabled:
 		return 0.7
 	return (sin(guidance_pulse_time / 1.1 * TAU - PI * 0.5) + 1.0) * 0.5
 
@@ -444,7 +447,9 @@ func _update_unit_hover(point: Vector2) -> void:
 		unit_hovered.emit(next_unit)
 
 func _grid_rect() -> Rect2:
-	var grid_top := clampf(size.y * 0.28, GRID_MIN_TOP, GRID_MAX_TOP)
+	# Match the upper edge of the illustrated deck instead of projecting the
+	# first lane into the skyline and rear scenery at taller resolutions.
+	var grid_top := clampf(size.y * 0.34, GRID_MIN_TOP, GRID_MAX_TOP)
 	var grid_height := maxf(1.0, size.y - grid_top - GRID_BOTTOM_MARGIN)
 	var maximum_width := maxf(1.0, size.x - GRID_SIDE_GUTTER)
 	var perspective_width := (grid_height / ROWS) * CELL_WIDTH_TO_DEPTH * COLS
@@ -526,34 +531,69 @@ func _draw_cell_shape(
 	outline.append(polygon[0])
 	draw_polyline(outline, border, width, true)
 
+func _draw_board_grid() -> void:
+	# The grid is part of the deck construction: broad cel-shaded plates sit
+	# beneath recessed ink seams and a restrained enamel/brass inlay. Faction
+	# color stays in the two deployment edges instead of tinting whole zones.
+	for row in ROWS:
+		for col in COLS:
+			var polygon := _cell_polygon(row, col, 0.018)
+			var fill := (
+				Color(0.80, 0.77, 0.67, 0.055)
+				if (row + col) % 2 == 0
+				else Color(0.075, 0.09, 0.10, 0.065)
+			)
+			if col == 0:
+				fill = Color(0.24, 0.54, 0.57, 0.07)
+			elif col == COLS - 1:
+				fill = Color(0.58, 0.27, 0.27, 0.065)
+			draw_colored_polygon(polygon, fill)
+
+	for row in ROWS:
+		for col in COLS:
+			var polygon := _cell_polygon(row, col, 0.018)
+			var outline := polygon.duplicate()
+			outline.append(polygon[0])
+			var inlay := GRID_BRASS
+			if col == 0:
+				inlay = GRID_PLAYER_ENAMEL
+			elif col == COLS - 1:
+				inlay = GRID_ENEMY_ENAMEL
+			draw_polyline(outline, Color(GRID_INK, 0.78), 3.4, true)
+			draw_polyline(outline, Color(inlay, 0.72), 1.15, true)
+
+	var outer := PackedVector2Array([
+		_cell_polygon(0, 0, 0.018)[0],
+		_cell_polygon(0, COLS - 1, 0.018)[1],
+		_cell_polygon(ROWS - 1, COLS - 1, 0.018)[2],
+		_cell_polygon(ROWS - 1, 0, 0.018)[3],
+	])
+	outer.append(outer[0])
+	draw_polyline(outer, Color(GRID_INK, 0.90), 5.0, true)
+	draw_polyline(outer, Color(GRID_BRASS, 0.82), 1.7, true)
+
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
 	draw_texture_rect(PRACTICE_BACKGROUND if practice_mode else BOARD_BACKGROUND, panel, false)
-	# Keep the scenery visible through the playmat. The perspective grid is a
-	# footprint for positioning rather than a set of isolated unit cards.
-	draw_rect(panel, Color(0.075, 0.055, 0.035, 0.25))
-	draw_style_box(_box(Color.TRANSPARENT, Color("#b88a48"), 12, 3), panel.grow(-2))
-	draw_style_box(_box(Color.TRANSPARENT, Color("#4e3824"), 10, 1), panel.grow(-7))
+	# A light cool glaze seats the background behind the units without muting
+	# the painted enamel values or turning the scene uniformly brown.
+	draw_rect(panel, Color(0.035, 0.045, 0.055, 0.08))
+	draw_style_box(_box(Color.TRANSPARENT, Color("#a98956"), 12, 2), panel.grow(-2))
+	draw_style_box(_box(Color.TRANSPARENT, Color("#312b27"), 10, 1), panel.grow(-6))
 
 	var grid := _grid_rect()
+	_draw_board_grid()
 	for row in ROWS:
 		for col in COLS:
-			var base := (
-				Color(0.10, 0.085, 0.065, 0.28)
-				if (row + col) % 2 == 0
-				else Color(0.15, 0.125, 0.085, 0.22)
-			)
-			if col == 0:
-				base = Color(0.05, 0.39, 0.44, 0.30)
-			elif col == COLS - 1:
-				base = Color(0.49, 0.08, 0.15, 0.28)
 			if (
 				row == hover_row and hover_col == 0 and col == 0
 				and enabled and not selected_card.is_empty()
 				and (guided_deployment_row < 0 or row == guided_deployment_row)
 			):
-				base = Color(0.08, 0.62, 0.78, 0.42)
-			_draw_cell_shape(row, col, base, Color(0.72, 0.58, 0.38, 0.48))
+				_draw_cell_shape(
+					row, col, Color(0.12, 0.62, 0.70, 0.22),
+					Color("#a8edf2"), 2.2, 0.045
+				)
 			if BattleRulesScript.is_cell_blocked(blocked_cells, row, col):
 				_draw_blocked_cell(row, col)
 	if guided_deployment_row >= 0:
@@ -827,16 +867,26 @@ func _draw_unit(unit: Dictionary) -> void:
 	var art_rect := _unit_art_rect(unit)
 	var art_size := art_rect.size.y
 	var color: Color = UnitCatalogScript.class_color(unit.kind)
+	var ready_pulse := _readiness_pulse_amount(unit)
+	var ring_fill_alpha := 0.055
+	var ring_line_alpha := 0.14
+	var ring_width := 1.0
+	if unit.get("ready", true) and int(unit.get("hp", 1)) > 0:
+		ring_fill_alpha = 0.07 + ready_pulse * 0.035
+		ring_line_alpha = 0.20 + ready_pulse * 0.08
+		ring_width = 1.2 + ready_pulse * 0.25
 
 	# The cell is only the unit's footprint. The art intentionally reaches into
 	# neighboring rows and columns, like figures standing together on a field.
 	draw_set_transform(foot - Vector2(0, 3), 0.0, Vector2(1.0, 0.30))
-	draw_circle(Vector2.ZERO, cell_width * 0.40, Color(color, 0.13))
-	draw_arc(Vector2.ZERO, cell_width * 0.40, 0, TAU, 28, Color(color, 0.28), 1.5)
+	draw_circle(Vector2.ZERO, cell_width * 0.40, Color(color, ring_fill_alpha))
+	draw_arc(
+		Vector2.ZERO, cell_width * 0.40, 0, TAU, 28,
+		Color(color, ring_line_alpha), ring_width
+	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	var bob := _idle_bob_offset(unit)
-	_draw_unit_shadow(footprint_rect, bob)
-	_draw_unit_art(unit, art_rect, bob)
+	_draw_unit_shadow(footprint_rect)
+	_draw_unit_art(unit, art_rect)
 	var flash: float = unit_flash_strength.get(unit.id, 0.0)
 	if flash > 0.0:
 		draw_style_box(
@@ -1007,33 +1057,36 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 			badges[index].color
 		)
 
-func _idle_bob_offset(unit: Dictionary) -> float:
-	if reduced_motion or not idle_bob_enabled or unit_defeat_strength.has(unit.id) or int(unit.get("hp", 1)) <= 0:
+func _readiness_pulse_amount(unit: Dictionary) -> float:
+	if (
+		not unit.get("ready", true) or unit_defeat_strength.has(unit.id)
+		or int(unit.get("hp", 1)) <= 0
+	):
 		return 0.0
-	# Golden-angle phase spread per unit id keeps units from bobbing in sync;
-	# the second harmonic makes the motion feel like breathing, not floating.
-	var phase := fposmod(float(int(unit.get("id", 0))) * 2.4, TAU)
-	var t := idle_time * IDLE_BOB_FREQUENCY * TAU + phase
-	var amplitude := IDLE_BOB_AMPLITUDE * (1.0 if unit.get("ready", true) else 0.55)
-	return (sin(t) * 0.8 + sin(t * 2.0 + 1.3) * 0.2) * amplitude
+	if reduced_motion or not idle_animation_enabled:
+		return 0.5
+	# A long, offset cycle keeps the readiness rings from pulsing in lockstep.
+	var phase := fposmod(float(int(unit.get("id", 0))) * 1.618, TAU)
+	return (sin(idle_time * READY_PULSE_FREQUENCY * TAU + phase) + 1.0) * 0.5
 
-func _draw_unit_shadow(rect: Rect2, bob: float) -> void:
-	# Shadow squashes and lightens as the unit bobs up, grounding the sprite.
-	var lift := clampf(-bob / IDLE_BOB_AMPLITUDE, -1.0, 1.0)
-	var half_width := rect.size.x * (0.30 - lift * 0.03)
-	var half_height := half_width * 0.22
+func _draw_unit_shadow(rect: Rect2) -> void:
+	# Two restrained, fixed ellipses ground the feet without implying a bounce.
 	var shadow_center := Vector2(rect.get_center().x, rect.end.y - 4.0)
-	draw_set_transform(shadow_center, 0.0, Vector2(1.0, half_height / half_width))
-	draw_circle(Vector2.ZERO, half_width, Color(0.02, 0.03, 0.06, 0.30 - lift * 0.05))
+	var outer_half_width := rect.size.x * 0.24
+	draw_set_transform(shadow_center, 0.0, Vector2(1.0, 0.14))
+	draw_circle(Vector2.ZERO, outer_half_width, Color(0.02, 0.03, 0.06, 0.08))
+	var inner_half_width := rect.size.x * 0.18
+	draw_set_transform(shadow_center, 0.0, Vector2(1.0, 0.12))
+	draw_circle(Vector2.ZERO, inner_half_width, Color(0.02, 0.03, 0.06, 0.13))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
+func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	var icon_id: int = unit.get("icon", 0)
 	if icon_id < 1:
 		return
 	var texture: Texture2D = _full_unit_texture(icon_id)
 	if texture == null:
-		_draw_missing_unit_art(unit, rect, bob)
+		_draw_missing_unit_art(unit, rect)
 		return
 	# Use the full generated canvas so deliberately small characters remain
 	# relatively small instead of being normalized by alpha-bound cropping.
@@ -1046,30 +1099,15 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2, bob: float = 0.0) -> void:
 	# toward the opposing Conductor.
 	var scale_x := 1.0 if unit.side == 0 else -1.0
 	draw_set_transform(center, 0.0, Vector2(scale_x, 1.0))
-	# Draw the sprite in two slices: everything below the knees stays planted
-	# so the unit keeps its footing, while the upper body carries the idle bob
-	# as a pure translation. The top slice samples a few pixels past the split
-	# and is drawn over the legs, so the overlap always covers the seam and the
-	# bob never tears the art.
-	var split_source_y := content_size.y * 0.72
-	var split_draw_y := draw_size.y * 0.72
-	var top_y := -draw_size.y * 0.5
-	var overlap_draw := IDLE_BOB_AMPLITUDE + 2.0
-	var overlap_source := minf(overlap_draw / art_scale, content_size.y - split_source_y)
 	draw_texture_rect_region(
 		texture,
-		Rect2(Vector2(-draw_size.x * 0.5, top_y + split_draw_y), Vector2(draw_size.x, draw_size.y - split_draw_y)),
-		Rect2(content_rect.position + Vector2(0, split_source_y), Vector2(content_size.x, content_size.y - split_source_y))
-	)
-	draw_texture_rect_region(
-		texture,
-		Rect2(Vector2(-draw_size.x * 0.5, top_y + bob), Vector2(draw_size.x, split_draw_y + overlap_draw)),
-		Rect2(content_rect.position, Vector2(content_size.x, split_source_y + overlap_source))
+		Rect2(-draw_size * 0.5, draw_size),
+		content_rect
 	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-func _draw_missing_unit_art(unit: Dictionary, rect: Rect2, bob: float) -> void:
-	var center := rect.get_center() + Vector2(0, bob)
+func _draw_missing_unit_art(unit: Dictionary, rect: Rect2) -> void:
+	var center := rect.get_center()
 	var size := minf(rect.size.x, rect.size.y) * 0.27
 	var color: Color = UnitCatalogScript.class_color(unit.get("kind", "Warden"))
 	draw_circle(center, size, Color(color, 0.22))

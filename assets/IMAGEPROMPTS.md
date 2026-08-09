@@ -30,6 +30,26 @@ Two Strider atlases provide twelve base silhouettes; every other class has six.
 faction hue variants, flips later variants for formation variety, and creates
 the 210 committed full-body and portrait outputs.
 
+## Ink and Cell full-body replacements
+
+Updated full-body sources live in `assets/units/gen/`, keyed by the stable
+numeric art IDs returned by `UnitCatalog.art_id()`. They use the project's
+`assets/ARTSTYLES.md` Ink and Cell guidance: strong ink contours, broad opaque
+paint shapes, crisp cel-shaded values, restrained brush texture, simplified
+mechanical construction, and transparent 1024x1024 canvases.
+
+Install every available replacement into the runtime `assets/units/full/`
+directory with:
+
+```bash
+./tools/godot-headless.sh --script res://tools/install_generated_unit_art.gd
+```
+
+The installer validates source filenames against the active roster art map,
+preserves the complete canvas used by `BoardView` for consistent scaling,
+enables mipmaps on every runtime import, and retains the atlas-derived runtime
+fallback for any active art ID that does not yet have a generated replacement.
+
 ## Supporting-cast atlas
 
 `assets/dialogue/original_sources/campaign-supporting-cast.png` was generated
@@ -71,6 +91,38 @@ Regenerate the runtime copies with:
 
 ```bash
 ./tools/godot-headless.sh --script res://tools/build_operations_map_art.gd
+```
+
+## Battlefield backgrounds
+
+The outdoor courtyard and indoor training hall sources in
+`assets/boards/original_sources/` were generated as project-original edits of
+the existing board composition. The edit targets fixed the panoramic camera,
+arena footprint, commander dais positions, and gameplay-safe negative space.
+Updated unit images `001`, `003`, and `005` were supplied only as visual-style
+references; their characters were explicitly excluded from the environments.
+
+Their shared final prompt direction was:
+
+> Restyle the board as a hand-painted Ink and Cell industrial-fantasy tactical
+> environment with confident varied contours, broad opaque matte gouache
+> shapes, crisp two-or-three-group cel shading, restrained brush texture,
+> simplified manufactured construction, and moderate readable detail. Build
+> the central battlefield into the environment as one quiet deck of a few
+> large pale-enamel and warm-slate panels with antique-brass rails and dark
+> recessed seams. Remove small paving and plank subdivisions. Preserve the
+> exact panoramic composition and do not add an explicit grid, cells, units,
+> text, UI, logos, or watermark; the exact 3x7 inlays are drawn in code.
+
+The courtyard variant keeps a sparse outdoor workshop skyline, distant hills,
+and cyan/coral side-dais accents. The training variant replaces the skyline
+with broad steel arches, clerestory light, pale wall panels, and a minimal
+equipment wall while retaining the same gameplay footprint and palette.
+
+Regenerate the normalized 2167x726 runtime copies with:
+
+```bash
+./tools/godot-headless.sh --script res://tools/build_board_background_art.gd
 ```
 
 ## Adding art

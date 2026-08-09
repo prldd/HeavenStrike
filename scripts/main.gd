@@ -644,7 +644,7 @@ func _cycle_audio() -> void:
 
 func _toggle_animation_skip() -> void:
 	skip_animations = not skip_animations
-	board.idle_bob_enabled = not skip_animations
+	board.idle_animation_enabled = not skip_animations
 	animation_button.text = "ANIM OFF" if skip_animations else "ANIM ON"
 	_save_battle_settings()
 
@@ -664,7 +664,7 @@ func _load_battle_settings() -> void:
 	speed_button.text = "SPEED %d×" % int(resolution_speed)
 	audio_button.text = battle_audio.label()
 	board.reduced_motion = reduced_motion
-	board.idle_bob_enabled = not skip_animations
+	board.idle_animation_enabled = not skip_animations
 	animation_button.text = "ANIM OFF" if skip_animations else "ANIM ON"
 	motion_button.text = "MOTION LOW" if reduced_motion else "MOTION FULL"
 
