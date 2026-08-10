@@ -764,6 +764,9 @@ func _init() -> void:
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
 	assert(default_squad.size() == 8)
+	assert(default_squad.all(func(unit_name): return (
+		UnitCatalogScript.by_name(unit_name).stars == 1
+	)))
 	var repaired_squad: Array = SquadStoreScript.sanitize(["Relay Lancer-003", "Relay Lancer-003", "Relay Lancer-003", "Missing"], roster)
 	assert(repaired_squad.size() == 2)
 	assert(repaired_squad.count("Relay Lancer-003") == 2)
@@ -787,14 +790,17 @@ func _init() -> void:
 		roster, ["Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006"]
 	)
 	assert(inventory["Relay Lancer-003"] == 3)
-	assert(inventory["Relay Mender-006"] == 1)
-	assert(inventory["Relay Mender-012"] == 0)
+	assert(inventory["Relay Mender-006"] == 2)
+	assert(inventory["Relay Mender-012"] == 1)
+	assert(inventory["Relay Bastion-013"] == 0)
 	var owned_squad: Array = SquadStoreScript.sanitize_owned(
 		["Relay Lancer-003", "Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006", "Relay Mender-012"],
 		roster,
 		inventory
 	)
-	assert(owned_squad == ["Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006"])
+	assert(owned_squad == [
+		"Relay Lancer-003", "Relay Lancer-003", "Relay Mender-006", "Relay Mender-012"
+	])
 	assert(ConductorSkillsScript.SKILLS.size() == 8)
 	assert(CampaignStoreScript.SAVE_VERSION == 1)
 	assert(SquadStoreScript.SAVE_VERSION == 3)
@@ -922,16 +928,22 @@ func _init() -> void:
 	assert(CampaignStoreScript.is_available(1, [0]))
 	assert(CampaignStoreScript.sanitize_completed([2, 2, 999, -1, 0]) == [0, 2])
 	var starting_unlocks: Array = CampaignStoreScript.unlocked_unit_names(roster, [])
-	assert(starting_unlocks.size() == 85)
-	assert("Relay Mender-006" not in starting_unlocks)
+	assert(starting_unlocks.size() == 15)
+	assert(starting_unlocks.all(func(unit_name): return (
+		UnitCatalogScript.by_name(unit_name).stars == 1
+	)))
+	assert("Relay Mender-006" in starting_unlocks)
+	assert("Relay Mender-012" in starting_unlocks)
 	assert("Zephyr Mender-208" not in starting_unlocks)
-	assert("Flux Weaver-210" in starting_unlocks)
-	assert("Flux Weaver-212" in starting_unlocks)
-	assert("Cinder Mender-215" in starting_unlocks)
+	assert("Flux Weaver-210" not in starting_unlocks)
+	assert("Flux Weaver-212" not in starting_unlocks)
+	assert("Cinder Mender-215" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
-		roster, ["Relay Mender-006", "Relay Mender-012"]
+		roster, ["Relay Bastion-013", "Cinder Blade-015"]
 	)
-	assert(earned_unlocks.size() == 87)
+	assert(earned_unlocks.size() == 17)
+	assert("Relay Bastion-013" in earned_unlocks)
+	assert("Cinder Blade-015" in earned_unlocks)
 	assert("Zephyr Mender-208" in CampaignStoreScript.REWARD_UNITS)
 	assert("Zephyr Mender-209" in CampaignStoreScript.REWARD_UNITS)
 	assert("Cinder Mender-213" in CampaignStoreScript.REWARD_UNITS)

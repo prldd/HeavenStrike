@@ -11,9 +11,17 @@ const LEGACY_LEADER_SKILL_KEY := "cap" + "tain_skill"
 static func default_squad(roster: Array) -> Array:
 	var names: Array = []
 	for unit in roster:
+		if unit.stars != 1:
+			continue
 		if names.size() >= SQUAD_SIZE:
 			break
 		names.append(unit.name)
+	# Pure-data fixtures and custom rosters may not define enough 1-star units.
+	for unit in roster:
+		if names.size() >= SQUAD_SIZE:
+			break
+		if unit.name not in names:
+			names.append(unit.name)
 	return names
 
 static func sanitize(candidate_names: Array, roster: Array) -> Array:

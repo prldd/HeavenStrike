@@ -13,18 +13,21 @@ func _init() -> void:
 
 func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(TutorialStoreScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
 	BattleSettingsScript.save_settings({
 		"speed": 1.0,
 		"volume": 2,
 		"reduced_motion": false,
 		"skip_animations": false
 	})
-	assert(TutorialStoreScript.mark_completed())
-	assert(TutorialStoreScript.is_completed())
+	assert(not TutorialStoreScript.is_completed())
 	var scene: PackedScene = load("res://main.tscn")
 	var game = scene.instantiate()
 	root.add_child(game)
 	await process_frame
+	assert(game.main_menu_overlay.visible)
+	assert(not game.tutorial_mode)
 	assert(game.main_menu_overlay.get_child(0) is TextureRect)
 	assert(game.main_menu_overlay.get_child(0).texture != null)
 	assert(game.squad_overlay.get_child(0) is TextureRect)
@@ -507,6 +510,11 @@ func _run() -> void:
 	var inventory: Dictionary = CampaignStoreScript.inventory_counts(
 		game.roster, game.earned_reward_units
 	)
+	assert(inventory.values().reduce(func(total, count): return total + count, 0) == 15)
+	assert(game.squad_names.all(func(instance_id): return (
+		KineticCrucibleScript.instance_by_id(game.collection_instances, instance_id).name
+		in game.roster.filter(func(unit): return unit.stars == 1).map(func(unit): return unit.name)
+	)))
 	var owned_types := 0
 	for count in inventory.values():
 		if count > 0:

@@ -13,8 +13,10 @@ assets required by the prototype.
 
 ## Controls
 
-- New profiles begin with a five-step guided battle; replay it any time from
-  **Guided Tutorial** on the main menu.
+- New profiles begin at the main menu. Start the five-step guided battle any
+  time from **Guided Tutorial**.
+- The starting collection contains the fifteen base 1-star units; advanced
+  units are earned from campaign rewards or Kinetic Crucible promotions.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.

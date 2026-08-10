@@ -136,17 +136,17 @@ static func debug_grant_minimum_copies(
 static func unlocked_unit_names(roster: Array, earned_rewards: Array) -> Array:
 	var unlocked: Array = []
 	for unit in roster:
-		if unit.name not in REWARD_UNITS:
+		if unit.stars == 1:
 			unlocked.append(unit.name)
 	for reward in earned_rewards:
-		if reward in REWARD_UNITS and reward not in unlocked:
+		if UnitCatalogScript.by_name(reward) != null and reward not in unlocked:
 			unlocked.append(reward)
 	return unlocked
 
 static func inventory_counts(roster: Array, earned_rewards: Array) -> Dictionary:
 	var counts := {}
 	for unit in roster:
-		counts[unit.name] = 0 if unit.name in REWARD_UNITS else 1
+		counts[unit.name] = 1 if unit.stars == 1 else 0
 	for reward in earned_rewards:
 		if counts.has(reward):
 			counts[reward] += 1

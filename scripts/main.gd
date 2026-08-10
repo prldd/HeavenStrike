@@ -314,11 +314,6 @@ func _ready() -> void:
 	_sanitize_squad_unlocks()
 	_start_new_match()
 	_show_main_menu()
-	if (
-		not TutorialStoreScript.is_completed() and completed_missions.is_empty()
-		and MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size()).is_empty()
-	):
-		_begin_tutorial()
 	_prewarm_icons()
 
 func _prewarm_icons() -> void:
