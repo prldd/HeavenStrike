@@ -3911,10 +3911,10 @@ func _class_card_style(
 func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)
 
-func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
+func _unit_icon_at_size(icon_id: int, icon_size: int) -> Texture2D:
 	if icon_id < 1:
 		return null
-	var cache_key := "%d:%d" % [icon_id, size]
+	var cache_key := "%d:%d" % [icon_id, icon_size]
 	if unit_icon_cache.has(cache_key):
 		return unit_icon_cache[cache_key]
 	var portrait_path := (
@@ -3925,7 +3925,7 @@ func _unit_icon_at_size(icon_id: int, size: int) -> Texture2D:
 	if portrait_texture == null:
 		return null
 	var portrait_image := portrait_texture.get_image()
-	portrait_image.resize(size, size, Image.INTERPOLATE_LANCZOS)
+	portrait_image.resize(icon_size, icon_size, Image.INTERPOLATE_LANCZOS)
 	var portrait_icon := ImageTexture.create_from_image(portrait_image)
 	unit_icon_cache[cache_key] = portrait_icon
 	return portrait_icon

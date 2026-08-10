@@ -9,6 +9,7 @@ extends Resource
 @export var atk: int = 0
 @export var hp: int = 0
 @export var move: int = 0
+@warning_ignore("shadowed_global_identifier")
 @export var range: int = 0
 @export var chassis_family: String = "standard"
 @export var description: String = ""

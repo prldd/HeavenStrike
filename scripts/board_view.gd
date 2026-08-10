@@ -154,8 +154,8 @@ func _background_texture() -> Texture2D:
 		_:
 			return RELAY_BACKGROUND
 
-func set_opponent_identity(name: String, affiliation: String) -> void:
-	opponent_name = name
+func set_opponent_identity(display_name: String, affiliation: String) -> void:
+	opponent_name = display_name
 	opponent_affiliation = affiliation
 	queue_redraw()
 
@@ -297,7 +297,10 @@ func animate_commander_attack(
 	if actor == null:
 		return get_tree().process_frame
 	var origin := _cell_rect(actor.row, actor.col).get_center()
-	var destination := Vector2(size.x - 82 if commander_side == 1 else 82, _grid_rect().get_center().y)
+	var destination := Vector2(
+		size.x - 82.0 if commander_side == 1 else 82.0,
+		_grid_rect().get_center().y
+	)
 	if unit_kind in ["Strider", "Duelist", "Warden"]:
 		var direction := (destination - origin).normalized()
 		var lunge := direction * (10.0 if reduced_motion else 30.0)
@@ -723,7 +726,10 @@ func _draw() -> void:
 	)
 	if commander_effect_side >= 0:
 		_draw_commander_effect(
-			Vector2(size.x - 82 if commander_effect_side == 1 else 82, grid.get_center().y)
+			Vector2(
+				size.x - 82.0 if commander_effect_side == 1 else 82.0,
+				grid.get_center().y
+			)
 		)
 	_draw_mana_indicator(Vector2(82, grid.get_center().y - 92), player_mana_text, false)
 	_draw_mana_indicator(Vector2(size.x - 82, grid.get_center().y - 92), enemy_mana_text, true)
@@ -1004,13 +1010,13 @@ func _draw_unit(unit: Dictionary) -> void:
 func _draw_projectile() -> void:
 	if projectile_kind.is_empty():
 		return
-	var position := projectile_from.lerp(projectile_to, projectile_progress)
+	var projectile_position := projectile_from.lerp(projectile_to, projectile_progress)
 	var color := Color("#70e0a1")
 	var radius := 7.0
 	if projectile_kind == "Artillerist":
 		color = Color("#ffd166")
 		radius = 5.0
-		draw_line(projectile_from, position, Color(color, 0.42), 3)
+		draw_line(projectile_from, projectile_position, Color(color, 0.42), 3)
 	elif projectile_kind == "Channeler":
 		color = Color("#c99cff")
 		radius = 10.0
@@ -1019,9 +1025,9 @@ func _draw_projectile() -> void:
 		radius = 9.0
 	else:
 		color = Color("#ff8fbd")
-	draw_circle(position, radius + 5, Color(color, 0.14))
-	draw_circle(position, radius, Color(color, 0.88))
-	draw_arc(position, radius + 3, 0, TAU, 18, color, 2)
+	draw_circle(projectile_position, radius + 5, Color(color, 0.14))
+	draw_circle(projectile_position, radius, Color(color, 0.88))
+	draw_arc(projectile_position, radius + 3, 0, TAU, 18, color, 2)
 
 ## Bluish ring around a Protected unit so the status reads at a glance,
 ## complementing the S-badge in _draw_status_badges.
@@ -1147,11 +1153,16 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 
 func _draw_missing_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	var center := rect.get_center()
-	var size := minf(rect.size.x, rect.size.y) * 0.27
+	var glyph_radius := minf(rect.size.x, rect.size.y) * 0.27
 	var color: Color = UnitCatalogScript.class_color(unit.get("kind", "Warden"))
-	draw_circle(center, size, Color(color, 0.22))
-	draw_arc(center, size, 0.0, TAU, 6, color, 3.0)
-	draw_line(center - Vector2(size * 0.45, 0), center + Vector2(size * 0.45, 0), color, 2.0)
+	draw_circle(center, glyph_radius, Color(color, 0.22))
+	draw_arc(center, glyph_radius, 0.0, TAU, 6, color, 3.0)
+	draw_line(
+		center - Vector2(glyph_radius * 0.45, 0),
+		center + Vector2(glyph_radius * 0.45, 0),
+		color,
+		2.0
+	)
 
 func _full_unit_texture(icon_id: int) -> Texture2D:
 	if full_unit_texture_cache.has(icon_id):

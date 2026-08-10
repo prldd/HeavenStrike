@@ -997,7 +997,7 @@ static func resolve_summon_forth(
 	var level := int(defender.get("level", 1))
 	var percent := rank_value(skill, level, 1, 50)
 	var count := rank_value(skill, level, 2, 1)
-	var damage := maxi(1, attacker.get("atk", 0) * percent / 100)
+	var damage := maxi(1, floori(float(attacker.get("atk", 0) * percent) / 100.0))
 	var targets := _highest_attack_enemies(defender, units, count, rng)
 	for target in targets:
 		BattleSimulatorScript.apply_unit_damage(target, damage)

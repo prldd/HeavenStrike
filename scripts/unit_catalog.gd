@@ -504,7 +504,7 @@ static func _unit(
 	atk: int,
 	hp: int,
 	move: int,
-	range: int,
+	attack_range: int,
 	text: String,
 	promotion_of: String = "",
 	skill: SkillData = null
@@ -518,7 +518,7 @@ static func _unit(
 	u.atk = atk
 	u.hp = hp
 	u.move = move
-	u.range = range
+	u.range = attack_range
 	u.chassis_family = CHASSIS_FAMILIES.get(icon, "standard")
 	u.description = text
 	u.promotion_of = promotion_of

@@ -5,7 +5,7 @@ const PLAYER := 0
 const ROWS := 3
 const COLS := 7
 
-static func is_taunted(unit: Dictionary, units: Array) -> bool:
+static func is_taunted(unit: Dictionary, _units: Array) -> bool:
 	return unit.get("taunt_turns", 0) > 0
 
 static func is_immobilized(unit: Dictionary) -> bool:
