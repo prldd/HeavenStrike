@@ -156,7 +156,8 @@ static func save_conductor_skill(skill_name: String, valid_skills: Array) -> boo
 	config.load(SAVE_PATH)
 	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("squad", "conductor_skill", skill_name)
-	config.erase_section_key("squad", LEGACY_LEADER_SKILL_KEY)
+	if config.has_section_key("squad", LEGACY_LEADER_SKILL_KEY):
+		config.erase_section_key("squad", LEGACY_LEADER_SKILL_KEY)
 	return config.save(SAVE_PATH) == OK
 
 static func build_deck(names: Array, roster: Array, instances: Array = []) -> Array:

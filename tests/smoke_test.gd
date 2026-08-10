@@ -51,6 +51,12 @@ func _init() -> void:
 	assert(migrated_player_config.get_value("squad", "conductor_skill", "") == "Shield")
 	assert(not migrated_player_config.has_section_key("squad", retired_skill_key))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SquadStoreScript.SAVE_PATH))
+	assert(SquadStoreScript.save_conductor_skill("Rally", ConductorSkillsScript.SKILLS))
+	var clean_player_config := ConfigFile.new()
+	assert(clean_player_config.load(SquadStoreScript.SAVE_PATH) == OK)
+	assert(clean_player_config.get_value("squad", "conductor_skill", "") == "Rally")
+	assert(not clean_player_config.has_section_key("squad", retired_skill_key))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SquadStoreScript.SAVE_PATH))
 	var old_run_config := ConfigFile.new()
 	old_run_config.set_value("run", "mission_id", 2)
 	old_run_config.set_value("run", "encounter_index", 1)
@@ -933,16 +939,30 @@ func _init() -> void:
 	assert("Flux Weaver-210" not in CampaignStoreScript.REWARD_UNITS)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Relay Lancer-003")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Relay Battery-004")
-	assert(CampaignStoreScript.reward_summary(2) == "Random: Helio Mender-049, Cinder Blade-015")
-	assert(CampaignStoreScript.reward_summary(3) == "Random: Zephyr Lancer-037")
-	assert(CampaignStoreScript.reward_summary(7) == "Random: Relay Weaver-005, Relay Lancer-009, Cinder Blade-015, Cinder Lancer-017, Cinder Lancer-018, Zephyr Mender-208, Zephyr Mender-209")
+	assert(CampaignStoreScript.reward_summary(2) == "Random: Relay Bastion-001, Relay Blade-002, Relay Lancer-003, Helio Mender-049, Cinder Blade-015")
+	assert(CampaignStoreScript.reward_summary(3) == "Random: Relay Battery-004, Relay Weaver-005, Relay Mender-006, Zephyr Lancer-037")
+	assert(CampaignStoreScript.reward_summary(7) == "Random: Relay Weaver-005, Relay Lancer-009, Relay Bastion-001, Cinder Blade-015, Cinder Lancer-017, Cinder Lancer-018, Zephyr Mender-208, Zephyr Mender-209")
 	var training_rewards: Array = CampaignStoreScript.reward_options(0, roster)
-	assert(training_rewards.size() == 2)
-	assert(is_equal_approx(training_rewards[0].chance, 0.5))
-	assert(is_equal_approx(training_rewards[1].chance, 0.5))
-	assert(CampaignStoreScript.reward_options(3, roster).size() == 1)
-	assert(is_equal_approx(CampaignStoreScript.reward_options(3, roster)[0].chance, 1.0))
-	assert(CampaignStoreScript.reward_summary(6) == "Random: Zephyr Lancer-037, Flux Weaver-045")
+	assert(training_rewards.size() == 3)
+	assert(is_equal_approx(training_rewards[0].chance, 1.0 / 3.0))
+	assert(is_equal_approx(training_rewards[1].chance, 1.0 / 3.0))
+	assert(is_equal_approx(training_rewards[2].chance, 1.0 / 3.0))
+	var ignition_rewards: Array = CampaignStoreScript.reward_options(3, roster)
+	assert(ignition_rewards.size() == 4)
+	assert(is_equal_approx(ignition_rewards[0].chance, 4.0 / 13.0))
+	assert(is_equal_approx(ignition_rewards[1].chance, 4.0 / 13.0))
+	assert(is_equal_approx(ignition_rewards[2].chance, 4.0 / 13.0))
+	assert(is_equal_approx(ignition_rewards[3].chance, 1.0 / 13.0))
+	# Every mission pool keeps at least three 1-star units so 4-star and higher
+	# drops stay rare under the weighted roll.
+	for mission in CampaignStoreScript.MISSIONS:
+		var one_star_count := 0
+		for unit_name in mission.reward_pool:
+			var reward_unit := UnitCatalogScript.by_name(unit_name)
+			if reward_unit != null and reward_unit.stars == 1:
+				one_star_count += 1
+		assert(one_star_count >= 3)
+	assert(CampaignStoreScript.reward_summary(6) == "Random: Relay Bastion-007, Relay Blade-008, Relay Lancer-009, Zephyr Lancer-037, Flux Weaver-045")
 	assert("Relay Bastion-014" in CampaignStoreScript.MISSIONS[10].reward_pool)
 	assert("Cinder Lancer-018" in CampaignStoreScript.MISSIONS[7].reward_pool)
 	assert("Flux Lancer-031" in CampaignStoreScript.MISSIONS[27].reward_pool)
@@ -1130,6 +1150,47 @@ func _init() -> void:
 	assert(BattleAIScript.should_use_conductor_skill(
 		"Shield", 4, 18, []
 	))
+
+	# Repositioning priorities: opening a rail toward the opposing Conductor
+	# outranks trading blows with a lane blocker that is not lethal.
+	var rail_attacker := {
+		"id": 60, "side": 1, "kind": "Duelist", "row": 1, "col": 3,
+		"atk": 3, "hp": 5, "max_hp": 5, "move": 2, "range": 1,
+		"repositioned": false, "taunt_turns": 0
+	}
+	var lane_bully := {
+		"id": 61, "side": 0, "kind": "Warden", "row": 1, "col": 2,
+		"atk": 2, "hp": 8, "max_hp": 8, "move": 1, "range": 1
+	}
+	assert(BattleAIScript.choose_reposition(
+		rail_attacker, [rail_attacker, lane_bully], [], 20
+	) == 0)
+	# A lethal rail toward our own Conductor outranks opening one: the guard
+	# interposes on lane 3 only while the striker's damage can kill.
+	var rail_guard := {
+		"id": 62, "side": 1, "kind": "Warden", "row": 0, "col": 5,
+		"atk": 2, "hp": 9, "max_hp": 9, "move": 1, "range": 1,
+		"repositioned": false, "taunt_turns": 0
+	}
+	var rail_striker := {
+		"id": 63, "side": 0, "kind": "Strider", "row": 2, "col": 4,
+		"atk": 6, "hp": 4, "max_hp": 4, "move": 3, "range": 1
+	}
+	assert(BattleAIScript.choose_reposition(
+		rail_guard, [rail_guard, rail_striker], [], 12
+	) == 2)
+	assert(BattleAIScript.choose_reposition(
+		rail_guard, [rail_guard, rail_striker], [], 20
+	) == 0)
+	# A defender already standing ahead of the striker breaks the lethal rail,
+	# so the guard keeps attacking instead of shuffling lanes.
+	var rail_anchor := {
+		"id": 64, "side": 1, "kind": "Duelist", "row": 2, "col": 6,
+		"atk": 3, "hp": 5, "max_hp": 5, "move": 2, "range": 1
+	}
+	assert(BattleAIScript.choose_reposition(
+		rail_guard, [rail_guard, rail_striker, rail_anchor], [], 12
+	) == 0)
 
 	var mana_units := [
 		{"side": 0, "cost": 2},

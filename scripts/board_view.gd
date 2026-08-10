@@ -31,6 +31,8 @@ const READY_PULSE_FREQUENCY := 0.32
 const GRID_BRASS := Color("#b99a64")
 const GRID_PLAYER_ENAMEL := Color("#78b9c2")
 const GRID_ENEMY_ENAMEL := Color("#bd7675")
+const DEPLOY_GREEN := Color("#70e0a1")
+const DEPLOY_GREEN_BRIGHT := Color("#c4ffda")
 const STAGE_TRAINING := "training"
 const STAGE_RELAY := "relay_excavation"
 const STAGE_PROVING := "proving_circuit"
@@ -578,14 +580,12 @@ func _draw_cell_shape(
 
 func _draw_deployment_option(row: int, hovered: bool) -> void:
 	var polygon := _cell_polygon(row, 0, 0.055)
-	draw_colored_polygon(
-		polygon,
-		Color(0.18, 0.72, 0.82, 0.15 if hovered else 0.055)
+	draw_colored_polygon(polygon, Color(DEPLOY_GREEN, 0.18))
+	var outline := polygon.duplicate()
+	outline.append(polygon[0])
+	draw_polyline(
+		outline, Color(DEPLOY_GREEN_BRIGHT, 0.72), 2.2 if hovered else 1.4, true
 	)
-	if hovered:
-		var outline := polygon.duplicate()
-		outline.append(polygon[0])
-		draw_polyline(outline, Color(0.66, 0.93, 0.96, 0.58), 1.4, true)
 
 func _draw_board_grid() -> void:
 	# Default cells are only a faint positional guide. The generated floor stays
@@ -651,8 +651,8 @@ func _draw() -> void:
 		var pulse := _guidance_pulse_amount()
 		_draw_cell_shape(
 			guided_deployment_row, 0,
-			Color(0.20, 0.86, 1.0, 0.10 + pulse * 0.14),
-			Color("#b7f6ff").lerp(Color.WHITE, pulse * 0.45),
+			Color(DEPLOY_GREEN, 0.10 + pulse * 0.14),
+			DEPLOY_GREEN_BRIGHT.lerp(Color.WHITE, pulse * 0.45),
 			3.0 + pulse * 2.0,
 			0.04
 		)

@@ -4589,7 +4589,7 @@ func _enemy_reposition_units() -> void:
 		):
 			continue
 		var best_row: int = BattleAIScript.choose_reposition(
-			unit, units, active_mission_rules.blocked_cells
+			unit, units, active_mission_rules.blocked_cells, enemy_hp
 		)
 		if best_row != unit.row:
 			var old_row: int = unit.row
