@@ -387,6 +387,8 @@ func _build_interface() -> void:
 	board.board_cell_clicked.connect(_on_board_cell_clicked)
 	board.unit_hovered.connect(_show_unit_details)
 	board.unit_hover_ended.connect(_hide_unit_details)
+	board.opponent_hovered.connect(_show_objective_details)
+	board.opponent_hover_ended.connect(_hide_unit_details)
 	root.add_child(board)
 
 	var control_bar := VBoxContainer.new()
@@ -1207,7 +1209,7 @@ func _make_reserve_class_option() -> OptionButton:
 
 func _make_reserve_search_edit(on_text_changed: Callable) -> LineEdit:
 	var edit := LineEdit.new()
-	edit.placeholder_text = "SEARCH UNITS OR SKILLS"
+	edit.placeholder_text = "SEARCH UNITS, SKILLS, OR CHASSIS"
 	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	edit.text_changed.connect(on_text_changed)
 	return edit
@@ -1219,7 +1221,8 @@ func _reserve_visible(unit: UnitData, filter_class: String, filter_text: String)
 		var query := filter_text.to_lower()
 		var matches_name := unit.name.to_lower().find(query) != -1
 		var matches_skill := unit.skill != null and unit.skill.name.to_lower().find(query) != -1
-		if not matches_name and not matches_skill:
+		var matches_chassis := unit.chassis_family.to_lower().find(query) != -1
+		if not matches_name and not matches_skill and not matches_chassis:
 			return false
 	return true
 
@@ -3429,6 +3432,16 @@ func _show_unit_details(unit: Dictionary) -> void:
 		]
 	if not active_effects.is_empty():
 		hover_ability_label.text += "\nACTIVE  [font_size=12][color=#c4b99f]%s[/color][/font_size]" % active_effects
+	hover_drop_label.visible = false
+	hover_card.size = HOVER_CARD_SIZE
+	hover_card.visible = true
+	_position_hover_card()
+
+func _show_objective_details() -> void:
+	hover_name_label.text = "WIN CONDITIONS"
+	hover_stats_label.text = MissionRulesScript.objective_banner(active_mission_rules, round_number)
+	var dossier_lines := MissionRulesScript.dossier_text(active_mission_rules).split("\n")
+	hover_ability_label.text = "\n".join(dossier_lines.slice(1))
 	hover_drop_label.visible = false
 	hover_card.size = HOVER_CARD_SIZE
 	hover_card.visible = true

@@ -15,6 +15,8 @@ signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
 signal unit_hovered(unit: Dictionary)
 signal unit_hover_ended
+signal opponent_hovered
+signal opponent_hover_ended
 
 const ROWS := 3
 const COLS := 7
@@ -56,6 +58,7 @@ var player_deck_text := ""
 var enemy_deck_text := ""
 var opponent_name := ""
 var opponent_affiliation := ""
+var _opponent_hovered := false
 var blocked_cells: Array = []
 var mission_objective_text := ""
 var enabled := true
@@ -157,7 +160,35 @@ func _background_texture() -> Texture2D:
 func set_opponent_identity(display_name: String, affiliation: String) -> void:
 	opponent_name = display_name
 	opponent_affiliation = affiliation
+	if display_name.is_empty() and _opponent_hovered:
+		_opponent_hovered = false
+		opponent_hover_ended.emit()
 	queue_redraw()
+
+func _opponent_plaque_rect() -> Rect2:
+	var plaque_width := minf(270.0, size.x * 0.25)
+	return Rect2(
+		Vector2(size.x - plaque_width - 14.0, 5.0),
+		Vector2(plaque_width, 31.0)
+	)
+
+func _update_opponent_hover(point: Vector2) -> void:
+	var inside := (
+		not opponent_name.is_empty()
+		and _opponent_plaque_rect().has_point(point)
+	)
+	if inside == _opponent_hovered:
+		return
+	_opponent_hovered = inside
+	if inside:
+		opponent_hovered.emit()
+	else:
+		opponent_hover_ended.emit()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_MOUSE_EXIT and _opponent_hovered:
+		_opponent_hovered = false
+		opponent_hover_ended.emit()
 
 func set_mission_rules(next_blocked_cells: Array, objective_text: String) -> void:
 	blocked_cells = next_blocked_cells.duplicate(true)
@@ -437,6 +468,7 @@ func _gui_input(event: InputEvent) -> void:
 		hover_row = _row_at(event.position)
 		hover_col = _col_at(event.position)
 		_update_unit_hover(event.position)
+		_update_opponent_hover(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		var cell := _cell_at(event.position)
@@ -801,11 +833,7 @@ func _unit_draws_before(a: Dictionary, b: Dictionary) -> bool:
 func _draw_opponent_identity() -> void:
 	if opponent_name.is_empty():
 		return
-	var plaque_width := minf(270.0, size.x * 0.25)
-	var plaque := Rect2(
-		Vector2(size.x - plaque_width - 14.0, 5.0),
-		Vector2(plaque_width, 31.0)
-	)
+	var plaque := _opponent_plaque_rect()
 	draw_style_box(
 		_box(Color(0.055, 0.045, 0.055, 0.82), Color(0.93, 0.36, 0.52, 0.72), 6, 1),
 		plaque

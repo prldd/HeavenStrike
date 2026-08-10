@@ -50,7 +50,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | File | Responsibility |
 |------|----------------|
 | `main.gd` | Main scene controller. Builds the entire UI in code, owns game state, handles input, drives the battle loop, replays, squad builder, mission select, and settings. |
-| `board_view.gd` | Presentation layer for the battlefield: drawing, animations, projectiles, hit flash, screen shake, hover previews. Emits `deployment_clicked`, `board_cell_clicked`, `unit_hovered`, `unit_hover_ended`. |
+| `board_view.gd` | Presentation layer for the battlefield: drawing, animations, projectiles, hit flash, screen shake, hover previews. Emits `deployment_clicked`, `board_cell_clicked`, `unit_hovered`, `unit_hover_ended`, `opponent_hovered`, `opponent_hover_ended` (opponent signals fire when the mouse enters/leaves the opponent name plaque; `main.gd` answers with the win-condition hover card). |
 | `battle_simulator.gd` | Deterministic simulation core: activation order, seeded RNG, replay serialization, damage/healing/shield math, target selection, and squad-power estimation. |
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Conductor-skill timing. |

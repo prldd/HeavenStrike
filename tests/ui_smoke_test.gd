@@ -275,6 +275,18 @@ func _run() -> void:
 	game.board.set_opponent_identity("Asha Vale", "Grand Circuit Champion")
 	assert(game.board.opponent_name == "Asha Vale")
 	assert(game.board.opponent_affiliation == "Grand Circuit Champion")
+	# Hovering the opponent plaque shows the current win conditions.
+	var plaque: Rect2 = game.board._opponent_plaque_rect()
+	var opponent_hover_log: Array = []
+	game.board.opponent_hovered.connect(func(): opponent_hover_log.append("enter"))
+	game.board.opponent_hover_ended.connect(func(): opponent_hover_log.append("exit"))
+	game.board._update_opponent_hover(plaque.get_center())
+	assert(game.hover_card.visible)
+	assert(game.hover_name_label.text == "WIN CONDITIONS")
+	assert(game.hover_ability_label.text.contains("Conductor"))
+	game.board._update_opponent_hover(Vector2(-1, -1))
+	assert(opponent_hover_log == ["enter", "exit"])
+	assert(not game.hover_card.visible)
 	game.board.set_opponent_identity("", "")
 	game.board.set_practice_mode(true)
 	assert(game.board.practice_mode)
