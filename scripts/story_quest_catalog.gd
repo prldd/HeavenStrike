@@ -891,7 +891,7 @@ static func build_missions() -> Array:
 			if index + 1 in ADDITIONAL_DROPS[unit_name]:
 				authored_pool.append(unit_name)
 		var reward_pool: Array = authored_pool
-		var enemy_hp := mini(20, 8 + int(index / 4))
+		var enemy_hp := mini(20, 8 + floori(index / 4.0))
 		var battle_count := 1 if index < 10 else (2 if index < 30 else 3)
 		var encounters: Array = []
 		var short_title: String = quest[0].split(" - ", true, 1)[-1]

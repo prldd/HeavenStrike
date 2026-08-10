@@ -110,9 +110,11 @@ var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
 var result_primary_button: Button
+var result_redeploy_button: Button
 var result_menu_button: Button
 var reward_reveal: VBoxContainer
-var reward_portrait: TextureRect
+var reward_portrait: SquadCard
+var reward_hint_label: Label
 var reward_stars_label: Label
 var reward_new_label: Label
 var result_rating_panel: PanelContainer
@@ -240,6 +242,7 @@ var squad_opened_from_menu := false
 var squad_opened_for_mission := false
 var pending_mission_id := -1
 var recent_reward_name := ""
+var reward_detail_unit: Dictionary = {}
 
 var units: Array = []
 var player_hand: Array = []
@@ -802,12 +805,32 @@ func _build_overlay() -> void:
 	portrait_center.custom_minimum_size = Vector2(0, 116)
 	reward_reveal.add_child(portrait_center)
 
-	reward_portrait = TextureRect.new()
+	reward_portrait = SquadCardScript.new()
 	reward_portrait.custom_minimum_size = Vector2(108, 108)
-	reward_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	reward_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	reward_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reward_portrait.expand_icon = true
+	reward_portrait.add_theme_constant_override("icon_max_width", 100)
+	reward_portrait.focus_mode = Control.FOCUS_NONE
+	reward_portrait.tooltip_text = (
+		"Hold to view stats and abilities" if OS.has_feature("mobile")
+		else "Hover to view stats and abilities"
+	)
+	if OS.has_feature("mobile"):
+		reward_portrait.long_pressed.connect(_on_reward_long_pressed)
+		reward_portrait.long_press_released.connect(_on_card_long_press_released)
+	else:
+		reward_portrait.mouse_entered.connect(_show_acquired_reward_details)
+		reward_portrait.mouse_exited.connect(_hide_unit_details)
 	portrait_center.add_child(reward_portrait)
+
+	reward_hint_label = Label.new()
+	reward_hint_label.text = (
+		"HOLD UNIT FOR ABILITIES" if OS.has_feature("mobile")
+		else "HOVER UNIT FOR ABILITIES"
+	)
+	reward_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_hint_label.add_theme_font_size_override("font_size", 10)
+	reward_hint_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	reward_reveal.add_child(reward_hint_label)
 
 	reward_stars_label = Label.new()
 	reward_stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -829,13 +852,23 @@ func _build_overlay() -> void:
 
 	result_primary_button = Button.new()
 	result_primary_button.text = "PLAY AGAIN"
-	result_primary_button.custom_minimum_size = Vector2(180, 48)
+	result_primary_button.custom_minimum_size = Vector2(150, 48)
 	result_primary_button.pressed.connect(_on_result_primary)
 	result_actions.add_child(result_primary_button)
 
+	result_redeploy_button = Button.new()
+	result_redeploy_button.text = "REDEPLOY MISSION"
+	result_redeploy_button.tooltip_text = (
+		"Replay this mission with the same squad for a new rating and another unit reward."
+	)
+	result_redeploy_button.custom_minimum_size = Vector2(180, 48)
+	result_redeploy_button.visible = false
+	result_redeploy_button.pressed.connect(_redeploy_mission)
+	result_actions.add_child(result_redeploy_button)
+
 	result_continue_button = Button.new()
 	result_continue_button.text = "CONTINUE CAMPAIGN"
-	result_continue_button.custom_minimum_size = Vector2(210, 48)
+	result_continue_button.custom_minimum_size = Vector2(190, 48)
 	result_continue_button.visible = false
 	result_continue_button.pressed.connect(_continue_campaign)
 	result_actions.add_child(result_continue_button)
@@ -2449,6 +2482,8 @@ func _complete_interlude_return(return_action: String) -> void:
 	match return_action:
 		"continue_campaign":
 			_open_mission_select(current_mission_id + 1)
+		"redeploy_mission":
+			_begin_mission(current_mission_id)
 		"mission_select":
 			_open_mission_select()
 		_:
@@ -3400,6 +3435,15 @@ func _show_reward_details(unit: Dictionary, chance: float) -> void:
 	hover_drop_label.text = "DROP CHANCE  ·  %.1f%%" % (chance * 100.0)
 	hover_drop_label.visible = true
 
+func _show_acquired_reward_details() -> void:
+	if reward_detail_unit.is_empty():
+		return
+	_show_unit_details(reward_detail_unit)
+
+func _on_reward_long_pressed() -> void:
+	_touch_details_active = true
+	_show_acquired_reward_details()
+
 func _format_primary_ability(description: String) -> String:
 	var divider := description.find(" — ")
 	if divider < 0:
@@ -3928,9 +3972,13 @@ func _unit_icon_at_size(icon_id: int, icon_size: int) -> Texture2D:
 func _show_card_reward(unit_name: String, is_new: bool) -> void:
 	var unit := UnitCatalogScript.by_name(unit_name)
 	reward_reveal.visible = unit != null
+	reward_detail_unit = unit.to_dict() if unit != null else {}
 	if unit == null:
+		_hide_unit_details()
 		return
-	reward_portrait.texture = _unit_icon_at_size(unit.icon, 100)
+	var portrait := _unit_icon_at_size(unit.icon, 100)
+	reward_portrait.configure(unit.name, "reward", portrait, -1, unit.kind)
+	reward_portrait.icon = portrait
 	reward_stars_label.text = "★".repeat(unit.stars)
 	reward_new_label.visible = is_new
 
@@ -5149,6 +5197,7 @@ func _on_result_primary() -> void:
 
 func _leave_completed_mission(return_action: String) -> void:
 	overlay.visible = false
+	result_redeploy_button.visible = false
 	result_continue_button.visible = false
 	if mission_interlude_pending:
 		mission_interlude_pending = false
@@ -5168,8 +5217,23 @@ func _continue_campaign() -> void:
 	mission_finished = false
 	_leave_completed_mission("continue_campaign")
 
+func _redeploy_mission() -> void:
+	if (
+		not mission_finished or not campaign_battle
+		or current_mission_id < 0
+		or current_mission_id >= CampaignStoreScript.MISSIONS.size()
+	):
+		return
+	mission_finished = false
+	_leave_completed_mission("redeploy_mission")
+
 func _emphasize_result_action(primary_action: Button) -> void:
-	for action in [result_primary_button, result_continue_button, result_menu_button]:
+	for action in [
+		result_primary_button,
+		result_redeploy_button,
+		result_continue_button,
+		result_menu_button
+	]:
 		for style_name in ["normal", "hover", "pressed"]:
 			action.remove_theme_stylebox_override(style_name)
 		for color_name in ["font_color", "font_hover_color", "font_pressed_color"]:
@@ -5243,6 +5307,7 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 	overlay.visible = true
 	reward_reveal.visible = false
 	result_rating_panel.visible = false
+	result_redeploy_button.visible = false
 	result_continue_button.visible = false
 	result_menu_button.visible = false
 	if player_won:
@@ -5307,6 +5372,7 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			campaign_battle
 			and current_mission_id + 1 < CampaignStoreScript.MISSIONS.size()
 		)
+		result_redeploy_button.visible = campaign_battle
 		result_menu_button.visible = not campaign_battle
 		_emphasize_result_action(
 			result_continue_button if result_continue_button.visible else result_primary_button

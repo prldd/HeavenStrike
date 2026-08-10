@@ -369,7 +369,8 @@ func _run() -> void:
 	assert(game.mission_node_buttons[21].position.x > game.mission_node_buttons[0].position.x)
 	assert(game.mission_node_buttons[21].position.y < game.mission_node_buttons[0].position.y)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
-	assert(result_buttons.size() == 3)
+	assert(result_buttons.size() == 5)
+	assert(game.reward_portrait in result_buttons)
 	assert(game.result_primary_button.get_index() < game.result_continue_button.get_index())
 	game._emphasize_result_action(game.result_continue_button)
 	assert(game.result_continue_button.has_theme_stylebox_override("normal"))
@@ -380,13 +381,23 @@ func _run() -> void:
 	assert(game.overlay_detail.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING)
 	assert(game.overlay_detail.mouse_filter == Control.MOUSE_FILTER_IGNORE)
 	assert(not game.result_continue_button.visible)
+	assert(not game.result_redeploy_button.visible)
 	assert(not game.result_menu_button.visible)
-	game._show_card_reward("Relay Mender-006", true)
+	game._show_card_reward("Relay Bastion-013", true)
 	assert(game.reward_reveal.visible)
-	assert(game.reward_portrait.texture != null)
-	assert(game.reward_stars_label.text == "★")
+	assert(game.reward_portrait.icon != null)
+	assert(game.reward_portrait.drag_source == "reward")
+	assert(game.reward_portrait._get_drag_data(Vector2.ZERO) == null)
+	assert(game.reward_hint_label.text.contains("ABILITIES"))
+	assert(game.reward_stars_label.text == "★★")
 	assert(game.reward_new_label.visible)
-	game._show_card_reward("Relay Mender-006", false)
+	game.reward_portrait.mouse_entered.emit()
+	assert(game.hover_card.visible)
+	assert(game.hover_name_label.text.contains("RELAY BASTION-013"))
+	assert(game.hover_ability_label.text.contains("BRACE PROTOCOL"))
+	game.reward_portrait.mouse_exited.emit()
+	assert(not game.hover_card.visible)
+	game._show_card_reward("Relay Bastion-013", false)
 	assert(not game.reward_new_label.visible)
 	game._open_kinetic_crucible()
 	await process_frame
@@ -583,7 +594,39 @@ func _run() -> void:
 	assert(not game.result_continue_button.has_theme_stylebox_override("normal"))
 	assert(game.result_menu_button.visible)
 	assert(not game.result_continue_button.visible)
+	assert(not game.result_redeploy_button.visible)
 	assert(not game.win_button.visible)
+	game.overlay.visible = false
+	game.campaign_battle = true
+	game.current_mission_id = 0
+	game.current_encounter_index = 0
+	game.completed_missions = [0]
+	game.mission_run_conductor_hp = game.STARTING_HP
+	game._start_new_match()
+	var redeploy_squad: Array = game.squad_names.duplicate()
+	var rewards_before_replay: int = game.earned_reward_units.size()
+	game.enemy_hp = 0
+	assert(game._check_game_over())
+	await process_frame
+	assert(game.mission_finished)
+	assert(game.earned_reward_units.size() == rewards_before_replay + 1)
+	assert(game.result_primary_button.text == "RETURN TO MENU")
+	assert(game.result_redeploy_button.visible)
+	assert(game.result_redeploy_button.text == "REDEPLOY MISSION")
+	assert(game.result_redeploy_button.tooltip_text.contains("another unit reward"))
+	assert(game.result_continue_button.visible)
+	assert(game.result_continue_button.has_theme_stylebox_override("normal"))
+	assert(not game.result_redeploy_button.has_theme_stylebox_override("normal"))
+	assert(game.get_viewport().gui_get_focus_owner() == game.result_continue_button)
+	game._redeploy_mission()
+	assert(not game.overlay.visible)
+	assert(not game.mission_finished)
+	assert(game.campaign_battle)
+	assert(game.current_mission_id == 0)
+	assert(game.current_encounter_index == 0)
+	assert(game.round_number == 1)
+	assert(game.player_hp == game.STARTING_HP)
+	assert(game.squad_names == redeploy_squad)
 	game.battle_over = false
 	game.input_enabled = true
 	game.campaign_battle = true

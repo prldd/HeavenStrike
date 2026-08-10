@@ -87,7 +87,7 @@ func _card_style(color: Color, tint: float, border_alpha: float, glow: int) -> S
 	return UIThemeScript.card_style(color, tint, border_alpha, glow)
 
 func _get_drag_data(_position: Vector2):
-	if unit_name.is_empty() or disabled:
+	if unit_name.is_empty() or disabled or drag_source == "reward":
 		return null
 	# On touch devices, dragging a card inside a scrollable list is the scroll
 	# gesture; starting drag-and-drop there makes the list impossible to scroll.

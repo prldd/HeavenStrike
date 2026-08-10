@@ -18,6 +18,8 @@ assets required by the prototype.
 - The starting collection contains the fifteen base 1-star units; advanced
   units are earned from campaign rewards or Kinetic Crucible promotions.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
+- After a campaign victory, use **Redeploy Mission** to pursue a better rating
+  and earn another unit reward; **Continue Campaign** remains the primary action.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Select a deployed unit, then a reachable tile in any other row to reposition it; friendly units may be crossed, but enemies block the path.
