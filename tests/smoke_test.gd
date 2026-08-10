@@ -17,7 +17,7 @@ const LegacyContentMigrationScript = preload("res://scripts/legacy_content_migra
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 210, "The playable roster must contain 210 units.")
+	assert(roster.size() == 215, "The playable roster must contain 215 units.")
 	var original_name_pattern := RegEx.new()
 	assert(original_name_pattern.compile(
 		"^(Relay|Cinder|Brass|Zephyr|Flux|Helio) (Lancer|Blade|Bastion|Battery|Weaver|Mender)-[0-9]{3}$"
@@ -222,7 +222,7 @@ func _init() -> void:
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 15)
 	assert(roster.filter(func(unit): return unit.stars == 2).size() == 17)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 39)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 44)
 	assert(roster.filter(func(unit): return unit.stars == 4).size() == 52)
 	assert(roster.filter(func(unit): return unit.stars == 5).size() == 61)
 	assert(roster.filter(func(unit): return unit.stars == 6).size() == 26)
@@ -232,12 +232,12 @@ func _init() -> void:
 		if icon_id not in unique_icon_ids:
 			unique_icon_ids.append(icon_id)
 	assert(icon_ids.size() == unique_icon_ids.size())
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 29)
-	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 31)
-	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 37)
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 30)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 32)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 38)
 	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 32)
-	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 39)
-	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 42)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 40)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 43)
 	assert(UnitCatalogScript.by_name("Relay Bastion-013").stars == 2)
 	assert(UnitCatalogScript.by_name("Cinder Blade-015").cost == 2)
 	assert(UnitCatalogScript.by_name("Flux Battery-019").range == 3)
@@ -248,6 +248,11 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Flux Mender-027").skill.name == "Brace Protocol")
 	assert(UnitCatalogScript.by_name("Brass Weaver-028").skill.name == "Overclock Link")
 	assert(UnitCatalogScript.by_name("Relay Blade-029").skill.name == "Arc Lance")
+	assert(UnitCatalogScript.by_name("Relay Bastion-030").skill.name == "Failover Mantle")
+	assert(UnitCatalogScript.by_name("Cinder Blade-036").skill.name == "Furnace Wake")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-042").skill.name == "Slipstream Reversal")
+	assert(UnitCatalogScript.by_name("Flux Weaver-047").skill.name == "Phase Cascade")
+	assert(UnitCatalogScript.by_name("Helio Mender-048").skill.name == "Dawn Circuit")
 	assert(UnitCatalogScript.by_name("Relay Bastion-014").promotion_of == "Relay Bastion-013")
 	assert(UnitCatalogScript.by_name("Cinder Lancer-018").skill.name == "Locking Strike")
 	assert(UnitCatalogScript.by_name("Flux Lancer-031").skill.name == "Relay Storm")
@@ -476,6 +481,13 @@ func _init() -> void:
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Resonant Chorus"
 	).size() == 8)
+	for skill_name in [
+		"Failover Mantle", "Furnace Wake", "Slipstream Reversal",
+		"Phase Cascade", "Dawn Circuit"
+	]:
+		assert(roster.filter(
+			func(unit): return unit.skill != null and unit.skill.name == skill_name
+		).size() == 1)
 	assert(UnitCatalogScript.by_name("Brass Bastion-112").promotion_of == "Brass Bastion-111")
 	assert(UnitCatalogScript.by_name("Zephyr Bastion-114").promotion_of == "Zephyr Bastion-113")
 	assert(UnitCatalogScript.by_name("Cinder Weaver-116").promotion_of == "Cinder Weaver-115")
@@ -614,6 +626,11 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(27) == 83)
 	assert(UnitCatalogScript.art_id(28) == 177)
 	assert(UnitCatalogScript.art_id(29) == 423)
+	assert(UnitCatalogScript.art_id(30) == 1301)
+	assert(UnitCatalogScript.art_id(36) == 1302)
+	assert(UnitCatalogScript.art_id(42) == 1303)
+	assert(UnitCatalogScript.art_id(47) == 1304)
+	assert(UnitCatalogScript.art_id(48) == 1305)
 	assert(UnitCatalogScript.art_id(39) == 535)
 	assert(UnitCatalogScript.art_id(68) == 629)
 	assert(UnitCatalogScript.art_id(80) == 488)
@@ -706,6 +723,9 @@ func _init() -> void:
 	var portrait_files := Array(DirAccess.get_files_at("res://assets/units/portraits")).filter(
 		func(file_name): return file_name.ends_with(".png")
 	)
+	var generated_files := Array(DirAccess.get_files_at("res://assets/units/gen")).filter(
+		func(file_name): return file_name.ends_with(".png")
+	)
 	var provenance_files: Array = []
 	for faction in ["Coal", "Steam", "Wind", "Fusion", "Solar", "Universal"]:
 		for unit_class in ["Warden", "Duelist", "Strider", "Artillerist", "Channeler", "Lifebinder"]:
@@ -714,13 +734,16 @@ func _init() -> void:
 					faction, unit_class
 				]
 			)).filter(func(file_name): return file_name.ends_with(".png")))
-	assert(full_files.size() == 210)
-	assert(portrait_files.size() == 210)
-	assert(provenance_files.size() == 210)
+	assert(full_files.size() == 215)
+	assert(portrait_files.size() == 215)
+	assert(generated_files.size() == 215)
+	assert(provenance_files.size() == 215)
 	full_files.sort()
 	portrait_files.sort()
+	generated_files.sort()
 	provenance_files.sort()
 	assert(full_files == portrait_files)
+	assert(full_files == generated_files)
 	assert(full_files == provenance_files)
 	assert(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(
 		"res://assets/units/portrait_sheets"
@@ -959,6 +982,11 @@ func _init() -> void:
 	assert("Cinder Mender-213" in CampaignStoreScript.MISSIONS[10].reward_pool)
 	assert("Cinder Mender-213" in CampaignStoreScript.MISSIONS[46].reward_pool)
 	assert("Cinder Mender-214" in CampaignStoreScript.MISSIONS[46].reward_pool)
+	assert("Relay Bastion-030" in CampaignStoreScript.MISSIONS[15].reward_pool)
+	assert("Cinder Blade-036" in CampaignStoreScript.MISSIONS[23].reward_pool)
+	assert("Zephyr Lancer-042" in CampaignStoreScript.MISSIONS[31].reward_pool)
+	assert("Flux Weaver-047" in CampaignStoreScript.MISSIONS[39].reward_pool)
+	assert("Helio Mender-048" in CampaignStoreScript.MISSIONS[47].reward_pool)
 	# Campaign reward rolls can grant the four new reward units.
 	assert(CampaignStoreScript.roll_reward(7, roster, 0.85) == "Zephyr Mender-208")
 	assert(CampaignStoreScript.roll_reward(7, roster, 0.99) == "Zephyr Mender-209")
@@ -3437,6 +3465,83 @@ func _init() -> void:
 		veteran_skirmisher, strike_target, [], 0.39
 	).message.is_empty())
 	assert(strike_target.immobilized_turns == 2)
+
+	# The five completed stable-ID slots exercise every secondary-skill timing.
+	var failover_actor := {
+		"id": 200, "side": 0, "name": "Relay Bastion-030", "level": 5,
+		"hp": 8, "max_hp": 8, "skill": UnitCatalogScript.by_name("Relay Bastion-030").skill.to_dict()
+	}
+	var failover_low := {
+		"id": 201, "side": 0, "name": "Low Ally", "hp": 2, "max_hp": 6,
+		"protect_turns": 0
+	}
+	var failover_high := {
+		"id": 202, "side": 0, "name": "High Ally", "hp": 4, "max_hp": 6,
+		"protect_turns": 0
+	}
+	var failover_result := UnitSkillsScript.resolve_warcry(
+		failover_actor, [failover_actor, failover_low, failover_high]
+	)
+	assert(failover_low.hp == 6 and failover_high.hp == 6)
+	assert(failover_low.protect_turns == 3)
+	assert(failover_result.affected == [201, 202])
+
+	var furnace_actor := {
+		"id": 203, "side": 0, "name": "Cinder Blade-036", "level": 5,
+		"atk": 3, "hp": 6, "effects": [], "haste_turns": 0,
+		"skill": UnitCatalogScript.by_name("Cinder Blade-036").skill.to_dict()
+	}
+	var furnace_target := {"id": 204, "side": 1, "name": "Target", "hp": 5}
+	assert(not UnitSkillsScript.resolve_strike(
+		furnace_actor, furnace_target, [furnace_actor, furnace_target]
+	).message.is_empty())
+	assert(furnace_actor.atk == 6 and furnace_actor.haste_turns == 3)
+	assert(furnace_actor.effects[0].name == "Furnace Wake")
+
+	var slipstream_actor := {
+		"id": 205, "side": 0, "name": "Zephyr Lancer-042", "level": 5,
+		"row": 0, "col": 3, "hp": 5, "haste_turns": 0,
+		"skill": UnitCatalogScript.by_name("Zephyr Lancer-042").skill.to_dict()
+	}
+	var slipstream_attacker := {
+		"id": 206, "side": 1, "name": "Attacker", "row": 0, "col": 4,
+		"hp": 5
+	}
+	var slipstream_result := UnitSkillsScript.resolve_reaction(
+		slipstream_actor, slipstream_attacker,
+		[slipstream_actor, slipstream_attacker]
+	)
+	assert(slipstream_attacker.col == 6 and slipstream_actor.haste_turns == 3)
+	assert(slipstream_result.moved[0].id == slipstream_attacker.id)
+
+	var phase_actor := {
+		"id": 207, "side": 0, "name": "Flux Weaver-047", "level": 5,
+		"hp": 5, "skill": UnitCatalogScript.by_name("Flux Weaver-047").skill.to_dict()
+	}
+	var phase_target := {
+		"id": 208, "side": 1, "name": "Disrupted Target", "atk": 6,
+		"hp": 6, "max_hp": 6, "immobilized_turns": 1, "silenced_turns": 0
+	}
+	var phase_results := UnitSkillsScript.resolve_chants(
+		0, [phase_actor, phase_target], "start"
+	)
+	assert(phase_results.size() == 1)
+	assert(phase_target.hp == 2 and phase_target.stun_turns == 3)
+
+	var dawn_actor := {
+		"id": 209, "side": 0, "name": "Helio Mender-048", "level": 5,
+		"atk": 2, "hp": 5, "max_hp": 5,
+		"skill": UnitCatalogScript.by_name("Helio Mender-048").skill.to_dict()
+	}
+	var dawn_ally := {
+		"id": 210, "side": 0, "name": "Regenerating Ally", "atk": 2,
+		"hp": 5, "max_hp": 5, "regen_turns": 1, "aura_hp": 0, "aura_atk": 0
+	}
+	UnitSkillsScript.refresh_auras([dawn_actor, dawn_ally])
+	assert(dawn_ally.hp == 9 and dawn_ally.max_hp == 9 and dawn_ally.atk == 5)
+	dawn_ally.regen_turns = 0
+	UnitSkillsScript.refresh_auras([dawn_actor, dawn_ally])
+	assert(dawn_ally.hp == 5 and dawn_ally.max_hp == 5 and dawn_ally.atk == 2)
 
 	# Promotion conversion: a level-5 copy becomes its promoted form at level 1.
 	assert(KineticCrucibleScript.promotion_target("Relay Bastion-013", roster).name == "Relay Bastion-014")

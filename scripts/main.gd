@@ -4308,7 +4308,7 @@ func _resolve_warcry(
 			elif skill.get("name", "") in [
 				"Brace Protocol", "Overclock Link", "Repair Pulse", "Guard Link", "Combat Surge",
 				"Purge Routine", "Refit Cycle", "Field Recovery", "Cover Matrix", "Solar Crescendo", "Lane Bulwark",
-				"Retaliation Screen", "Thermal Wrap"
+				"Retaliation Screen", "Thermal Wrap", "Failover Mantle"
 			]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
@@ -4779,6 +4779,9 @@ func _activate_unit(actor: Dictionary) -> void:
 				var strike_label := "IMMOBILISED"
 				var strike_color := Color("#ffd166")
 				match strike_name:
+					"Furnace Wake":
+						strike_label = "+ATK · HASTE"
+						strike_color = Color("#ffd166")
 					"Corrosive Edge":
 						strike_label = "POISONED"
 						strike_color = Color("#8ee36b")
@@ -4798,7 +4801,10 @@ func _activate_unit(actor: Dictionary) -> void:
 						strike_label = "+HP"
 						strike_color = Color("#8ee36b")
 				if not was_protected:
-					board.play_unit_effect(target.id, strike_label, strike_color)
+					var strike_effect_target: int = (
+						actor.id if strike_name == "Furnace Wake" else target.id
+					)
+					board.play_unit_effect(strike_effect_target, strike_label, strike_color)
 			for moved in strike_result.get("moved", []):
 				await board.animate_unit_move(
 					moved.id, moved.row, moved.from_col, _animation_duration(0.2)
@@ -4810,7 +4816,8 @@ func _activate_unit(actor: Dictionary) -> void:
 				status_message += " " + reaction_result.message
 				var reaction_name: String = target.get("skill", {}).get("name", "")
 				var buff_reactions := [
-					"Aegis Array", "Holdfast", "Pressure Sink", "Reversal Current", "Repulse Command", "Paired Circuit"
+					"Aegis Array", "Holdfast", "Pressure Sink", "Reversal Current", "Repulse Command", "Paired Circuit",
+					"Slipstream Reversal"
 				]
 				battle_audio.play("status" if reaction_name in buff_reactions else "hit")
 				var reaction_label := "COUNTER"
@@ -4831,6 +4838,9 @@ func _activate_unit(actor: Dictionary) -> void:
 					"Repulse Command":
 						reaction_label = "KNOCKBACK"
 						reaction_color = Color("#ffd166")
+					"Slipstream Reversal":
+						reaction_label = "SLIPSTREAM"
+						reaction_color = Color("#52cfff")
 				for reaction_id in reaction_result.affected:
 					var reaction_target = _unit_by_id(reaction_id)
 					if reaction_target == null:

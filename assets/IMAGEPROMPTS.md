@@ -27,8 +27,9 @@ Each class added its own silhouette requirements:
 
 Two Strider atlases provide twelve base silhouettes; every other class has six.
 `tools/build_original_unit_art.gd` removes the magenta matte, derives controlled
-faction hue variants, flips later variants for formation variety, and creates
-the 210 committed full-body and portrait outputs.
+faction hue variants, flips later variants for formation variety, and created
+the original 210-card full-body and portrait output set. Standalone sources
+extend that set without changing the established atlas variant order.
 
 ## Ink and Cell full-body replacements
 
@@ -49,6 +50,59 @@ The installer validates source filenames against the active roster art map,
 preserves the complete canvas used by `BoardView` for consistent scaling,
 enables mipmaps on every runtime import, and retains the atlas-derived runtime
 fallback for any active art ID that does not yet have a generated replacement.
+
+## Stable-ID completion and final fallback replacements
+
+Fourteen standalone chassis sources were generated with the built-in OpenAI
+image-generation tool on 2026-08-09, without input images or external visual
+references. Five create the completed catalog IDs 30, 36, 42, 47, and 48;
+nine replace the last atlas-derived runtime fallbacks. Untouched chroma sources
+are retained in `assets/units/original_sources/generated_chassis/chroma/`.
+`tools/build_original_unit_art.gd` samples and removes the matte, contracts the
+edge by one pixel, normalizes each cutout to a transparent 1024×1024 canvas,
+and writes `cutouts/`, `gen/`, faction provenance, runtime full-body art, and
+portraits. The roster now has generated `gen/` art for every active art ID.
+
+Shared final prompt:
+
+> Create one entirely original War of Resonance industrial-fantasy autonomous
+> machine as a 1024×1024 full-body tactical RPG unit sprite. Use the Ink and
+> Cell language: confident dark ink contours, broad opaque matte gouache
+> shapes, crisp two-to-three-value cel shading, restrained dry-brush texture,
+> and simplified readable mechanical construction. Show one complete machine,
+> centered with generous padding, facing right in a three-quarter side view on
+> a perfectly flat solid #ff00ff chroma-key background. No human pilot, text,
+> logo, watermark, border, shadow, reflection, crop, sprite sheet, atlas,
+> multiple view, or #ff00ff in the subject.
+
+Subject and palette additions to that shared prompt:
+
+- `1301` — Relay Bastion-030: layered pale-blue failover shield, square silver
+  chassis, antique-brass hinges, cyan capacitors, short anchor hammer; Universal
+  Warden silhouette.
+- `1302` — Cinder Blade-036: paired furnace-edged cleavers, ember-red cowls,
+  blackened steel, brass heat vents, orange-white core; Coal Duelist silhouette.
+- `1303` — Zephyr Lancer-042: long silver legs, sky-blue fins, twin lance arms,
+  slipstream vanes, cyan turbine; Wind Strider silhouette.
+- `1304` — Flux Weaver-047: suspended violet core, stepped indigo coil hoops,
+  phase lenses, silver tripod frame; Fusion Channeler silhouette.
+- `1305` — Helio Mender-048: ivory body, warm-gold repair halo, amber
+  reservoirs, precise manipulators, cyan sun-disc aperture; Solar Lifebinder.
+- `866` — Helio Mender-163: elite ivory-gold Shield Exchange repair frame with
+  segmented halo, emitter dishes, amber reservoirs, and cyan-white aperture.
+- `887` / `888` — Relay Blade-100/101: base and promoted slate-blue paired-blade
+  Lumen Shell frames; the promotion adds larger blades, twin shell rings, and
+  reinforced relay modules.
+- `947` / `948` — Cinder Bastion-166/167: base and promoted black-steel,
+  furnace-red Paired Circuit Wardens with tower shields, anchor mauls, and
+  paired brass conduits.
+- `965` / `966` — Brass Mender-180/181: base and promoted oxidized-teal repair
+  frames with brass tanks, manipulators, clamps, and folding snare projectors.
+- `979` — Relay Blade-174: disciplined blue-grey paired-saber frame with one
+  compact back-mounted lane-shield generator.
+- `980` — Relay Blade-175: elite blue-grey paired-saber frame with twin
+  lane-shield projectors; the final revision explicitly zoomed out to retain at
+  least twelve percent padding around both complete swords and every extremity.
 
 ## Supporting-cast atlas
 

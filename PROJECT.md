@@ -614,7 +614,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, chassis family, and one or more abilities. Chassis families are original mechanical tuning groups; aura skills such as Resonant Chorus can key off them.
 
-The current prototype roster contains 210 units: 107 promotion roots or standalone units and 103 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
+The current prototype roster contains 215 units: 112 promotion roots or standalone units and 103 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
 
 Campaign missions award cards from authored mission pools. Reward composition and rarity weighting are deterministic game data.
 
@@ -736,7 +736,7 @@ For development, the Crucible also exposes a clearly labeled debug inventory
 button that grants enough copies to leave at least four active copies of every
 implemented unit without resetting existing levels or merge progress.
 
-The implemented roster contains 210 original chassis cards spanning one- to six-star rarity, including 103 promotion forms. Six class abilities define each unit’s baseline role: Twin Actuator, Momentum Core, Anchor Blow, Rail Volley, Arc Burst, and Repair Field. Authored secondary skills cover deployment effects, strikes, chants, reactions, auras, healing, damage, protection, movement control, Poison, Regen, Stun, Haste, Doom, and Silence. Skill magnitudes scale across five Kinetic Crucible levels through `UnitCatalog.RANK_VALUES`; their player-facing copy lives in `UnitCatalog.SKILL_DESCRIPTIONS`. Resonant Chorus is the sole chassis-family synergy and strengthens other allied resonant frames while its source remains active. Units beyond the starting set are earned through authored mission reward pools.
+The implemented roster contains 215 original chassis cards spanning one- to six-star rarity, including 103 promotion forms. Six class abilities define each unit’s baseline role: Twin Actuator, Momentum Core, Anchor Blow, Rail Volley, Arc Burst, and Repair Field. Authored secondary skills cover deployment effects, strikes, chants, reactions, auras, healing, damage, protection, movement control, Poison, Regen, Stun, Haste, Doom, and Silence. The completed stable-ID set adds Failover Mantle, Furnace Wake, Slipstream Reversal, Phase Cascade, and Dawn Circuit, covering all five secondary-skill timings. Skill magnitudes scale across five Kinetic Crucible levels through `UnitCatalog.RANK_VALUES`; their player-facing copy lives in `UnitCatalog.SKILL_DESCRIPTIONS`. Resonant Chorus is the sole chassis-family synergy and strengthens other allied resonant frames while its source remains active. Units beyond the starting set are earned through authored mission reward pools.
 
 ## Example Turn
 
@@ -765,7 +765,7 @@ Conductor selection changes a squad's strategy without adding another unit to th
 - Full 77-mission, three-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 210 original chassis units across all six classes
+- 215 original chassis units across all six classes
 - Three Conductors
 
 ### Later Possibilities
@@ -837,7 +837,7 @@ game presented through an ornate, tactile storybook:
 
 Original class atlases live in `assets/units/original_sources/class_atlases/`.
 `tools/build_original_unit_art.gd` derives faction-colored provenance copies,
-all 210 runtime full-body sprites, and all 210 portraits. Numeric art-ID
+all 215 runtime full-body sprites, and all 215 portraits. Numeric art-ID
 filenames and whole promotion lineages remain stable.
 
 ## Technical Direction

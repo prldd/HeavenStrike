@@ -25,14 +25,19 @@ const CLASS_COLORS := {
 # documentation/Unit_Faction_and_Sprite_Staging.md. Icons not listed here are
 # Universal: neutral units that can appear in any faction's squad.
 const FACTION_ICON_IDS := {
-	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215],
+	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 36, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215],
 	"Steam": [96, 97, 104, 105, 106, 111, 112, 136, 137, 138, 139, 186, 187, 200, 201, 117, 118, 43, 44, 77, 78, 83, 84, 98, 99, 28, 34, 158, 159, 51, 52, 180, 181, 196, 197],
-	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209],
-	"Fusion": [53, 54, 154, 155, 73, 74, 25, 31, 79, 80, 19, 20, 140, 141, 45, 46, 92, 93, 107, 108, 188, 189, 192, 193, 206, 207, 210, 211, 212, 27, 33, 184, 185, 194, 195],
-	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163]
+	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 42, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209],
+	"Fusion": [53, 54, 154, 155, 73, 74, 25, 31, 79, 80, 19, 20, 140, 141, 45, 46, 47, 92, 93, 107, 108, 188, 189, 192, 193, 206, 207, 210, 211, 212, 27, 33, 184, 185, 194, 195],
+	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 48, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163]
 }
 
 const ICON_ART_IDS := {
+	30: 1301, # Relay Bastion-030
+	36: 1302, # Cinder Blade-036
+	42: 1303, # Zephyr Lancer-042
+	47: 1304, # Flux Weaver-047
+	48: 1305, # Helio Mender-048
 	25: 29, # Flux Lancer-025
 	26: 33, # Helio Weaver-026
 	27: 83, # Flux Mender-027
@@ -223,6 +228,10 @@ const ICON_ART_IDS := {
 ## table use the standard frame. Families are mechanical tuning groups used
 ## by a small number of authored synergies; they do not imply species.
 const CHASSIS_FAMILIES := {
+	30: "bulwark", # Relay Bastion-030
+	42: "swift", # Zephyr Lancer-042
+	47: "resonant", # Flux Weaver-047
+	48: "resonant", # Helio Mender-048
 	9: "swift", # Relay Lancer-009
 	2: "bulwark", # Relay Blade-002
 	11: "resonant", # Relay Weaver-011
@@ -336,6 +345,11 @@ const LEGACY_NAME_ALIASES := {
 ## Authored per-level secondary-skill magnitudes. Row index is unit level - 1;
 ## each row holds values substituted into the {0}/{1} placeholders.
 const RANK_VALUES := {
+	"Failover Mantle": [["1 HP", "1 turn"], ["2 HP", "1 turn"], ["2 HP", "2 turns"], ["3 HP", "2 turns"], ["4 HP", "3 turns"]],
+	"Furnace Wake": [["1 ATK", "1 turn"], ["1 ATK", "2 turns"], ["2 ATK", "2 turns"], ["2 ATK", "3 turns"], ["3 ATK", "3 turns"]],
+	"Slipstream Reversal": [["1", "1 turn"], ["2", "1 turn"], ["2", "2 turns"], ["3", "2 turns"], ["4", "3 turns"]],
+	"Phase Cascade": [["1 damage", "1 turn"], ["2 damage", "1 turn"], ["2 damage", "2 turns"], ["3 damage", "2 turns"], ["4 damage", "3 turns"]],
+	"Dawn Circuit": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "2 ATK"], ["3 HP", "2 ATK"], ["4 HP", "3 ATK"]],
 	"Brace Protocol": [["3 HP", "2 turns"], ["3 HP", "3 turns"], ["4 HP", "3 turns"], ["4 HP", "4 turns"], ["5 HP", "5 turns"]],
 	"Overclock Link": [["1 ATK", "2 turns"], ["1 ATK", "3 turns"], ["2 ATK", "3 turns"], ["2 ATK", "4 turns"], ["2 ATK", "5 turns"]],
 	"Arc Lance": [["1 damage"], ["2 damage"], ["3 damage"], ["4 damage"], ["5 damage"]],
@@ -403,6 +417,11 @@ const RANK_VALUES := {
 ## Player-facing copy is authored here rather than embedded in roster rows.
 ## This keeps mechanics, rank placeholders, and writing independently editable.
 const SKILL_DESCRIPTIONS := {
+	"Failover Mantle": "On deployment, restore {0} to every damaged ally; the most damaged also gains Protect for {1}.",
+	"Furnace Wake": "After attacking, this unit gains {0} and Haste for {1}.",
+	"Slipstream Reversal": "After being attacked, knock the attacker back {0} spaces and gain Haste for {1}.",
+	"Phase Cascade": "At turn start, deal {0} to the strongest enemy; if it is Immobilised or Silenced, Stun it for {1}.",
+	"Dawn Circuit": "Other allied units with Regen gain {0} and {1} while this unit is active.",
 	"Brace Protocol": "On deployment, the other ally with the lowest HP gains {0} for {1}.",
 	"Overclock Link": "On deployment, another ally gains {0} for {1}.",
 	"Arc Lance": "On deployment, deal {0} to the enemy with the highest HP.",
@@ -533,6 +552,7 @@ static func _build() -> void:
 		_unit('Flux Mender-027', 27, 3, 'Lifebinder', 2, 3, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Brace Protocol', 'Warcry', -1.0)),
 		_unit('Brass Weaver-028', 28, 4, 'Channeler', 3, 3, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Overclock Link', 'Warcry', -1.0)),
 		_unit('Relay Blade-029', 29, 4, 'Duelist', 2, 3, 5, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Arc Lance', 'Warcry', -1.0)),
+		_unit('Relay Bastion-030', 30, 3, 'Warden', 3, 2, 8, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Failover Mantle', 'Warcry', -1.0)),
 		_unit('Relay Bastion-014', 14, 3, 'Warden', 3, 3, 6, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', 'Relay Bastion-013', _skill('Brace Protocol', 'Warcry', -1.0)),
 		_unit('Cinder Blade-016', 16, 3, 'Duelist', 2, 3, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', 'Cinder Blade-015', _skill('Overclock Link', 'Warcry', -1.0)),
 		_unit('Cinder Lancer-018', 18, 3, 'Strider', 3, 3, 4, 3, 1, 'Twin Actuator — Performs two attacks each action.', 'Cinder Lancer-017', _skill('Locking Strike', 'Strike', -1.0)),
@@ -544,15 +564,19 @@ static func _build() -> void:
 		_unit('Flux Mender-033', 33, 4, 'Lifebinder', 2, 4, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Flux Mender-027', _skill('Brace Protocol', 'Warcry', -1.0)),
 		_unit('Brass Weaver-034', 34, 5, 'Channeler', 3, 4, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', 'Brass Weaver-028', _skill('Overclock Link', 'Warcry', -1.0)),
 		_unit('Relay Blade-035', 35, 5, 'Duelist', 2, 3, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', 'Relay Blade-029', _skill('Arc Lance', 'Warcry', -1.0)),
+		_unit('Cinder Blade-036', 36, 3, 'Duelist', 3, 3, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Furnace Wake', 'Strike', -1.0)),
 		_unit('Zephyr Lancer-037', 37, 3, 'Strider', 4, 2, 4, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Sever Drive', 'Strike', -1.0)),
 		_unit('Zephyr Lancer-038', 38, 4, 'Strider', 4, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', 'Zephyr Lancer-037', _skill('Sever Drive', 'Strike', -1.0)),
 		_unit('Zephyr Battery-039', 39, 4, 'Artillerist', 3, 3, 6, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Sever Drive', 'Strike', -1.0)),
 		_unit('Zephyr Battery-040', 40, 5, 'Artillerist', 3, 3, 7, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', 'Zephyr Battery-039', _skill('Sever Drive', 'Strike', -1.0)),
 		_unit('Zephyr Lancer-041', 41, 5, 'Strider', 3, 3, 6, 3, 1, 'Twin Actuator — Performs two attacks each action.', 'Zephyr Lancer-038', _skill('Sever Drive', 'Strike', -1.0)),
+		_unit('Zephyr Lancer-042', 42, 3, 'Strider', 3, 2, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Slipstream Reversal', 'Reaction', -1.0)),
 		_unit('Brass Lancer-043', 43, 2, 'Strider', 3, 2, 2, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Signal Jam', 'Warcry', -1.0)),
 		_unit('Brass Lancer-044', 44, 3, 'Strider', 3, 3, 3, 3, 1, 'Twin Actuator — Performs two attacks each action.', 'Brass Lancer-043', _skill('Signal Jam', 'Warcry', -1.0)),
 		_unit('Flux Weaver-045', 45, 2, 'Channeler', 2, 2, 4, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Signal Jam', 'Warcry', -1.0)),
 		_unit('Flux Weaver-046', 46, 3, 'Channeler', 2, 3, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', 'Flux Weaver-045', _skill('Signal Jam', 'Warcry', -1.0)),
+		_unit('Flux Weaver-047', 47, 3, 'Channeler', 3, 3, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Phase Cascade', 'Chant', -1.0)),
+		_unit('Helio Mender-048', 48, 3, 'Lifebinder', 3, 2, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Dawn Circuit', 'Aura', -1.0)),
 		_unit('Helio Weaver-055', 55, 3, 'Channeler', 2, 2, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Signal Jam', 'Warcry', -1.0)),
 		_unit('Helio Weaver-056', 56, 4, 'Channeler', 2, 3, 7, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', 'Helio Weaver-055', _skill('Signal Jam', 'Warcry', -1.0)),
 		_unit('Helio Mender-049', 49, 2, 'Lifebinder', 3, 2, 3, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Repair Pulse', 'Warcry', -1.0)),

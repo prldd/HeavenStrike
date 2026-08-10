@@ -6,8 +6,16 @@ const CANVAS_SIZE := 1024
 const PORTRAIT_SIZE := 160
 const SOURCE_ROOT := "res://assets/units/original_sources"
 const FACTION_SOURCE_ROOT := SOURCE_ROOT + "/faction_chassis"
+const GENERATED_ROOT := "res://assets/units/gen"
+const GENERATED_CHROMA_ROOT := SOURCE_ROOT + "/generated_chassis/chroma"
+const GENERATED_CUTOUT_ROOT := SOURCE_ROOT + "/generated_chassis/cutouts"
 const LIVE_FULL_ROOT := "res://assets/units/full"
 const LIVE_PORTRAIT_ROOT := "res://assets/units/portraits"
+const STANDALONE_GENERATED_ART_IDS := [
+	866, 887, 888, 947, 948, 965, 966, 979, 980,
+	1301, 1302, 1303, 1304, 1305
+]
+const NEW_STANDALONE_ART_IDS := [1301, 1302, 1303, 1304, 1305]
 const DIALOGUE_ATLAS := "res://assets/dialogue/original_sources/campaign-supporting-cast.png"
 const DIALOGUE_PORTRAIT_ROOT := "res://assets/dialogue/portraits"
 const DIALOGUE_PORTRAITS := ["lysa-vey", "asha-vale", "dax-calder"]
@@ -40,19 +48,93 @@ var atlas_cache: Dictionary = {}
 
 func _init() -> void:
 	_make_dir(FACTION_SOURCE_ROOT)
+	_make_dir(GENERATED_CUTOUT_ROOT)
+	_make_dir(GENERATED_ROOT)
 	_make_dir(LIVE_FULL_ROOT)
 	_make_dir(LIVE_PORTRAIT_ROOT)
 	_make_dir(DIALOGUE_PORTRAIT_ROOT)
+	var generated_count := _build_generated_cutouts()
 	var sprite_count := _build_roster_originals()
 	var portrait_count := _build_portraits()
 	var dialogue_count := _build_dialogue_portraits()
-	assert(sprite_count == 210, "Expected one original sprite per roster unit.")
-	assert(portrait_count == 210, "Expected one portrait per roster unit.")
+	assert(sprite_count == 215, "Expected one original sprite per roster unit.")
+	assert(portrait_count == 215, "Expected one portrait per roster unit.")
 	assert(dialogue_count == 3, "Expected all supporting-cast portraits.")
-	print("Original-art build complete: %d sprites, %d portraits, %d dialogue portraits." % [
-		sprite_count, portrait_count, dialogue_count
+	print("Original-art build complete: %d generated cutouts, %d sprites, %d portraits, %d dialogue portraits." % [
+		generated_count, sprite_count, portrait_count, dialogue_count
 	])
 	quit()
+
+func _build_generated_cutouts() -> int:
+	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(GENERATED_CHROMA_ROOT)):
+		return 0
+	var active_art_ids: Array[int] = []
+	for unit in UnitCatalogScript.all_units():
+		active_art_ids.append(UnitCatalogScript.art_id(unit.icon))
+	var source_files := Array(DirAccess.get_files_at(GENERATED_CHROMA_ROOT)).filter(
+		func(file_name): return file_name.ends_with(".png")
+	)
+	source_files.sort()
+	for file_name in source_files:
+		var art_id: int = file_name.get_basename().to_int()
+		assert(file_name == "%03d.png" % art_id, "Generated chroma source needs a zero-padded numeric art ID: " + file_name)
+		assert(art_id in active_art_ids, "Generated chroma source is not used by the roster: " + file_name)
+		var source := _load_image(GENERATED_CHROMA_ROOT + "/" + file_name)
+		_remove_generated_chroma(source)
+		var cutout := _fit_to_canvas(source)
+		_contract_alpha(cutout)
+		var bounds := _alpha_bounds(cutout)
+		assert(bounds.size.x > 64 and bounds.size.y > 64, "Empty generated cutout: " + file_name)
+		for corner in [
+			Vector2i.ZERO, Vector2i(CANVAS_SIZE - 1, 0),
+			Vector2i(0, CANVAS_SIZE - 1), Vector2i(CANVAS_SIZE - 1, CANVAS_SIZE - 1)
+		]:
+			assert(cutout.get_pixelv(corner).a <= 0.05, "Generated cutout needs transparent corners: %s (%s = %.3f)" % [
+				file_name, str(corner), cutout.get_pixelv(corner).a
+			])
+		_save_png(cutout, GENERATED_CUTOUT_ROOT + "/" + file_name)
+		_save_png(cutout, GENERATED_ROOT + "/" + file_name)
+	return source_files.size()
+
+func _contract_alpha(image: Image) -> void:
+	var source := image.duplicate()
+	for y in range(1, image.get_height() - 1):
+		for x in range(1, image.get_width() - 1):
+			if source.get_pixel(x, y).a <= 0.05:
+				continue
+			var touches_transparency := false
+			for offset_y in range(-1, 2):
+				for offset_x in range(-1, 2):
+					if source.get_pixel(x + offset_x, y + offset_y).a <= 0.05:
+						touches_transparency = true
+						break
+				if touches_transparency:
+					break
+			if touches_transparency:
+				image.set_pixel(x, y, Color.TRANSPARENT)
+
+func _remove_generated_chroma(image: Image) -> void:
+	image.convert(Image.FORMAT_RGBA8)
+	var key := image.get_pixel(0, 0)
+	for y in image.get_height():
+		for x in image.get_width():
+			var color := image.get_pixel(x, y)
+			var distance := Vector3(
+				color.r - key.r, color.g - key.g, color.b - key.b
+			).length()
+			var alpha := smoothstep(0.08, 0.32, distance)
+			if alpha <= 0.01:
+				image.set_pixel(x, y, Color.TRANSPARENT)
+				continue
+			if alpha < 0.995:
+				color.r = clampf((color.r - key.r * (1.0 - alpha)) / alpha, 0.0, 1.0)
+				color.g = clampf((color.g - key.g * (1.0 - alpha)) / alpha, 0.0, 1.0)
+				color.b = clampf((color.b - key.b * (1.0 - alpha)) / alpha, 0.0, 1.0)
+				var spill := maxf(0.0, minf(color.r, color.b) - color.g)
+				color.r = maxf(0.0, color.r - spill)
+				color.b = maxf(0.0, color.b - spill)
+			color.a = alpha
+			image.set_pixel(x, y, color)
 
 func _build_roster_originals() -> int:
 	var variant_counts := {}
@@ -61,14 +143,26 @@ func _build_roster_originals() -> int:
 		var faction: String = UnitCatalogScript.faction_for_icon(unit.icon)
 		var key := "%s:%s" % [faction, unit.kind]
 		var variant: int = variant_counts.get(key, 0)
-		variant_counts[key] = variant + 1
-		var cell := _class_template(unit.kind, variant)
-		_remove_magenta(cell)
-		var canvas := _fit_to_canvas(cell)
-		_recolor_for_faction(canvas, faction, variant)
+		var art_id: int = UnitCatalogScript.art_id(unit.icon)
+		# Existing standalone replacements still consume their historical atlas
+		# slot so later chassis retain stable variants. Newly appended IDs do not.
+		if art_id not in NEW_STANDALONE_ART_IDS:
+			variant_counts[key] = variant + 1
+		var generated_path := GENERATED_ROOT + "/%03d.png" % art_id
+		var canvas: Image
+		if art_id in STANDALONE_GENERATED_ART_IDS and FileAccess.file_exists(generated_path):
+			canvas = _load_image(generated_path)
+			assert(
+				canvas.get_size() == Vector2i(CANVAS_SIZE, CANVAS_SIZE),
+				"Generated unit source must be 1024x1024: " + generated_path
+			)
+		else:
+			var cell := _class_template(unit.kind, variant)
+			_remove_magenta(cell)
+			canvas = _fit_to_canvas(cell)
+			_recolor_for_faction(canvas, faction, variant)
 		var source_dir := "%s/%s/%s" % [FACTION_SOURCE_ROOT, faction, unit.kind]
 		_make_dir(source_dir)
-		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		var file_name := "%03d.png" % art_id
 		_save_png(canvas, source_dir + "/" + file_name)
 		_save_png(canvas, LIVE_FULL_ROOT + "/" + file_name)
@@ -181,7 +275,7 @@ func _build_portraits() -> int:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		if art_id not in art_ids:
 			art_ids.append(art_id)
-	assert(art_ids.size() == 210, "Every roster unit must have a unique art ID.")
+	assert(art_ids.size() == 215, "Every roster unit must have a unique art ID.")
 	for art_id in art_ids:
 		var full_path := LIVE_FULL_ROOT + "/%03d.png" % art_id
 		var full := _load_image(full_path)

@@ -47,7 +47,7 @@ assets required by the prototype.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 210 units across six distinct classes
+- 215 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 77 sequential story missions across three acts with escalating difficulty
 - One-to-three battle encounter sequences with Conductor-HP attrition
@@ -57,7 +57,7 @@ assets required by the prototype.
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Conductor information
 - Authored mission reward pools with Star-Rarity weighting and persistent unlocks
-- 107 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
+- 112 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
 - Post-battle 1–10 performance ratings with Conductor integrity, formation
   survival, and completion-tempo scoring
@@ -107,10 +107,11 @@ assets required by the prototype.
 
 ## Unit Art Production
 
-All 210 live unit sprites and portraits are derived from the original class
-atlases in `assets/units/original_sources/class_atlases/`. The reproducible
-builder applies faction palettes, writes per-unit provenance copies, and emits
-the runtime files:
+All 215 live unit sprites and portraits are project-original generated chassis.
+Standalone generated sources complete the five new units and replace the last
+nine atlas fallbacks. The reproducible builder removes their chroma mattes,
+applies the established source pipeline, writes per-unit provenance copies, and
+emits the runtime files:
 
 ```bash
 ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd

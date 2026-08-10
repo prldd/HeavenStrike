@@ -11,12 +11,12 @@ func _init() -> void:
 	var assigned_icons: Array = []
 	for faction in UnitCatalogScript.FACTION_ICON_IDS:
 		var faction_icons: Array = UnitCatalogScript.FACTION_ICON_IDS[faction]
-		assert(faction_icons.size() == 35)
+		assert(faction_icons.size() in [35, 36])
 		for icon_id in faction_icons:
 			assert(icon_id in roster_icons)
 			assert(icon_id not in assigned_icons)
 			assigned_icons.append(icon_id)
-	assert(roster.size() - assigned_icons.size() == 35)
+	assert(roster.size() - assigned_icons.size() == 36)
 	var baseline_names := SquadStoreScript.default_squad(roster)
 	var baseline_cards := SquadStoreScript.build_deck(baseline_names, roster)
 	var baseline_power := BattleSimulatorScript.estimate_squad_power(baseline_cards)

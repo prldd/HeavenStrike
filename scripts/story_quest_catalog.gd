@@ -7,6 +7,11 @@ const MissionRulesScript = preload("res://scripts/mission_rules.gd")
 # the mission index, and rewards should remain deterministic across updates.
 # Add units only when the authored reward plan assigns them to that mission.
 const ADDITIONAL_DROPS := {
+	"Relay Bastion-030": [16, 35],
+	"Cinder Blade-036": [24, 42],
+	"Zephyr Lancer-042": [32, 44],
+	"Flux Weaver-047": [40, 57],
+	"Helio Mender-048": [48, 62],
 	"Helio Mender-049": [3, 13, 14, 19, 27, 37, 38, 45],
 	"Helio Mender-050": [10, 13, 17, 23, 27, 37, 38, 45],
 	"Flux Bastion-053": [18],

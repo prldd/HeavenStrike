@@ -1,7 +1,8 @@
 # Original Unit Art Matrix
 
 This document defines the production boundary for playable unit art. Every live
-unit is an original autonomous chassis derived from project-owned class atlases.
+unit is an original autonomous chassis derived from project-owned class atlases
+or a standalone project-generated chassis source.
 No third-party sprite, portrait, character design, or extracted sheet is part of
 the runtime or source-art tree.
 
@@ -10,11 +11,16 @@ the runtime or source-art tree.
 - `assets/units/original_sources/class_atlases/` contains seven original source
   atlases: one each for Warden, Duelist, Artillerist, Channeler, and Lifebinder,
   plus two Strider atlases for additional silhouette variety.
+- `assets/units/original_sources/generated_chassis/chroma/` retains untouched
+  standalone generated sources; `cutouts/` contains their reproducible alpha
+  derivatives.
 - `assets/units/original_sources/faction_chassis/<Faction>/<Class>/` contains
-  the 210 derived per-unit provenance images.
-- `assets/units/full/` contains exactly the same 210 art IDs as runtime
+  the 215 derived per-unit provenance images.
+- `assets/units/gen/` contains transparent standalone generated art for every
+  active roster ID, including the fourteen sources that complete the set.
+- `assets/units/full/` contains exactly the same 215 art IDs as runtime
   full-body sprites.
-- `assets/units/portraits/` contains exactly the same 210 art IDs as cropped
+- `assets/units/portraits/` contains exactly the same 215 art IDs as cropped
   menu portraits.
 
 Regenerate all derived assets with:

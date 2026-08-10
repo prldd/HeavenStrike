@@ -13,6 +13,8 @@ const REWARD_UNITS := [
 	"Flux Battery-019", "Relay Weaver-021", "Zephyr Mender-023",
 	"Flux Lancer-025", "Helio Weaver-026", "Flux Mender-027",
 	"Brass Weaver-028", "Relay Blade-029",
+	"Relay Bastion-030", "Cinder Blade-036", "Zephyr Lancer-042",
+	"Flux Weaver-047", "Helio Mender-048",
 	"Relay Bastion-014", "Cinder Blade-016", "Cinder Lancer-018", "Flux Battery-020",
 	"Relay Weaver-022", "Zephyr Mender-024", "Flux Lancer-031", "Helio Weaver-032",
 	"Flux Mender-033", "Brass Weaver-034", "Relay Blade-035",

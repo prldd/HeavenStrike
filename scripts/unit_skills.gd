@@ -27,6 +27,33 @@ static func resolve_warcry(
 		return result
 	var level := int(actor.get("level", 1))
 	match skill.get("name", ""):
+		"Failover Mantle":
+			var amount := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 1)
+			var damaged: Array = units.filter(
+				func(ally): return (
+					ally.side == actor.side and ally.get("hp", 0) > 0
+					and ally.get("hp", 0) < ally.get("max_hp", ally.get("hp", 0))
+				)
+			)
+			damaged.sort_custom(func(a, b):
+				var a_missing: int = a.get("max_hp", a.hp) - a.hp
+				var b_missing: int = b.get("max_hp", b.hp) - b.hp
+				if a_missing == b_missing:
+					return a.id < b.id
+				return a_missing > b_missing
+			)
+			if not damaged.is_empty():
+				damaged[0].protect_turns = maxi(
+					damaged[0].get("protect_turns", 0), turns
+				)
+				for ally in damaged:
+					BattleSimulatorScript.apply_unit_healing(ally, amount)
+					result.affected.append(ally.id)
+				result.message = "Failover Mantle restores %d HP to %d damaged all%s; %s gains Protect for %s." % [
+					amount, damaged.size(), "y" if damaged.size() == 1 else "ies",
+					damaged[0].name, _turn_label(turns)
+				]
 		"Brace Protocol":
 			var target = _lowest_health_ally(actor, units)
 			if target != null:
@@ -513,6 +540,33 @@ static func resolve_chants(
 			continue
 		var level := int(unit.get("level", 1))
 		match skill_name:
+			"Phase Cascade":
+				var candidates: Array = units.filter(
+					func(enemy): return enemy.side != side and enemy.get("hp", 0) > 0
+				)
+				candidates.sort_custom(func(a, b):
+					if a.atk == b.atk:
+						return a.id < b.id
+					return a.atk > b.atk
+				)
+				if not candidates.is_empty():
+					var target = candidates[0]
+					var damage := rank_value(skill, level, 0, 1)
+					var turns := rank_value(skill, level, 1, 1)
+					var disrupted: bool = (
+						target.get("immobilized_turns", 0) > 0
+						or target.get("silenced_turns", 0) > 0
+					)
+					BattleSimulatorScript.apply_unit_damage(target, damage)
+					if disrupted and target.get("hp", 0) > 0:
+						target.stun_turns = maxi(target.get("stun_turns", 0), turns)
+					results.append({
+						"message": "Phase Cascade deals %d damage to %s%s." % [
+							damage, target.name,
+							" and Stuns it for %s" % _turn_label(turns) if disrupted and target.get("hp", 0) > 0 else ""
+						],
+						"affected": [target.id], "sound": "mage"
+					})
 			"Breaker Impact":
 				var damage := rank_value(skill, level, 0, 1)
 				var turns := rank_value(skill, level, 1, 2)
@@ -1051,6 +1105,16 @@ static func resolve_strike(
 				target.name, _turn_label(turns)
 			]
 			result.affected.append(target.id)
+	elif skill_name == "Furnace Wake":
+		var amount := rank_value(skill, level, 0, 1)
+		var turns := rank_value(skill, level, 1, 1)
+		actor.atk += amount
+		actor.haste_turns = maxi(actor.get("haste_turns", 0), turns)
+		_add_effect(actor, "Furnace Wake", turns, amount, 0)
+		result.message = "Furnace Wake grants %s +%d ATK and Haste for %s." % [
+			actor.name, amount, _turn_label(turns)
+		]
+		result.affected.append(actor.id)
 	elif skill_name == "Drain Strike":
 		var weaken_chance := rank_value(skill, level, 0, 60) / 100.0
 		var amount := rank_value(skill, level, 1, 1)
@@ -1209,6 +1273,17 @@ static func resolve_reaction(
 		return result
 	var level := int(target.get("level", 1))
 	match skill.get("name", ""):
+		"Slipstream Reversal":
+			var spaces := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 1)
+			_knockback(target, attacker, spaces, _units, result)
+			target.haste_turns = maxi(target.get("haste_turns", 0), turns)
+			result.message = "Slipstream Reversal knocks %s back %d space%s and grants %s Haste for %s." % [
+				attacker.name, spaces, "" if spaces == 1 else "s",
+				target.name, _turn_label(turns)
+			]
+			result.affected.append(attacker.id)
+			result.affected.append(target.id)
 		"Reactor Leap":
 			var damage := rank_value(skill, level, 0, 3)
 			BattleSimulatorScript.apply_unit_damage(attacker, damage)
@@ -1314,6 +1389,20 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 			continue
 		var level := int(source.get("level", 1))
 		match skill.get("name", ""):
+			"Dawn Circuit":
+				var hp_amount := rank_value(skill, level, 0, 1)
+				var atk_amount := rank_value(skill, level, 1, 1)
+				for unit in units:
+					if (
+						unit.side == source.side and unit.id != source.id
+						and unit.get("hp", 0) > 0 and unit.get("regen_turns", 0) > 0
+					):
+						desired[unit.id] = int(desired.get(unit.id, 0)) + hp_amount
+						desired_atk[unit.id] = int(desired_atk.get(unit.id, 0)) + atk_amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Dawn Circuit" not in labels:
+							labels.append("Dawn Circuit")
+						desired_labels[unit.id] = labels
 			"Lumen Shell":
 				var amount := rank_value(skill, level, 0, 4)
 				for unit in units:
