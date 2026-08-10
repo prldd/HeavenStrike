@@ -1,6 +1,7 @@
 extends SceneTree
 
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const MissionUnitCatalogScript = preload("res://scripts/mission_unit_catalog.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleResultsScript = preload("res://scripts/battle_results.gd")
 const MissionRulesScript = preload("res://scripts/mission_rules.gd")
@@ -18,6 +19,18 @@ const LegacyContentMigrationScript = preload("res://scripts/legacy_content_migra
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
 	assert(roster.size() == 215, "The playable roster must contain 215 units.")
+	var mission_units: Array = MissionUnitCatalogScript.all_units()
+	assert(mission_units.size() == 1)
+	var ground_transport: UnitData = mission_units[0]
+	assert(ground_transport.name == "Relay Ground Transport-216")
+	assert(ground_transport.icon == 216)
+	assert(ground_transport.kind == "Transport")
+	assert(ground_transport.cost == 0)
+	assert(ground_transport.atk == 1)
+	assert(ground_transport.hp == 18)
+	assert(ground_transport.move == 0)
+	assert(ground_transport.range == 1)
+	assert(MissionUnitCatalogScript.by_name("Missing") == null)
 	var original_name_pattern := RegEx.new()
 	assert(original_name_pattern.compile(
 		"^(Relay|Cinder|Brass|Zephyr|Flux|Helio) (Lancer|Blade|Bastion|Battery|Weaver|Mender)-[0-9]{3}$"
@@ -711,7 +724,10 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(213) == 107)
 	assert(UnitCatalogScript.art_id(214) == 108)
 	assert(UnitCatalogScript.art_id(215) == 633)
-	for unit in roster:
+	assert(UnitCatalogScript.art_id(216) == 1306)
+	var art_units: Array = roster.duplicate()
+	art_units.append_array(mission_units)
+	for unit in art_units:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		assert(FileAccess.file_exists(
 			"res://assets/units/portraits/%03d.png" % art_id
@@ -734,16 +750,19 @@ func _init() -> void:
 	)
 	var provenance_files: Array = []
 	for faction in ["Coal", "Steam", "Wind", "Fusion", "Solar", "Universal"]:
-		for unit_class in ["Warden", "Duelist", "Strider", "Artillerist", "Channeler", "Lifebinder"]:
-			provenance_files.append_array(Array(DirAccess.get_files_at(
-				"res://assets/units/original_sources/faction_chassis/%s/%s" % [
-					faction, unit_class
-				]
-			)).filter(func(file_name): return file_name.ends_with(".png")))
-	assert(full_files.size() == 215)
-	assert(portrait_files.size() == 215)
-	assert(generated_files.size() == 215)
-	assert(provenance_files.size() == 215)
+		for unit_class in ["Warden", "Duelist", "Strider", "Artillerist", "Channeler", "Lifebinder", "Transport"]:
+			var provenance_dir := (
+				"res://assets/units/original_sources/faction_chassis/%s/%s"
+				% [faction, unit_class]
+			)
+			if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(provenance_dir)):
+				provenance_files.append_array(Array(
+					DirAccess.get_files_at(provenance_dir)
+				).filter(func(file_name): return file_name.ends_with(".png")))
+	assert(full_files.size() == 216)
+	assert(portrait_files.size() == 216)
+	assert(generated_files.size() == 216)
+	assert(provenance_files.size() == 216)
 	full_files.sort()
 	portrait_files.sort()
 	generated_files.sort()
@@ -878,13 +897,19 @@ func _init() -> void:
 				authored_encounters += 1
 			var occupied_rule_cells: Array = []
 			for deployment in encounter.rules.predeployed:
-				assert(UnitCatalogScript.by_name(deployment.unit) != null)
+				assert(
+					UnitCatalogScript.by_name(deployment.unit) != null
+					or MissionUnitCatalogScript.by_name(deployment.unit) != null
+				)
 				var cell := {"row": deployment.row, "col": deployment.col}
 				assert(cell not in encounter.rules.blocked_cells)
 				assert(cell not in occupied_rule_cells)
 				occupied_rule_cells.append(cell)
 			for reinforcement in encounter.rules.reinforcements:
-				assert(UnitCatalogScript.by_name(reinforcement.unit) != null)
+				assert(
+					UnitCatalogScript.by_name(reinforcement.unit) != null
+					or MissionUnitCatalogScript.by_name(reinforcement.unit) != null
+				)
 				assert(reinforcement.round >= 1)
 	assert(authored_encounters == 7)
 	var evacuation_rules: Dictionary = CampaignStoreScript.encounter(2, 0).rules

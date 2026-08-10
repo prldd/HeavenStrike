@@ -2,6 +2,7 @@ extends Control
 
 const BoardViewScript = preload("res://scripts/board_view.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const MissionUnitCatalogScript = preload("res://scripts/mission_unit_catalog.gd")
 const BattleAIScript = preload("res://scripts/battle_ai.gd")
 const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
@@ -691,6 +692,8 @@ func _play_attack_sound(kind: String) -> void:
 			battle_audio.play("mage")
 		"Lifebinder":
 			battle_audio.play("priest")
+		"Transport":
+			battle_audio.play("gunner")
 
 func _wait(seconds: float) -> Signal:
 	return get_tree().create_timer(_animation_duration(seconds), false).timeout
@@ -2831,7 +2834,7 @@ func _apply_next_replay_event() -> void:
 		"combat_log":
 			status_message = _canonical_replay_text(str(event.get("message", "")))
 		"deploy":
-			var card := UnitCatalogScript.by_name(event.get("card", ""))
+			var card := _unit_definition(event.get("card", ""))
 			if card != null:
 				var side: int = event.get("side", PLAYER)
 				var row: int = event.get("row", 0)
@@ -3389,7 +3392,7 @@ func _build_hover_card() -> void:
 	content.add_child(hover_drop_label)
 
 func _show_unit_details(unit: Dictionary) -> void:
-	var definition := UnitCatalogScript.by_name(unit.name)
+	var definition := _unit_definition(unit.name)
 	if definition == null:
 		_hide_unit_details()
 		return
@@ -3404,10 +3407,11 @@ func _show_unit_details(unit: Dictionary) -> void:
 		UnitCatalogScript.display_class(definition.kind)
 	]
 	var unit_level: int = unit.get("level", 1)
-	hover_stats_label.text = "LEVEL %d · %d MANA · %s\n%d ATK    %s    %d MOV    %d RANGE" % [
+	hover_stats_label.text = "LEVEL %d · %d MANA · %s · %s CHASSIS\n%d ATK    %s    %d MOV    %d RANGE" % [
 		unit_level,
 		definition.cost,
 		"★".repeat(definition.stars),
+		definition.chassis_family.to_upper(),
 		unit.get("atk", definition.atk),
 		hp_text,
 		definition.move,
@@ -3658,7 +3662,7 @@ func _apply_mission_setup_units() -> void:
 		})
 
 func _spawn_mission_unit(deployment: Dictionary, setup: bool = false) -> Dictionary:
-	var definition := UnitCatalogScript.by_name(str(deployment.get("unit", "")))
+	var definition := _unit_definition(str(deployment.get("unit", "")))
 	if definition == null:
 		return {}
 	var row := clampi(int(deployment.get("row", 1)), 0, ROWS - 1)
@@ -3968,6 +3972,10 @@ func _unit_icon_at_size(icon_id: int, icon_size: int) -> Texture2D:
 	var portrait_icon := ImageTexture.create_from_image(portrait_image)
 	unit_icon_cache[cache_key] = portrait_icon
 	return portrait_icon
+
+func _unit_definition(unit_name: String) -> UnitData:
+	var definition := UnitCatalogScript.by_name(unit_name)
+	return definition if definition != null else MissionUnitCatalogScript.by_name(unit_name)
 
 func _show_card_reward(unit_name: String, is_new: bool) -> void:
 	var unit := UnitCatalogScript.by_name(unit_name)

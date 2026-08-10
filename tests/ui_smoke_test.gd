@@ -3,6 +3,7 @@ extends SceneTree
 const CampaignStoreScript = preload("res://scripts/campaign_store.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
+const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
@@ -394,6 +395,7 @@ func _run() -> void:
 	game.reward_portrait.mouse_entered.emit()
 	assert(game.hover_card.visible)
 	assert(game.hover_name_label.text.contains("RELAY BASTION-013"))
+	assert(game.hover_stats_label.text.contains("BULWARK CHASSIS"))
 	assert(game.hover_ability_label.text.contains("BRACE PROTOCOL"))
 	game.reward_portrait.mouse_exited.emit()
 	assert(not game.hover_card.visible)
@@ -772,6 +774,26 @@ func _run() -> void:
 	assert(not protected_units[0].get("locks_mana", true))
 	assert(protected_units[0].id not in game.battle_simulator.activation_order(
 		0, game.units
+	))
+	game.current_mission_id = 8
+	game._start_new_match()
+	var transports: Array = game.units.filter(
+		func(unit): return unit.name == "Relay Ground Transport-216"
+	)
+	assert(transports.size() == 1)
+	var transport: Dictionary = transports[0]
+	assert(transport.get("mission_role", "") == "protected")
+	assert(not transport.get("mission_stationary", true))
+	assert(not transport.get("locks_mana", true))
+	assert(transport.kind == "Transport")
+	assert(transport.hp == 18 and transport.max_hp == 18)
+	assert(transport.atk == 1 and transport.move == 0 and transport.range == 1)
+	assert(transport.id in game.battle_simulator.activation_order(0, game.units))
+	assert(BattleRulesScript.traversal_cells(
+		transport, game.units, game.active_mission_rules.blocked_cells
+	).is_empty())
+	assert(not BattleRulesScript.can_reposition(
+		transport, 0, game.units, game.active_mission_rules.blocked_cells
 	))
 	game.current_mission_id = 5
 	game._start_new_match()

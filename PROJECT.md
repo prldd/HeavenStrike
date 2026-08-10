@@ -837,7 +837,8 @@ game presented through an ornate, tactile storybook:
 
 Original class atlases live in `assets/units/original_sources/class_atlases/`.
 `tools/build_original_unit_art.gd` derives faction-colored provenance copies,
-all 215 runtime full-body sprites, and all 215 portraits. Numeric art-ID
+all 216 runtime full-body sprites, and all 216 portraits: 215 playable chassis
+plus the mission-only ground transport. Numeric art-ID
 filenames and whole promotion lineages remain stable.
 
 ## Technical Direction

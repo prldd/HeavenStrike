@@ -111,9 +111,10 @@ assets required by the prototype.
 
 ## Unit Art Production
 
-All 215 live unit sprites and portraits are project-original generated chassis.
-Standalone generated sources complete the five new units and replace the last
-nine atlas fallbacks. The reproducible builder removes their chroma mattes,
+All 215 playable unit sprites and portraits, plus the mission-only ground
+transport, are project-original generated chassis. Standalone generated sources
+complete the five stable-ID units, add the transport, and replace the last nine
+atlas fallbacks. The reproducible builder removes their chroma mattes,
 applies the established source pipeline, writes per-unit provenance copies, and
 emits the runtime files:
 

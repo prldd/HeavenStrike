@@ -221,7 +221,8 @@ const ICON_ART_IDS := {
 	212: 603, # Flux Weaver-212
 	213: 107, # Cinder Mender-213
 	214: 108, # Cinder Mender-214
-	215: 633 # Cinder Mender-215
+	215: 633, # Cinder Mender-215
+	216: 1306 # Relay Ground Transport-216 (mission-only)
 }
 
 ## Original chassis families keyed by project icon. Units missing from this

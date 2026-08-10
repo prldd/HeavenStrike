@@ -1013,7 +1013,7 @@ func _draw_projectile() -> void:
 	var projectile_position := projectile_from.lerp(projectile_to, projectile_progress)
 	var color := Color("#70e0a1")
 	var radius := 7.0
-	if projectile_kind == "Artillerist":
+	if projectile_kind in ["Artillerist", "Transport"]:
 		color = Color("#ffd166")
 		radius = 5.0
 		draw_line(projectile_from, projectile_position, Color(color, 0.42), 3)

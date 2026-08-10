@@ -1,6 +1,7 @@
 extends SceneTree
 
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const MissionUnitCatalogScript = preload("res://scripts/mission_unit_catalog.gd")
 
 const CANVAS_SIZE := 1024
 const PORTRAIT_SIZE := 160
@@ -13,9 +14,9 @@ const LIVE_FULL_ROOT := "res://assets/units/full"
 const LIVE_PORTRAIT_ROOT := "res://assets/units/portraits"
 const STANDALONE_GENERATED_ART_IDS := [
 	866, 887, 888, 947, 948, 965, 966, 979, 980,
-	1301, 1302, 1303, 1304, 1305
+	1301, 1302, 1303, 1304, 1305, 1306
 ]
-const NEW_STANDALONE_ART_IDS := [1301, 1302, 1303, 1304, 1305]
+const NEW_STANDALONE_ART_IDS := [1301, 1302, 1303, 1304, 1305, 1306]
 const DIALOGUE_ATLAS := "res://assets/dialogue/original_sources/campaign-supporting-cast.png"
 const DIALOGUE_PORTRAIT_ROOT := "res://assets/dialogue/portraits"
 const DIALOGUE_PORTRAITS := ["lysa-vey", "asha-vale", "dax-calder"]
@@ -57,8 +58,8 @@ func _init() -> void:
 	var sprite_count := _build_roster_originals()
 	var portrait_count := _build_portraits()
 	var dialogue_count := _build_dialogue_portraits()
-	assert(sprite_count == 215, "Expected one original sprite per roster unit.")
-	assert(portrait_count == 215, "Expected one portrait per roster unit.")
+	assert(sprite_count == 216, "Expected art for every playable and mission unit.")
+	assert(portrait_count == 216, "Expected portraits for every playable and mission unit.")
 	assert(dialogue_count == 3, "Expected all supporting-cast portraits.")
 	print("Original-art build complete: %d generated cutouts, %d sprites, %d portraits, %d dialogue portraits." % [
 		generated_count, sprite_count, portrait_count, dialogue_count
@@ -69,7 +70,7 @@ func _build_generated_cutouts() -> int:
 	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(GENERATED_CHROMA_ROOT)):
 		return 0
 	var active_art_ids: Array[int] = []
-	for unit in UnitCatalogScript.all_units():
+	for unit in _all_art_units():
 		active_art_ids.append(UnitCatalogScript.art_id(unit.icon))
 	var source_files := Array(DirAccess.get_files_at(GENERATED_CHROMA_ROOT)).filter(
 		func(file_name): return file_name.ends_with(".png")
@@ -139,7 +140,7 @@ func _remove_generated_chroma(image: Image) -> void:
 func _build_roster_originals() -> int:
 	var variant_counts := {}
 	var built := 0
-	for unit in UnitCatalogScript.all_units():
+	for unit in _all_art_units():
 		var faction: String = UnitCatalogScript.faction_for_icon(unit.icon)
 		var key := "%s:%s" % [faction, unit.kind]
 		var variant: int = variant_counts.get(key, 0)
@@ -271,11 +272,11 @@ func _fit_to_canvas(source: Image) -> Image:
 
 func _build_portraits() -> int:
 	var art_ids: Array[int] = []
-	for unit in UnitCatalogScript.all_units():
+	for unit in _all_art_units():
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		if art_id not in art_ids:
 			art_ids.append(art_id)
-	assert(art_ids.size() == 215, "Every roster unit must have a unique art ID.")
+	assert(art_ids.size() == 216, "Every playable and mission unit needs a unique art ID.")
 	for art_id in art_ids:
 		var full_path := LIVE_FULL_ROOT + "/%03d.png" % art_id
 		var full := _load_image(full_path)
@@ -290,6 +291,11 @@ func _build_portraits() -> int:
 		portrait.resize(PORTRAIT_SIZE, PORTRAIT_SIZE, Image.INTERPOLATE_LANCZOS)
 		_save_png(portrait, LIVE_PORTRAIT_ROOT + "/%03d.png" % art_id)
 	return art_ids.size()
+
+func _all_art_units() -> Array:
+	var units: Array = UnitCatalogScript.all_units().duplicate()
+	units.append_array(MissionUnitCatalogScript.all_units())
+	return units
 
 func _build_dialogue_portraits() -> int:
 	var atlas := _load_image(DIALOGUE_ATLAS)

@@ -31,7 +31,7 @@ static func can_reposition(
 		return false
 	if (
 		is_taunted(unit, units) or is_immobilized(unit) or is_stunned(unit)
-		or unit.get("mission_stationary", false)
+		or unit.get("mission_stationary", false) or int(unit.get("move", 1)) <= 0
 	):
 		return false
 	var direction := 1 if target_row > unit.row else -1

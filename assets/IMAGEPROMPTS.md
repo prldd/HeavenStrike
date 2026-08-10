@@ -53,10 +53,11 @@ fallback for any active art ID that does not yet have a generated replacement.
 
 ## Stable-ID completion and final fallback replacements
 
-Fourteen standalone chassis sources were generated with the built-in OpenAI
+Fifteen standalone chassis sources were generated with the built-in OpenAI
 image-generation tool on 2026-08-09, without input images or external visual
 references. Five create the completed catalog IDs 30, 36, 42, 47, and 48;
-nine replace the last atlas-derived runtime fallbacks. Untouched chroma sources
+one creates the mission-only ground transport, and nine replace the last
+atlas-derived runtime fallbacks. Untouched chroma sources
 are retained in `assets/units/original_sources/generated_chassis/chroma/`.
 `tools/build_original_unit_art.gd` samples and removes the matte, contracts the
 edge by one pixel, normalizes each cutout to a transparent 1024×1024 canvas,
@@ -88,6 +89,12 @@ Subject and palette additions to that shared prompt:
   phase lenses, silver tripod frame; Fusion Channeler silhouette.
 - `1305` — Helio Mender-048: ivory body, warm-gold repair halo, amber
   reservoirs, precise manipulators, cyan sun-disc aperture; Solar Lifebinder.
+- `1306` — Relay Ground Transport-216: mission-only Universal convoy crawler;
+  low broad six-wheel silhouette, enclosed pale-blue cargo vault, reinforced
+  silver-and-brass armor, cyan navigation lens, and exactly one small forward
+  defensive cannon. Generated on 2026-08-10 with no image references using the
+  shared Ink and Cell/chroma constraints, plus explicit exclusions for people,
+  limbs, shields, humanoid anatomy, tank proportions, and additional weapons.
 - `866` — Helio Mender-163: elite ivory-gold Shield Exchange repair frame with
   segmented halo, emitter dishes, amber reservoirs, and cyan-white aperture.
 - `887` / `888` — Relay Blade-100/101: base and promoted slate-blue paired-blade

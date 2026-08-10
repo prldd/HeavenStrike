@@ -56,6 +56,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Conductor-skill timing. |
 | `mission_rules.gd` | Normalizes authored encounter objectives and modifiers, formats mission intel, validates blocked/setup/reinforcement data, and evaluates deterministic win/loss conditions. |
 | `unit_catalog.gd` | Authoritative original roster: 215 units as `UnitData` Resources with stats, class, chassis family, skills, star rarity, and portrait/full-body art IDs. |
+| `mission_unit_catalog.gd` | Mission-only `UnitData` assets that can be predeployed and replayed but never enter rewards, Reserves, or the Kinetic Crucible. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
@@ -143,7 +144,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 - **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards (applying `KineticCrucible.scaled_stat` for the card's level). Secondary skills scale with unit level: `UnitCatalog.RANK_VALUES` holds the five authored per-level rows, `SkillData` carries them as `rank_values` with `{0}`/`{1}` placeholder descriptions, and `UnitSkills.rank_value` reads the magnitudes at resolution time. Any new secondary skill needs authored copy, a rank table (or flat fallback), a matching resolution branch in `UnitSkills`, and an AI consideration in `BattleAI` if relevant.
 - **Deterministic replays:** the simulator records events. Replays are saved to `user://last_replay.json` and archived newest-first to `user://replay_history.json` (limit 10). Keep replay serialization backward-compatible where possible; the tests already assert version 1 format.
 - **Persistence:** all player save data is written under `user://` via `ConfigFile` or `JSON`. Files include `user://player.cfg`, `user://campaign.cfg`, `user://mission_run.cfg`, and `user://kinetic_crucible.cfg`. Migration code is kept in the relevant store scripts, not in `main.gd`.
-- **Original unit art:** the seven class atlases in `assets/units/original_sources/class_atlases/` and standalone generated sources in `assets/units/original_sources/generated_chassis/` are the generative sources for playable chassis. `assets/units/gen/` contains a transparent generated cutout for every live art ID, so runtime art no longer needs an atlas fallback. The builder asserts exactly 215 full-body sprites and 215 portraits. Regenerate with:
+- **Original unit art:** the seven class atlases in `assets/units/original_sources/class_atlases/` and standalone generated sources in `assets/units/original_sources/generated_chassis/` are the generative sources for playable and mission-only chassis. `assets/units/gen/` contains a transparent generated cutout for every live art ID, so runtime art no longer needs an atlas fallback. The builder asserts exactly 216 full-body sprites and 216 portraits (215 playable, one mission-only). Regenerate with:
   ```bash
   ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
   ```
@@ -152,9 +153,9 @@ The project follows `.editorconfig` and `.gitattributes`:
 ## Data and assets
 
 - `assets/units/original_sources/class_atlases/` — seven original mechanical class atlases.
-- `assets/units/original_sources/faction_chassis/` — the 215 derived per-unit provenance files, grouped by faction and class.
-- `assets/units/portraits/` — exactly 215 generated 160×160 portrait PNGs.
-- `assets/units/full/` — exactly 215 original full-body sprites used on the battlefield.
+- `assets/units/original_sources/faction_chassis/` — 216 derived provenance files, grouped by faction and class.
+- `assets/units/portraits/` — exactly 216 generated 160×160 portrait PNGs.
+- `assets/units/full/` — exactly 216 original full-body sprites used on the battlefield.
 - `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
 - `assets/IMAGEPROMPTS.md` — original generation briefs and provenance rules.
 - Menu and operations-map backgrounds are at the repository root under `assets/`. Battlefield stage art lives under `assets/boards/`: practice/tutorial uses the training hall, while `BoardView.set_campaign_mission()` selects Relay excavation, proving circuit, faction crossroads, coalition front, or Caelis sanctum by mission range. Normalize all runtime boards from `assets/boards/original_sources/` with `./tools/godot-headless.sh --script res://tools/build_board_background_art.gd`.
@@ -166,7 +167,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (215 units, 15/17/44/52/61/26 six-bucket star distribution, 103 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding the roster.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (215 playable units plus mission-only assets, 15/17/44/52/61/26 six-bucket star distribution, 103 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding either catalog.
 
 ## Save files and persistence
 

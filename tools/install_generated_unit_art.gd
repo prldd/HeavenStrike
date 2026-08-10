@@ -1,6 +1,7 @@
 extends SceneTree
 
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
+const MissionUnitCatalogScript = preload("res://scripts/mission_unit_catalog.gd")
 
 const CANVAS_SIZE := Vector2i(1024, 1024)
 const GENERATED_ROOT := "res://assets/units/gen"
@@ -58,7 +59,9 @@ func _init() -> void:
 
 func _active_art_ids() -> Array[int]:
 	var art_ids: Array[int] = []
-	for unit in UnitCatalogScript.all_units():
+	var units: Array = UnitCatalogScript.all_units().duplicate()
+	units.append_array(MissionUnitCatalogScript.all_units())
+	for unit in units:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		assert(art_id not in art_ids, "Roster art IDs must remain unique.")
 		art_ids.append(art_id)

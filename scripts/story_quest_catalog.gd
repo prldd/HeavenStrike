@@ -788,8 +788,8 @@ const ENCOUNTER_RULES := {
 		},
 		"turn_limit": 7,
 		"predeployed": [{
-			"unit": "Relay Bastion-013", "side": 0, "row": 1, "col": 2,
-			"role": "protected", "stationary": true, "locks_mana": false
+			"unit": "Relay Ground Transport-216", "side": 0, "row": 1, "col": 2,
+			"role": "protected", "stationary": false, "locks_mana": false
 		}],
 		"reinforcements": [
 			{"unit": "Cinder Lancer-018", "side": 1, "round": 2, "row": 0, "col": 6},

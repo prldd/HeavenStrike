@@ -15,12 +15,13 @@ the runtime or source-art tree.
   standalone generated sources; `cutouts/` contains their reproducible alpha
   derivatives.
 - `assets/units/original_sources/faction_chassis/<Faction>/<Class>/` contains
-  the 215 derived per-unit provenance images.
+  216 derived provenance images: 215 playable chassis and one mission-only
+  ground transport.
 - `assets/units/gen/` contains transparent standalone generated art for every
   active roster ID, including the fourteen sources that complete the set.
-- `assets/units/full/` contains exactly the same 215 art IDs as runtime
+- `assets/units/full/` contains exactly the same 216 art IDs as runtime
   full-body sprites.
-- `assets/units/portraits/` contains exactly the same 215 art IDs as cropped
+- `assets/units/portraits/` contains exactly the same 216 art IDs as cropped
   menu portraits.
 
 Regenerate all derived assets with:
@@ -29,9 +30,10 @@ Regenerate all derived assets with:
 ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
 ```
 
-The builder reads faction assignment from `UnitCatalog.FACTION_ICON_IDS` and
-art filename mapping from `UnitCatalog.ICON_ART_IDS`. It asserts a unique art ID
-for every catalog unit.
+The builder reads playable units from `UnitCatalog`, mission assets from
+`MissionUnitCatalog`, faction assignment from `UnitCatalog.FACTION_ICON_IDS`,
+and art filename mapping from `UnitCatalog.ICON_ART_IDS`. It asserts a unique
+art ID for every playable and mission unit.
 
 ## Faction color language
 
@@ -59,6 +61,7 @@ must not be renumbered casually.
 | Artillerist | Gunner | visible barrel, recoil brace, rear counterweight |
 | Channeler | Mage | suspended coils, arc vanes, luminous core |
 | Lifebinder | Priest | repair arms, reservoir, protective halo geometry |
+| Transport | Mission asset | wheels or tracks, enclosed cargo mass, no humanoid anatomy |
 
 New art must extend this language without imitating an existing entertainment
 property. Record any new generation brief and source file in
