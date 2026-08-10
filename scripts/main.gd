@@ -1249,6 +1249,7 @@ func _rebuild_squad_grid() -> void:
 		if unit == null or not _reserve_visible(unit, reserve_filter_class, reserve_filter_text):
 			continue
 		var copies: int = selected_names.count(instance.name)
+		var in_formation: bool = instance.id in editing_squad_names
 		var button: Button = SquadCardScript.new()
 		button.configure(instance.id, "barracks", _unit_icon(unit.icon), -1, unit.kind)
 		button.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
@@ -1256,15 +1257,17 @@ func _rebuild_squad_grid() -> void:
 		button.icon = _unit_icon(unit.icon)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.disabled = (
-			instance.id in editing_squad_names
+			in_formation
 			or copies >= 2
 			or editing_squad_names.size() >= SquadStoreScript.SQUAD_SIZE
 		)
 		button.text = "%s%s · LV %d\n%s" % [
 			"★ NEW REWARD · " if unit.name == recent_reward_name else "",
 			unit.name.to_upper(), instance.level,
-			"IN FORMATION" if instance.id in editing_squad_names else "AVAILABLE"
+			"IN FORMATION" if in_formation else "AVAILABLE"
 		]
+		if in_formation:
+			button.add_theme_color_override("font_disabled_color", UIThemeScript.title_color())
 		if unit.name == recent_reward_name:
 			button.add_theme_color_override("font_color", UIThemeScript.title_color())
 		button.add_theme_font_size_override("font_size", 11)
