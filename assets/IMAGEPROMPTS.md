@@ -209,6 +209,40 @@ Regenerate the normalized 2167x726 runtime copies with:
 ./tools/godot-headless.sh --script res://tools/build_board_background_art.gd
 ```
 
+## Conductor battle HUD instruments
+
+The Life, Mana, and deck-count instrument sources were generated with the
+built-in OpenAI image-generation tool on 2026-08-11, without input images or
+external visual references. Untouched green-matte sources live under
+`assets/ui/original_sources/chroma/`; transparent, normalized runtime assets
+live directly under `assets/ui/`.
+
+Their shared prompt direction was:
+
+> Create one original War of Resonance conductor HUD instrument in the Ink and
+> Cell language: confident dark contours, broad matte gouache shapes, crisp
+> two-to-three-value cel shading, restrained brush texture, pale enamel,
+> silver steel, antique brass, and one broad dark empty reading aperture for a
+> live value drawn in code. Use a straight-on orthographic view, a strong
+> tiny-scale silhouette, and a perfectly flat solid-green chroma background.
+> No text, numbers, letters, logos, watermark, cast shadow, characters, hands,
+> or unrelated objects.
+
+Each readout has a distinct physical metaphor:
+
+- Life: near-square mechanical life-core vessel with a coral-crimson heartlike
+  pulse core, paired pulse fins, clamps, and a large central aperture.
+- Mana: wide arc-energy capacitor with cyan-white induction coils, electrical
+  arcs, blue reservoir fins, and a central power readout chamber.
+- Deck: exactly three offset slate-blue tactical cards in an antique-brass
+  counting cradle, with a small cyan corner pip and front counting aperture.
+
+Remove the matte and rebuild the runtime copies with:
+
+```bash
+./tools/godot-headless.sh --script res://tools/build_conductor_hud_art.gd
+```
+
 ## Adding art
 
 1. Write a project-specific visual brief and record it here.

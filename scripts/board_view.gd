@@ -10,6 +10,9 @@ const PROVING_BACKGROUND := preload("res://assets/boards/stage-proving-circuit.p
 const FACTION_BACKGROUND := preload("res://assets/boards/stage-faction-crossroads.png")
 const COALITION_BACKGROUND := preload("res://assets/boards/stage-coalition-front.png")
 const CAELIS_BACKGROUND := preload("res://assets/boards/stage-caelis-sanctum.png")
+const CONDUCTOR_LIFE_BACKGROUND := preload("res://assets/ui/conductor-life.png")
+const CONDUCTOR_MANA_BACKGROUND := preload("res://assets/ui/conductor-mana.png")
+const CONDUCTOR_DECK_BACKGROUND := preload("res://assets/ui/conductor-deck.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -1009,51 +1012,75 @@ func _draw_targetable(unit: Dictionary) -> void:
 	)
 
 func _draw_commander(center: Vector2, enemy: bool, hp_text: String, deck_text: String) -> void:
-	var color := Color("#ed5b86") if enemy else Color("#50d4e8")
-	draw_circle(center, 48, Color(color, 0.12))
-	draw_circle(center, 34, Color("#0c1529"))
-	draw_arc(center, 35, 0, TAU, 40, color, 3)
+	var side_color := Color("#ed5b86") if enemy else Color("#50d4e8")
 	var font := get_theme_default_font()
+	var life_size := Vector2(122.0, 122.0)
+	var life_rect := Rect2(center - life_size * 0.5, life_size)
+	draw_texture_rect(CONDUCTOR_LIFE_BACKGROUND, life_rect, false)
 	var hp_lines := hp_text.split("\n")
-	var hp_value: String = hp_lines[0] if not hp_lines.is_empty() else "HP"
+	var hp_value: String = (
+		hp_lines[0].replace("HP", "").strip_edges()
+		if not hp_lines.is_empty() else "--"
+	)
 	draw_string(
-		font, center + Vector2(-36, 5), hp_value,
-		HORIZONTAL_ALIGNMENT_CENTER, 72, 16, Color("#f4f8ff")
+		font, center + Vector2(-42.0, -8.0), "LIFE",
+		HORIZONTAL_ALIGNMENT_CENTER, 84.0, 9, Color("#dc7d70")
+	)
+	draw_string(
+		font, center + Vector2(-42.0, 14.0), hp_value,
+		HORIZONTAL_ALIGNMENT_CENTER, 84.0, 18, Color("#fff1dc")
 	)
 	if hp_lines.size() > 1:
 		draw_string(
-			font, center + Vector2(-36, 21), hp_lines[1],
-			HORIZONTAL_ALIGNMENT_CENTER, 72, 9, Color("#ffd166")
+			font, center + Vector2(-42.0, 30.0), hp_lines[1],
+			HORIZONTAL_ALIGNMENT_CENTER, 84.0, 9, Color("#e8c77b")
 		)
+
+	var deck_size := Vector2(78.0, 52.0)
+	var deck_rect := Rect2(
+		Vector2(center.x - deck_size.x * 0.5, center.y + 54.0),
+		deck_size
+	)
+	draw_texture_rect(CONDUCTOR_DECK_BACKGROUND, deck_rect, false)
+	var deck_value := deck_text.replace("DECK", "").strip_edges()
 	draw_string(
 		font,
-		center + Vector2(-55, 58),
-		"%s  ·  %s" % ["ENEMY" if enemy else "YOU", deck_text],
+		deck_rect.position + Vector2(0.0, 43.0),
+		deck_value,
 		HORIZONTAL_ALIGNMENT_CENTER,
-		110,
-		11,
-		Color("#91a7ce")
+		deck_rect.size.x,
+		14,
+		Color("#fff1dc")
+	)
+	draw_string(
+		font,
+		deck_rect.position + Vector2(0.0, deck_rect.size.y + 11.0),
+		"ENEMY" if enemy else "YOU",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		deck_rect.size.x,
+		9,
+		side_color
 	)
 
 func _draw_mana_indicator(center: Vector2, value: String, enemy: bool) -> void:
 	if value.is_empty():
 		return
-	var color := Color("#ff8ba8") if enemy else Color("#61e8ff")
-	var rect := Rect2(center - Vector2(55, 26), Vector2(110, 52))
-	draw_style_box(_box(Color(0.025, 0.05, 0.11, 0.86), color, 9, 2), rect)
+	var side_color := Color("#ff8ba8") if enemy else Color("#61e8ff")
+	var rect := Rect2(center - Vector2(72.0, 36.0), Vector2(144.0, 72.0))
+	draw_texture_rect(CONDUCTOR_MANA_BACKGROUND, rect, false)
 	draw_string(
-		get_theme_default_font(), rect.position + Vector2(0, 15), "MANA",
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 10, color
+		get_theme_default_font(), rect.position + Vector2(31.0, 24.0), "MANA",
+		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 62.0, 9, Color("#68dcff")
 	)
 	var lines := value.split("\n")
 	draw_string(
-		get_theme_default_font(), rect.position + Vector2(0, 32), lines[0],
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, Color("#fff1b5")
+		get_theme_default_font(), rect.position + Vector2(31.0, 44.0), lines[0],
+		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 62.0, 16, Color("#eefbff")
 	)
 	if lines.size() > 1:
 		draw_string(
-			get_theme_default_font(), rect.position + Vector2(0, 46), lines[1],
-			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 9, Color("#91a7ce")
+			get_theme_default_font(), rect.position + Vector2(31.0, 58.0), lines[1],
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 62.0, 8, side_color
 		)
 
 func _draw_unit(unit: Dictionary) -> void:
@@ -1069,68 +1096,51 @@ func _draw_unit(unit: Dictionary) -> void:
 	var art_size := art_rect.size.y
 	var color: Color = UnitCatalogScript.class_color(unit.kind)
 	var ready_pulse := _readiness_pulse_amount(unit)
-	var ring_fill_alpha := 0.055
-	var ring_line_alpha := 0.14
-	var ring_width := 1.0
+	var grounding_fill_alpha := 0.035
+	var grounding_line_alpha := 0.14
+	var grounding_line_width := 1.0
 	if unit.get("ready", true) and int(unit.get("hp", 1)) > 0:
-		ring_fill_alpha = 0.07 + ready_pulse * 0.035
-		ring_line_alpha = 0.20 + ready_pulse * 0.08
-		ring_width = 1.2 + ready_pulse * 0.25
+		grounding_fill_alpha = 0.045 + ready_pulse * 0.025
+		grounding_line_alpha = 0.20 + ready_pulse * 0.08
+		grounding_line_width = 1.2 + ready_pulse * 0.25
 
 	# The cell is only the unit's footprint. The art intentionally reaches into
 	# neighboring rows and columns, like figures standing together on a field.
-	draw_set_transform(foot - Vector2(0, 3), 0.0, Vector2(1.0, 0.30))
-	draw_circle(Vector2.ZERO, cell_width * 0.40, Color(color, ring_fill_alpha))
-	draw_arc(
-		Vector2.ZERO, cell_width * 0.40, 0, TAU, 28,
-		Color(color, ring_line_alpha), ring_width
+	# Keep the readiness treatment on the board plane instead of making the
+	# character read as a circular token pasted over it.
+	var grounding_polygon := _cell_polygon(unit.row, unit.col, 0.15)
+	for index in grounding_polygon.size():
+		grounding_polygon[index] += visual_offset
+	draw_colored_polygon(grounding_polygon, Color(color, grounding_fill_alpha))
+	var grounding_outline := grounding_polygon.duplicate()
+	grounding_outline.append(grounding_polygon[0])
+	draw_polyline(
+		grounding_outline, Color(color, grounding_line_alpha),
+		grounding_line_width, true
 	)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	_draw_unit_shadow(footprint_rect)
+	_draw_unit_shadow(unit, art_rect, cell_rect)
 	_draw_unit_art(unit, art_rect)
 	var flash: float = unit_flash_strength.get(unit.id, 0.0)
 	if flash > 0.0:
-		draw_style_box(
-			_box(Color(1, 1, 1, flash * 0.34), Color(1, 1, 1, flash * 0.72), 10, 2),
-			footprint_rect.grow(-2)
-		)
+			draw_style_box(
+				_box(Color(1, 1, 1, flash * 0.34), Color(1, 1, 1, flash * 0.72), 10, 2),
+				footprint_rect.grow(-2)
+			)
 	var font := get_theme_default_font()
-	var hp_text := "%d" % unit.hp
-	var atk_text := "%d" % unit.atk
-	var pill_size := Vector2(minf(34.0, cell_width * 0.32), 20.0)
-	var pill_y := foot.y - pill_size.y - 1.0
-	var health_pill := Rect2(
-		Vector2(foot.x - cell_width * 0.39, pill_y), pill_size
+	var stat_plate_size := Vector2(minf(38.0, cell_width * 0.36), 21.0)
+	var stat_plate_y := foot.y - stat_plate_size.y - 1.0
+	var health_plate := Rect2(
+		Vector2(foot.x - cell_width * 0.39, stat_plate_y), stat_plate_size
 	)
-	var attack_pill := Rect2(
-		Vector2(foot.x + cell_width * 0.39 - pill_size.x, pill_y), pill_size
+	var attack_plate := Rect2(
+		Vector2(
+			foot.x + cell_width * 0.39 - stat_plate_size.x,
+			stat_plate_y
+		),
+		stat_plate_size
 	)
-	draw_style_box(
-		_box(Color("#3f7554"), Color("#91b886"), 10, 1),
-		health_pill
-	)
-	draw_style_box(
-		_box(Color("#9b4145"), Color("#d08076"), 10, 1),
-		attack_pill
-	)
-	draw_string(
-		font,
-		health_pill.position + Vector2(0, 15),
-		hp_text,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		health_pill.size.x,
-		12,
-		Color.WHITE
-	)
-	draw_string(
-		font,
-		attack_pill.position + Vector2(0, 15),
-		atk_text,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		attack_pill.size.x,
-		12,
-		Color.WHITE
-	)
+	_draw_unit_stat_plate(health_plate, int(unit.hp), "H", Color("#79a574"))
+	_draw_unit_stat_plate(attack_plate, int(unit.atk), "A", Color("#b9655f"))
 	_draw_protect_aura(unit, footprint_rect)
 	var badge_rect := Rect2(
 		Vector2(foot.x - cell_width * 0.5, maxf(38.0, art_rect.position.y + 6.0)),
@@ -1525,6 +1535,66 @@ func _draw_protect_aura(unit: Dictionary, rect: Rect2) -> void:
 	draw_arc(center, radius, 0, TAU, 36, Color(color, 0.62), 2.5)
 	draw_arc(center, radius - 5, 0, TAU, 36, Color(color, 0.28), 1.5)
 
+func _draw_unit_stat_plate(
+	rect: Rect2, value: int, stat_mark: String, accent: Color
+) -> void:
+	# Clipped-corner instrument plates echo the illustrated brass and enamel
+	# hardware without covering the artwork in glossy, fully colored UI pills.
+	var cut := minf(4.0, rect.size.y * 0.22)
+	var plate := PackedVector2Array([
+		rect.position + Vector2(cut, 0.0),
+		Vector2(rect.end.x - cut, rect.position.y),
+		Vector2(rect.end.x, rect.position.y + cut),
+		rect.end - Vector2(0.0, cut),
+		rect.end - Vector2(cut, 0.0),
+		Vector2(rect.position.x + cut, rect.end.y),
+		Vector2(rect.position.x, rect.end.y - cut),
+		rect.position + Vector2(0.0, cut),
+	])
+	draw_colored_polygon(plate, Color(0.055, 0.06, 0.06, 0.94))
+	var outline := plate.duplicate()
+	outline.append(plate[0])
+	draw_polyline(outline, Color(VFX_INK, 0.96), 3.0, true)
+	draw_polyline(outline, Color(VFX_BRASS, 0.74), 1.0, true)
+
+	var mark_width := minf(12.0, rect.size.x * 0.32)
+	var divider_x := rect.position.x + mark_width
+	draw_line(
+		Vector2(divider_x, rect.position.y + 3.0),
+		Vector2(divider_x, rect.end.y - 3.0),
+		Color(VFX_BRASS, 0.46), 1.0, true
+	)
+	draw_line(
+		Vector2(rect.position.x + 3.0, rect.end.y - 3.0),
+		Vector2(divider_x - 2.0, rect.end.y - 3.0),
+		Color(accent, 0.94), 2.0, true
+	)
+	draw_line(
+		Vector2(rect.position.x + cut + 2.0, rect.position.y + 2.0),
+		Vector2(rect.end.x - cut - 2.0, rect.position.y + 2.0),
+		Color("#f4e6c7", 0.18), 1.0, true
+	)
+
+	var font := get_theme_default_font()
+	draw_string(
+		font,
+		rect.position + Vector2(0.0, 14.5),
+		stat_mark,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		mark_width,
+		9,
+		accent
+	)
+	draw_string(
+		font,
+		Vector2(divider_x, rect.position.y + 15.0),
+		str(value),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		rect.end.x - divider_x,
+		12,
+		Color("#f4e6c7")
+	)
+
 func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 	var badges: Array = []
 	if unit.get("mission_role", "") == "priority":
@@ -1594,19 +1664,57 @@ func _readiness_pulse_amount(unit: Dictionary) -> float:
 		return 0.0
 	if reduced_motion or not idle_animation_enabled:
 		return 0.5
-	# A long, offset cycle keeps the readiness rings from pulsing in lockstep.
+	# A long, offset cycle keeps the grounding outlines from pulsing in lockstep.
 	var phase := fposmod(float(int(unit.get("id", 0))) * 1.618, TAU)
 	return (sin(idle_time * READY_PULSE_FREQUENCY * TAU + phase) + 1.0) * 0.5
 
-func _draw_unit_shadow(rect: Rect2) -> void:
-	# Two restrained, fixed ellipses ground the feet without implying a bounce.
-	var shadow_center := Vector2(rect.get_center().x, rect.end.y - 4.0)
-	var outer_half_width := rect.size.x * 0.24
-	draw_set_transform(shadow_center, 0.0, Vector2(1.0, 0.14))
-	draw_circle(Vector2.ZERO, outer_half_width, Color(0.02, 0.03, 0.06, 0.08))
-	var inner_half_width := rect.size.x * 0.18
-	draw_set_transform(shadow_center, 0.0, Vector2(1.0, 0.12))
-	draw_circle(Vector2.ZERO, inner_half_width, Color(0.02, 0.03, 0.06, 0.13))
+func _draw_unit_shadow(unit: Dictionary, art_rect: Rect2, cell_rect: Rect2) -> void:
+	# Project the actual cutout onto the board as a short, hard-edged cast
+	# shadow. Its origin is the unit's foot point, so it remains visibly joined
+	# to the figure instead of reading as a separate oval decal.
+	var foot := Vector2(art_rect.get_center().x, art_rect.end.y - 1.0)
+	var cell_width := _cell_visual_width(unit.row, unit.col)
+	var cell_depth := cell_rect.size.y
+	var cast_vector := Vector2(-cell_width * 0.22, -cell_depth * 0.32)
+	var contact_shadow := PackedVector2Array([
+		foot + Vector2(-cell_width * 0.18, 0.0),
+		foot + Vector2(cell_width * 0.16, 0.0),
+		foot + cast_vector * 0.48 + Vector2(cell_width * 0.12, 0.0),
+		foot + cast_vector * 0.82 - Vector2(cell_width * 0.10, 0.0),
+	])
+	draw_colored_polygon(contact_shadow, Color(0.02, 0.025, 0.03, 0.22))
+
+	var icon_id: int = unit.get("icon", 0)
+	if icon_id < 1:
+		return
+	var texture: Texture2D = _full_unit_texture(icon_id)
+	if texture == null:
+		return
+	var content_rect := Rect2(Vector2.ZERO, texture.get_size())
+	var art_scale := minf(
+		art_rect.size.x / content_rect.size.x,
+		art_rect.size.y / content_rect.size.y
+	)
+	var draw_size := (content_rect.size * art_scale).round()
+	if draw_size.x <= 0.0 or draw_size.y <= 0.0:
+		return
+	var side_scale := 1.0 if int(unit.get("side", 0)) == 0 else -1.0
+	var shadow_width_scale := minf(cell_width * 0.70 / draw_size.x, 0.72)
+	var shadow_transform := Transform2D(
+		Vector2(side_scale * shadow_width_scale, 0.0),
+		Vector2(
+			-cell_width * 0.22 / draw_size.y,
+			cell_depth * 0.32 / draw_size.y
+		),
+		foot
+	)
+	draw_set_transform_matrix(shadow_transform)
+	draw_texture_rect_region(
+		texture,
+		Rect2(Vector2(-draw_size.x * 0.5, -draw_size.y), draw_size),
+		content_rect,
+		Color(0.025, 0.03, 0.035, 0.18)
+	)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:

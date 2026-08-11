@@ -10,6 +10,9 @@ assets/units/gen/*.png.import
 /dist/
 /exports/
 
+# Unused art explorations
+assets/Unused Explorations/
+
 # Godot export credentials
 export_credentials.cfg
 
