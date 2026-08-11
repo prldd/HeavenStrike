@@ -4,7 +4,8 @@ Generated attack clips become six optional sprite frames. `BoardView` loads a
 complete frame set automatically and uses it in place of the unit's generic
 class attack effect; units without one retain the standard static sprite lunge
 and class effect. Sound, lunge motion, damage flashes, and combat timing remain
-shared.
+shared. Generated frames remain visible at 2×/4× speed and during autobattle
+when `ANIM ON`; `ANIM OFF` is the explicit way to skip them.
 
 ## Generate the source clip
 

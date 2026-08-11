@@ -32,6 +32,7 @@ const UNIT_ART_CELL_SCALE := 1.82
 const UNIT_FOOT_INSET := 8.0
 const ATTACK_FRAMES_DIR := "res://assets/units/attack"
 const ATTACK_FRAME_COUNT := 6
+const MIN_ATTACK_FRAME_WALL_DURATION := 0.30
 const READY_PULSE_FREQUENCY := 0.32
 const GRID_BRASS := Color("#b99a64")
 const GRID_PLAYER_ENAMEL := Color("#78b9c2")
@@ -102,6 +103,7 @@ var attack_effect_progress := 0.0
 var shake_tween: Tween
 var reduced_motion := false
 var idle_animation_enabled := true
+var attack_frame_animation_enabled := true
 var idle_time := 0.0
 
 func _ready() -> void:
@@ -334,10 +336,14 @@ func animate_attack(
 	var destination := _unit_art_rect(target).get_center()
 	var effect_cells := attack_effect_cells(actor, target, unit_kind)
 	var impact_cells := _attack_impact_cells(actor, target, unit_kind, effect_cells)
-	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
-	var frames := _attack_frames_for(actor)
+	var frames := _attack_frames_for(actor) if attack_frame_animation_enabled else []
 	if not frames.is_empty():
-		return _animate_attack_frames(actor_id, frames.size(), duration)
+		var frame_duration := _attack_frame_duration(duration)
+		_animate_attack_pose(
+			actor_id, unit_kind, origin, destination, frame_duration, strike_index
+		)
+		return _animate_attack_frames(actor_id, frames.size(), frame_duration)
+	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
 	return _animate_attack_effect(
 		origin, destination, unit_kind, effect_cells, impact_cells, duration,
 		strike_index, strike_count, false
@@ -355,10 +361,14 @@ func animate_commander_attack(
 		size.x - 82.0 if commander_side == 1 else 82.0,
 		_grid_rect().get_center().y
 	)
-	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
-	var frames := _attack_frames_for(actor)
+	var frames := _attack_frames_for(actor) if attack_frame_animation_enabled else []
 	if not frames.is_empty():
-		return _animate_attack_frames(actor_id, frames.size(), duration)
+		var frame_duration := _attack_frame_duration(duration)
+		_animate_attack_pose(
+			actor_id, unit_kind, origin, destination, frame_duration, strike_index
+		)
+		return _animate_attack_frames(actor_id, frames.size(), frame_duration)
+	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
 	return _animate_attack_effect(
 		origin, destination, unit_kind, [], [], duration,
 		strike_index, strike_count, true
@@ -511,6 +521,13 @@ func _animate_attack_frames(actor_id: int, frame_count: int, duration: float) ->
 	)
 	tween.tween_callback(_clear_unit_attack_frame_progress.bind(actor_id))
 	return tween.finished
+
+func _attack_frame_duration(duration: float) -> float:
+	# Tweens are accelerated by Engine.time_scale. Reserve enough scaled time
+	# for all six source frames to reach the renderer even at 2x/4x speed or
+	# during autobattle; ANIM OFF disables this path explicitly instead.
+	var time_scale := maxf(Engine.time_scale, 0.001)
+	return maxf(duration, MIN_ATTACK_FRAME_WALL_DURATION * time_scale)
 
 func _set_unit_attack_frame_progress(progress: float, actor_id: int) -> void:
 	unit_attack_frame_progress[actor_id] = progress

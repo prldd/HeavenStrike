@@ -162,7 +162,7 @@ The project follows `.editorconfig` and `.gitattributes`:
 - `assets/units/portraits/` — exactly 224 generated 160×160 portrait PNGs.
 - `assets/units/full/` — exactly 224 original full-body sprites used on the battlefield.
 - `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
-- `assets/units/attack/<art id>/attack_<1..6>.png` — optional per-unit attack animation frames extracted from generated video clips. When all six imported frames exist for a unit's art id, `BoardView` swaps them in during unit and Conductor attacks (progress driven by `unit_attack_frame_progress`) and skips the overlapping generic class effect; units without frames keep the static-sprite lunge and class effect. Frames share the idle sprite's canvas size and foot line. Generate them with the Python pipeline:
+- `assets/units/attack/<art id>/attack_<1..6>.png` — optional per-unit attack animation frames extracted from generated video clips. When all six imported frames exist for a unit's art id, `BoardView` swaps them in during unit and Conductor attacks (progress driven by `unit_attack_frame_progress`) and skips the overlapping generic class effect; units without frames keep the static-sprite lunge and class effect. Generated frames use a minimum wall-clock playback duration so all six remain visible at 2×/4× speed and during autobattle whenever `ANIM ON`; `ANIM OFF` disables them explicitly. Frames share the idle sprite's canvas size and foot line. Generate them with the Python pipeline:
   ```bash
   .tools/anim-pipeline-venv/Scripts/python.exe tools/attack_anim/extract_attack_frames.py --video <clip.mp4> --art-id 241
   ```

@@ -5,7 +5,8 @@ const BoardViewScript = preload("res://scripts/board_view.gd")
 const OUTPUT_PATH := "res://tests/attack-animation-visual.png"
 const CAPTURE_SIZE := Vector2i(640, 360)
 const CAPTURE_COUNT := 6
-const ATTACK_DURATION := 1.20
+const ATTACK_DURATION := 0.48
+const TEST_TIME_SCALE := 4.0
 
 func _init() -> void:
 	call_deferred("_render")
@@ -33,13 +34,35 @@ func _render() -> void:
 
 	var loaded_frames: Array = board._attack_frames_for(board.units[0])
 	assert(loaded_frames.size() == 6)
-	board.animate_attack(1, 2, "Warden", ATTACK_DURATION)
+	Engine.time_scale = TEST_TIME_SCALE
+	var attack_finished: Signal = board.animate_attack(1, 2, "Warden", ATTACK_DURATION)
+	var playback_duration := board._attack_frame_duration(ATTACK_DURATION)
+	assert(playback_duration / Engine.time_scale >= 0.30)
+	for frame in 4:
+		await process_frame
+	assert(board.unit_attack_frame_progress.has(1))
+	var high_speed_progress: float = board.unit_attack_frame_progress[1]
+	assert(high_speed_progress > 0.0 and high_speed_progress < float(CAPTURE_COUNT))
+	await attack_finished
+	assert(board.unit_attack_frame_progress.is_empty())
+	var commander_attack_finished: Signal = board.animate_commander_attack(
+		1, 1, "Warden", 0.12
+	)
+	for frame in 4:
+		await process_frame
+	assert(board.unit_attack_frame_progress.has(1))
+	await commander_attack_finished
+	assert(board.unit_attack_frame_progress.is_empty())
+	Engine.time_scale = 1.0
+
 	var sheet := Image.create_empty(
 		CAPTURE_SIZE.x * 3, CAPTURE_SIZE.y * 2, false, Image.FORMAT_RGBA8
 	)
-	var frame_interval := ATTACK_DURATION / float(CAPTURE_COUNT)
-	await create_timer(frame_interval * 0.5).timeout
 	for capture_index in CAPTURE_COUNT:
+		board.unit_attack_frame_progress[1] = float(capture_index)
+		board.queue_redraw()
+		await process_frame
+		await RenderingServer.frame_post_draw
 		var capture := root.get_viewport().get_texture().get_image()
 		assert(not capture.is_empty())
 		capture.resize(CAPTURE_SIZE.x, CAPTURE_SIZE.y, Image.INTERPOLATE_LANCZOS)
@@ -48,15 +71,10 @@ func _render() -> void:
 			(capture_index / 3) * CAPTURE_SIZE.y
 		)
 		sheet.blit_rect(capture, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), destination)
-		if capture_index < CAPTURE_COUNT - 1:
-			await create_timer(frame_interval).timeout
-	await create_timer(frame_interval * 0.5).timeout
+	board.unit_attack_frame_progress.clear()
+	board.attack_frame_animation_enabled = false
+	board.animate_attack(1, 2, "Warden", 0.01)
 	await process_frame
-	assert(board.unit_attack_frame_progress.is_empty())
-	board.animate_commander_attack(1, 1, "Warden", 0.12)
-	await create_timer(0.04).timeout
-	assert(board.unit_attack_frame_progress.has(1))
-	await create_timer(0.10).timeout
 	assert(board.unit_attack_frame_progress.is_empty())
 	assert(sheet.save_png(OUTPUT_PATH) == OK)
 	print("Attack-animation visual written to %s." % OUTPUT_PATH)
