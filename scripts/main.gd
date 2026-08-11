@@ -130,6 +130,7 @@ var squad_selection_grid: GridContainer
 var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
+var squad_autobattle_button: Button
 var conductor_skill_option: OptionButton
 var reserve_class_option: OptionButton
 var reserve_search_edit: LineEdit
@@ -247,6 +248,7 @@ var current_encounter_index := 0
 var mission_run_conductor_hp := STARTING_HP
 var awaiting_next_encounter := false
 var mission_finished := false
+var autobattle_active := false
 var mission_interlude_pending := false
 var campaign_battle := false
 var squad_opened_from_menu := false
@@ -695,7 +697,7 @@ func _save_battle_settings() -> void:
 	})
 
 func _animation_duration(seconds: float) -> float:
-	if skip_animations:
+	if skip_animations or autobattle_active:
 		return 0.001
 	# Engine.time_scale controls the wall-clock playback rate so changing speed
 	# also affects a tween or timer that is already in progress.
@@ -1092,6 +1094,16 @@ func _build_squad_builder() -> void:
 	squad_start_button.pressed.connect(_save_and_start_mission)
 	actions.add_child(squad_start_button)
 
+	squad_autobattle_button = Button.new()
+	squad_autobattle_button.text = "AUTOBATTLE"
+	squad_autobattle_button.custom_minimum_size = Vector2(180, 44)
+	squad_autobattle_button.visible = false
+	squad_autobattle_button.tooltip_text = (
+		"Let the AI command your squad against this completed mission."
+	)
+	squad_autobattle_button.pressed.connect(_save_and_autobattle_mission)
+	actions.add_child(squad_autobattle_button)
+
 func _open_squad_builder() -> void:
 	if replay_mode:
 		_open_replay_squads()
@@ -1343,6 +1355,10 @@ func _rebuild_squad_grid() -> void:
 	squad_save_button.disabled = editing_squad_names.is_empty()
 	squad_start_button.visible = squad_opened_for_mission
 	squad_start_button.disabled = editing_squad_names.is_empty()
+	squad_autobattle_button.visible = (
+		squad_opened_for_mission and pending_mission_id in completed_missions
+	)
+	squad_autobattle_button.disabled = editing_squad_names.is_empty()
 
 func _refresh_mission_intel() -> void:
 	for child in mission_enemy_preview_row.get_children():
@@ -1484,6 +1500,30 @@ func _save_squad() -> void:
 func _save_and_start_mission() -> void:
 	if editing_squad_names.is_empty() or pending_mission_id < 0:
 		return
+	autobattle_active = false
+	squad_names = editing_squad_names.duplicate()
+	player_conductor_skill = editing_conductor_skill
+	SquadStoreScript.save_instance_squad(squad_names, collection_instances)
+	SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
+	var mission_id := pending_mission_id
+	squad_opened_for_mission = false
+	pending_mission_id = -1
+	squad_overlay.visible = false
+	recent_reward_name = ""
+	recent_reward_instance_id = ""
+	recent_reward_is_duplicate = false
+	recent_reward_copy_count = 0
+	_begin_mission(mission_id)
+
+## Starts the pending completed mission with the AI commanding the player's
+## squad: deployment, repositioning, Warcry targets, and the Conductor skill
+## are all chosen automatically so the player can farm rewards hands-free.
+func _save_and_autobattle_mission() -> void:
+	if editing_squad_names.is_empty() or pending_mission_id < 0:
+		return
+	if pending_mission_id not in completed_missions:
+		return
+	autobattle_active = true
 	squad_names = editing_squad_names.duplicate()
 	player_conductor_skill = editing_conductor_skill
 	SquadStoreScript.save_instance_squad(squad_names, collection_instances)
@@ -2041,7 +2081,8 @@ func _build_kinetic_crucible() -> void:
 	crucible_extras_toggle = CheckButton.new()
 	crucible_extras_toggle.text = "EXTRAS ONLY"
 	crucible_extras_toggle.tooltip_text = (
-		"Protect the two most-invested copies of each unit from being used as donors."
+		"Show unit groups with copies beyond the protected two; after choosing a "
+		+ "target, show only copies that are safe to merge."
 	)
 	crucible_extras_toggle.button_pressed = true
 	crucible_extras_toggle.toggled.connect(_toggle_crucible_extras)
@@ -2432,10 +2473,20 @@ func _rebuild_crucible(sync_collection: bool = true) -> void:
 			grid.remove_child(child)
 			child.queue_free()
 	var protected_ids := _crucible_protected_ids(active)
+	var extra_names := _crucible_extra_names(active, protected_ids)
 	for instance in KineticCrucibleScript.sort_reserves(active, roster):
 		var unit := UnitCatalogScript.by_name(instance.name)
 		if unit == null or not _reserve_visible(unit, crucible_filter_class, crucible_filter_text):
 			continue
+		if crucible_extras_toggle.button_pressed:
+			if crucible_target_id.is_empty() and instance.name not in extra_names:
+				continue
+			if (
+				not crucible_target_id.is_empty()
+				and instance.id != crucible_target_id
+				and instance.id in protected_ids
+			):
+				continue
 		var card: Button = SquadCardScript.new()
 		card.configure(
 			instance.id, "crucible_reserve", _unit_icon(unit.icon), -1, unit.kind
@@ -2557,14 +2608,27 @@ func _crucible_protected_ids(active: Array) -> Array:
 		return []
 	return KineticCrucibleScript.protected_instance_ids(active)
 
+## Before target selection, Extras Only keeps complete unit groups visible when
+## at least one copy is safe to sacrifice. This lets the player choose the best
+## copy as the enhancement target. Once selected, the reserve list is narrowed
+## to that target plus the actual unprotected donors.
+func _crucible_extra_names(active: Array, protected_ids: Array) -> Array:
+	if not crucible_extras_toggle.button_pressed:
+		return active.map(func(instance): return instance.name)
+	var names: Array = []
+	for instance in active:
+		if instance.id not in protected_ids and instance.name not in names:
+			names.append(instance.name)
+	return names
+
 func _refresh_crucible_detail() -> void:
 	var target := _crucible_target()
 	crucible_merge_button.text = "MERGE QUEUE"
 	crucible_promote_button.text = "PROMOTE"
 	if target.is_empty():
 		crucible_detail_label.text = (
-			"Choose any owned unit to enhance. Extras Only keeps your two best "
-			+ "formation copies safe when you select donors."
+			"Choose a unit to enhance. Extras Only shows unit groups with a copy "
+			+ "beyond your protected two; turn it off to browse the full collection."
 		)
 		crucible_merge_button.disabled = true
 		crucible_promote_button.disabled = true
@@ -2961,6 +3025,7 @@ func _show_main_menu() -> void:
 		settings_panel.visible = false
 	replay_mode = false
 	replay_playing = false
+	autobattle_active = false
 	if replay_panel != null:
 		replay_panel.visible = false
 	if replay_squad_overlay != null:
@@ -3599,6 +3664,7 @@ func _replay_interlude(mission_id: int) -> void:
 func _begin_practice() -> void:
 	_leave_tutorial()
 	campaign_battle = false
+	autobattle_active = false
 	board.set_practice_mode(true)
 	current_mission_id = -1
 	current_encounter_index = 0
@@ -3942,6 +4008,8 @@ func _start_new_match() -> void:
 	if tutorial_mode:
 		_setup_tutorial_target()
 	_refresh()
+	if autobattle_active and not battle_over:
+		_autobattle_player_turn()
 
 func _draw_player_card() -> void:
 	if player_hand.size() >= BENCH_LIMIT or draw_index >= battle_deck.size():
@@ -4674,6 +4742,7 @@ func _resolve_warcry(
 	)
 	if (
 		actor.side == PLAYER
+		and not autobattle_active
 		and skill.get("name", "") in ["Overclock Link", "Guard Link", "Purge Routine", "Refit Cycle", "Field Recovery", "Thermal Wrap"]
 		and target_id < 0
 		and has_other_ally
@@ -4681,7 +4750,8 @@ func _resolve_warcry(
 		pending_empower_actor_id = actor.id
 		return "Choose another allied unit as %s's target." % skill.get("name", "")
 	if (
-		actor.side == PLAYER and skill.get("name", "") in ["Toxin Injector", "Thermal Burst", "Null Signal"]
+		actor.side == PLAYER and not autobattle_active
+		and skill.get("name", "") in ["Toxin Injector", "Thermal Burst", "Null Signal"]
 		and target_id < 0 and units.any(func(unit): return unit.side == ENEMY)
 	):
 		pending_envenom_actor_id = actor.id
@@ -4690,6 +4760,7 @@ func _resolve_warcry(
 	var lane_side := _lane_target_side(skill.get("name", ""))
 	if (
 		actor.side == PLAYER
+		and not autobattle_active
 		and skill.get("name", "") in ["Suppression Field", "Meteor Pattern", "Cryo Lock", "Lane Bulwark", "Umbral Clamp"]
 		and target_lane < 0 and units.any(
 			func(unit): return (
@@ -4819,7 +4890,7 @@ func _win_campaign_battle() -> void:
 	_check_game_over()
 
 func _end_player_turn() -> void:
-	if not input_enabled or battle_over:
+	if battle_over or (not input_enabled and not autobattle_active):
 		return
 	if tutorial_mode and tutorial_step not in [TUTORIAL_RESOLVE, TUTORIAL_FINAL_RESOLVE]:
 		return
@@ -4879,6 +4950,8 @@ func _end_player_turn() -> void:
 		return
 	await _wait(0.35)
 	await _enemy_turn()
+	if autobattle_active and not battle_over:
+		_autobattle_player_turn()
 
 func _run_tutorial_enemy_turn() -> void:
 	_set_tutorial_step(TUTORIAL_ENEMY_TURN)
@@ -5052,6 +5125,94 @@ func _enemy_reposition_units() -> void:
 			board.play_unit_effect(unit.id, "SHIFT", Color("#ff8b9f"))
 			_refresh()
 			await _wait(0.28)
+
+## Autobattle player turn: mirrors the enemy turn with the sides flipped so
+## the AI commands the player's squad on completed missions. Input stays
+## locked; targeted Warcries skip their prompts while autobattle_active (see
+## _resolve_warcry), so UnitSkills' side-agnostic -1 fallbacks pick targets,
+## and _end_player_turn runs even though input_enabled is false.
+func _autobattle_player_turn() -> void:
+	if battle_over or tutorial_mode:
+		return
+	input_enabled = false
+	status_message = "Autobattle is commanding your squad..."
+	_refresh()
+	await _wait(0.35)
+
+	var player_ids: Array = units.filter(
+		func(unit): return unit.side == PLAYER
+	).map(func(unit): return unit.id)
+	for unit_id in player_ids:
+		var unit = _unit_by_id(unit_id)
+		if (
+			unit == null
+			or BattleRulesScript.is_taunted(unit, units)
+			or BattleRulesScript.is_immobilized(unit)
+		):
+			continue
+		var best_row: int = BattleAIScript.choose_reposition(
+			unit, units, active_mission_rules.blocked_cells, player_hp
+		)
+		if best_row != unit.row:
+			var old_row: int = unit.row
+			var old_col: int = unit.col
+			unit.row = best_row
+			battle_simulator.record("reposition", {
+				"unit_id": unit.id, "from_row": old_row, "to_row": best_row
+			})
+			status_message = "%s shifts from lane %d to lane %d." % [unit.name, old_row + 1, best_row + 1]
+			_refresh()
+			battle_audio.play("move")
+			await board.animate_unit_move(unit.id, old_row, old_col, _animation_duration(0.24))
+			board.play_unit_effect(unit.id, "SHIFT", Color("#67e6f4"))
+			_refresh()
+			await _wait(0.28)
+
+	var attempts := 0
+	while attempts < 3:
+		var choice: Dictionary = BattleAIScript.choose_deployment(
+			player_hand, player_energy, units, active_mission_rules.blocked_cells, PLAYER
+		)
+		if choice.is_empty():
+			break
+		var card: Dictionary = choice.card
+		var row: int = choice.row
+		var spawned: Dictionary = _spawn_unit(card, PLAYER, row, 0)
+		battle_simulator.record("deploy", {
+			"side": PLAYER, "unit_id": spawned.id, "card": card.name, "row": row
+		})
+		player_energy -= card.cost
+		var hand_index: int = player_hand.find(card)
+		if hand_index >= 0:
+			player_hand.remove_at(hand_index)
+		status_message = "Autobattle deployed %s to lane %d." % [card.name, row + 1]
+		_refresh()
+		battle_audio.play("deploy")
+		await board.animate_unit_move(spawned.id, row, -1, _animation_duration(0.32))
+		var warcry_message := await _resolve_warcry(spawned)
+		if not warcry_message.is_empty():
+			status_message += " " + warcry_message
+		_refresh()
+		await _wait(0.35)
+		attempts += 1
+
+	if (
+		not player_power_used
+		and BattleAIScript.should_use_conductor_skill(
+			player_conductor_skill, round_number, player_hp, units, PLAYER
+		)
+	):
+		var skill_applied: bool = await _apply_conductor_skill(
+			PLAYER, player_conductor_skill
+		)
+		if skill_applied:
+			player_power_used = true
+			_refresh()
+			await _wait(0.45)
+			if _check_game_over("action"):
+				return
+
+	_end_player_turn()
 
 func _player_lane_threat(row: int, enemy_col: int) -> int:
 	var threat := 0
@@ -5653,6 +5814,7 @@ func _redeploy_mission() -> void:
 	):
 		return
 	mission_finished = false
+	autobattle_active = false
 	_leave_completed_mission("redeploy_mission")
 
 func _emphasize_result_action(primary_action: Button) -> void:
@@ -5747,6 +5909,14 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 				awaiting_next_encounter = true
 				mission_run_conductor_hp = player_hp
 				MissionRunStoreScript.save_run(current_mission_id, current_encounter_index + 1, mission_run_conductor_hp)
+				if autobattle_active:
+					# Skip the "FIELD SECURED" screen and roll straight into the
+					# next encounter; _start_new_match relaunches the driver.
+					overlay.visible = false
+					awaiting_next_encounter = false
+					current_encounter_index += 1
+					_start_new_match()
+					return true
 				var next_encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index + 1)
 				overlay_title.text = "FIELD SECURED"
 				overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))

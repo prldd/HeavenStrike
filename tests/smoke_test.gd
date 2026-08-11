@@ -3634,6 +3634,30 @@ func _init() -> void:
 	]
 	assert(BattleAIScript.choose_deployment(ai_hand, 10, blocked_units).is_empty())
 
+	# Autobattle reuses the same chooser for the player's side: the deploy
+	# column flips to column 0 and the opposing side drives the threat score.
+	var autobattle_units := [
+		{"side": 1, "row": 2, "col": 1, "atk": 3, "hp": 4, "max_hp": 4}
+	]
+	var autobattle_choice: Dictionary = BattleAIScript.choose_deployment(
+		ai_hand, 2, autobattle_units, [], 0
+	)
+	assert(not autobattle_choice.is_empty())
+	assert(autobattle_choice.row == 2, "Autobattle AI should answer the enemy's lane.")
+	var player_blocked_units := [
+		{"side": 0, "row": 0, "col": 0, "atk": 1, "hp": 1, "max_hp": 1},
+		{"side": 0, "row": 1, "col": 0, "atk": 1, "hp": 1, "max_hp": 1},
+		{"side": 0, "row": 2, "col": 0, "atk": 1, "hp": 1, "max_hp": 1}
+	]
+	assert(BattleAIScript.choose_deployment(ai_hand, 10, player_blocked_units, [], 0).is_empty())
+	# should_use_conductor_skill flips allies/enemies for the player side.
+	var player_skill_units := [
+		{"side": 0, "row": 0, "col": 0, "atk": 2, "hp": 3, "max_hp": 3},
+		{"side": 0, "row": 1, "col": 0, "atk": 2, "hp": 3, "max_hp": 3}
+	]
+	assert(BattleAIScript.should_use_conductor_skill("Rally", 1, 20, player_skill_units, 0))
+	assert(not BattleAIScript.should_use_conductor_skill("Firestorm", 1, 20, player_skill_units, 0))
+
 	# Level growth: +10% ATK / max HP per level above 1, never below base.
 	assert(KineticCrucibleScript.scaled_stat(10, 1) == 10)
 	assert(KineticCrucibleScript.scaled_stat(10, 5) == 14)
@@ -3728,6 +3752,23 @@ func _init() -> void:
 	).message.is_empty())
 	assert(furnace_actor.atk == 6 and furnace_actor.haste_turns == 3)
 	assert(furnace_actor.effects[0].name == "Furnace Wake")
+
+	# Furnace Wake resolves after attacking, so its first turn must survive the
+	# same-side expiry pass and empower the actor's following activation.
+	var furnace_recruit := {
+		"id": 209, "side": 0, "name": "Cinder Blade-036", "level": 1,
+		"atk": 3, "hp": 6, "effects": [], "haste_turns": 0,
+		"skill": UnitCatalogScript.by_name("Cinder Blade-036").skill.to_dict()
+	}
+	UnitSkillsScript.resolve_strike(furnace_recruit, furnace_target, [
+		furnace_recruit, furnace_target
+	])
+	ConductorSkillsScript.expire_effects([furnace_recruit], 0)
+	UnitSkillsScript.expire_statuses([furnace_recruit], 0)
+	assert(furnace_recruit.atk == 4 and furnace_recruit.haste_turns == 1)
+	ConductorSkillsScript.expire_effects([furnace_recruit], 0)
+	UnitSkillsScript.expire_statuses([furnace_recruit], 0)
+	assert(furnace_recruit.atk == 3 and furnace_recruit.haste_turns == 0)
 
 	var slipstream_actor := {
 		"id": 205, "side": 0, "name": "Zephyr Lancer-042", "level": 5,

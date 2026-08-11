@@ -7,8 +7,9 @@ const ENEMY := 1
 const COLS := 7
 
 static func choose_deployment(
-	roster: Array, energy: int, units: Array, blocked_cells: Array = []
+	roster: Array, energy: int, units: Array, blocked_cells: Array = [], side: int = ENEMY
 ) -> Dictionary:
+	var deploy_col: int = 0 if side == PLAYER else COLS - 1
 	var best := {}
 	var best_score := -INF
 	for card in roster:
@@ -16,11 +17,11 @@ static func choose_deployment(
 			continue
 		for row in 3:
 			if (
-				_occupied(units, row, COLS - 1)
-				or BattleRulesScript.is_cell_blocked(blocked_cells, row, COLS - 1)
+				_occupied(units, row, deploy_col)
+				or BattleRulesScript.is_cell_blocked(blocked_cells, row, deploy_col)
 			):
 				continue
-			var score := _score(card, row, energy, units)
+			var score := _score(card, row, energy, units, side)
 			if score > best_score:
 				best_score = score
 				best = {"card": card, "row": row}
@@ -39,13 +40,15 @@ static func lane_priority(units: Array) -> Array:
 	scored.sort_custom(func(a, b): return a.score > b.score)
 	return scored.map(func(item): return item.row)
 
-static func _score(card: Dictionary, row: int, energy: int, units: Array) -> float:
+static func _score(
+	card: Dictionary, row: int, energy: int, units: Array, side: int = ENEMY
+) -> float:
 	var player_threat := 0.0
 	var enemy_support := 0.0
 	var wounded_allies := 0
 	var adjacent_targets := 0
 	for unit in units:
-		if unit.side == PLAYER:
+		if unit.side != side:
 			if unit.row == row:
 				player_threat += unit.atk * 2.0 + unit.hp * 0.25 + unit.col * 0.8
 			if absi(unit.row - row) == 1:
@@ -60,7 +63,7 @@ static func _score(card: Dictionary, row: int, energy: int, units: Array) -> flo
 	score += board_value / maxf(1.0, card.cost)
 	score -= card.cost * 0.25
 	score += 1.25 if card.cost == energy else 0.0
-	var deployed_allies: int = units.filter(func(unit): return unit.side == ENEMY).size()
+	var deployed_allies: int = units.filter(func(unit): return unit.side == side).size()
 	if player_threat <= 0.0 and deployed_allies >= 3:
 		score -= card.cost * 0.9
 	match card.kind:
@@ -100,10 +103,10 @@ static func choose_reposition(
 	return best_row
 
 static func should_use_conductor_skill(
-	skill_name: String, round_number: int, conductor_hp: int, units: Array
+	skill_name: String, round_number: int, conductor_hp: int, units: Array, side: int = ENEMY
 ) -> bool:
-	var allies: Array = units.filter(func(unit): return unit.side == ENEMY)
-	var enemies: Array = units.filter(func(unit): return unit.side == PLAYER)
+	var allies: Array = units.filter(func(unit): return unit.side == side)
+	var enemies: Array = units.filter(func(unit): return unit.side != side)
 	match skill_name:
 		"Aid", "Healing Wave":
 			return allies.any(func(unit): return unit.hp < unit.max_hp)

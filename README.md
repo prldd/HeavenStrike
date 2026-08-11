@@ -24,6 +24,9 @@ assets required by the prototype.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
 - After a campaign victory, use **Redeploy Mission** to pursue a better rating
   and earn another unit reward; **Continue Campaign** remains the primary action.
+- Completed missions offer **Autobattle** in the Squad Workshop: the AI commands
+  your squad through the whole mission at fast-forward speed, then shows the
+  usual victory reward or defeat screen.
 - Reward reveals label duplicates, show the owned copy count, and explain their
   same-unit Kinetic Crucible value.
 - Select a unit card whose Mana cost is currently available.

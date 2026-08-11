@@ -448,15 +448,18 @@ func _run() -> void:
 	var crucible_units: Array = KineticCrucibleScript.active_instances(
 		game.collection_instances
 	)
-	# EXTRAS ONLY keeps every copy visible as a possible target. Protection is
-	# applied only after a target is chosen, when the remaining cards are donors.
+	# EXTRAS ONLY visibly filters out unit groups that do not have a third copy
+	# available beyond the protected two formation copies.
 	var names_seen := {}
 	var protected_count := 0
+	var extras_group_count := 0
 	for instance in crucible_units:
 		names_seen[instance.name] = names_seen.get(instance.name, 0) + 1
 	for copy_count in names_seen.values():
 		protected_count += mini(2, copy_count)
-	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
+		if copy_count > 2:
+			extras_group_count += copy_count
+	assert(game.crucible_reserve_grid.get_child_count() == extras_group_count)
 	assert(protected_count > 0)
 	game.crucible_extras_toggle.button_pressed = false
 	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
@@ -495,7 +498,9 @@ func _run() -> void:
 	assert(game.crucible_target_id.is_empty())
 	assert(game.crucible_donor_ids.is_empty())
 	assert(game.crucible_promote_button.disabled)
-	# EXTRAS ONLY protects the two most-invested donors while leaving them visible.
+	# Before target selection, a three-copy group remains fully visible so the
+	# strongest copy can be selected as the target. Afterwards, protected
+	# non-target copies disappear and only the safe extra donor remains.
 	var extras_config := ConfigFile.new()
 	extras_config.set_value("meta", "instances_migrated", true)
 	extras_config.set_value("collection", "next_id", 4)
@@ -529,8 +534,9 @@ func _run() -> void:
 		cards_by_id[card.unit_name] = card
 	assert(not cards_by_id["unit_000001"].disabled)
 	assert(cards_by_id["unit_000001"].text.contains("RECOVERED"))
-	assert(cards_by_id["unit_000002"].disabled)
-	assert(cards_by_id["unit_000002"].text.contains("PROTECTED"))
+	assert(not cards_by_id.has("unit_000002"))
+	assert(cards_by_id["unit_000003"].disabled)
+	assert(cards_by_id["unit_000003"].text.contains("TARGET"))
 	game._select_crucible_unit("unit_000001")
 	assert(game.crucible_donor_ids == ["unit_000001"])
 	assert(game.crucible_detail_label.text.contains("PROJECTED STATS"))
@@ -955,6 +961,39 @@ func _run() -> void:
 	assert(GachaStoreScript.load_pity() == 0)
 	game._show_main_menu()
 	assert(not game.gacha_overlay.visible)
+	# Autobattle: completed missions offer an AI-commanded battle from the squad
+	# builder; the driver resolves the whole mission at skip-animation speed and
+	# lands on the normal victory (with reward) or loss screen.
+	game._open_mission_select(0)
+	for frame in 3:
+		await process_frame
+	game._select_mission_on_map(0)
+	game._prepare_mission(0)
+	assert(game.squad_opened_for_mission)
+	assert(game.pending_mission_id == 0)
+	assert(game.squad_autobattle_button.visible)
+	assert(not game.squad_autobattle_button.disabled)
+	game._save_and_autobattle_mission()
+	assert(game.autobattle_active)
+	assert(game.campaign_battle)
+	assert(game.current_mission_id == 0)
+	assert(not game.squad_overlay.visible)
+	var autobattle_frames := 0
+	while not game.battle_over and autobattle_frames < 20000:
+		await process_frame
+		autobattle_frames += 1
+	assert(game.battle_over, "Autobattle should resolve the mission on its own.")
+	assert(game.overlay.visible)
+	assert(game.battle_simulator.events.any(
+		func(event): return event.type == "battle_finished"
+	))
+	if game.mission_finished:
+		assert(game.result_primary_button.text == "RETURN TO MENU")
+		assert(not game.recent_reward_name.is_empty())
+	else:
+		assert(game.overlay_title.text == game.LOSS_TITLE)
+	game._show_main_menu()
+	assert(not game.autobattle_active)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
 	await create_timer(0.05).timeout
 	game.queue_free()

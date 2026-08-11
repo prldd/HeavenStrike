@@ -1110,7 +1110,11 @@ static func resolve_strike(
 		var turns := rank_value(skill, level, 1, 1)
 		actor.atk += amount
 		actor.haste_turns = maxi(actor.get("haste_turns", 0), turns)
-		_add_effect(actor, "Furnace Wake", turns, amount, 0)
+		# Strike skills resolve after the actor attacks, immediately before its
+		# side's end-of-turn expiry pass. Preserve this fresh buff through that
+		# pass so its first listed turn applies to the actor's next activation.
+		actor.defer_haste_expiry = true
+		_add_effect(actor, "Furnace Wake", turns, amount, 0, true)
 		result.message = "Furnace Wake grants %s +%d ATK and Haste for %s." % [
 			actor.name, amount, _turn_label(turns)
 		]
@@ -1469,7 +1473,10 @@ static func expire_statuses(units: Array, side: int) -> void:
 		if unit.side == side and unit.get("silenced_turns", 0) > 0:
 			unit.silenced_turns -= 1
 		if unit.side == side and unit.get("haste_turns", 0) > 0:
-			unit.haste_turns -= 1
+			if unit.get("defer_haste_expiry", false):
+				unit.erase("defer_haste_expiry")
+			else:
+				unit.haste_turns -= 1
 		# Doom timers (Lasting Aegis) count the opposing side's turns; when one
 		# runs out the carrier is defeated.
 		if unit.side != side and unit.get("doom_turns", 0) > 0:
@@ -1503,14 +1510,16 @@ static func timing_tooltip(skill_type: String) -> String:
 	return ""
 
 static func _add_effect(
-	unit: Dictionary, effect_name: String, turns: int, attack: int, health: int
+	unit: Dictionary, effect_name: String, turns: int, attack: int, health: int,
+	defer_first_expiry: bool = false
 ) -> void:
 	var effects: Array = unit.get("effects", [])
 	effects.append({
 		"name": effect_name,
 		"turns": turns,
 		"attack": attack,
-		"health": health
+		"health": health,
+		"defer_first_expiry": defer_first_expiry
 	})
 	unit.effects = effects
 

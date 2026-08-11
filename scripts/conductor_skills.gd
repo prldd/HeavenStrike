@@ -130,6 +130,10 @@ static func expire_effects(units: Array, side: int) -> void:
 			continue
 		var retained: Array = []
 		for effect in unit.get("effects", []):
+			if effect.get("defer_first_expiry", false):
+				effect.erase("defer_first_expiry")
+				retained.append(effect)
+				continue
 			effect.turns -= 1
 			if effect.turns <= 0:
 				unit.atk = maxi(0, unit.atk - effect.get("attack", 0))
