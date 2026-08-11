@@ -106,6 +106,33 @@ static func dark_plaque() -> StyleBoxFlat:
 	style.shadow_size = 14
 	return style
 
+static func command_bridge_style() -> StyleBoxFlat:
+	var style := _panel(
+		Color(0.035, 0.068, 0.096, 0.96), Color.TRANSPARENT, 0, 10, 10
+	)
+	style.border_color = Color("#789096", 0.30)
+	style.set_border_width(SIDE_BOTTOM, 1)
+	style.shadow_color = Color(0.01, 0.02, 0.03, 0.48)
+	style.shadow_size = 5
+	return style
+
+static func command_dock_style() -> StyleBoxFlat:
+	var style := _panel(
+		Color(0.025, 0.052, 0.075, 0.97), Color("#789096", 0.28), 1, 12, 8
+	)
+	style.shadow_color = Color(0.01, 0.02, 0.03, 0.56)
+	style.shadow_size = 6
+	return style
+
+static func instrument_style(
+	accent: Color, tint: float, border_alpha: float, glow: int, margin: float = 8.0
+) -> StyleBoxFlat:
+	var fill := Color("#0c1a25").lerp(accent.darkened(0.62), tint)
+	var style := _panel(fill, Color(accent, border_alpha * 0.74), 1, 10, margin)
+	style.shadow_color = Color(accent, 0.10 if glow > 0 else 0.0)
+	style.shadow_size = mini(glow, 3)
+	return style
+
 static func card_style(color: Color, tint: float, border_alpha: float, glow: int) -> StyleBoxFlat:
 	var style := _panel(NAVY_DEEP.lerp(color.darkened(0.28), tint), Color(color, border_alpha), 2, 6, 7)
 	style.shadow_color = Color(color, 0.22 if glow > 0 else 0.0)

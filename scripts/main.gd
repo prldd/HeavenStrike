@@ -154,6 +154,9 @@ var animation_button: Button
 var motion_button: Button
 var settings_button: Button
 var settings_panel: PanelContainer
+var command_bridge: PanelContainer
+var command_dock: PanelContainer
+var opponent_button: Button
 var battle_audio: BattleAudio
 var battle_simulator: BattleSimulator
 var combat_log_panel: PanelContainer
@@ -372,39 +375,49 @@ func _build_interface() -> void:
 	root.add_theme_constant_override("separation", 8)
 	margin.add_child(root)
 
-	var header := HBoxContainer.new()
-	header.custom_minimum_size.y = 50
-	root.add_child(header)
+	command_bridge = PanelContainer.new()
+	command_bridge.custom_minimum_size.y = 58
+	command_bridge.add_theme_stylebox_override(
+		"panel", UIThemeScript.command_bridge_style()
+	)
+	root.add_child(command_bridge)
 
-	var brand := Label.new()
-	brand.text = "WAR OF\nRESONANCE"
-	brand.add_theme_font_size_override("font_size", 17)
-	brand.add_theme_color_override("font_color", UIThemeScript.title_color())
-	brand.custom_minimum_size.x = 170
-	header.add_child(brand)
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	command_bridge.add_child(header)
 
 	turn_label = Label.new()
-	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	turn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	turn_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	turn_label.add_theme_font_size_override("font_size", 18)
+	turn_label.custom_minimum_size.x = 235
+	turn_label.add_theme_font_size_override("font_size", 17)
+	turn_label.add_theme_color_override("font_color", Color("#e7eef0"))
 	header.add_child(turn_label)
 
-	var header_balance := HBoxContainer.new()
-	header_balance.custom_minimum_size.x = 170
-	header_balance.alignment = BoxContainer.ALIGNMENT_END
-	header.add_child(header_balance)
-	settings_button = Button.new()
-	settings_button.text = "⚙"
-	settings_button.tooltip_text = "Settings"
-	settings_button.custom_minimum_size = Vector2(46, 42)
-	settings_button.add_theme_font_size_override("font_size", 22)
-	settings_button.pressed.connect(_toggle_settings)
-	header_balance.add_child(settings_button)
+	hint_label = Label.new()
+	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hint_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	hint_label.add_theme_font_size_override("font_size", 12)
+	hint_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	header.add_child(hint_label)
+
+	opponent_button = Button.new()
+	opponent_button.custom_minimum_size = Vector2(235, 40)
+	opponent_button.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	opponent_button.add_theme_font_size_override("font_size", 11)
+	opponent_button.tooltip_text = "View the opponent and current win conditions."
+	opponent_button.mouse_entered.connect(_show_objective_details)
+	opponent_button.mouse_exited.connect(_hide_unit_details)
+	opponent_button.pressed.connect(_on_opponent_clicked)
+	_apply_instrument_button_style(opponent_button, Color("#bd6675"), false)
+	header.add_child(opponent_button)
 
 	board = BoardViewScript.new()
 	board.custom_minimum_size = Vector2(0, 370)
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	board.set_command_overlay_visible(false)
 	board.deployment_clicked.connect(_on_deployment_clicked)
 	board.board_cell_clicked.connect(_on_board_cell_clicked)
 	board.unit_hovered.connect(_show_unit_details)
@@ -414,66 +427,68 @@ func _build_interface() -> void:
 	board.opponent_clicked.connect(_on_opponent_clicked)
 	root.add_child(board)
 
-	var control_bar := VBoxContainer.new()
-	control_bar.custom_minimum_size.y = 44
-	control_bar.add_theme_constant_override("separation", 8)
-	root.add_child(control_bar)
+	command_dock = PanelContainer.new()
+	command_dock.custom_minimum_size.y = 106
+	command_dock.add_theme_stylebox_override("panel", UIThemeScript.command_dock_style())
+	root.add_child(command_dock)
 
-	var status_row := HBoxContainer.new()
-	status_row.add_theme_constant_override("separation", 8)
-	status_row.visible = false
-	control_bar.add_child(status_row)
-
-	hint_label = Label.new()
-	hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hint_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	status_row.add_child(hint_label)
-
-	var action_row := HBoxContainer.new()
-	action_row.alignment = BoxContainer.ALIGNMENT_END
-	action_row.add_theme_constant_override("separation", 8)
-	control_bar.add_child(action_row)
+	var dock_row := HBoxContainer.new()
+	dock_row.add_theme_constant_override("separation", 7)
+	command_dock.add_child(dock_row)
 
 	power_button = Button.new()
 	power_button.text = "RALLY"
 	power_button.tooltip_text = "Once per battle: all allies gain +1 ATK."
-	power_button.custom_minimum_size.x = 135
+	power_button.custom_minimum_size = Vector2(132, 86)
+	power_button.add_theme_font_size_override("font_size", 12)
+	_apply_instrument_button_style(power_button, Color("#50d4e8"), true)
 	power_button.pressed.connect(_use_player_power)
-	action_row.add_child(power_button)
+	dock_row.add_child(power_button)
+
+	hand_row = HBoxContainer.new()
+	hand_row.custom_minimum_size.y = 90
+	hand_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hand_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	hand_row.add_theme_constant_override("separation", 5)
+	dock_row.add_child(hand_row)
+
+	var utility_stack := VBoxContainer.new()
+	utility_stack.custom_minimum_size.x = 46
+	utility_stack.add_theme_constant_override("separation", 4)
+	dock_row.add_child(utility_stack)
 
 	menu_button = _make_home_button()
-	menu_button.custom_minimum_size.x = 64
+	menu_button.custom_minimum_size = Vector2(42, 41)
+	_apply_instrument_button_style(menu_button, UIThemeScript.BRASS, false)
 	menu_button.pressed.connect(_show_main_menu)
-	action_row.add_child(menu_button)
+	utility_stack.add_child(menu_button)
+
+	settings_button = Button.new()
+	settings_button.text = "⚙"
+	settings_button.tooltip_text = "Settings"
+	settings_button.custom_minimum_size = Vector2(42, 41)
+	settings_button.add_theme_font_size_override("font_size", 18)
+	_apply_instrument_button_style(settings_button, UIThemeScript.BRASS, false)
+	settings_button.pressed.connect(_toggle_settings)
+	utility_stack.add_child(settings_button)
 
 	win_button = Button.new()
 	win_button.text = "WIN"
 	win_button.tooltip_text = "Immediately win this campaign battle."
-	win_button.custom_minimum_size.x = 64
+	win_button.custom_minimum_size = Vector2(52, 86)
 	win_button.visible = false
+	_apply_instrument_button_style(win_button, Color("#bd6675"), false)
 	win_button.pressed.connect(_win_campaign_battle)
-	action_row.add_child(win_button)
+	dock_row.add_child(win_button)
 
 	end_button = Button.new()
-	end_button.text = "→"
+	end_button.text = "END TURN"
 	end_button.tooltip_text = "Resolve turn (Enter)"
-	end_button.add_theme_font_size_override("font_size", 28)
-	end_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	end_button.offset_left = -74
-	end_button.offset_top = -68
-	end_button.offset_right = -18
-	end_button.offset_bottom = -18
-	end_button.z_index = 20
+	end_button.custom_minimum_size = Vector2(104, 86)
+	end_button.add_theme_font_size_override("font_size", 13)
+	_apply_instrument_button_style(end_button, UIThemeScript.BRASS_LIGHT, true)
 	end_button.pressed.connect(_end_player_turn)
-	board.add_child(end_button)
-
-	hand_row = HBoxContainer.new()
-	hand_row.custom_minimum_size.y = 104
-	hand_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	hand_row.add_theme_constant_override("separation", 6)
-	root.add_child(hand_row)
+	dock_row.add_child(end_button)
 
 	_build_combat_log()
 	_build_settings_menu()
@@ -729,6 +744,27 @@ func _make_home_button() -> Button:
 	button.icon = UIThemeScript.home_icon()
 	button.tooltip_text = "Return to the main menu."
 	return button
+
+func _apply_instrument_button_style(
+	button: Button, accent: Color, emphasis: bool
+) -> void:
+	button.set_meta("instrument_accent", accent)
+	button.set_meta("instrument_emphasis", emphasis)
+	button.add_theme_stylebox_override(
+		"normal", UIThemeScript.instrument_style(
+			accent, 0.20 if emphasis else 0.10, 0.78 if emphasis else 0.52,
+			4 if emphasis else 1
+		)
+	)
+	button.add_theme_stylebox_override(
+		"hover", UIThemeScript.instrument_style(accent, 0.34, 0.96, 6)
+	)
+	button.add_theme_stylebox_override(
+		"pressed", UIThemeScript.instrument_style(accent, 0.42, 1.0, 3)
+	)
+	button.add_theme_stylebox_override(
+		"disabled", UIThemeScript.instrument_style(accent, 0.04, 0.22, 0)
+	)
 
 func _log_action(message: String) -> void:
 	if message.is_empty() or message == last_logged_message:
@@ -4175,10 +4211,12 @@ func _refresh() -> void:
 	var player_locked_mana := BattleRulesScript.locked_mana(units, PLAYER)
 	var enemy_locked_mana := BattleRulesScript.locked_mana(units, ENEMY)
 	turn_label.text = "GUIDED DRILL  ·  ROUND %02d" % round_number if tutorial_mode else (
-		"ROUND %02d  ·  YOUR COMMAND" % round_number
-		if input_enabled else "ROUND %02d  ·  RESOLVING" % round_number
+		"YOUR TURN  ·  ROUND %02d" % round_number
+		if input_enabled else "RESOLVING  ·  ROUND %02d" % round_number
 	)
 	hint_label.text = status_message
+	hint_label.tooltip_text = status_message
+	board.set_active_conductor_side(PLAYER if input_enabled else ENEMY)
 	end_button.disabled = (
 		not input_enabled or battle_over
 		or pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
@@ -4197,7 +4235,13 @@ func _refresh() -> void:
 		not input_enabled or player_power_used or battle_over
 		or (tutorial_mode and tutorial_step != TUTORIAL_POWER)
 	)
-	power_button.text = "%s USED" % player_conductor_skill.to_upper() if player_power_used else player_conductor_skill.to_upper()
+	power_button.text = (
+		"POWER USED\n%s" % player_conductor_skill.to_upper()
+		if player_power_used else "POWER\n%s" % player_conductor_skill.to_upper()
+	)
+	power_button.add_theme_font_size_override(
+		"font_size", 9 if player_conductor_skill.length() > 12 else 12
+	)
 	power_button.tooltip_text = ConductorSkillsScript.DESCRIPTIONS[player_conductor_skill]
 	if tutorial_mode:
 		var tutorial_action_locked := (
@@ -4297,10 +4341,17 @@ func _refresh() -> void:
 	_rebuild_hand()
 
 func _set_board_opponent(encounter: Dictionary) -> void:
-	board.set_opponent_identity(
-		encounter.get("opponent_name", ""),
-		encounter.get("opponent_affiliation", "")
-	)
+	var display_name: String = encounter.get("opponent_name", "")
+	var affiliation: String = encounter.get("opponent_affiliation", "")
+	board.set_opponent_identity(display_name, affiliation)
+	if opponent_button != null:
+		opponent_button.visible = true
+		opponent_button.disabled = display_name.is_empty()
+		opponent_button.text = (
+			"PRACTICE FRAME\nTRAINING HALL"
+			if display_name.is_empty()
+			else "%s\n%s" % [display_name.to_upper(), affiliation.to_upper()]
+		)
 
 func _rebuild_hand() -> void:
 	for child in hand_row.get_children():
@@ -4310,7 +4361,7 @@ func _rebuild_hand() -> void:
 	for i in player_hand.size():
 		var card: Dictionary = player_hand[i]
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(170, 98)
+		button.custom_minimum_size = Vector2(144, 84)
 		button.toggle_mode = true
 		button.button_pressed = i == selected_hand_index
 		button.disabled = not input_enabled or card.cost > player_energy or battle_over
@@ -4320,14 +4371,15 @@ func _rebuild_hand() -> void:
 			)
 		button.icon = _unit_icon(card.get("icon", 0))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.text = "%s\n%d◆ · %s\n%d ATK · %d HP" % [
+		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		button.text = "%s\n%d MANA  ·  %s\n%d ATK  ·  %d HP" % [
 			card.name.to_upper(), card.cost, UnitCatalogScript.display_class(card.kind),
 			card.atk, card.hp
 		]
 		_apply_class_card_style(button, card.kind)
 		if tutorial_mode and tutorial_step == TUTORIAL_SELECT_CARD and card.name == TUTORIAL_UNIT_NAME:
 			_set_tutorial_button_highlight(button, true)
-		button.add_theme_font_size_override("font_size", 10)
+		button.add_theme_font_size_override("font_size", 9)
 		button.pressed.connect(_select_card.bind(i))
 		button.mouse_entered.connect(_show_unit_details.bind(card))
 		button.mouse_exited.connect(_hide_unit_details)
@@ -4337,6 +4389,12 @@ func _set_tutorial_button_highlight(button: Button, active: bool) -> void:
 	for style_name in ["normal", "hover", "pressed"]:
 		button.remove_theme_stylebox_override(style_name)
 	if not active:
+		if button.has_meta("instrument_accent"):
+			_apply_instrument_button_style(
+				button,
+				button.get_meta("instrument_accent"),
+				button.get_meta("instrument_emphasis", false)
+			)
 		button.remove_meta("tutorial_pulse")
 		button.modulate = Color.WHITE
 		button.scale = Vector2.ONE
@@ -4393,7 +4451,7 @@ func _apply_class_card_style(button: Button, kind: String) -> void:
 func _class_card_style(
 	color: Color, tint: float, border_alpha: float, glow: int
 ) -> StyleBoxFlat:
-	return UIThemeScript.card_style(color, tint, border_alpha, glow)
+	return UIThemeScript.instrument_style(color, tint, border_alpha, glow, 6.0)
 
 func _unit_icon(icon_id: int) -> Texture2D:
 	return _unit_icon_at_size(icon_id, 48)

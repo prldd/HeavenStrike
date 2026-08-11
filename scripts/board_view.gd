@@ -10,9 +10,6 @@ const PROVING_BACKGROUND := preload("res://assets/boards/stage-proving-circuit.p
 const FACTION_BACKGROUND := preload("res://assets/boards/stage-faction-crossroads.png")
 const COALITION_BACKGROUND := preload("res://assets/boards/stage-coalition-front.png")
 const CAELIS_BACKGROUND := preload("res://assets/boards/stage-caelis-sanctum.png")
-const CONDUCTOR_LIFE_BACKGROUND := preload("res://assets/ui/conductor-life.png")
-const CONDUCTOR_MANA_BACKGROUND := preload("res://assets/ui/conductor-mana.png")
-const CONDUCTOR_DECK_BACKGROUND := preload("res://assets/ui/conductor-deck.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -70,6 +67,8 @@ var enemy_deck_text := ""
 var opponent_name := ""
 var opponent_affiliation := ""
 var _opponent_hovered := false
+var show_command_overlay := true
+var active_conductor_side := 0
 var blocked_cells: Array = []
 var mission_objective_text := ""
 var enabled := true
@@ -178,6 +177,19 @@ func set_opponent_identity(display_name: String, affiliation: String) -> void:
 		opponent_hover_ended.emit()
 	queue_redraw()
 
+func set_command_overlay_visible(visible_flag: bool) -> void:
+	show_command_overlay = visible_flag
+	if not show_command_overlay and _opponent_hovered:
+		_opponent_hovered = false
+		opponent_hover_ended.emit()
+	queue_redraw()
+
+func set_active_conductor_side(side: int) -> void:
+	if active_conductor_side == side:
+		return
+	active_conductor_side = side
+	queue_redraw()
+
 func _opponent_plaque_rect() -> Rect2:
 	var plaque_width := minf(270.0, size.x * 0.25)
 	return Rect2(
@@ -187,7 +199,7 @@ func _opponent_plaque_rect() -> Rect2:
 
 func _update_opponent_hover(point: Vector2) -> void:
 	var inside := (
-		not opponent_name.is_empty()
+		show_command_overlay and not opponent_name.is_empty()
 		and _opponent_plaque_rect().has_point(point)
 	)
 	if inside == _opponent_hovered:
@@ -823,39 +835,43 @@ func _draw() -> void:
 			0.04
 		)
 
-	var event_width := minf(grid.size.x * 0.68, 620.0)
-	var event_rect := Rect2(
-		Vector2((size.x - event_width) * 0.5, 6),
-		Vector2(event_width, 28)
-	)
-	draw_style_box(
-		_box(Color(0.055, 0.06, 0.07, 0.72), Color(0.72, 0.54, 0.30, 0.68), 6, 1),
-		event_rect
-	)
-	draw_string(
-		get_theme_default_font(),
-		event_rect.position + Vector2(0, 18),
-		event_text,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		event_rect.size.x,
-		12,
-		Color("#f4e6c7")
-	)
-	if not mission_objective_text.is_empty():
-		var objective_rect := Rect2(
-			Vector2((size.x - event_width) * 0.5, 37),
-			Vector2(event_width, 20)
+	if show_command_overlay:
+		var event_width := minf(grid.size.x * 0.68, 620.0)
+		var event_rect := Rect2(
+			Vector2((size.x - event_width) * 0.5, 6),
+			Vector2(event_width, 28)
+		)
+		draw_style_box(
+			_box(
+				Color(0.055, 0.06, 0.07, 0.72),
+				Color(0.72, 0.54, 0.30, 0.68), 6, 1
+			),
+			event_rect
 		)
 		draw_string(
 			get_theme_default_font(),
-			objective_rect.position + Vector2(0, 14),
-			mission_objective_text,
+			event_rect.position + Vector2(0, 18),
+			event_text,
 			HORIZONTAL_ALIGNMENT_CENTER,
-			objective_rect.size.x,
-			10,
-			Color("#e8c77b")
+			event_rect.size.x,
+			12,
+			Color("#f4e6c7")
 		)
-	_draw_opponent_identity()
+		if not mission_objective_text.is_empty():
+			var objective_rect := Rect2(
+				Vector2((size.x - event_width) * 0.5, 37),
+				Vector2(event_width, 20)
+			)
+			draw_string(
+				get_theme_default_font(),
+				objective_rect.position + Vector2(0, 14),
+				mission_objective_text,
+				HORIZONTAL_ALIGNMENT_CENTER,
+				objective_rect.size.x,
+				10,
+				Color("#e8c77b")
+			)
+		_draw_opponent_identity()
 
 	var preview_id: int = (
 		-1 if not targetable_unit_ids.is_empty() or not targetable_rows.is_empty()
@@ -881,11 +897,15 @@ func _draw() -> void:
 		)
 		_draw_action_preview_data(projected_unit, deployment_preview)
 
+	var player_conductor_center := Vector2(76, grid.get_center().y)
+	var enemy_conductor_center := Vector2(size.x - 76, grid.get_center().y)
 	_draw_commander(
-		Vector2(82, grid.get_center().y), false, player_hp_text, player_deck_text
+		player_conductor_center, false, player_hp_text, player_deck_text,
+		player_mana_text
 	)
 	_draw_commander(
-		Vector2(size.x - 82, grid.get_center().y), true, enemy_hp_text, enemy_deck_text
+		enemy_conductor_center, true, enemy_hp_text, enemy_deck_text,
+		enemy_mana_text
 	)
 	if commander_effect_side >= 0:
 		_draw_commander_effect(
@@ -894,8 +914,6 @@ func _draw() -> void:
 				grid.get_center().y
 			)
 		)
-	_draw_mana_indicator(Vector2(82, grid.get_center().y - 92), player_mana_text, false)
-	_draw_mana_indicator(Vector2(size.x - 82, grid.get_center().y - 92), enemy_mana_text, true)
 	for unit in units:
 		if unit.id == selected_unit_id:
 			_draw_selection(unit)
@@ -1011,77 +1029,91 @@ func _draw_targetable(unit: Dictionary) -> void:
 		Color("#fff1b5")
 	)
 
-func _draw_commander(center: Vector2, enemy: bool, hp_text: String, deck_text: String) -> void:
-	var side_color := Color("#ed5b86") if enemy else Color("#50d4e8")
+func _draw_commander(
+	center: Vector2, enemy: bool, hp_text: String, deck_text: String, mana_text: String
+) -> void:
+	var side_color := Color("#ec7890") if enemy else Color("#67d7e5")
+	var side := 1 if enemy else 0
+	var active := active_conductor_side == side
 	var font := get_theme_default_font()
-	var life_size := Vector2(122.0, 122.0)
-	var life_rect := Rect2(center - life_size * 0.5, life_size)
-	draw_texture_rect(CONDUCTOR_LIFE_BACKGROUND, life_rect, false)
+	var panel_size := Vector2(116.0, 156.0)
+	var panel := Rect2(center - panel_size * 0.5, panel_size)
+	var border := Color(side_color, 0.82 if active else 0.38)
+	draw_style_box(
+		_box(Color(0.035, 0.060, 0.082, 0.88), border, 12, 1), panel
+	)
+
+	# A single colored rule identifies sides and turn ownership without a large
+	# animated frame competing with the battlefield art.
+	draw_rect(
+		Rect2(panel.position + Vector2(12, 10), Vector2(panel.size.x - 24, 3)),
+		Color(side_color, 0.95 if active else 0.42)
+	)
+	draw_string(
+		font, panel.position + Vector2(12, 29),
+		"RIVAL" if enemy else "YOU",
+		HORIZONTAL_ALIGNMENT_LEFT, panel.size.x - 24, 10,
+		Color(side_color, 0.94)
+	)
+	if active:
+		draw_string(
+			font, panel.position + Vector2(12, 29), "ACTIVE",
+			HORIZONTAL_ALIGNMENT_RIGHT, panel.size.x - 24, 8,
+			Color("#d8e7e8", 0.72)
+		)
+
 	var hp_lines := hp_text.split("\n")
-	var hp_value: String = (
-		hp_lines[0].replace("HP", "").strip_edges()
-		if not hp_lines.is_empty() else "--"
+	var hp_value := (
+		"--"
+		if hp_lines.is_empty()
+		else hp_lines[0].replace("HP", "").strip_edges()
 	)
 	draw_string(
-		font, center + Vector2(-42.0, -8.0), "LIFE",
-		HORIZONTAL_ALIGNMENT_CENTER, 84.0, 9, Color("#dc7d70")
+		font, panel.position + Vector2(12, 55), hp_value,
+		HORIZONTAL_ALIGNMENT_LEFT, 48, 24, Color("#f4f6f2")
 	)
 	draw_string(
-		font, center + Vector2(-42.0, 14.0), hp_value,
-		HORIZONTAL_ALIGNMENT_CENTER, 84.0, 18, Color("#fff1dc")
+		font, panel.position + Vector2(60, 52), "LIFE",
+		HORIZONTAL_ALIGNMENT_LEFT, 42, 9, Color("#aab7ba")
 	)
 	if hp_lines.size() > 1:
 		draw_string(
-			font, center + Vector2(-42.0, 30.0), hp_lines[1],
-			HORIZONTAL_ALIGNMENT_CENTER, 84.0, 9, Color("#e8c77b")
+			font, panel.position + Vector2(60, 64), hp_lines[1],
+			HORIZONTAL_ALIGNMENT_LEFT, 48, 8, Color("#e5c678")
 		)
 
-	var deck_size := Vector2(78.0, 52.0)
-	var deck_rect := Rect2(
-		Vector2(center.x - deck_size.x * 0.5, center.y + 54.0),
-		deck_size
-	)
-	draw_texture_rect(CONDUCTOR_DECK_BACKGROUND, deck_rect, false)
+	var hp_amount := clampf(float(hp_value.to_int()) / 20.0, 0.0, 1.0)
+	var hp_track := Rect2(panel.position + Vector2(12, 72), Vector2(92, 5))
+	draw_style_box(_box(Color("#ffffff", 0.10), Color.TRANSPARENT, 3, 0), hp_track)
+	if hp_amount > 0.0:
+		draw_style_box(
+			_box(side_color.darkened(0.05), Color.TRANSPARENT, 3, 0),
+			Rect2(hp_track.position, Vector2(hp_track.size.x * hp_amount, hp_track.size.y))
+		)
+
+	var mana_lines := mana_text.split("\n")
+	var mana_value := "--" if mana_lines.is_empty() else mana_lines[0].strip_edges()
 	var deck_value := deck_text.replace("DECK", "").strip_edges()
-	draw_string(
-		font,
-		deck_rect.position + Vector2(0.0, 43.0),
-		deck_value,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		deck_rect.size.x,
-		14,
-		Color("#fff1dc")
-	)
-	draw_string(
-		font,
-		deck_rect.position + Vector2(0.0, deck_rect.size.y + 11.0),
-		"ENEMY" if enemy else "YOU",
-		HORIZONTAL_ALIGNMENT_CENTER,
-		deck_rect.size.x,
-		9,
-		side_color
-	)
-
-func _draw_mana_indicator(center: Vector2, value: String, enemy: bool) -> void:
-	if value.is_empty():
-		return
-	var side_color := Color("#ff8ba8") if enemy else Color("#61e8ff")
-	var rect := Rect2(center - Vector2(72.0, 36.0), Vector2(144.0, 72.0))
-	draw_texture_rect(CONDUCTOR_MANA_BACKGROUND, rect, false)
-	draw_string(
-		get_theme_default_font(), rect.position + Vector2(31.0, 24.0), "MANA",
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 62.0, 9, Color("#68dcff")
-	)
-	var lines := value.split("\n")
-	draw_string(
-		get_theme_default_font(), rect.position + Vector2(31.0, 44.0), lines[0],
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 62.0, 16, Color("#eefbff")
-	)
-	if lines.size() > 1:
+	_draw_commander_stat(panel.position + Vector2(12, 91), "MANA", mana_value, side_color)
+	_draw_commander_stat(panel.position + Vector2(12, 117), "CARDS", deck_value, Color("#c9d1d1"))
+	if mana_lines.size() > 1 and not mana_lines[1].begins_with("0 "):
 		draw_string(
-			get_theme_default_font(), rect.position + Vector2(31.0, 58.0), lines[1],
-			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 62.0, 8, side_color
+			font, panel.position + Vector2(12, 146), mana_lines[1],
+			HORIZONTAL_ALIGNMENT_LEFT, 92, 8, Color("#e5c678")
 		)
+
+func _draw_commander_stat(
+	position: Vector2, label: String, value: String, accent: Color
+) -> void:
+	var font := get_theme_default_font()
+	draw_string(
+		font, position + Vector2(0, 10), label,
+		HORIZONTAL_ALIGNMENT_LEFT, 54, 9, Color("#9eadaf")
+	)
+	draw_string(
+		font, position + Vector2(54, 12), value,
+		HORIZONTAL_ALIGNMENT_RIGHT, 38, 13, accent
+	)
 
 func _draw_unit(unit: Dictionary) -> void:
 	var cell_rect := _cell_rect(unit.row, unit.col)

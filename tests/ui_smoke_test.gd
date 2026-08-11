@@ -86,8 +86,12 @@ func _run() -> void:
 	assert(game.audio_button.text == "SOUND OFF")
 	game._cycle_audio()
 	assert(game.audio_button.text == "SOUND 100%")
-	assert(game.end_button.get_parent() == game.board)
-	assert(game.end_button.text == "→")
+	assert(game.command_dock.is_ancestor_of(game.end_button))
+	assert(game.command_dock.is_ancestor_of(game.hand_row))
+	assert(game.command_dock.is_ancestor_of(game.power_button))
+	assert(game.command_bridge.is_ancestor_of(game.turn_label))
+	assert(game.command_bridge.is_ancestor_of(game.hint_label))
+	assert(game.end_button.text == "END TURN")
 	assert(game.end_button.tooltip_text.contains("Enter"))
 	assert(not game.end_button.visible)
 	for action in game.find_children("*", "Button", true, false):
@@ -294,19 +298,22 @@ func _run() -> void:
 		Vector2i(3, 1), Vector2i(2, 1), Vector2i(4, 1),
 		Vector2i(3, 0), Vector2i(3, 2)
 	])
-	game.board.set_opponent_identity("Asha Vale", "Grand Circuit Champion")
+	game._set_board_opponent({
+		"opponent_name": "Asha Vale",
+		"opponent_affiliation": "Grand Circuit Champion",
+	})
 	assert(game.board.opponent_name == "Asha Vale")
 	assert(game.board.opponent_affiliation == "Grand Circuit Champion")
-	# Hovering the opponent plaque shows the current win conditions.
-	var plaque: Rect2 = game.board._opponent_plaque_rect()
+	assert(game.opponent_button.text.contains("ASHA VALE"))
+	# Hovering the command-bridge opponent readout shows the win conditions.
 	var opponent_hover_log: Array = []
-	game.board.opponent_hovered.connect(func(): opponent_hover_log.append("enter"))
-	game.board.opponent_hover_ended.connect(func(): opponent_hover_log.append("exit"))
-	game.board._update_opponent_hover(plaque.get_center())
+	game.opponent_button.mouse_entered.connect(func(): opponent_hover_log.append("enter"))
+	game.opponent_button.mouse_exited.connect(func(): opponent_hover_log.append("exit"))
+	game.opponent_button.mouse_entered.emit()
 	assert(game.hover_card.visible)
 	assert(game.hover_name_label.text == "WIN CONDITIONS")
 	assert(game.hover_ability_label.text.contains("Conductor"))
-	game.board._update_opponent_hover(Vector2(-1, -1))
+	game.opponent_button.mouse_exited.emit()
 	assert(opponent_hover_log == ["enter", "exit"])
 	assert(not game.hover_card.visible)
 	game.board.set_opponent_identity("", "")
