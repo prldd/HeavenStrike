@@ -21,11 +21,14 @@ const DESCRIPTIONS := {
 	"Healing Wave": "Restore 2 HP to every damaged allied unit.",
 	"Shield": "Give your Conductor 5 Shield for 2 turns.",
 	"Last Stand": "At 8 Conductor HP or less, allies gain +2 ATK for 1 turn.",
-	"Lightning Burst": "Deal 3 damage to the strongest enemy unit or Conductor.",
+	"Lightning Burst": "Deal 3 damage to a chosen enemy unit or the enemy Conductor.",
 	"Firestorm": "Deal 2 damage to every enemy unit, or the enemy Conductor."
 }
 
-static func apply(skill_name: String, side: int, units: Array, conductor_hp: int) -> Dictionary:
+static func apply(
+	skill_name: String, side: int, units: Array, conductor_hp: int,
+	target_unit_id: int = -1, target_conductor: bool = false
+) -> Dictionary:
 	var allies: Array = units.filter(func(unit): return unit.side == side)
 	var enemies: Array = units.filter(func(unit): return unit.side != side)
 	var result := {
@@ -90,14 +93,21 @@ static func apply(skill_name: String, side: int, units: Array, conductor_hp: int
 				result.affected.append(unit.id)
 			result.message = "Last Stand grants all allied units +2 ATK this turn."
 		"Lightning Burst":
-			if enemies.is_empty():
+			if target_conductor or enemies.is_empty():
 				result.conductor_damage = 3
 				result.message = "Lightning Burst strikes the enemy Conductor for 3."
 			else:
-				enemies.sort_custom(func(a, b): return a.atk > b.atk)
-				enemies[0].hp -= 3
-				result.affected.append(enemies[0].id)
-				result.message = "Lightning Burst deals 3 damage to %s." % enemies[0].name
+				var target = null
+				if target_unit_id >= 0:
+					for unit in enemies:
+						if unit.id == target_unit_id:
+							target = unit
+				if target == null:
+					enemies.sort_custom(func(a, b): return a.atk > b.atk)
+					target = enemies[0]
+				target.hp -= 3
+				result.affected.append(target.id)
+				result.message = "Lightning Burst deals 3 damage to %s." % target.name
 		"Firestorm":
 			if enemies.is_empty():
 				result.conductor_damage = 2

@@ -1,268 +1,277 @@
-# War of Resonance — Intro Sizzle
+# War of Resonance — 30-Second Intro Sizzle
 
 This document is the production brief and generation script for the opening
-cinematic. It is designed as a 48-second sequence assembled from eight
-six-second MiniMax Hailuo 2.3 clips.
+cinematic. The finished sequence is exactly 30 seconds and contains no spoken
+dialogue or generated speech. Short narrative lines appear as exact typography
+on pure black between visual scenes.
 
-The modular structure keeps each generated shot focused on one visual idea,
-helps preserve character and machine continuity, and supports a clean editorial
-rhythm. At 1080p, Hailuo 2.3 supports six-second generations and explicit camera
-commands such as `[Push in]`, `[Tracking shot]`, and `[Static shot]`.
+Generate five six-second MiniMax Hailuo 2.3 clips, for a maximum of 30 seconds
+of generated footage. Trim and assemble those clips with the black intertitles
+and final title card according to the edit timeline below.
 
 Official reference:
 [MiniMax video-generation documentation](https://platform.minimax.io/docs/api-reference/video-generation-t2v)
 
-## Format
+## Final edit timeline
 
-- Length: 48 seconds.
-- Frame: cinematic 16:9.
-- Output: 1080p, six seconds per generated clip.
-- Editing: hard cuts driven by sound, one match cut, and a final smash to black.
-- Dialogue: sparse voice-over, never lip-synchronized.
-- Spoiler level: establish the Relay accident, the Conductor-machine bond,
-  Cassian's political role, and Caelis as a mystery without explaining the
-  Source.
-- Final image: exact game title on pure black.
+| Time | Image | Sound |
+|------|-------|-------|
+| 00:00–00:01.5 | Black intertitle: `THE RELAY WAS DEAD.` | One low machine heartbeat |
+| 00:01.5–00:06 | Clip 1: discovery of the dormant Relay | Sub-bass machinery and diagnostic ticks |
+| 00:06–00:10.5 | Clip 2: activation, injury, and machine awakening | Rising five-note Relay signal |
+| 00:10.5–00:12 | Black intertitle: `THEN THE MACHINES REMEMBERED.` | Sudden silence, then one core chime |
+| 00:12–00:17 | Clip 3: formation charge and shield breach | Full percussion enters |
+| 00:17–00:22 | Clip 4: coordinated counterattack | Fastest musical passage |
+| 00:22–00:23.5 | Black intertitle: `EVERY VICTORY CREATES A CLAIM.` | Percussion becomes a stamping press |
+| 00:23.5–00:27 | Clip 5: Ilyra opens the gate to Caelis | Music collapses into a distant pulse |
+| 00:27–00:30 | Black title: `WAR OF RESONANCE` | Struck brass impact and final heartbeat |
 
-For best consistency, generate a 16:9 first-frame illustration for each shot,
-then animate that image with Hailuo's image-to-video mode. Established character
-and environment references:
-
-- [The Conductor](../assets/Unused%20Explorations/Talking%20Heads/Conductor.png)
-- [Cassian](../assets/Unused%20Explorations/Talking%20Heads/ComfyUI_00160_.png)
-- [Warden Ilyra](../assets/Unused%20Explorations/Talking%20Heads/ComfyUI_00119_.png)
-- [Brass Bastion-136](../assets/units/full/241.png)
-- [Caelis environment](../assets/operations_maps/original_sources/act-3-caelis.png)
+All intertitle and title typography must be composited during editing. Do not
+ask the video model to generate lettering.
 
 ## Shared visual-style prompt
 
-Paste this before every individual shot prompt:
+Paste this before every individual clip prompt:
 
 ```text
-An original hand-painted industrial-fantasy tactical RPG cinematic in the War of Resonance Ink and Cell visual language. Stylized 2.5D animation with confident varied dark ink contours, broad opaque matte gouache color shapes, crisp two-or-three-value cel shading, restrained dry-brush texture, slightly imperfect painted edges, limited internal linework, strong readable silhouettes, and atmospheric multiplane depth. This is moving illustrated concept art, not photorealism and not glossy 3D CGI.
+An original high-energy hand-painted industrial-fantasy tactical RPG cinematic in the War of Resonance Ink and Cell visual language. Stylized 2.5D animation with confident varied dark ink contours, broad opaque matte gouache color shapes, crisp two-or-three-value cel shading, restrained dry-brush texture, slightly imperfect painted edges, limited internal linework, strong readable silhouettes, and deep multiplane parallax. This is animated illustrated concept art, not photorealism and not glossy 3D CGI.
 
-Materials are pale enamel, silver steel, antique brass, charcoal iron, ceramic insulation, and matte mechanical underlayers. Energy appears as restrained cyan light inside engineered lenses, conduits, Relay rings, and machine cores—not free-floating fantasy magic. Accent colors may include furnace ember-orange, solar gold, wind blue, and contained fusion violet.
+Materials are pale enamel, silver steel, antique brass, charcoal iron, ceramic insulation, and matte mechanical underlayers. Energy appears as restrained cyan light inside engineered lenses, conduits, Relay rings, and machine cores—not free-floating fantasy magic. Accent colors include furnace ember-orange, solar gold, wind blue, and contained fusion violet.
 
-Automatons are human-scale autonomous mechanical characters with solid enclosed panels, articulated manufactured joints, optical lenses, distinct personalities, and no pilots. Humans wear practical industrial field clothing. Natural restrained acting, stable anatomy, deliberate cinematic motion, 16:9 composition, 24fps feeling, moderate detail, consistent faces and costumes.
+Automatons are human-scale autonomous mechanical characters with solid enclosed panels, articulated manufactured joints, optical lenses, distinct personalities, and no pilots. Humans wear practical industrial field clothing. Stable anatomy and designs, cinematic 16:9 framing, 24fps feeling, dramatic foreground parallax, forceful acceleration, readable impacts, and decisive camera movement.
 ```
 
-Append this negative direction to every shot:
+Append this negative direction to every clip:
 
 ```text
-No photorealism, plastic 3D rendering, glossy anime treatment, excessive bloom, modern vehicles, firearms held by humans, medieval fantasy armor, spaceships, giant mechs, human pilots inside robots, skeletal robot bodies, tangled exposed cables, random costume changes, extra limbs, duplicated characters, malformed hands, floating machinery, illegible signage, subtitles, captions, logos, watermark, or on-screen text.
+No photorealism, plastic 3D rendering, glossy anime treatment, excessive bloom, modern vehicles, firearms held by humans, medieval fantasy armor, spaceships, giant mechs, human pilots inside robots, skeletal robot bodies, tangled exposed cables, random costume changes, extra limbs, duplicated characters, malformed hands, floating machinery, weightless movement, slow posing, idle combatants, turn-taking combat, stationary battle tableaux, illegible signage, subtitles, captions, logos, watermark, or on-screen text.
 ```
 
-## Character continuity bible
+## Character continuity
 
 ### The Conductor
 
 The Conductor is an unnamed young adult reclamation technician with short swept
 black hair, black rectangular glasses, a charcoal-gray work hoodie, dark utility
-trousers, and a compact tool harness. Before the accident he looks ordinary and
-slightly exhausted. Afterward, narrow cyan Relay filaments glow beneath the skin
-at the neck and right hand. He is an engineer, not a superhero: observant,
-compassionate, frightened, and determined.
+trousers, and a compact tool harness. Before the accident he appears ordinary
+and exhausted. Afterward, narrow cyan Relay filaments glow beneath the skin at
+the neck and right hand. He remains an engineer rather than an action hero.
+
+Reference:
+[The Conductor](../assets/Unused%20Explorations/Talking%20Heads/Conductor.png)
 
 ### Cassian
 
 Cassian is a lean adult man with warm medium-brown skin, a short trimmed beard,
 a gray field cap, pale gray logistics shirt, dark cross-body satchel, and a
-subtle segmented interface at his neck. His movements are economical. He
-watches rooms, papers, and people more than weapons. His warmth should coexist
-with the sense that he is always calculating the next consequence.
+subtle segmented interface at his neck. His movements are economical, and his
+first instinct during the Relay accident is to help the expedition personnel
+around him.
+
+Reference:
+[Cassian](../assets/Unused%20Explorations/Talking%20Heads/ComfyUI_00160_.png)
 
 ### Warden Ilyra
 
 Warden Ilyra is a composed adult woman with long steel-blue hair, charcoal
 formal fieldwear, small asymmetrical multicolored beads near one ear, and
 restrained pale-violet Caelian accents. She is neither sinister nor ethereal.
-She carries the stillness of someone representing a civilization that
+She moves with the still certainty of someone representing a civilization that
 officially does not exist.
+
+Reference:
+[Warden Ilyra](../assets/Unused%20Explorations/Talking%20Heads/ComfyUI_00119_.png)
 
 ### Brass Bastion-136
 
-Brass Bastion-136 is a massive but human-scale reclaimed Warden automaton:
-weathered pale-blue and ivory enamel, antique-brass edging, broad shoulders, a
-single cyan optical lens, circular cyan chest core, small turbine-like crown,
-and an enormous segmented flower-turbine shield. Its personality is protective
-and deliberate. It must feel old, scarred, and loyal by choice.
+Brass Bastion-136 is a massive but human-scale Warden automaton with weathered
+pale-blue and ivory enamel, antique-brass edging, broad shoulders, one cyan
+optical lens, a circular cyan chest core, a small turbine-like crown, and an
+enormous segmented flower-turbine shield. It moves with enormous weight but can
+accelerate explosively over a few steps. Its first instinct is protection.
+
+Reference:
+[Brass Bastion-136](../assets/units/full/241.png)
 
 ### Caelis
 
 Caelis is an immaculate, nearly empty circular city of ivory stone, pale enamel,
 antique-brass ribs, cyan vertical conduits, domed halls, radial bridges, deep
 dark chasms, and silent infrastructure still maintaining itself. It is
-beautiful but unsettling because everything works and almost no citizens
+beautiful and unsettling because everything works and almost no citizens
 remain.
+
+Reference:
+[Caelis environment](../assets/operations_maps/original_sources/act-3-caelis.png)
+
+## Intertitle 1 — The Relay Was Dead
+
+**Final time:** 00:00–00:01.5
+
+Use a pure black frame. Center the following line in warm ivory capitals:
+
+```text
+THE RELAY WAS DEAD.
+```
+
+Use widely tracked, restrained lettering. A hairline cyan pulse briefly passes
+through the period. There are no particles, border, ornament, or background
+image. Cut sharply into Clip 1.
 
 ## Clip 1 — The Dead Relay
 
-**Time:** 00:00–00:06
+**Generated length:** 6 seconds
+
+**Final edit usage:** approximately 4.5 seconds
 
 ### Visual prompt
 
 ```text
-Begin in complete black. A single narrow cyan pulse appears, as thin as an electrocardiogram, then vanishes. Reveal a vast underground reclamation chamber containing a dormant ancient Relay: concentric antique-brass rings surrounding a dark glass core, half buried in dust, broken masonry, old cables, and pale Caelian panels. Small expedition work lights illuminate only fragments of the chamber.
+Begin inside a vast underground reclamation chamber. A dormant ancient Relay dominates the darkness: concentric antique-brass rings around a black glass core, half buried beneath dust, broken pale Caelian masonry, and severed conduits. Small expedition lamps swing through the foreground and create rapid parallax as the camera races low along a maintenance track toward the structure.
 
-The Conductor, still an ordinary technician in a charcoal hoodie and black rectangular glasses, stands at a maintenance console in the lower foreground. He brushes dust away with one gloved hand and inserts a compact diagnostic tool. The enormous Relay remains apparently dead. On the final second, one distant ring rotates by a few centimeters without being touched and a faint cyan reflection crosses his glasses.
+The Conductor, still an ordinary technician in a charcoal hoodie and black rectangular glasses, slides on one knee beneath a hanging cable, catches himself at the maintenance console, wipes dust from its surface, and drives a compact diagnostic key into the socket. Cassian arrives behind him carrying a field case and turns to wave other workers away from unstable scaffolding.
 
-Start almost completely dark, then reveal the chamber with the expedition lamp. Preserve huge scale and quiet negative space. Dust drifts slowly through the beam. [Push in,Pedestal up]
+The camera whips around the Conductor as the first Relay ring rotates by itself. Dust jumps from the floor in a perfect circle. A thin cyan reflection races across his glasses. End in an extreme close-up of that reflection as the black core opens like a mechanical aperture. Fast entry, abrupt stop, strong scale, heavy machinery, urgent but controlled movement. [Tracking shot,Truck right,Push in]
 ```
 
-### Audio and edit
+### Sound design
 
-- Begin with silence.
-- One low synthetic heartbeat at 00:01.
-- Metal groan at 00:05.
-- Cassian, quietly over radio: “The Relay was dead.”
-- Hard cut on the first bright cyan pulse.
+- Low sub-bass machinery.
+- Quick diagnostic ticks follow the camera movement.
+- The final aperture movement produces a dry brass snap.
+- No voice, breathy narration, or audible words.
 
-## Clip 2 — It Was Waiting
+## Clip 2 — The Accident
 
-**Time:** 00:06–00:12
+**Generated length:** 6 seconds
+
+**Final edit usage:** approximately 4.5 seconds
 
 ### Visual prompt
 
 ```text
-Inside the same excavation chamber, continue with the same Conductor. Extreme close-up of his black glasses reflecting several concentric cyan rings. Pull wider as the Relay activates violently behind him. Brass rings counter-rotate, dust lifts from the floor, dormant conduits illuminate in branching cyan paths, and a controlled pressure wave moves through his clothing and hair.
+Continue in the same chamber with the same Conductor and Cassian. Start on the Relay aperture opening. Concentric brass rings counter-rotate at escalating speed as cyan conduits ignite outward through the floor. The camera orbits rapidly around the Conductor while a geometric pressure wave tears dust and loose paper through the room.
 
-The energy is technological and geometric, never magical. The Conductor reaches toward the console to shut it down, but narrow cyan circuitry travels from the interface into his right glove and beneath the skin at his wrist and neck. His expression shifts from concentration to frightened recognition. In the background Cassian is knocked from a catwalk as lights fail. The Conductor turns toward him instead of staring at the Relay.
+A catwalk support snaps. Cassian is thrown toward the edge while the Conductor lunges and catches his wrist with both hands. Cyan circuitry travels from the live console through the Conductor's glove and beneath the skin at his right wrist and neck. His body locks in pain, but he refuses to release Cassian.
 
-End with a sharp white-cyan overexposure that fills the frame and creates the transition to the next shot. Strong inked shadow shapes, restrained cyan glow, stable human anatomy. [Pull out,Shake]
+Behind them, Brass Bastion-136 erupts from the dust. Its cyan eye opens, it takes three thunderous accelerating steps, drives its enormous turbine shield beneath the falling catwalk, and throws the wreckage sideways away from both humans. Two smaller machines wake and rush into the collapsing chamber without being ordered. End as Brass Bastion's cyan chest core and the Conductor's new Relay filaments pulse in perfect synchronization. Violent environmental motion, heavy impacts, stable faces, no magical levitation. [Truck left,Shake,Push in]
 ```
 
-### Audio and edit
+### Sound design
 
-- Relay tone rises through five slightly incompatible pitches.
-- Conductor, almost whispering: “No. It was waiting.”
-- Abrupt electrical silence at the white frame.
-- Do not show an explosion or imply the Conductor controls the event.
+- Five incompatible Relay pitches rise into a single chord.
+- Metal failure travels left to right across the stereo field.
+- Brass Bastion lands with a deep impact followed by a clean cyan core chime.
+- Cut into total silence for the second intertitle.
 
-## Clip 3 — The Machines Remember
+## Intertitle 2 — The Machines Remembered
 
-**Time:** 00:12–00:18
+**Final time:** 00:10.5–00:12
+
+Use pure black. Center the following line in warm ivory capitals:
+
+```text
+THEN THE MACHINES REMEMBERED.
+```
+
+On the final word, place a faint cyan reflection behind the letters, as though a
+machine eye opened beyond the black. Keep the background otherwise empty. Cut
+on the first battle-drum strike.
+
+## Clip 3 — Formation Breach
+
+**Generated length:** 6 seconds
+
+**Final edit usage:** approximately 5 seconds
+
+This clip must feel like an attack already in progress. No opposing rows waiting
+for their turns and no heroic lineup pose.
 
 ### Visual prompt
 
 ```text
-The white flare resolves into the circular cyan eye of Brass Bastion-136. Its weathered pale-blue faceplate lifts from centuries of stillness. Dust falls from its shoulders. Its chest core answers the Conductor's pulse in the same rhythm.
+A kinetic battle on a broad industrial tactical deck organized into three implied lanes, with no visible grid or UI. Begin at ankle height moving backward at high speed as four allied automatons sprint directly toward the camera while enemy fire tears across the deck behind and beside them. Every machine is already moving.
 
-The camera tracks sideways as Brass Bastion steps between the injured Conductor, fallen Cassian, and collapsing debris. It plants its enormous segmented flower-turbine shield into the floor. Heavy stone and metal strike the shield while it holds firm. Behind the shield, two smaller reclaimed automatons activate independently: a slender lancer steadies Cassian and a compact repair machine scans the Conductor's wounds.
+Brass Bastion-136 charges in the center lane, shield lowered like a moving wall. A furnace-orange artillery shell screams past the lens. Brass Bastion pivots its whole weight, catches the shell on the angled turbine shield, and redirects the explosion sideways into an empty railing. The blast kicks debris and painted speed lines across the frame without stopping the advance.
 
-The Conductor and Brass Bastion look directly at one another for one still beat. This is recognition and shared purpose, not an officer giving an order. End on the Conductor placing his glowing right hand against the old shield as matching cyan resonance rings travel through both of them. [Tracking shot,Push in]
+Using the tilted shield as a ramp, a long-legged silver and sky-blue Zephyr lancer accelerates from behind, runs three steps up the shield, vaults over Brass Bastion, rotates its polearm in midair, and lands in a sliding strike that sweeps an enemy machine out of the lane. The camera whip-pans with the lancer, passes inches above the deck, then finishes facing the rest of the formation surging through the breach. Aggressive forward momentum, heavy footfalls, rapid parallax, readable cause-and-effect choreography. [Tracking shot,Truck left,Shake]
 ```
 
-### Audio and edit
+### Sound design
 
-- Deep shield impact.
-- Three machine cores answer with distinct pitched chimes.
-- Cassian, shaken: “Did you tell them to do that?”
-- Conductor: “No.”
-- Cut on the matching pulse.
+- Fast struck-brass percussion and deep industrial drums.
+- Doppler whistle as the projectile passes the camera.
+- Shield impact briefly ducks the music.
+- Lancer landing adds a cutting wind sound and hard metallic skid.
 
-## Clip 4 — The War Answers
+## Clip 4 — Resonance Counterattack
 
-**Time:** 00:18–00:24
+**Generated length:** 6 seconds
+
+**Final edit usage:** approximately 5 seconds
+
+The action must build continuously from defense to repair to retaliation. Do
+not present separate characters posing for isolated ability demonstrations.
 
 ### Visual prompt
 
 ```text
-A fast but visually readable battlefield shot on a broad industrial tactical deck organized into three implied lanes, with no visible game grid or UI. Continue the Ink and Cell painted style.
+Continue the same battle from inside the breached formation. The camera races sideways between moving automatons while enemy machines attack from foreground and background at the same time. A damaged allied Strider is struck, tumbles across the deck, plants one polearm, and converts the fall into a spinning recovery without stopping.
 
-Brass Bastion advances in the central lane and catches a furnace-orange projectile on its turbine shield. A long-legged silver and sky-blue Zephyr lancer sprints through the left lane, slips past the shield, and strikes with a compact polearm. On the right, an ivory-and-gold Helio repair automaton opens a segmented halo and sends one precise golden repair pulse into damaged allied armor. Behind them, a charcoal and violet Flux channeler suspends two controlled coil rings and discharges a branching cyan-violet arc toward opposing machines.
+An ivory-and-gold Helio Mender skates into the moving formation, unfolds a segmented repair halo while running, and fires one precise golden repair pulse into the Strider. Armor seams close as the Strider launches forward again. An enemy blade dives toward the Mender, but Brass Bastion enters from outside frame at full speed and shoulder-checks it away with the edge of the turbine shield.
 
-Show each action as coordinated but autonomous. The robots glance toward one another and adjust formation without visible commands. Sparks and paint chips are restrained. No gore, no human soldiers, no giant explosions. Camera travels parallel to the advancing formation, then briefly slows as all four silhouettes align. [Tracking shot,Truck right,Shake]
+That shield impact reveals a charcoal-and-violet Flux channeler directly behind it. The channeler snaps two coil rings into alignment. The camera performs a rapid half-orbit as a controlled cyan-violet arc travels through three enemy machines, throwing them backward in sequence. At the same instant the recovered Strider races along the arc's path and drives the final opponent out of frame. Finish with the allied formation continuing forward rather than stopping to pose. Fast camera, speed ramp into impacts, layered foreground action, clear silhouettes, coordinated autonomous decisions. [Pan right,Tracking shot,Shake]
 ```
 
-### Audio and edit
+### Sound design
 
-- Percussion enters: struck brass, deep industrial drum, ticking Relay rhythm.
-- Shield impact, lancer wind-cut, repair chime, and contained electrical crack.
-- No dialogue.
-- Use three fast editorial inserts from this generation if the full shot is too
-  busy.
+- Music reaches its fastest tempo.
+- Repair tone becomes part of the percussion rather than pausing the action.
+- Each chained arc impact steps upward in pitch.
+- Final strike cuts immediately to the third black intertitle.
 
-## Clip 5 — Every Victory Becomes a Claim
+## Intertitle 3 — Every Victory Creates a Claim
 
-**Time:** 00:24–00:30
+**Final time:** 00:22–00:23.5
+
+Use pure black. Center the following line in warm ivory capitals:
+
+```text
+EVERY VICTORY CREATES A CLAIM.
+```
+
+As the words appear, briefly reveal five extremely faint faction-colored lines
+approaching the sentence from different directions. They stop before touching
+it. Accompany the card with a single legal-stamp impact, not a voice.
+
+## Clip 5 — The Gate of Caelis
+
+**Generated length:** 6 seconds
+
+**Final edit usage:** approximately 3.5 seconds
 
 ### Visual prompt
 
 ```text
-Cassian stands at the edge of a crowded coalition negotiation room, wearing the same gray field cap, pale logistics shirt, dark satchel, and subtle neck interface. Long tables are covered with maps, sealed reports, colored faction tokens, and damaged machine components. Representatives remain indistinct silhouettes so Cassian is the clear subject.
+A monumental sealed Caelian gate fills the frame. Begin close behind the Conductor and Brass Bastion-136 as they approach through wind and drifting white dust. Their movement remains urgent from the preceding battle, but both slow when the enormous mechanism unlocks without being touched.
 
-Begin close on Cassian's hand sliding one battlefield report across the table. As the camera circles him, match-cut between the report, a stamped reclamation charter, a map from which Caelis has been deliberately erased, and five different faction hands reaching for the same recovered Relay component. Cassian calmly moves the component out of everyone's reach and replaces it with a written agreement.
+The gate opens inward with perfect silent precision. Warden Ilyra waits beyond it, composed and motionless, with long steel-blue hair, charcoal formal fieldwear, asymmetrical colored beads, and subtle pale-violet Caelian details. She turns immediately and walks away, expecting them to follow.
 
-He looks through a rain-streaked window toward the distant Conductor repairing an automaton outside. Cassian's expression holds genuine affection, concern, and calculation at once. Warm brass interior light contrasts with cold cyan rain outside. [Truck left,Push in]
+The camera rushes through the widening gate and rises behind her to reveal only one breathtaking glimpse of Caelis: immaculate ivory circular platforms, antique-brass ribs, domed halls, radial bridges over immense dark chasms, thin cyan conduits, and ancient maintenance automatons still performing their routines. The city is alive, functioning, and almost empty. Far below, one enormous cyan pulse flashes through every bridge and tower. Cut to black at the brightest instant before explaining its source. [Tracking shot,Pedestal up,Push in]
 ```
 
-### Audio and edit
+### Sound design
 
-- Battle percussion becomes the rhythm of a stamping press.
-- Muffled arguments remain unintelligible.
-- Cassian: “Every victory becomes a claim.”
-- On “claim,” all five hands strike the table.
-- Cut away before any agreement is signed.
+- Battle music collapses into wind and a distant mechanical breath.
+- The gate unlocks with five quiet tones resolving into one.
+- The city-wide pulse produces a deep sound felt more than heard.
+- No dialogue from Ilyra or the Conductor.
 
-## Clip 6 — Not Salvage
+## Final title card
 
-**Time:** 00:30–00:36
+**Final time:** 00:27–00:30
 
-### Visual prompt
-
-```text
-Night in a damaged worker district after a battle. Controlled fires burn behind heavy rain; no apocalyptic destruction. The Conductor kneels beside a wounded Brass Bastion-136 beneath a temporary canvas shelter. His glasses are cracked at one corner. Cyan Relay filaments glow faintly at his neck and right hand as he repairs a split shoulder panel with ordinary tools.
-
-Behind them, autonomous machines perform compassionate tasks without receiving orders: a broad Warden supports a failing roof, a small Mender restores power to a clinic, and a Lancer carries water rather than a weapon. Civilians move safely through the formation.
-
-Brass Bastion slowly raises one damaged hand and holds the shelter above the exhausted Conductor so rain stops falling on him. He pauses, then gives the machine a tired, grateful smile. The moment is quiet and reciprocal. End on their two hands—human and mechanical—working on the same exposed but orderly repair assembly. [Pedestal down,Push in]
-```
-
-### Audio and edit
-
-- Music thins to cello-like synthetic resonance and rainfall.
-- Conductor: “People aren't salvage.”
-- Cassian, distant voice-over: “Neither are machines.”
-- Let the final mechanical click become the sound of a Caelian gate unlocking.
-
-## Clip 7 — Caelis Remembers
-
-**Time:** 00:36–00:42
-
-### Visual prompt
-
-```text
-A monumental sealed Caelian gate opens inward with perfect silent precision. On the near side stand the Conductor and Brass Bastion, seen from behind as small silhouettes. Beyond the threshold waits Warden Ilyra, composed and motionless, with long steel-blue hair, charcoal formal fieldwear, asymmetrical colored beads, and subtle pale-violet Caelian details.
-
-Ilyra turns and walks into Caelis. The camera follows through the gate and reveals only a controlled glimpse: immaculate ivory circular platforms, antique-brass ribs, thin cyan conduits, domed buildings, radial bridges crossing immense dark chasms, and ancient maintenance automatons continuing their routines. No crowd welcomes them. The city is alive, functional, and almost empty.
-
-Far below, something enormous sends one soft cyan pulse through every conduit. The pulse matches the Conductor's heartbeat. Ilyra looks back without smiling. Wind moves her hair while the rest of the city remains unnaturally still. [Tracking shot,Pedestal up]
-```
-
-### Audio and edit
-
-- Nearly all music drops away when the gate opens.
-- A vast distant machine breath.
-- Ilyra: “Caelis remembers.”
-- Conductor: “What?”
-- Cut before she answers.
-
-## Clip 8 — The Source and Title
-
-**Time:** 00:42–00:48
-
-Generate the visual plate without lettering:
-
-```text
-Deep beneath Caelis, descend through an immense dark cylindrical chamber crossed by five distant conduit systems: furnace orange, steam-brass teal, solar gold, wind blue, and contained fusion violet. Each incomplete current travels through separate machinery, then curves toward one tiny suspended cyan point far below.
-
-The five currents almost meet, but the frame cuts to absolute pure black one instant before contact. After the cut, only one extremely thin cyan resonance ring expands silently from the center of the black frame and fades. Leave the final four seconds perfectly centered, uncluttered, and black for a title overlay. No objects, stars, smoke, architecture, or generated lettering after the cut. [Pedestal down,Zoom in]
-```
-
-Edit the cut to black at approximately 00:44. Do not ask the video model to
-render the final title. Add it afterward so the spelling is exact.
-
-### Title construction
+Cut from the Caelis pulse to absolute pure black. Add the title in editing:
 
 ```text
                          WAR OF
@@ -274,54 +283,33 @@ render the final title. Add it afterward so the spelling is exact.
 - Main letters are weathered ivory with a restrained antique-brass edge.
 - A hairline cyan illumination travels once through the center of “RESONANCE,”
   then dies.
-- Use a pure black background.
 - Do not add a subtitle, publisher mark, menu prompt, particles, crest, or
   additional logo.
-- Hold the fully readable title for at least three seconds.
-- End on black, not a fade into gameplay.
+- Hold the fully readable title through the final frame.
+- End on black rather than transitioning directly into gameplay.
 
-### Audio and edit
+The title appears with one deep struck-brass impact and a low resonance tone.
+The final sound is one quiet machine heartbeat.
 
-- Five faction tones begin separately.
-- At the instant they nearly converge, use total silence.
-- The title appears with one deep struck-brass impact and a low cyan resonance
-  tone.
-- Final sound: a quiet machine heartbeat.
+## Energy and choreography rules
 
-## Complete voice-over script
-
-```text
-CASSIAN:
-The Relay was dead.
-
-CONDUCTOR:
-No. It was waiting.
-
-CASSIAN:
-Did you tell them to do that?
-
-CONDUCTOR:
-No.
-
-CASSIAN:
-Every victory becomes a claim.
-
-CONDUCTOR:
-People aren't salvage.
-
-CASSIAN:
-Neither are machines.
-
-ILYRA:
-Caelis remembers.
-
-CONDUCTOR:
-What?
-```
-
-The unanswered “What?” should be swallowed by the cut into the Source chamber.
-No narrator should explain Caelis, the Source, the five factions, or why the
-machines responded.
+- Battle movement must begin before the camera arrives and continue after the
+  camera leaves. No one waits to take a turn.
+- Give every action visible preparation, acceleration, contact, recoil, and
+  recovery.
+- Keep the camera close enough that projectiles and moving limbs cross the
+  foreground, creating speed and danger.
+- Use lateral tracking for velocity, low angles for weight, whip-pans to connect
+  dependent actions, and short speed ramps into major impacts.
+- Each action must cause the next action. Brass Bastion's shield creates the
+  Lancer's ramp; the repair pulse returns the Strider to combat; the shield
+  counter exposes the Channeler's firing line.
+- Maintain readable silhouettes. Energy and debris must support the motion,
+  never conceal it.
+- Keep explosions brief and directional. Avoid spherical fireballs that fill
+  the frame.
+- Robots fight as autonomous individuals sharing purpose. The Conductor never
+  gestures like a puppeteer and is not shown issuing battlefield orders.
 
 ## Final consistency rules
 
@@ -330,21 +318,17 @@ machines responded.
 - Cyan implants appear only after the Relay accident.
 - Keep Brass Bastion's shield, single lens, turbine crown, chest core, and
   weathering unchanged.
-- Robots display intention through head angle, lens movement, pauses, and
+- Robots communicate intention through head angle, lens movement, timing, and
   protective actions—not human mouths or exaggerated cartoon expressions.
-- Never depict the Conductor controlling machines with hand gestures.
-- Use hard cuts for conflict and slow camera movement for connection or
-  mystery.
-- Caelis must look maintained, not ruined.
-- Do not reveal the Source as a conventional glowing reactor. It should remain
-  an implied network whose separated currents are only about to converge.
-- Generate the title plate as clean black motion footage, but composite the
-  exact `WAR OF RESONANCE` lettering afterward. This avoids the most visible
-  possible failure: a misspelled game title.
+- Caelis must look maintained rather than ruined.
+- Do not reveal the Source as a conventional glowing reactor. The city-wide
+  pulse is the only hint.
+- Composite every intertitle and the final `WAR OF RESONANCE` lettering during
+  editing so all text is spelled and timed exactly.
 
 ## Audio implementation note
 
 The project does not use external audio assets. Treat the sound and music
-directions above as composition and timing guidance for the project's
-procedural audio system, or generate the visual clips without audio and score
-the assembled movie in-engine.
+directions as timing guidance for the project's procedural audio system. The
+generated visual clips should be silent; no TTS, character voices, narration,
+or generated dialogue is required.

@@ -259,6 +259,7 @@ var selected_board_unit_id := -1
 var pending_empower_actor_id := -1
 var pending_envenom_actor_id := -1
 var pending_lane_actor_id := -1
+var pending_lightning_burst := false
 var next_unit_id := 1
 ## Most recently deployed unit id per side; Deployment Snare targets it when the
 ## deploying side's next turn starts. Reset by _start_new_match.
@@ -392,6 +393,7 @@ func _build_interface() -> void:
 	board.unit_hover_ended.connect(_hide_unit_details)
 	board.opponent_hovered.connect(_show_objective_details)
 	board.opponent_hover_ended.connect(_hide_unit_details)
+	board.opponent_clicked.connect(_on_opponent_clicked)
 	root.add_child(board)
 
 	var control_bar := VBoxContainer.new()
@@ -3642,6 +3644,7 @@ func _start_new_match() -> void:
 	pending_empower_actor_id = -1
 	pending_envenom_actor_id = -1
 	pending_lane_actor_id = -1
+	pending_lightning_burst = false
 	next_unit_id = 1
 	last_deployed_unit_id = {PLAYER: -1, ENEMY: -1}
 	round_number = 1
@@ -3822,7 +3825,7 @@ func _refresh() -> void:
 	end_button.disabled = (
 		not input_enabled or battle_over
 		or pending_empower_actor_id >= 0 or pending_envenom_actor_id >= 0
-		or pending_lane_actor_id >= 0
+		or pending_lane_actor_id >= 0 or pending_lightning_burst
 		or (tutorial_mode and tutorial_step not in [TUTORIAL_RESOLVE, TUTORIAL_FINAL_RESOLVE])
 	)
 	if tutorial_mode:
@@ -3863,6 +3866,10 @@ func _refresh() -> void:
 			)
 		).map(func(unit): return unit.id)
 	elif pending_envenom_actor_id >= 0:
+		targetable_ids = units.filter(
+			func(unit): return unit.side == ENEMY
+		).map(func(unit): return unit.id)
+	elif pending_lightning_burst:
 		targetable_ids = units.filter(
 			func(unit): return unit.side == ENEMY
 		).map(func(unit): return unit.id)
@@ -4140,6 +4147,10 @@ func _select_card(index: int) -> void:
 		status_message = "Choose the highlighted Warcry target first."
 		_refresh()
 		return
+	if pending_lightning_burst:
+		status_message = "Choose a Lightning Burst target first."
+		_refresh()
+		return
 	selected_hand_index = -1 if selected_hand_index == index else index
 	selected_board_unit_id = -1
 	if selected_hand_index >= 0:
@@ -4200,6 +4211,16 @@ func _on_board_cell_clicked(row: int, col: int) -> void:
 				actor.get("skill", {}).get("name", "the Warcry") if actor != null else "the Warcry"
 			)
 		_refresh()
+		return
+	if pending_lightning_burst:
+		if clicked != null and clicked.side == ENEMY:
+			pending_lightning_burst = false
+			await _strike_lightning_burst(clicked.id, false)
+		else:
+			status_message = (
+				"Choose an enemy unit or the enemy Conductor for Lightning Burst."
+			)
+			_refresh()
 		return
 	if pending_lane_actor_id >= 0:
 		var actor = _unit_by_id(pending_lane_actor_id)
@@ -4299,6 +4320,10 @@ func _on_deployment_clicked(row: int) -> void:
 		or pending_lane_actor_id >= 0
 	):
 		status_message = "Choose the highlighted Warcry target first."
+		_refresh()
+		return
+	if pending_lightning_burst:
+		status_message = "Choose a Lightning Burst target first."
 		_refresh()
 		return
 	if _unit_at(row, 0) != null:
@@ -4498,6 +4523,22 @@ func _use_player_power() -> void:
 		return
 	if tutorial_mode and tutorial_step != TUTORIAL_POWER:
 		return
+	if pending_lightning_burst:
+		pending_lightning_burst = false
+		status_message = "Lightning Burst cancelled."
+		_refresh()
+		return
+	if (
+		player_conductor_skill == "Lightning Burst"
+		and units.any(func(unit): return unit.side == ENEMY)
+	):
+		pending_lightning_burst = true
+		status_message = (
+			"Choose an enemy unit or the enemy Conductor for Lightning Burst. "
+			+ "Press %s again to cancel." % player_conductor_skill.to_upper()
+		)
+		_refresh()
+		return
 	var applied: bool = await _apply_conductor_skill(PLAYER, player_conductor_skill)
 	if not applied:
 		_refresh()
@@ -4508,6 +4549,23 @@ func _use_player_power() -> void:
 	if tutorial_mode:
 		_set_tutorial_step(TUTORIAL_FINAL_RESOLVE)
 	else:
+		_refresh()
+
+func _on_opponent_clicked() -> void:
+	if not pending_lightning_burst or not input_enabled or battle_over:
+		return
+	pending_lightning_burst = false
+	await _strike_lightning_burst(-1, true)
+
+func _strike_lightning_burst(target_unit_id: int, strike_conductor: bool) -> void:
+	var applied: bool = await _apply_conductor_skill(
+		PLAYER, "Lightning Burst", target_unit_id, strike_conductor
+	)
+	if not applied:
+		_refresh()
+		return
+	player_power_used = true
+	if not _check_game_over("action"):
 		_refresh()
 
 func _win_campaign_battle() -> void:
@@ -4527,6 +4585,10 @@ func _end_player_turn() -> void:
 		or pending_lane_actor_id >= 0
 	):
 		status_message = "Choose the highlighted Warcry target before resolving."
+		_refresh()
+		return
+	if pending_lightning_burst:
+		status_message = "Choose a Lightning Burst target before resolving."
 		_refresh()
 		return
 	if tutorial_mode:
@@ -5178,9 +5240,13 @@ func _refresh_auras() -> void:
 		else:
 			_log_action("%s loses %d %s as %s fades." % [unit.name, -delta, stat, event.label])
 
-func _apply_conductor_skill(side: int, skill_name: String) -> bool:
+func _apply_conductor_skill(
+	side: int, skill_name: String, target_unit_id: int = -1, target_conductor: bool = false
+) -> bool:
 	var conductor_hp: int = player_hp if side == PLAYER else enemy_hp
-	var result: Dictionary = ConductorSkillsScript.apply(skill_name, side, units, conductor_hp)
+	var result: Dictionary = ConductorSkillsScript.apply(
+		skill_name, side, units, conductor_hp, target_unit_id, target_conductor
+	)
 	status_message = result.message
 	if not result.success:
 		return false

@@ -17,6 +17,7 @@ signal unit_hovered(unit: Dictionary)
 signal unit_hover_ended
 signal opponent_hovered
 signal opponent_hover_ended
+signal opponent_clicked
 
 const ROWS := 3
 const COLS := 7
@@ -471,6 +472,12 @@ func _gui_input(event: InputEvent) -> void:
 		_update_opponent_hover(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if (
+			enabled and not opponent_name.is_empty()
+			and _opponent_plaque_rect().has_point(event.position)
+		):
+			opponent_clicked.emit()
+			return
 		var cell := _cell_at(event.position)
 		var row := cell.y
 		var col := cell.x
