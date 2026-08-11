@@ -55,7 +55,9 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `battle_rules.gd` | Static rules for the board: movement, repositioning, attack reach, Mana locking, and projected deployment/attack previews. |
 | `battle_ai.gd` | Static enemy AI: deployment scoring, repositioning, and Conductor-skill timing. |
 | `mission_rules.gd` | Normalizes authored encounter objectives and modifiers, formats mission intel, validates blocked/setup/reinforcement data, and evaluates deterministic win/loss conditions. |
-| `unit_catalog.gd` | Authoritative original roster: 215 units as `UnitData` Resources with stats, class, chassis family, skills, star rarity, and portrait/full-body art IDs. |
+| `challenge_catalog.gd` | Three authored challenge battles and deterministic UTC ISO-week rotation metadata. |
+| `challenge_store.gd` | Persistent rotating-challenge completions and idempotent Requisition Credit reward orchestration. |
+| `unit_catalog.gd` | Authoritative original roster: 223 units as `UnitData` Resources with stats, class, chassis family, skills, star rarity, and portrait/full-body art IDs. |
 | `mission_unit_catalog.gd` | Mission-only `UnitData` assets that can be predeployed and replayed but never enter rewards, Reserves, or the Kinetic Crucible. |
 | `resources/unit_data.gd` | `UnitData` Resource: one catalog unit's stats, class, promotion, and skill. `to_dict()` bridges to the card Dictionary shape. |
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
@@ -141,12 +143,13 @@ The project follows `.editorconfig` and `.gitattributes`:
 - **Mobile touch scrolling:** on Android/iOS (`OS.has_feature("mobile")`), interactive children of `ScrollContainer`s must use `MOUSE_FILTER_PASS` (see `SquadCard.configure` and the mission-list buttons in `main.gd`), otherwise a touch drag that starts on them never reaches the container and the list cannot scroll. Only skip this when the child keeps drag-and-drop on mobile (squad-formation cards). Card drag-and-drop itself is disabled on mobile for list cards (`SquadCard._get_drag_data`) so drags scroll instead of starting a drag; `ui_theme.gd` also widens scrollbars on mobile.
 - **Mobile touch details:** touch has no hover, so detail popups must not be driven by `mouse_entered` on mobile (it fires on every tap/scroll and the popup tracks the last touch point). Cards show details via long-press instead: `SquadCard` emits `long_pressed`/`long_press_released` (0.45 s hold, cancelled by ~10 px of movement), wired through `main.gd:_connect_card_details`, and the card tap handlers bail out when `_touch_details_active` is set so the release that ends a long-press does not also fire the card's action (the Viewport delivers the release to the pressed button regardless of `mouse_filter`, so suppression must happen at the action level).
 - **Simulation vs. presentation:** keep deterministic combat rules in `BattleSimulator`, `BattleRules`, `BattleAI`, `UnitSkills`, and `ConductorSkills`. Keep drawing, animation, audio, and input in `BoardView` and `main.gd`. Do not add combat logic to `BoardView`.
-- **Autobattle:** completed campaign missions offer an AUTOBATTLE button in the squad builder (`squad_autobattle_button` → `main.gd:_save_and_autobattle_mission`). It reuses the live battle loop rather than a separate simulation: `autobattle_active` forces `_animation_duration` to 0.001, `_resolve_warcry` skips its player-target prompts so `UnitSkills`' side-agnostic `-1` fallbacks pick targets, and `_autobattle_player_turn` (a side-flipped mirror of `_enemy_turn`) drives repositioning, deployment, and the Conductor skill through `BattleAI.choose_reposition`, `choose_deployment`, and `should_use_conductor_skill` — the latter two take an optional `side` parameter that defaults to ENEMY. Multi-encounter missions auto-advance past the "FIELD SECURED" screen inside `_check_game_over`. The flag clears on manual mission starts, redeploy, practice, and the main menu, but survives a loss so RETRY BATTLE autobattles again.
+- **Autobattle:** completed campaign missions offer an AUTOBATTLE button in the squad builder (`squad_autobattle_button` → `main.gd:_save_and_autobattle_mission`). It reuses the live battle loop rather than a separate simulation: `autobattle_active` forces `_animation_duration` to 0.001, `_resolve_warcry` skips its player-target prompts so `UnitSkills`' side-agnostic `-1` fallbacks pick targets, and `_autobattle_player_turn` (a side-flipped mirror of `_enemy_turn`) drives repositioning, deployment, and the Conductor skill through `BattleAI.choose_reposition`, `choose_deployment`, and `should_use_conductor_skill` — the latter two take an optional `side` parameter that defaults to ENEMY. Multi-encounter missions auto-advance past the "FIELD SECURED" screen inside `_check_game_over`. The flag clears on manual mission starts, redeploy, practice, and the main menu, but survives a loss so RETRY BATTLE autobattles again. The Operation Complete screen also offers AUTOBATTLE (`result_autobattle_button` → `_autobattle_mission_replay`) next to REDEPLOY and the primary CAMPAIGN action; its campaign-win home button is the shared home glyph.
+- **Home icon:** every return-to-menu control (battle HUD, tutorial, result screens, replay panel, mission select, Kinetic Crucible, Requisition) is a textless Button built by `main.gd:_make_home_button` with the procedural glyph from `UITheme.home_icon()`; keep new menu-return buttons on the same helper instead of adding "MENU" text labels.
 - **Authored encounter rules:** optional rules live in `StoryQuestCatalog.ENCOUNTER_RULES`, keyed as `"<1-based mission>:<0-based encounter>"`, and are normalized by `MissionRules`. Encounters without an entry must retain the standard defeat-the-Conductor behavior. Setup and reinforcement deployments must be recorded with their exact cell and mission-role metadata so version-one replays can reconstruct them without executing live rule setup.
 - **Unit data as Resources:** the catalog (`UnitCatalog`) returns `UnitData`/`SkillData` Resources built once in code; `by_name()` returns `null` when a unit is missing. New units belong in the `_unit(...)` list in `UnitCatalog._build()`. Deck/hand cards and runtime battle units remain plain Dictionaries — cards are produced via `UnitData.to_dict()` plus per-instance keys in `SquadStore.build_deck`, and `main.gd:_spawn_unit` builds runtime instances from cards (applying `KineticCrucible.scaled_stat` for the card's level). Secondary skills scale with unit level: `UnitCatalog.RANK_VALUES` holds the five authored per-level rows, `SkillData` carries them as `rank_values` with `{0}`/`{1}` placeholder descriptions, and `UnitSkills.rank_value` reads the magnitudes at resolution time. Any new secondary skill needs authored copy, a rank table (or flat fallback), a matching resolution branch in `UnitSkills`, and an AI consideration in `BattleAI` if relevant.
 - **Deterministic replays:** the simulator records events. Replays are saved to `user://last_replay.json` and archived newest-first to `user://replay_history.json` (limit 10). Keep replay serialization backward-compatible where possible; the tests already assert version 1 format.
 - **Persistence:** all player save data is written under `user://` via `ConfigFile` or `JSON`. Files include `user://player.cfg`, `user://campaign.cfg`, `user://mission_run.cfg`, and `user://kinetic_crucible.cfg`. Migration code is kept in the relevant store scripts, not in `main.gd`.
-- **Original unit art:** the seven class atlases in `assets/units/original_sources/class_atlases/` and standalone generated sources in `assets/units/original_sources/generated_chassis/` are the generative sources for playable and mission-only chassis. `assets/units/gen/` contains a transparent generated cutout for every live art ID, so runtime art no longer needs an atlas fallback. The builder asserts exactly 216 full-body sprites and 216 portraits (215 playable, one mission-only). Regenerate with:
+- **Original unit art:** the seven class atlases in `assets/units/original_sources/class_atlases/` and standalone generated sources in `assets/units/original_sources/generated_chassis/` are the generative sources for playable and mission-only chassis. `assets/units/gen/` contains a transparent generated cutout for every live art ID, so runtime art no longer needs an atlas fallback. The builder asserts exactly 224 full-body sprites and 224 portraits (223 playable, one mission-only). Regenerate with:
   ```bash
   ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
   ```
@@ -155,9 +158,9 @@ The project follows `.editorconfig` and `.gitattributes`:
 ## Data and assets
 
 - `assets/units/original_sources/class_atlases/` — seven original mechanical class atlases.
-- `assets/units/original_sources/faction_chassis/` — 216 derived provenance files, grouped by faction and class.
-- `assets/units/portraits/` — exactly 216 generated 160×160 portrait PNGs.
-- `assets/units/full/` — exactly 216 original full-body sprites used on the battlefield.
+- `assets/units/original_sources/faction_chassis/` — 224 derived provenance files, grouped by faction and class.
+- `assets/units/portraits/` — exactly 224 generated 160×160 portrait PNGs.
+- `assets/units/full/` — exactly 224 original full-body sprites used on the battlefield.
 - `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
 - `assets/IMAGEPROMPTS.md` — original generation briefs and provenance rules.
 - Menu and operations-map backgrounds are at the repository root under `assets/`. Battlefield stage art lives under `assets/boards/`: practice/tutorial uses the training hall, while `BoardView.set_campaign_mission()` selects Relay excavation, proving circuit, faction crossroads, coalition front, or Caelis sanctum by mission range. Normalize all runtime boards from `assets/boards/original_sources/` with `./tools/godot-headless.sh --script res://tools/build_board_background_art.gd`.
@@ -169,7 +172,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 1. Run the three headless scripts above.
 2. After UI changes, run `ui_smoke_test.gd` and then do a manual visual pass at the target 1280×720 window size.
 3. When adding units or changing campaign data, run `balance_simulation.gd` to avoid breaking the difficulty curve assertion (`largest_difficulty_jump <= 0.18`).
-4. `smoke_test.gd` is the broad safety net; it asserts exact counts (215 playable units plus mission-only assets, 15/17/44/52/61/26 six-bucket star distribution, 103 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding either catalog.
+4. `smoke_test.gd` is the broad safety net; it asserts exact counts (223 playable units plus mission-only assets, 15/17/48/56/61/26 six-bucket star distribution, 107 promotions, 13 audio sounds, etc.), so expect to update it when intentionally expanding either catalog.
 
 ## Save files and persistence
 
@@ -177,6 +180,8 @@ Godot `user://` resolves to the project-local user dir when run through `tools/g
 
 - `user://player.cfg` — battle settings, squad name list, and squad instance IDs.
 - `user://campaign.cfg` — completed missions, reward units, and debug-granted inventory.
+- `user://requisition.cfg` — Requisition Credit balance and idempotent reward claim IDs.
+- `user://challenges.cfg` — completed rotating-challenge claim IDs.
 - `user://mission_run.cfg` — active multi-encounter run.
 - `user://kinetic_crucible.cfg` — per-copy collection instances, levels, and points.
 - `user://last_replay.json` — legacy single latest replay.
@@ -235,7 +240,7 @@ All roster identities, descriptions, values, rewards, and art must be authored f
 - Project `icon` IDs are stable gameplay identifiers. `ICON_ART_IDS` maps them to stable numeric filenames when the IDs differ.
 - Internal classes are Warden, Duelist, Strider, Artillerist, Channeler, and Lifebinder. Movement and range are authored per card, while class ability copy stays consistent within a class.
 - Secondary-skill copy lives in `SKILL_DESCRIPTIONS`; five level rows live in `RANK_VALUES`. Both are original project content and must change together.
-- `CHASSIS_FAMILIES` assigns optional `standard`, `bulwark`, `swift`, or `resonant` tuning families. Resonant Chorus is currently the only family-gated effect.
+- `CHASSIS_FAMILIES` assigns optional `standard`, `bulwark`, `swift`, or `resonant` tuning families. Foundation Grid, Aegis Lattice, Vector Manifold, Resonance Pulse, and Resonant Chorus grant family-gated effects.
 - Promotions are declared pairwise via `promotion_of`; `KineticCrucible.record_promotion` safely walks multi-tier chains.
 - Retired public names are migrated only through hashes in `legacy_content_migration.gd`; never reintroduce retired strings into production files.
 
@@ -245,14 +250,17 @@ All roster identities, descriptions, values, rewards, and art must be authored f
 2. A resolution branch in `scripts/unit_skills.gd` (`resolve_warcry`,
    `resolve_strike`, `resolve_chants`, `resolve_reaction`, `refresh_auras` —
    all five timing hooks are live; auras are recomputed from living sources
-   on every call, stripping each unit's `aura_hp`/`aura_atk` and re-applying,
-   so a buff disappears when its source dies). Auras so far: Lumen Shell (HP
-   only) and Resonant Chorus (HP + ATK, gated on the target's
-   `chassis_family == "resonant"`, source excluded); multiple sources of the same aura
-   stack additively, and each change event carries a `stat` field ("HP"/"ATK")
-   so `main.gd:_refresh_auras` can log it. The `target_id = -1` /
-   `target_lane = -1` fallbacks are what the enemy AI uses — `BattleAI` itself
-   only scores by class and usually needs no per-skill changes.
+   on every call, stripping each unit's `aura_hp`/`aura_atk`/`aura_move` and
+   re-applying, so a buff disappears when its source dies). Family auras are
+   Foundation Grid (Standard HP + ATK), Aegis Lattice (Bulwark HP), Vector
+   Manifold (Swift Move), and Resonant Chorus (Resonant HP + ATK); all exclude
+   the source. Lumen Shell remains an unrestricted HP aura, while Dawn Circuit
+   grants HP + ATK to allies that currently have Regen.
+   Multiple sources of the same aura stack additively, and each change event
+   carries a `stat` field ("HP"/"ATK"/"MOVE") so
+   `main.gd:_refresh_auras` can log it. The `target_id = -1` /
+   `target_lane = -1` fallbacks are what the enemy AI uses. `BattleAI` scores
+   family-matched allies when deploying chassis-synergy carriers.
    `resolve_chants(side, units, phase, ...)` runs twice per side turn:
    `phase = "start"` for start-of-turn chants (and the Regen/Poison tick lives
    in `resolve_start_statuses`), `phase = "end"` for skills in
@@ -329,6 +337,8 @@ All roster identities, descriptions, values, rewards, and art must be authored f
    Live example: the Resonant Chorus batch (icons 208–215) — Zephyr Mender-208,
    Zephyr Mender-209, Cinder Mender-213, and Cinder Mender-214 are reward units with
    `ADDITIONAL_DROPS` entries; the other four carriers are starting Reserves.
+   The chassis-synergy promotion pairs (icons 217–224) are all reward units
+   with authored `ADDITIONAL_DROPS` entries.
 
 ### Updating the tests
 

@@ -25,11 +25,11 @@ const CLASS_COLORS := {
 # documentation/Unit_Faction_and_Sprite_Staging.md. Icons not listed here are
 # Universal: neutral units that can appear in any faction's squad.
 const FACTION_ICON_IDS := {
-	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 36, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215],
+	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 36, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215, 219, 220],
 	"Steam": [96, 97, 104, 105, 106, 111, 112, 136, 137, 138, 139, 186, 187, 200, 201, 117, 118, 43, 44, 77, 78, 83, 84, 98, 99, 28, 34, 158, 159, 51, 52, 180, 181, 196, 197],
-	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 42, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209],
+	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 42, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 221, 222, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209],
 	"Fusion": [53, 54, 154, 155, 73, 74, 25, 31, 79, 80, 19, 20, 140, 141, 45, 46, 47, 92, 93, 107, 108, 188, 189, 192, 193, 206, 207, 210, 211, 212, 27, 33, 184, 185, 194, 195],
-	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 48, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163]
+	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 223, 224, 48, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163]
 }
 
 const ICON_ART_IDS := {
@@ -329,7 +329,13 @@ const CHASSIS_FAMILIES := {
 	212: "resonant", # Flux Weaver-212
 	213: "resonant", # Cinder Mender-213
 	214: "resonant", # Cinder Mender-214
-	215: "resonant" # Cinder Mender-215
+	215: "resonant", # Cinder Mender-215
+	219: "bulwark", # Cinder Bastion-219
+	220: "bulwark", # Cinder Bastion-220
+	221: "swift", # Zephyr Lancer-221
+	222: "swift", # Zephyr Lancer-222
+	223: "resonant", # Helio Mender-223
+	224: "resonant" # Helio Mender-224
 }
 
 static var _units: Array[UnitData] = []
@@ -412,7 +418,11 @@ const RANK_VALUES := {
 	"Silent Cycle": [["1", "1 random", "1"], ["1", "2 random", "2"], ["2", "2 random", "2"], ["3", "2 random", "2"], ["3", "3 random", "3"]],
 	"Thermal Wrap": [["1 HP", "2 turns"], ["2 HP", "2 turns"], ["3 HP", "2 turns"], ["3 HP", "3 turns"], ["4 HP", "3 turns"]],
 	"Umbral Clamp": [["1 ATK", "2 turns"], ["2 ATK", "2 turns"], ["3 ATK", "2 turns"], ["3 ATK", "3 turns"], ["4 ATK", "3 turns"]],
-	"Resonant Chorus": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "2 ATK"], ["3 HP", "2 ATK"], ["4 HP", "2 ATK"]]
+	"Resonant Chorus": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "2 ATK"], ["3 HP", "2 ATK"], ["4 HP", "2 ATK"]],
+	"Foundation Grid": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "1 ATK"], ["3 HP", "1 ATK"], ["3 HP", "2 ATK"]],
+	"Aegis Lattice": [["2 HP"], ["3 HP"], ["4 HP"], ["5 HP"], ["6 HP"]],
+	"Vector Manifold": [["1 Move"], ["1 Move"], ["1 Move"], ["2 Move"], ["2 Move"]],
+	"Resonance Pulse": [["1 HP", "1 turn"], ["1 HP", "2 turns"], ["2 HP", "2 turns"], ["2 HP", "3 turns"], ["3 HP", "3 turns"]]
 }
 
 ## Player-facing copy is authored here rather than embedded in roster rows.
@@ -484,7 +494,11 @@ const SKILL_DESCRIPTIONS := {
 	"Silent Cycle": "For {0} enemy turns, Silence {1} strong enemies for {2}; Silenced enemies cannot damage this unit.",
 	"Thermal Wrap": "On deployment, a selected ally gains {0} and Protect for {1}.",
 	"Umbral Clamp": "On deployment, enemies in one lane lose {0} and are Immobilised for {1}.",
-	"Resonant Chorus": "Other allied Resonant chassis gain {0} and {1} while this unit is active."
+	"Resonant Chorus": "Other allied Resonant chassis gain {0} and {1} while this unit is active.",
+	"Foundation Grid": "Other allied Standard chassis gain {0} and {1} while this unit is active.",
+	"Aegis Lattice": "Other allied Bulwark chassis gain {0} while this unit is active.",
+	"Vector Manifold": "Other allied Swift chassis gain {0} while this unit is active.",
+	"Resonance Pulse": "At turn start, other allied Resonant chassis restore {0} and gain Regen for {1}."
 }
 
 static func _skill(name: String, type: String, chance: float) -> SkillData:
@@ -744,7 +758,15 @@ static func _build() -> void:
 		_unit('Flux Weaver-212', 212, 5, 'Channeler', 3, 6, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', 'Flux Weaver-211', _skill('Resonant Chorus', 'Aura', -1.0)),
 		_unit('Cinder Mender-213', 213, 3, 'Lifebinder', 2, 2, 3, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Resonant Chorus', 'Aura', -1.0)),
 		_unit('Cinder Mender-214', 214, 4, 'Lifebinder', 2, 3, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Cinder Mender-213', _skill('Resonant Chorus', 'Aura', -1.0)),
-		_unit('Cinder Mender-215', 215, 5, 'Lifebinder', 2, 4, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Cinder Mender-214', _skill('Resonant Chorus', 'Aura', -1.0))
+		_unit('Cinder Mender-215', 215, 5, 'Lifebinder', 2, 4, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Cinder Mender-214', _skill('Resonant Chorus', 'Aura', -1.0)),
+		_unit('Relay Battery-217', 217, 3, 'Artillerist', 3, 3, 4, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Foundation Grid', 'Aura', -1.0)),
+		_unit('Relay Battery-218', 218, 4, 'Artillerist', 3, 4, 6, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', 'Relay Battery-217', _skill('Foundation Grid', 'Aura', -1.0)),
+		_unit('Cinder Bastion-219', 219, 3, 'Warden', 3, 2, 9, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Aegis Lattice', 'Aura', -1.0)),
+		_unit('Cinder Bastion-220', 220, 4, 'Warden', 3, 3, 11, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', 'Cinder Bastion-219', _skill('Aegis Lattice', 'Aura', -1.0)),
+		_unit('Zephyr Lancer-221', 221, 3, 'Strider', 3, 2, 4, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Vector Manifold', 'Aura', -1.0)),
+		_unit('Zephyr Lancer-222', 222, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', 'Zephyr Lancer-221', _skill('Vector Manifold', 'Aura', -1.0)),
+		_unit('Helio Mender-223', 223, 3, 'Lifebinder', 3, 2, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Resonance Pulse', 'Chant', -1.0)),
+		_unit('Helio Mender-224', 224, 4, 'Lifebinder', 3, 3, 6, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Helio Mender-223', _skill('Resonance Pulse', 'Chant', -1.0))
 	]
 
 static func all_units() -> Array[UnitData]:

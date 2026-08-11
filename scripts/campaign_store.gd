@@ -48,7 +48,9 @@ const REWARD_UNITS := [
 	"Cinder Bastion-166", "Cinder Bastion-167",
 	"Zephyr Weaver-168", "Zephyr Weaver-169",
 	"Cinder Battery-170", "Cinder Battery-171",
-	"Zephyr Mender-208", "Zephyr Mender-209", "Cinder Mender-213", "Cinder Mender-214"
+	"Zephyr Mender-208", "Zephyr Mender-209", "Cinder Mender-213", "Cinder Mender-214",
+	"Relay Battery-217", "Relay Battery-218", "Cinder Bastion-219", "Cinder Bastion-220",
+	"Zephyr Lancer-221", "Zephyr Lancer-222", "Helio Mender-223", "Helio Mender-224"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()

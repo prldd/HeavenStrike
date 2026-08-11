@@ -198,7 +198,8 @@ func _run() -> void:
 	assert(game.tutorial_step == game.TUTORIAL_COMPLETE)
 	assert(not game.tutorial_continue_button.visible)
 	assert(game.tutorial_menu_button.visible)
-	assert(game.tutorial_menu_button.text == "MENU")
+	assert(game.tutorial_menu_button.text.is_empty())
+	assert(game.tutorial_menu_button.icon != null)
 	assert(game.tutorial_menu_button.has_meta("tutorial_pulse"))
 	game._finish_tutorial_to_menu()
 	assert(not game.tutorial_mode)
@@ -410,7 +411,7 @@ func _run() -> void:
 	assert(game.mission_node_buttons[21].position.x > game.mission_node_buttons[0].position.x)
 	assert(game.mission_node_buttons[21].position.y < game.mission_node_buttons[0].position.y)
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
-	assert(result_buttons.size() == 5)
+	assert(result_buttons.size() == 6)
 	assert(game.reward_portrait in result_buttons)
 	assert(game.result_primary_button.get_index() < game.result_continue_button.get_index())
 	game._emphasize_result_action(game.result_continue_button)
@@ -659,6 +660,19 @@ func _run() -> void:
 	assert(not game.result_continue_button.visible)
 	assert(not game.result_redeploy_button.visible)
 	assert(not game.win_button.visible)
+	# The defeat screen keeps RETRY BATTLE as the emphasized primary action and
+	# offers the home icon as the way out.
+	game.player_hp = 0
+	game.enemy_hp = 20
+	assert(game._check_game_over())
+	await process_frame
+	assert(game.overlay_title.text == game.LOSS_TITLE)
+	assert(game.result_primary_button.text == "RETRY BATTLE")
+	assert(game.result_primary_button.has_theme_stylebox_override("normal"))
+	assert(game.result_menu_button.visible)
+	assert(game.result_menu_button.icon != null)
+	assert(not game.result_continue_button.visible)
+	assert(not game.result_redeploy_button.visible)
 	game.overlay.visible = false
 	game.campaign_battle = true
 	game.current_mission_id = 0
@@ -683,11 +697,16 @@ func _run() -> void:
 		currency_before_manual_clear + RequisitionStoreScript.CAMPAIGN_MILESTONE_GRANT
 	))
 	assert(game.overlay_detail.text.contains("FIRST MANUAL CLEAR"))
-	assert(game.result_primary_button.text == "RETURN TO MENU")
+	assert(game.result_primary_button.text.is_empty())
+	assert(game.result_primary_button.icon != null)
 	assert(game.result_redeploy_button.visible)
-	assert(game.result_redeploy_button.text == "REDEPLOY MISSION")
+	assert(game.result_redeploy_button.text == "REDEPLOY")
 	assert(game.result_redeploy_button.tooltip_text.contains("another unit reward"))
+	assert(game.result_autobattle_button.visible)
+	assert(game.result_autobattle_button.text == "AUTOBATTLE")
+	assert(game.result_autobattle_button.tooltip_text.contains("AI command"))
 	assert(game.result_continue_button.visible)
+	assert(game.result_continue_button.text == "CAMPAIGN")
 	assert(game.result_continue_button.has_theme_stylebox_override("normal"))
 	assert(not game.result_redeploy_button.has_theme_stylebox_override("normal"))
 	assert(game.get_viewport().gui_get_focus_owner() == game.result_continue_button)
@@ -917,7 +936,9 @@ func _run() -> void:
 	assert(not game.end_button.visible)
 	assert(not game.power_button.visible)
 	assert(game.speed_button.visible)
-	assert(game.replay_panel.get_child(0).get_child(0).get_child(0).text == "MENU")
+	var replay_menu_button: Button = game.replay_panel.get_child(0).get_child(0).get_child(0)
+	assert(replay_menu_button.text.is_empty())
+	assert(replay_menu_button.icon != null)
 	game._open_squad_builder()
 	assert(game.replay_squad_overlay.visible)
 	assert(game.replay_player_squad_grid.get_child_count() == 2)
@@ -1017,9 +1038,23 @@ func _run() -> void:
 		func(event): return event.type == "battle_finished"
 	))
 	if game.mission_finished:
-		assert(game.result_primary_button.text == "RETURN TO MENU")
+		assert(game.result_primary_button.text.is_empty())
+		assert(game.result_primary_button.icon != null)
 		assert(not game.recent_reward_name.is_empty())
 		assert(game.overlay_detail.text.contains("UNIT REWARD ONLY"))
+		# The Operation Complete screen offers its own AUTOBATTLE rerun.
+		assert(game.result_autobattle_button.visible)
+		assert(game.result_redeploy_button.text == "REDEPLOY")
+		assert(game.result_continue_button.text == "CAMPAIGN")
+		game._autobattle_mission_replay()
+		assert(game.autobattle_active)
+		assert(not game.overlay.visible)
+		autobattle_frames = 0
+		while not game.battle_over and autobattle_frames < 20000:
+			await process_frame
+			autobattle_frames += 1
+		assert(game.battle_over, "Result-screen autobattle should also resolve.")
+		assert(game.overlay.visible)
 	else:
 		assert(game.overlay_title.text == game.LOSS_TITLE)
 	assert(game.requisition_currency == currency_before_autobattle)

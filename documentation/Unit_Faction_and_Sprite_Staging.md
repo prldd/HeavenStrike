@@ -15,13 +15,13 @@ the runtime or source-art tree.
   standalone generated sources; `cutouts/` contains their reproducible alpha
   derivatives.
 - `assets/units/original_sources/faction_chassis/<Faction>/<Class>/` contains
-  216 derived provenance images: 215 playable chassis and one mission-only
+  224 derived provenance images: 223 playable chassis and one mission-only
   ground transport.
 - `assets/units/gen/` contains transparent standalone generated art for every
   active roster ID, including the fourteen sources that complete the set.
-- `assets/units/full/` contains exactly the same 216 art IDs as runtime
+- `assets/units/full/` contains exactly the same 224 art IDs as runtime
   full-body sprites.
-- `assets/units/portraits/` contains exactly the same 216 art IDs as cropped
+- `assets/units/portraits/` contains exactly the same 224 art IDs as cropped
   menu portraits.
 
 Regenerate all derived assets with:

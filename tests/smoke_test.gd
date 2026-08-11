@@ -14,13 +14,15 @@ const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const RequisitionStoreScript = preload("res://scripts/requisition_store.gd")
+const ChallengeCatalogScript = preload("res://scripts/challenge_catalog.gd")
+const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const LegacyContentMigrationScript = preload("res://scripts/legacy_content_migration.gd")
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 215, "The playable roster must contain 215 units.")
+	assert(roster.size() == 223, "The playable roster must contain 223 units.")
 	var mission_units: Array = MissionUnitCatalogScript.all_units()
 	assert(mission_units.size() == 1)
 	var ground_transport: UnitData = mission_units[0]
@@ -336,12 +338,12 @@ func _init() -> void:
 	assert(conductor_hit.shield_absorbed == 2)
 	assert(conductor_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 215
+		func(icon_id): return icon_id >= 1 and icon_id <= 224 and icon_id != 216
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 15)
 	assert(roster.filter(func(unit): return unit.stars == 2).size() == 17)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 44)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 52)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 48)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 56)
 	assert(roster.filter(func(unit): return unit.stars == 5).size() == 61)
 	assert(roster.filter(func(unit): return unit.stars == 6).size() == 26)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
@@ -350,12 +352,12 @@ func _init() -> void:
 		if icon_id not in unique_icon_ids:
 			unique_icon_ids.append(icon_id)
 	assert(icon_ids.size() == unique_icon_ids.size())
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 30)
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 32)
 	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 32)
-	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 38)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 32)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 40)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 34)
 	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 40)
-	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 43)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 45)
 	assert(UnitCatalogScript.by_name("Relay Bastion-013").stars == 2)
 	assert(UnitCatalogScript.by_name("Cinder Blade-015").cost == 2)
 	assert(UnitCatalogScript.by_name("Flux Battery-019").range == 3)
@@ -599,6 +601,12 @@ func _init() -> void:
 	assert(roster.filter(
 		func(unit): return unit.skill != null and unit.skill.name == "Resonant Chorus"
 	).size() == 8)
+	for chassis_skill in [
+		"Foundation Grid", "Aegis Lattice", "Vector Manifold", "Resonance Pulse"
+	]:
+		assert(roster.filter(
+			func(unit): return unit.skill != null and unit.skill.name == chassis_skill
+		).size() == 2)
 	for skill_name in [
 		"Failover Mantle", "Furnace Wake", "Slipstream Reversal",
 		"Phase Cascade", "Dawn Circuit"
@@ -723,6 +731,14 @@ func _init() -> void:
 	assert(UnitCatalogScript.by_name("Cinder Mender-215").promotion_of == "Cinder Mender-214")
 	assert(UnitCatalogScript.by_name("Cinder Mender-215").stars == 5)
 	assert(UnitCatalogScript.by_name("Cinder Mender-215").hp == 5)
+	assert(UnitCatalogScript.by_name("Relay Battery-217").skill.name == "Foundation Grid")
+	assert(UnitCatalogScript.by_name("Relay Battery-218").promotion_of == "Relay Battery-217")
+	assert(UnitCatalogScript.by_name("Cinder Bastion-219").skill.name == "Aegis Lattice")
+	assert(UnitCatalogScript.by_name("Cinder Bastion-220").promotion_of == "Cinder Bastion-219")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-221").skill.name == "Vector Manifold")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-222").promotion_of == "Zephyr Lancer-221")
+	assert(UnitCatalogScript.by_name("Helio Mender-223").skill.name == "Resonance Pulse")
+	assert(UnitCatalogScript.by_name("Helio Mender-224").promotion_of == "Helio Mender-223")
 	# Chassis families are authored mechanical traits; units default to standard.
 	assert(UnitCatalogScript.by_name("Relay Lancer-003").chassis_family == "standard")
 	assert(UnitCatalogScript.by_name("Relay Bastion-001").chassis_family == "standard")
@@ -739,6 +755,10 @@ func _init() -> void:
 		"Flux Weaver-212", "Cinder Mender-213", "Cinder Mender-214", "Cinder Mender-215"
 	]:
 		assert(UnitCatalogScript.by_name(resonant_name).chassis_family == "resonant")
+	assert(UnitCatalogScript.by_name("Relay Battery-217").chassis_family == "standard")
+	assert(UnitCatalogScript.by_name("Cinder Bastion-219").chassis_family == "bulwark")
+	assert(UnitCatalogScript.by_name("Zephyr Lancer-221").chassis_family == "swift")
+	assert(UnitCatalogScript.by_name("Helio Mender-223").chassis_family == "resonant")
 	assert(UnitCatalogScript.art_id(49) == 47)
 	assert(UnitCatalogScript.art_id(56) == 58)
 	assert(UnitCatalogScript.art_id(27) == 83)
@@ -824,6 +844,8 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(214) == 108)
 	assert(UnitCatalogScript.art_id(215) == 633)
 	assert(UnitCatalogScript.art_id(216) == 1306)
+	for new_icon in range(217, 225):
+		assert(UnitCatalogScript.art_id(new_icon) == new_icon)
 	var art_units: Array = roster.duplicate()
 	art_units.append_array(mission_units)
 	for unit in art_units:
@@ -858,10 +880,10 @@ func _init() -> void:
 				provenance_files.append_array(Array(
 					DirAccess.get_files_at(provenance_dir)
 				).filter(func(file_name): return file_name.ends_with(".png")))
-	assert(full_files.size() == 216)
-	assert(portrait_files.size() == 216)
-	assert(generated_files.size() == 216)
-	assert(provenance_files.size() == 216)
+	assert(full_files.size() == 224)
+	assert(portrait_files.size() == 224)
+	assert(generated_files.size() == 224)
+	assert(provenance_files.size() == 224)
 	full_files.sort()
 	portrait_files.sort()
 	generated_files.sort()
@@ -877,7 +899,7 @@ func _init() -> void:
 	)))
 	assert(not FileAccess.file_exists("res://assets/units/portrait_manifest.tsv"))
 	assert(not FileAccess.file_exists("res://tools/generate_unit_portraits.gd"))
-	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 103)
+	assert(roster.filter(func(unit): return unit.promotion_of != "").size() == 107)
 	assert(UnitSkillsScript.timing_tooltip("Warcry") == "Activates when this unit enters the battlefield.")
 
 	var default_squad: Array = SquadStoreScript.default_squad(roster)
@@ -1062,6 +1084,8 @@ func _init() -> void:
 	assert("Flux Weaver-210" not in starting_unlocks)
 	assert("Flux Weaver-212" not in starting_unlocks)
 	assert("Cinder Mender-215" not in starting_unlocks)
+	assert("Relay Battery-217" not in starting_unlocks)
+	assert("Helio Mender-224" not in starting_unlocks)
 	var earned_unlocks: Array = CampaignStoreScript.unlocked_unit_names(
 		roster, ["Relay Bastion-013", "Cinder Blade-015"]
 	)
@@ -1072,6 +1096,12 @@ func _init() -> void:
 	assert("Zephyr Mender-209" in CampaignStoreScript.REWARD_UNITS)
 	assert("Cinder Mender-213" in CampaignStoreScript.REWARD_UNITS)
 	assert("Cinder Mender-214" in CampaignStoreScript.REWARD_UNITS)
+	for chassis_reward in [
+		"Relay Battery-217", "Relay Battery-218", "Cinder Bastion-219",
+		"Cinder Bastion-220", "Zephyr Lancer-221", "Zephyr Lancer-222",
+		"Helio Mender-223", "Helio Mender-224"
+	]:
+		assert(chassis_reward in CampaignStoreScript.REWARD_UNITS)
 	assert("Flux Weaver-210" not in CampaignStoreScript.REWARD_UNITS)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Relay Lancer-003")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Relay Battery-004")
@@ -1117,6 +1147,7 @@ func _init() -> void:
 	assert(GachaStoreScript.load_pity() == 12)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RequisitionStoreScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ChallengeStoreScript.SAVE_PATH))
 	assert(RequisitionStoreScript.load_balance() == 0)
 	var starter_currency := RequisitionStoreScript.ensure_starter_grant()
 	assert(starter_currency.claimed)
@@ -1130,10 +1161,107 @@ func _init() -> void:
 	)
 	assert(mission_currency.claimed and mission_currency.balance == 1100)
 	assert(RequisitionStoreScript.has_claimed(mission_claim_id))
-	var challenge_currency := RequisitionStoreScript.claim(
-		"challenge:2026-W32:iron_trial", 250
-	)
-	assert(challenge_currency.claimed and challenge_currency.balance == 1350)
+	# Three offline challenge templates rotate on UTC ISO-week boundaries. Their
+	# authored objectives use the same normalized rules as campaign encounters.
+	var challenges := ChallengeCatalogScript.all_challenges()
+	assert(challenges.size() == 3)
+	assert(challenges.map(func(challenge): return challenge.id) == [
+		"iron_trial", "overclock_gauntlet", "null_hunt"
+	])
+	for challenge in challenges:
+		assert(challenge.reward_credits == 250)
+		assert(challenge.enemy_squad.size() == SquadStoreScript.SQUAD_SIZE)
+		assert(challenge.skill in ConductorSkillsScript.SKILLS)
+		assert(MissionRulesScript.has_authored_rules(challenge.rules))
+		var challenge_cards := SquadStoreScript.build_deck(challenge.enemy_squad, roster)
+		assert(challenge_cards.size() == SquadStoreScript.SQUAD_SIZE)
+		assert(BattleSimulatorScript.estimate_squad_power(challenge_cards) > 0.0)
+		var challenge_classes: Array = []
+		for unit_name in challenge.enemy_squad:
+			var challenge_unit := UnitCatalogScript.by_name(unit_name)
+			assert(challenge_unit != null)
+			assert(
+				UnitCatalogScript.faction_for_name(unit_name) == challenge.squad_faction
+				or UnitCatalogScript.faction_for_name(unit_name) == "Universal"
+			)
+			if challenge_unit.kind not in challenge_classes:
+				challenge_classes.append(challenge_unit.kind)
+		assert(challenge_classes.size() >= 5)
+		var occupied_challenge_cells: Array = []
+		for deployment in challenge.rules.predeployed + challenge.rules.reinforcements:
+			assert(
+				UnitCatalogScript.by_name(deployment.unit) != null
+				or MissionUnitCatalogScript.by_name(deployment.unit) != null
+			)
+			var challenge_cell := {"row": deployment.row, "col": deployment.col}
+			assert(challenge_cell not in challenge.rules.blocked_cells)
+			if deployment in challenge.rules.predeployed:
+				assert(challenge_cell not in occupied_challenge_cells)
+				occupied_challenge_cells.append(challenge_cell)
+	assert(challenges[0].rules.objective.type == "protect")
+	assert(challenges[1].rules.objective.type == "survive")
+	assert(challenges[1].rules.objective.rounds == 5)
+	assert(challenges[2].rules.objective.type == "eliminate_target")
+	assert(challenges[2].rules.turn_limit == 6)
+	var week_32_start := int(Time.get_unix_time_from_datetime_dict({
+		"year": 2026, "month": 8, "day": 3,
+		"hour": 0, "minute": 0, "second": 0
+	}))
+	var week_33_start := week_32_start + 7 * 86400
+	var week_34_start := week_33_start + 7 * 86400
+	assert(ChallengeCatalogScript.cycle_for_unix_time(week_32_start).id == "2026-W32")
+	assert(ChallengeCatalogScript.cycle_for_unix_time(
+		week_32_start + 7 * 86400 - 1
+	).id == "2026-W32")
+	assert(ChallengeCatalogScript.cycle_for_unix_time(week_33_start).id == "2026-W33")
+	assert(ChallengeCatalogScript.active_for_unix_time(week_32_start).id == "iron_trial")
+	assert(ChallengeCatalogScript.active_for_unix_time(
+		week_33_start
+	).id == "overclock_gauntlet")
+	assert(ChallengeCatalogScript.active_for_unix_time(week_34_start).id == "null_hunt")
+	var year_boundary := int(Time.get_unix_time_from_datetime_dict({
+		"year": 2025, "month": 12, "day": 31,
+		"hour": 12, "minute": 0, "second": 0
+	}))
+	assert(ChallengeCatalogScript.cycle_for_unix_time(year_boundary).id == "2026-W01")
+	assert(ChallengeCatalogScript.claim_id(
+		"2026-W32", "iron_trial"
+	) == "challenge:2026-W32:iron_trial")
+	assert(ChallengeCatalogScript.claim_id("bad-cycle", "iron_trial").is_empty())
+	assert(not ChallengeCatalogScript.is_valid_claim_id("challenge:2026-W54:iron_trial"))
+	# Completion records sanitize malformed and duplicate values.
+	var challenge_config := ConfigFile.new()
+	var week_34_claim := "challenge:2026-W34:null_hunt"
+	challenge_config.set_value("challenges", "completed_claim_ids", [
+		"", "invalid", week_34_claim, week_34_claim
+	])
+	assert(challenge_config.save(ChallengeStoreScript.SAVE_PATH) == OK)
+	assert(ChallengeStoreScript.load_completed_claim_ids() == [week_34_claim])
+	assert(ChallengeStoreScript.is_completed("2026-W34", "null_hunt"))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ChallengeStoreScript.SAVE_PATH))
+	# A first clear grants 250 Credits once. Repeats preserve completion without
+	# paying again, and the wallet claim can recover a missing challenge save.
+	var challenge_currency := ChallengeStoreScript.record_victory(week_32_start)
+	assert(challenge_currency.completed and challenge_currency.first_clear)
+	assert(challenge_currency.claim_id == "challenge:2026-W32:iron_trial")
+	assert(challenge_currency.reward_amount == 250 and challenge_currency.balance == 1350)
+	assert(ChallengeStoreScript.load_completed_claim_ids() == [
+		"challenge:2026-W32:iron_trial"
+	])
+	var completed_challenge := ChallengeStoreScript.active_status(week_32_start)
+	assert(completed_challenge.completed and not completed_challenge.reward_available)
+	var repeat_challenge := ChallengeStoreScript.record_victory(week_32_start)
+	assert(repeat_challenge.completed and not repeat_challenge.first_clear)
+	assert(repeat_challenge.reward_amount == 0 and repeat_challenge.balance == 1350)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ChallengeStoreScript.SAVE_PATH))
+	assert(ChallengeStoreScript.is_completed("2026-W32", "iron_trial"))
+	assert(not ChallengeStoreScript.is_completed(
+		"2026-W33", "overclock_gauntlet"
+	))
+	assert(RequisitionStoreScript.has_claimed(
+		"challenge:2026-W32:iron_trial"
+	))
+	assert(RequisitionStoreScript.load_balance() == 1350)
 	assert(RequisitionStoreScript.pull_cost(1) == 100)
 	assert(RequisitionStoreScript.pull_cost(10) == 1000)
 	assert(RequisitionStoreScript.pull_cost(2) == -1)
@@ -1149,6 +1277,7 @@ func _init() -> void:
 	var rejected_spend := RequisitionStoreScript.spend(1000)
 	assert(not rejected_spend.spent and rejected_spend.balance == 350)
 	assert(RequisitionStoreScript.load_balance() == 350)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ChallengeStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RequisitionStoreScript.SAVE_PATH))
 	assert(CampaignStoreScript.reward_summary(2) == "Random: Relay Bastion-001, Relay Blade-002, Relay Lancer-003, Helio Mender-049, Cinder Blade-015")
 	assert(CampaignStoreScript.reward_summary(3) == "Random: Relay Battery-004, Relay Weaver-005, Relay Mender-006, Zephyr Lancer-037")
@@ -1213,6 +1342,14 @@ func _init() -> void:
 	assert("Cinder Mender-213" in CampaignStoreScript.MISSIONS[10].reward_pool)
 	assert("Cinder Mender-213" in CampaignStoreScript.MISSIONS[46].reward_pool)
 	assert("Cinder Mender-214" in CampaignStoreScript.MISSIONS[46].reward_pool)
+	assert("Relay Battery-217" in CampaignStoreScript.MISSIONS[17].reward_pool)
+	assert("Relay Battery-218" in CampaignStoreScript.MISSIONS[44].reward_pool)
+	assert("Cinder Bastion-219" in CampaignStoreScript.MISSIONS[25].reward_pool)
+	assert("Cinder Bastion-220" in CampaignStoreScript.MISSIONS[54].reward_pool)
+	assert("Zephyr Lancer-221" in CampaignStoreScript.MISSIONS[21].reward_pool)
+	assert("Zephyr Lancer-222" in CampaignStoreScript.MISSIONS[50].reward_pool)
+	assert("Helio Mender-223" in CampaignStoreScript.MISSIONS[29].reward_pool)
+	assert("Helio Mender-224" in CampaignStoreScript.MISSIONS[59].reward_pool)
 	assert("Relay Bastion-030" in CampaignStoreScript.MISSIONS[15].reward_pool)
 	assert("Cinder Blade-036" in CampaignStoreScript.MISSIONS[23].reward_pool)
 	assert("Zephyr Lancer-042" in CampaignStoreScript.MISSIONS[31].reward_pool)
@@ -3396,6 +3533,95 @@ func _init() -> void:
 	assert(harlequin.max_hp == 5 and harlequin.atk == 6)
 	assert(standard_ally.max_hp == 6 and standard_ally.atk == 3)
 
+	# Chassis-family batch: each Aura buffs only its authored family. Foundation
+	# Grid grants HP/ATK to Standard frames, Aegis Lattice grants HP to Bulwark
+	# frames, and Vector Manifold grants movement to Swift frames.
+	var foundation_source := {
+		"id": 130, "side": 0, "name": "Relay Battery-217", "atk": 3,
+		"hp": 4, "max_hp": 4, "move": 1, "effects": [], "level": 1,
+		"chassis_family": "standard",
+		"skill": UnitCatalogScript.by_name("Relay Battery-217").skill.to_dict()
+	}
+	var aegis_source := {
+		"id": 131, "side": 0, "name": "Cinder Bastion-219", "atk": 2,
+		"hp": 9, "max_hp": 9, "move": 2, "effects": [], "level": 1,
+		"chassis_family": "bulwark",
+		"skill": UnitCatalogScript.by_name("Cinder Bastion-219").skill.to_dict()
+	}
+	var vector_source := {
+		"id": 132, "side": 0, "name": "Zephyr Lancer-221", "atk": 2,
+		"hp": 4, "max_hp": 4, "move": 3, "effects": [], "level": 1,
+		"chassis_family": "swift", "silenced_turns": 0,
+		"skill": UnitCatalogScript.by_name("Zephyr Lancer-221").skill.to_dict()
+	}
+	var foundation_ally := {
+		"id": 133, "side": 0, "name": "Standard Ally", "atk": 3,
+		"hp": 5, "max_hp": 5, "move": 2, "effects": [], "chassis_family": "standard"
+	}
+	var aegis_ally := {
+		"id": 134, "side": 0, "name": "Bulwark Ally", "atk": 2,
+		"hp": 8, "max_hp": 8, "move": 2, "effects": [], "chassis_family": "bulwark"
+	}
+	var vector_ally := {
+		"id": 135, "side": 0, "name": "Swift Ally", "atk": 2,
+		"hp": 4, "max_hp": 4, "move": 3, "effects": [], "chassis_family": "swift"
+	}
+	var resonance_ally := {
+		"id": 136, "side": 0, "name": "Resonant Ally", "atk": 2,
+		"hp": 4, "max_hp": 4, "move": 1, "effects": [], "chassis_family": "resonant"
+	}
+	var chassis_aura_units := [
+		foundation_source, aegis_source, vector_source,
+		foundation_ally, aegis_ally, vector_ally, resonance_ally
+	]
+	var chassis_aura_events: Array = []
+	UnitSkillsScript.refresh_auras(chassis_aura_units, chassis_aura_events)
+	assert(foundation_ally.max_hp == 6 and foundation_ally.atk == 4)
+	assert(aegis_ally.max_hp == 10 and aegis_ally.atk == 2)
+	assert(vector_ally.move == 4)
+	assert(resonance_ally.max_hp == 4 and resonance_ally.atk == 2)
+	assert(chassis_aura_events.size() == 4)
+	assert(chassis_aura_events.any(func(event): return (
+		event.unit_id == 135 and event.stat == "MOVE" and event.delta == 1
+	)))
+	chassis_aura_events.clear()
+	UnitSkillsScript.refresh_auras(chassis_aura_units, chassis_aura_events)
+	assert(chassis_aura_events.is_empty())
+	vector_source.silenced_turns = 1
+	UnitSkillsScript.refresh_auras(chassis_aura_units, chassis_aura_events)
+	assert(vector_ally.move == 3)
+	assert(chassis_aura_events.size() == 1 and chassis_aura_events[0].stat == "MOVE")
+
+	# Resonance Pulse is a start-turn Chant that repairs only other Resonant
+	# frames and grants them Regen; its Standard neighbor remains unchanged.
+	var pulse_source := {
+		"id": 140, "side": 0, "name": "Helio Mender-223", "atk": 2,
+		"hp": 5, "max_hp": 5, "move": 1, "effects": [], "level": 1,
+		"chassis_family": "resonant", "silenced_turns": 0,
+		"skill": UnitCatalogScript.by_name("Helio Mender-223").skill.to_dict()
+	}
+	var pulse_ally := {
+		"id": 141, "side": 0, "name": "Pulse Ally", "atk": 2,
+		"hp": 2, "max_hp": 5, "move": 1, "effects": [],
+		"regen_turns": 0, "chassis_family": "resonant"
+	}
+	var pulse_standard := {
+		"id": 142, "side": 0, "name": "Pulse Standard", "atk": 2,
+		"hp": 2, "max_hp": 5, "move": 1, "effects": [],
+		"regen_turns": 0, "chassis_family": "standard"
+	}
+	var pulse_results := UnitSkillsScript.resolve_chants(
+		0, [pulse_source, pulse_ally, pulse_standard], "start"
+	)
+	assert(pulse_results.size() == 1)
+	assert(pulse_results[0].affected == [141])
+	assert(pulse_ally.hp == 3 and pulse_ally.regen_turns == 1)
+	assert(pulse_standard.hp == 2 and pulse_standard.regen_turns == 0)
+	pulse_source.silenced_turns = 1
+	assert(UnitSkillsScript.resolve_chants(
+		0, [pulse_source, pulse_ally, pulse_standard], "start"
+	).is_empty())
+
 	# Warcry: Retaliation Screen makes the carrier take 0 damage from attacks for
 	# {0} enemy turns; each blocked hit retaliates against the {2} highest-ATK
 	# living enemies for {1}% of the attacker's ATK (min 1, rounded down).
@@ -3667,6 +3893,22 @@ func _init() -> void:
 	assert(chosen_index >= 0)
 	finite_hand.remove_at(chosen_index)
 	assert(finite_hand.size() == 3)
+	var plain_support_card := {
+		"name": "Plain Support", "cost": 3, "atk": 2, "hp": 5,
+		"kind": "Lifebinder", "chassis_family": "resonant", "skill": {}
+	}
+	var pulse_support_card: Dictionary = plain_support_card.duplicate(true)
+	pulse_support_card.name = "Pulse Support"
+	pulse_support_card.skill = {"name": "Resonance Pulse", "type": "Chant"}
+	var synergy_board := [
+		{"id": 30, "side": 1, "row": 0, "col": 5, "atk": 3, "hp": 2,
+			"max_hp": 5, "chassis_family": "resonant"},
+		{"id": 31, "side": 0, "row": 0, "col": 2, "atk": 3, "hp": 5,
+			"max_hp": 5, "chassis_family": "standard"}
+	]
+	assert(BattleAIScript._score(
+		pulse_support_card, 0, 3, synergy_board, 1
+	) > BattleAIScript._score(plain_support_card, 0, 3, synergy_board, 1))
 
 	var blocked_units := [
 		{"side": 1, "row": 0, "col": 6, "atk": 1, "hp": 1, "max_hp": 1},
@@ -3867,6 +4109,18 @@ func _init() -> void:
 	assert(KineticCrucibleScript.promotion_target("Cinder Mender-213", roster).name == "Cinder Mender-214")
 	assert(KineticCrucibleScript.promotion_target("Cinder Mender-214", roster).name == "Cinder Mender-215")
 	assert(KineticCrucibleScript.promotion_target("Cinder Mender-215", roster) == null)
+	assert(KineticCrucibleScript.promotion_target(
+		"Relay Battery-217", roster
+	).name == "Relay Battery-218")
+	assert(KineticCrucibleScript.promotion_target(
+		"Cinder Bastion-219", roster
+	).name == "Cinder Bastion-220")
+	assert(KineticCrucibleScript.promotion_target(
+		"Zephyr Lancer-221", roster
+	).name == "Zephyr Lancer-222")
+	assert(KineticCrucibleScript.promotion_target(
+		"Helio Mender-223", roster
+	).name == "Helio Mender-224")
 	var chain_by_name := {}
 	for unit in roster:
 		chain_by_name[unit.name] = unit

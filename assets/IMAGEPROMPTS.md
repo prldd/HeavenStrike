@@ -64,6 +64,20 @@ edge by one pixel, normalizes each cutout to a transparent 1024×1024 canvas,
 and writes `cutouts/`, `gen/`, faction provenance, runtime full-body art, and
 portraits. The roster now has generated `gen/` art for every active art ID.
 
+### Chassis-synergy atlas extensions
+
+Icons `217`–`224` were added on 2026-08-10 as four two-stage promotion
+families for the Standard, Bulwark, Swift, and Resonant synergy mechanics. No
+new external or AI-generated source was used. Their full-body provenance is
+derived reproducibly from the project-owned class atlases by
+`tools/build_original_unit_art.gd`, using the established faction recoloring,
+transparent 1024×1024 canvas, right-facing orientation, and portrait crop:
+
+- `217` / `218` — Relay Battery, Universal Artillerist, Foundation Grid.
+- `219` / `220` — Cinder Bastion, Coal Warden, Aegis Lattice.
+- `221` / `222` — Zephyr Lancer, Wind Strider, Vector Manifold.
+- `223` / `224` — Helio Mender, Solar Lifebinder, Resonance Pulse.
+
 Shared final prompt:
 
 > Create one entirely original War of Resonance industrial-fantasy autonomous

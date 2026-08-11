@@ -69,6 +69,30 @@ static func title_color() -> Color:
 static func muted_color() -> Color:
 	return Color("#c4b99f")
 
+## Procedural house glyph shared by every return-to-menu button. Drawn as a
+## brass roof triangle over a body block with a door cutout, so the app needs
+## no icon asset files.
+static func home_icon(size: int = 28) -> ImageTexture:
+	var image := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	var center := size / 2
+	var roof_peak := int(size * 0.06)
+	var roof_base := int(size * 0.48)
+	var body_bottom := int(size * 0.9)
+	for y in range(roof_peak, body_bottom):
+		var half := 0.0
+		if y <= roof_base:
+			half = (float(y - roof_peak) / float(roof_base - roof_peak)) * size * 0.44
+		else:
+			half = size * 0.27
+		for x in range(maxi(0, center - int(half)), mini(size, center + int(half) + 1)):
+			image.set_pixel(x, y, BRASS_LIGHT)
+	var door_half := int(size * 0.07)
+	for y in range(int(size * 0.64), body_bottom):
+		for x in range(center - door_half, center + door_half + 1):
+			image.set_pixel(x, y, Color.TRANSPARENT)
+	return ImageTexture.create_from_image(image)
+
 static func parchment_panel() -> StyleBoxFlat:
 	var style := _panel(PARCHMENT, BRASS_DARK, 3, 9, 18)
 	style.border_color = BRASS

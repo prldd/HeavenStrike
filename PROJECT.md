@@ -616,7 +616,7 @@ Before battle, each side prepares a squad of up to 8 units:
 
 Every unit has a deployment cost, attack, health, movement distance, attack range, class, chassis family, and one or more abilities. Chassis families are original mechanical tuning groups; aura skills such as Resonant Chorus can key off them.
 
-The current prototype roster contains 215 units: 112 promotion roots or standalone units and 103 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
+The current prototype roster contains 223 units: 116 promotion roots or standalone units and 107 promoted forms linked into family trees. Promoted forms still enter the reward pool as independent cards, and a level-5 copy can also be converted into its next form in the Kinetic Crucible (see Kinetic Crucible).
 
 Campaign missions award cards from authored mission pools. Reward composition and rarity weighting are deterministic game data.
 
@@ -746,7 +746,7 @@ For development, the Crucible also exposes a clearly labeled debug inventory
 button that grants enough copies to leave at least four active copies of every
 implemented unit without resetting existing levels or merge progress.
 
-The implemented roster contains 215 original chassis cards spanning one- to six-star rarity, including 103 promotion forms. Six class abilities define each unit’s baseline role: Twin Actuator, Momentum Core, Anchor Blow, Rail Volley, Arc Burst, and Repair Field. Authored secondary skills cover deployment effects, strikes, chants, reactions, auras, healing, damage, protection, movement control, Poison, Regen, Stun, Haste, Doom, and Silence. The completed stable-ID set adds Failover Mantle, Furnace Wake, Slipstream Reversal, Phase Cascade, and Dawn Circuit, covering all five secondary-skill timings. Skill magnitudes scale across five Kinetic Crucible levels through `UnitCatalog.RANK_VALUES`; their player-facing copy lives in `UnitCatalog.SKILL_DESCRIPTIONS`. Resonant Chorus is the sole chassis-family synergy and strengthens other allied resonant frames while its source remains active. Units beyond the starting set are earned through authored mission reward pools.
+The implemented roster contains 223 original chassis cards spanning one- to six-star rarity, including 107 promotion forms. Six class abilities define each unit’s baseline role: Twin Actuator, Momentum Core, Anchor Blow, Rail Volley, Arc Burst, and Repair Field. Authored secondary skills cover deployment effects, strikes, chants, reactions, auras, healing, damage, protection, movement control, Poison, Regen, Stun, Haste, Doom, and Silence. The completed stable-ID set adds Failover Mantle, Furnace Wake, Slipstream Reversal, Phase Cascade, and Dawn Circuit, covering all five secondary-skill timings. Skill magnitudes scale across five Kinetic Crucible levels through `UnitCatalog.RANK_VALUES`; their player-facing copy lives in `UnitCatalog.SKILL_DESCRIPTIONS`. Chassis-family synergies now support all four frames: Foundation Grid strengthens Standard allies, Aegis Lattice reinforces Bulwark allies, Vector Manifold accelerates Swift allies, and Resonance Pulse repairs Resonant allies alongside the existing Resonant Chorus. Units beyond the starting set are earned through authored mission reward pools.
 
 ## Example Turn
 
@@ -775,7 +775,7 @@ Conductor selection changes a squad's strategy without adding another unit to th
 - Full 77-mission, three-act story campaign
 - Practice battle against AI
 - Squad-building screen
-- 215 original chassis units across all six classes
+- 223 original chassis units across all six classes
 - Three Conductors
 
 ### Later Possibilities
@@ -829,6 +829,13 @@ all Autobattle clears continue awarding units but do not grant currency.
 Currency rewards use stable claim IDs so later rotating challenges can provide
 renewable income without duplicate claims or another wallet migration.
 
+The rotating-challenge backend authors three special-rule battles and selects
+one on deterministic UTC ISO-week boundaries. A first victory in each weekly
+rotation grants 250 Credits through a cycle-specific claim ID; repeat victories
+do not pay again. Challenge completion persists independently and can recover
+from the wallet's claim record. The player-facing Challenge Operations menu and
+battle-flow integration remain a presentation task.
+
 The first release will not include paid energy or randomized stat growth.
 
 ## Presentation
@@ -862,7 +869,7 @@ game presented through an ornate, tactile storybook:
 
 Original class atlases live in `assets/units/original_sources/class_atlases/`.
 `tools/build_original_unit_art.gd` derives faction-colored provenance copies,
-all 216 runtime full-body sprites, and all 216 portraits: 215 playable chassis
+all 224 runtime full-body sprites, and all 224 portraits: 223 playable chassis
 plus the mission-only ground transport. Numeric art-ID
 filenames and whole promotion lineages remain stable.
 

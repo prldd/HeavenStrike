@@ -73,7 +73,15 @@ const ADDITIONAL_DROPS := {
 	"Zephyr Mender-208": [8, 9, 12, 13, 26, 30, 31, 36, 43, 45],
 	"Zephyr Mender-209": [8, 12, 26, 30, 31, 36, 43, 45, 48],
 	"Cinder Mender-213": [11, 47],
-	"Cinder Mender-214": [47]
+	"Cinder Mender-214": [47],
+	"Relay Battery-217": [18, 33],
+	"Relay Battery-218": [45],
+	"Cinder Bastion-219": [26, 40],
+	"Cinder Bastion-220": [55],
+	"Zephyr Lancer-221": [22, 37],
+	"Zephyr Lancer-222": [51],
+	"Helio Mender-223": [30, 44],
+	"Helio Mender-224": [60]
 }
 
 # Every pool carries at least three 1-star units so the weighted roll in

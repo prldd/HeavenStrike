@@ -744,6 +744,28 @@ static func resolve_chants(
 							cleansed, "y" if cleansed == 1 else "ies"
 						]
 					results.append(result)
+			"Resonance Pulse":
+				var amount := rank_value(skill, level, 0, 1)
+				var turns := rank_value(skill, level, 1, 1)
+				var affected: Array = []
+				for ally in units:
+					if (
+						ally.side != side or ally.id == unit.id
+						or ally.get("hp", 0) <= 0
+						or ally.get("chassis_family", "standard") != "resonant"
+					):
+						continue
+					BattleSimulatorScript.apply_unit_healing(ally, amount)
+					ally.regen_turns = maxi(ally.get("regen_turns", 0), turns)
+					affected.append(ally.id)
+				if not affected.is_empty():
+					results.append({
+						"message": "Resonance Pulse restores %d HP to %d Resonant all%s and grants Regen for %s." % [
+							amount, affected.size(), "y" if affected.size() == 1 else "ies",
+							_turn_label(turns)
+						],
+						"affected": affected, "sound": "heal"
+					})
 			"Tidal Reset":
 				var cleanse_count := rank_value(skill, level, 0, 1)
 				var turns := rank_value(skill, level, 1, 2)
@@ -1373,15 +1395,16 @@ static func resolve_reaction(
 	return result
 
 ## Recomputes aura buffs from living sources. Each call strips the bonuses a
-## unit currently carries (`aura_hp`, `aura_atk`) and re-applies what surviving
-## aura units grant, so a buff disappears as soon as its source leaves the
-## board. Silenced sources contribute nothing, so the buff drops while the
-## source is Silenced and returns when the Silence expires. Every change is
-## appended to `events` as {"unit_id", "delta", "label", "stat"} so callers can
-## log aura gains and losses.
+## unit currently carries (`aura_hp`, `aura_atk`, `aura_move`) and re-applies
+## what surviving aura units grant, so a buff disappears as soon as its source
+## leaves the board. Silenced sources contribute nothing, so the buff drops
+## while the source is Silenced and returns when the Silence expires. Every
+## change is appended to `events` as {"unit_id", "delta", "label", "stat"} so
+## callers can log aura gains and losses.
 static func refresh_auras(units: Array, events: Array = []) -> void:
 	var desired := {}
 	var desired_atk := {}
+	var desired_move := {}
 	var desired_labels := {}
 	for source in units:
 		if source.get("hp", 1) <= 0:
@@ -1430,6 +1453,44 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 						if "Resonant Chorus" not in labels:
 							labels.append("Resonant Chorus")
 						desired_labels[unit.id] = labels
+			"Foundation Grid":
+				var hp_amount := rank_value(skill, level, 0, 1)
+				var atk_amount := rank_value(skill, level, 1, 1)
+				for unit in units:
+					if (
+						unit.side == source.side and unit.id != source.id
+						and unit.get("chassis_family", "standard") == "standard"
+					):
+						desired[unit.id] = int(desired.get(unit.id, 0)) + hp_amount
+						desired_atk[unit.id] = int(desired_atk.get(unit.id, 0)) + atk_amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Foundation Grid" not in labels:
+							labels.append("Foundation Grid")
+						desired_labels[unit.id] = labels
+			"Aegis Lattice":
+				var amount := rank_value(skill, level, 0, 2)
+				for unit in units:
+					if (
+						unit.side == source.side and unit.id != source.id
+						and unit.get("chassis_family", "standard") == "bulwark"
+					):
+						desired[unit.id] = int(desired.get(unit.id, 0)) + amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Aegis Lattice" not in labels:
+							labels.append("Aegis Lattice")
+						desired_labels[unit.id] = labels
+			"Vector Manifold":
+				var amount := rank_value(skill, level, 0, 1)
+				for unit in units:
+					if (
+						unit.side == source.side and unit.id != source.id
+						and unit.get("chassis_family", "standard") == "swift"
+					):
+						desired_move[unit.id] = int(desired_move.get(unit.id, 0)) + amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Vector Manifold" not in labels:
+							labels.append("Vector Manifold")
+						desired_labels[unit.id] = labels
 	for unit in units:
 		if unit.get("hp", 0) <= 0:
 			continue
@@ -1453,7 +1514,16 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 			})
 			unit.atk = maxi(0, unit.atk + want_atk - applied_atk)
 			unit.aura_atk = want_atk
-		if want > 0 or want_atk > 0:
+		var applied_move := int(unit.get("aura_move", 0))
+		var want_move := int(desired_move.get(unit.id, 0))
+		if applied_move != want_move:
+			events.append({
+				"unit_id": unit.id, "delta": want_move - applied_move,
+				"label": label, "stat": "MOVE"
+			})
+			unit.move = maxi(0, unit.get("move", 1) + want_move - applied_move)
+			unit.aura_move = want_move
+		if want > 0 or want_atk > 0 or want_move > 0:
 			unit.aura_label = label
 		else:
 			unit.erase("aura_label")

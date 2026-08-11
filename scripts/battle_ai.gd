@@ -66,6 +66,23 @@ static func _score(
 	var deployed_allies: int = units.filter(func(unit): return unit.side == side).size()
 	if player_threat <= 0.0 and deployed_allies >= 3:
 		score -= card.cost * 0.9
+	var synergy_family: String = {
+		"Foundation Grid": "standard",
+		"Aegis Lattice": "bulwark",
+		"Vector Manifold": "swift",
+		"Resonance Pulse": "resonant",
+		"Resonant Chorus": "resonant"
+	}.get(card.get("skill", {}).get("name", ""), "")
+	if not synergy_family.is_empty():
+		var matching_allies: Array = units.filter(func(unit): return (
+			unit.side == side and unit.get("hp", 0) > 0
+			and unit.get("chassis_family", "standard") == synergy_family
+		))
+		score += matching_allies.size() * 1.75
+		if card.get("skill", {}).get("name", "") == "Resonance Pulse":
+			score += matching_allies.filter(
+				func(unit): return unit.hp < unit.get("max_hp", unit.hp)
+			).size() * 1.5
 	match card.kind:
 		"Warden":
 			score += player_threat * 0.55

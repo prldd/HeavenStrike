@@ -114,6 +114,7 @@ var overlay_title: Label
 var overlay_detail: Label
 var result_primary_button: Button
 var result_redeploy_button: Button
+var result_autobattle_button: Button
 var result_menu_button: Button
 var reward_reveal: VBoxContainer
 var reward_portrait: SquadCard
@@ -442,8 +443,7 @@ func _build_interface() -> void:
 	power_button.pressed.connect(_use_player_power)
 	action_row.add_child(power_button)
 
-	menu_button = Button.new()
-	menu_button.text = "MENU"
+	menu_button = _make_home_button()
 	menu_button.custom_minimum_size.x = 64
 	menu_button.pressed.connect(_show_main_menu)
 	action_row.add_child(menu_button)
@@ -597,8 +597,7 @@ func _build_tutorial_panel() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_END
 	actions.add_theme_constant_override("separation", 8)
 	layout.add_child(actions)
-	tutorial_menu_button = Button.new()
-	tutorial_menu_button.text = "MENU"
+	tutorial_menu_button = _make_home_button()
 	tutorial_menu_button.visible = false
 	tutorial_menu_button.pressed.connect(_finish_tutorial_to_menu)
 	actions.add_child(tutorial_menu_button)
@@ -722,6 +721,14 @@ func _play_attack_sound(kind: String) -> void:
 
 func _wait(seconds: float) -> Signal:
 	return get_tree().create_timer(_animation_duration(seconds), false).timeout
+
+## Every return-to-menu control in the app shares the same home glyph instead
+## of a text label.
+func _make_home_button() -> Button:
+	var button := Button.new()
+	button.icon = UIThemeScript.home_icon()
+	button.tooltip_text = "Return to the main menu."
+	return button
 
 func _log_action(message: String) -> void:
 	if message.is_empty() or message == last_logged_message:
@@ -885,7 +892,7 @@ func _build_overlay() -> void:
 	result_actions.add_child(result_primary_button)
 
 	result_redeploy_button = Button.new()
-	result_redeploy_button.text = "REDEPLOY MISSION"
+	result_redeploy_button.text = "REDEPLOY"
 	result_redeploy_button.tooltip_text = (
 		"Replay this mission with the same squad for a new rating and another unit reward."
 	)
@@ -894,16 +901,25 @@ func _build_overlay() -> void:
 	result_redeploy_button.pressed.connect(_redeploy_mission)
 	result_actions.add_child(result_redeploy_button)
 
+	result_autobattle_button = Button.new()
+	result_autobattle_button.text = "AUTOBATTLE"
+	result_autobattle_button.tooltip_text = (
+		"Let the AI command the same squad against this mission for another unit reward."
+	)
+	result_autobattle_button.custom_minimum_size = Vector2(170, 48)
+	result_autobattle_button.visible = false
+	result_autobattle_button.pressed.connect(_autobattle_mission_replay)
+	result_actions.add_child(result_autobattle_button)
+
 	result_continue_button = Button.new()
-	result_continue_button.text = "CONTINUE CAMPAIGN"
+	result_continue_button.text = "CAMPAIGN"
 	result_continue_button.custom_minimum_size = Vector2(190, 48)
 	result_continue_button.visible = false
 	result_continue_button.pressed.connect(_continue_campaign)
 	result_actions.add_child(result_continue_button)
 
-	result_menu_button = Button.new()
-	result_menu_button.text = "MENU"
-	result_menu_button.custom_minimum_size = Vector2(140, 48)
+	result_menu_button = _make_home_button()
+	result_menu_button.custom_minimum_size = Vector2(72, 48)
 	result_menu_button.visible = false
 	result_menu_button.pressed.connect(_show_main_menu)
 	result_actions.add_child(result_menu_button)
@@ -1640,8 +1656,7 @@ func _build_replay_controls() -> void:
 	var menu_center := CenterContainer.new()
 	menu_center.custom_minimum_size.x = 76
 	row.add_child(menu_center)
-	var back := Button.new()
-	back.text = "MENU"
+	var back := _make_home_button()
 	back.custom_minimum_size = Vector2(68, 46)
 	back.pressed.connect(_close_replay)
 	menu_center.add_child(back)
@@ -1893,9 +1908,8 @@ func _build_mission_select() -> void:
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 12)
 	layout.add_child(footer)
-	var back := Button.new()
-	back.text = "BACK TO MENU"
-	back.custom_minimum_size = Vector2(180, 44)
+	var back := _make_home_button()
+	back.custom_minimum_size = Vector2(72, 44)
 	back.pressed.connect(_show_main_menu)
 	footer.add_child(back)
 	var legend := Label.new()
@@ -2160,9 +2174,8 @@ func _build_kinetic_crucible() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_END
 	actions.add_theme_constant_override("separation", 12)
 	layout.add_child(actions)
-	var back := Button.new()
-	back.text = "BACK TO MENU"
-	back.custom_minimum_size = Vector2(180, 46)
+	var back := _make_home_button()
+	back.custom_minimum_size = Vector2(72, 46)
 	back.pressed.connect(_show_main_menu)
 	actions.add_child(back)
 	var debug_copies := Button.new()
@@ -2262,9 +2275,8 @@ func _build_gacha() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", 12)
 	layout.add_child(actions)
-	var back := Button.new()
-	back.text = "BACK TO MENU"
-	back.custom_minimum_size = Vector2(180, 46)
+	var back := _make_home_button()
+	back.custom_minimum_size = Vector2(72, 46)
 	back.pressed.connect(_show_main_menu)
 	actions.add_child(back)
 	gacha_roll_one_button = Button.new()
@@ -5820,6 +5832,7 @@ func _on_result_primary() -> void:
 func _leave_completed_mission(return_action: String) -> void:
 	overlay.visible = false
 	result_redeploy_button.visible = false
+	result_autobattle_button.visible = false
 	result_continue_button.visible = false
 	if mission_interlude_pending:
 		mission_interlude_pending = false
@@ -5850,10 +5863,24 @@ func _redeploy_mission() -> void:
 	autobattle_active = false
 	_leave_completed_mission("redeploy_mission")
 
+## Autobattle straight from the Operation Complete screen: same squad, AI
+## commanding, for another unit reward (Requisition credits stay manual-only).
+func _autobattle_mission_replay() -> void:
+	if (
+		not mission_finished or not campaign_battle
+		or current_mission_id < 0
+		or current_mission_id >= CampaignStoreScript.MISSIONS.size()
+	):
+		return
+	mission_finished = false
+	autobattle_active = true
+	_leave_completed_mission("redeploy_mission")
+
 func _emphasize_result_action(primary_action: Button) -> void:
 	for action in [
 		result_primary_button,
 		result_redeploy_button,
+		result_autobattle_button,
 		result_continue_button,
 		result_menu_button
 	]:
@@ -5932,6 +5959,7 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 	reward_reveal.visible = false
 	result_rating_panel.visible = false
 	result_redeploy_button.visible = false
+	result_autobattle_button.visible = false
 	result_continue_button.visible = false
 	result_menu_button.visible = false
 	if player_won:
@@ -5962,6 +5990,7 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 					current_encounter_index + 2, encounter_count, next_encounter.title
 				]
 				result_primary_button.text = "CONTINUE MISSION"
+				result_primary_button.icon = null
 				_emphasize_result_action(result_primary_button)
 				_refresh()
 				return true
@@ -6034,12 +6063,20 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			overlay_detail.text += "\nAUTOBATTLE · UNIT REWARD ONLY · NO REQUISITION CREDITS"
 		elif requisition_reward > 0:
 			overlay_detail.text += "\n+%d REQUISITION CREDITS · FIRST MANUAL CLEAR" % requisition_reward
-		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
+		if campaign_battle:
+			result_primary_button.text = ""
+			result_primary_button.icon = UIThemeScript.home_icon()
+			result_primary_button.tooltip_text = "Return to the main menu."
+		else:
+			result_primary_button.text = "PLAY AGAIN"
+			result_primary_button.icon = null
+			result_primary_button.tooltip_text = ""
 		result_continue_button.visible = (
 			campaign_battle
 			and current_mission_id + 1 < CampaignStoreScript.MISSIONS.size()
 		)
 		result_redeploy_button.visible = campaign_battle
+		result_autobattle_button.visible = campaign_battle
 		result_menu_button.visible = not campaign_battle
 		_emphasize_result_action(
 			result_continue_button if result_continue_button.visible else result_primary_button
@@ -6050,7 +6087,10 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 		overlay_title.text = LOSS_TITLE
 		overlay_title.add_theme_color_override("font_color", Color("#ff668f"))
 		overlay_detail.text = "%s\nRetry the battle with a new tactical approach." % outcome_reason
+		result_menu_button.visible = true
 		result_primary_button.text = "RETRY BATTLE"
+		result_primary_button.icon = null
+		result_primary_button.tooltip_text = ""
 		_emphasize_result_action(result_primary_button)
 	_refresh()
 	return true

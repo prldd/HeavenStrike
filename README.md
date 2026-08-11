@@ -23,11 +23,13 @@ assets required by the prototype.
   100 Credits once when completed manually. Persistent pity raises 5-star and
   6-star odds after every miss, guarantees one by pull 50, and resets on either tier.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
-- After a campaign victory, use **Redeploy Mission** to pursue a better rating
-  and earn another unit reward; **Continue Campaign** remains the primary action.
-- Completed missions offer **Autobattle** in the Squad Workshop: the AI commands
-  your squad through the whole mission at fast-forward speed, then shows the
-  usual unit reward or defeat screen. Autobattle never awards Requisition Credits.
+- After a campaign victory, use **Redeploy** to pursue a better rating
+  and earn another unit reward; **Campaign** remains the primary action.
+- Completed missions offer **Autobattle** in the Squad Workshop and on the
+  Operation Complete screen: the AI commands your squad through the whole
+  mission at fast-forward speed, then shows the usual unit reward or defeat
+  screen. Autobattle never awards Requisition Credits.
+- Every return-to-menu control is a house-shaped Home icon.
 - Reward reveals label duplicates, show the owned copy count, and explain their
   same-unit Kinetic Crucible value.
 - Select a unit card whose Mana cost is currently available.
@@ -61,7 +63,7 @@ assets required by the prototype.
 ## Implemented
 
 - Three-lane, seven-column battlefield
-- 215 units across six distinct classes
+- 223 units across six distinct classes
 - Persistent 1–8 unit squad construction with a two-copy limit
 - 77 sequential story missions across three acts with escalating difficulty
 - One-to-three battle encounter sequences with Conductor-HP attrition
@@ -74,7 +76,7 @@ assets required by the prototype.
 - Full-roster Unit Requisition with the battle rarity curve normalized across
   tiers, sequential single/ten-pulls, persistent soft pity, and a 50-pull
   top-tier guarantee; an earnable wallet funds pulls and tracks one-time claims
-- 112 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
+- 116 promotion roots or standalone units plus 107 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, copy count, and explicit
   NEW UNIT or DUPLICATE progression status
 - Post-battle 1–10 performance ratings with Conductor integrity, formation
@@ -109,6 +111,9 @@ assets required by the prototype.
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
 - Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
 - Player-selected ally, enemy, and lane targets for authored Warcries
+- Four chassis-family team strategies: Foundation Grid for Standard frames,
+  Aegis Lattice for Bulwark frames, Vector Manifold for Swift frames, and
+  Resonance Pulse/Resonant Chorus for Resonant frames
 - Conductor health, Rally powers, victory, defeat, and replay
 - Persistent selection of eight Conductor skills
 - Timed attack effects, healing, direct damage, area damage, and Conductor shields
@@ -126,7 +131,7 @@ assets required by the prototype.
 
 ## Unit Art Production
 
-All 215 playable unit sprites and portraits, plus the mission-only ground
+All 223 playable unit sprites and portraits, plus the mission-only ground
 transport, are project-original generated chassis. Standalone generated sources
 complete the five stable-ID units, add the transport, and replace the last nine
 atlas fallbacks. The reproducible builder removes their chroma mattes,
