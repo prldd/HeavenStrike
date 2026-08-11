@@ -16,7 +16,11 @@ assets required by the prototype.
 - New profiles begin at the main menu. Start the five-step guided battle any
   time from **Guided Tutorial**.
 - The starting collection contains the fifteen base 1-star units; advanced
-  units are earned from campaign rewards or Kinetic Crucible promotions.
+  units are earned from campaign rewards, Unit Requisition rolls, or Kinetic
+  Crucible promotions.
+- **Unit Requisition** supports free Roll 1 and Roll 10 acquisition while its
+  currency economy is pending. Its persistent pity raises 5-star and 6-star
+  odds after every miss, guarantees one by pull 50, and resets on either tier.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
 - After a campaign victory, use **Redeploy Mission** to pursue a better rating
   and earn another unit reward; **Continue Campaign** remains the primary action.
@@ -63,6 +67,8 @@ assets required by the prototype.
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Conductor information
 - Authored mission reward pools with Star-Rarity weighting and persistent unlocks
+- Full-roster Unit Requisition with battle-equivalent rarity weights, sequential
+  single/ten-pulls, persistent soft pity, and a 50-pull top-tier guarantee
 - 112 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, copy count, and explicit
   NEW UNIT or DUPLICATE progression status

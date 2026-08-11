@@ -5,6 +5,7 @@ const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
@@ -16,6 +17,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(TutorialStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
 	BattleSettingsScript.save_settings({
 		"speed": 1.0,
 		"volume": 2,
@@ -933,6 +935,27 @@ func _run() -> void:
 	assert(game.menu_button.visible)
 	assert(not game.end_button.visible)
 	assert(game.power_button.visible)
+	var rewards_before_gacha: int = game.earned_reward_units.size()
+	game._open_gacha()
+	assert(game.gacha_overlay.visible)
+	assert(not game.main_menu_overlay.visible)
+	assert(game.gacha_pity_label.text.contains("PITY"))
+	assert(game.gacha_odds_label.text.contains("Battle reward weights"))
+	game._perform_gacha_roll(10, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+	assert(game.gacha_results.size() == 10)
+	assert(game.gacha_result_grid.get_child_count() == 10)
+	assert(game.earned_reward_units.size() == rewards_before_gacha + 10)
+	assert(game.gacha_pity == 10)
+	game.gacha_pity = GachaStoreScript.HARD_PITY_PULL - 1
+	game._perform_gacha_roll(1, [0.0])
+	assert(game.gacha_results.size() == 1)
+	assert(game.gacha_results[0].stars >= 5)
+	assert(game.gacha_results[0].pity_reset)
+	assert(game.gacha_pity == 0)
+	assert(GachaStoreScript.load_pity() == 0)
+	game._show_main_menu()
+	assert(not game.gacha_overlay.visible)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
 	await create_timer(0.05).timeout
 	game.queue_free()
 	await process_frame

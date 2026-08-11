@@ -814,7 +814,15 @@ campaign rewards or unit progression.
 
 Campaign victories award one random card from that quest's eligible drop list. Drop weight halves with each additional Star Rarity, making lower-star cards progressively more likely. Earned card unlocks persist and expand strategic options rather than directly increasing unit statistics.
 
-The first release will not include loot boxes, paid energy, duplicate-unit upgrades, or randomized stat growth.
+Unit Requisition offers single and ten-unit rolls from the full playable roster.
+At zero pity it uses the same per-unit weights as battle rewards: weight halves
+with every additional Star Rarity. Each consecutive result below 5-star raises
+the relative weight of both 5-star and 6-star units by 10%. The 50th consecutive
+miss is a guaranteed 5-star or 6-star result, and acquiring either tier resets
+the counter immediately, including midway through a ten-roll. Pity persists
+between sessions. Requisition has no cost until its currency economy is authored.
+
+The first release will not include paid energy or randomized stat growth.
 
 ## Presentation
 

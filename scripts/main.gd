@@ -18,6 +18,7 @@ const BattleResultsScript = preload("res://scripts/battle_results.gd")
 const MissionRulesScript = preload("res://scripts/mission_rules.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
@@ -157,6 +158,13 @@ var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
 var crucible_overlay: ColorRect
+var gacha_overlay: ColorRect
+var gacha_pity_label: Label
+var gacha_odds_label: Label
+var gacha_result_label: Label
+var gacha_result_grid: GridContainer
+var gacha_roll_one_button: Button
+var gacha_roll_ten_button: Button
 var crucible_reserve_grid: GridContainer
 var crucible_target_grid: GridContainer
 var crucible_donor_grid: GridContainer
@@ -172,6 +180,8 @@ var crucible_target_id := ""
 var crucible_donor_ids: Array = []
 var collection_instances: Array = []
 var crucible_notice := ""
+var gacha_pity := 0
+var gacha_results: Array = []
 var mission_list: Control
 var mission_map_texture: TextureRect
 var mission_act_buttons: Array[Button] = []
@@ -316,6 +326,7 @@ func _ready() -> void:
 	_load_battle_settings()
 	completed_missions = CampaignStoreScript.load_completed()
 	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
+	gacha_pity = GachaStoreScript.load_pity()
 	_sync_collection()
 	squad_names = SquadStoreScript.load_instance_squad(roster, collection_instances)
 	player_conductor_skill = SquadStoreScript.load_conductor_skill(ConductorSkillsScript.SKILLS)
@@ -466,6 +477,7 @@ func _build_interface() -> void:
 	_build_mission_select()
 	_build_dialogue_overlay()
 	_build_kinetic_crucible()
+	_build_gacha()
 	_build_hover_card()
 	_build_replay_controls()
 	_build_replay_squad_overlay()
@@ -1520,7 +1532,7 @@ func _build_main_menu() -> void:
 	var layout := VBoxContainer.new()
 	layout.custom_minimum_size = Vector2(420, 600)
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override("separation", 12)
+	layout.add_theme_constant_override("separation", 8)
 	plaque.add_child(layout)
 
 	var title := Label.new()
@@ -1560,6 +1572,10 @@ func _build_main_menu() -> void:
 	var squad := _menu_action("FORMATION COMMAND")
 	squad.pressed.connect(_open_squad_from_menu)
 	layout.add_child(squad)
+
+	var gacha := _menu_action("UNIT REQUISITION")
+	gacha.pressed.connect(_open_gacha)
+	layout.add_child(gacha)
 
 	var crucible := _menu_action("KINETIC CRUCIBLE")
 	crucible.pressed.connect(_open_kinetic_crucible)
@@ -2126,6 +2142,220 @@ func _build_kinetic_crucible() -> void:
 	crucible_merge_button.pressed.connect(_merge_crucible_units)
 	actions.add_child(crucible_merge_button)
 
+func _build_gacha() -> void:
+	gacha_overlay = ColorRect.new()
+	gacha_overlay.color = Color.TRANSPARENT
+	gacha_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	gacha_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	gacha_overlay.visible = false
+	add_child(gacha_overlay)
+	_add_overlay_background(
+		gacha_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.035, 0.025, 0.02, 0.78)
+	)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 70)
+	margin.add_theme_constant_override("margin_right", 70)
+	margin.add_theme_constant_override("margin_top", 34)
+	margin.add_theme_constant_override("margin_bottom", 34)
+	gacha_overlay.add_child(margin)
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 10)
+	margin.add_child(layout)
+
+	var title := Label.new()
+	title.text = "UNIT REQUISITION"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", UIThemeScript.title_color())
+	layout.add_child(title)
+	var subtitle := Label.new()
+	subtitle.text = "TUNE THE RELAY · ACQUIRE PLAYABLE CHASSIS · NO CURRENCY COST YET"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 12)
+	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	layout.add_child(subtitle)
+
+	var status_panel := PanelContainer.new()
+	layout.add_child(status_panel)
+	var status_layout := VBoxContainer.new()
+	status_layout.add_theme_constant_override("separation", 4)
+	status_panel.add_child(status_layout)
+	gacha_pity_label = Label.new()
+	gacha_pity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gacha_pity_label.add_theme_font_size_override("font_size", 17)
+	gacha_pity_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	status_layout.add_child(gacha_pity_label)
+	gacha_odds_label = Label.new()
+	gacha_odds_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gacha_odds_label.add_theme_font_size_override("font_size", 12)
+	gacha_odds_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	status_layout.add_child(gacha_odds_label)
+
+	var result_scroll := ScrollContainer.new()
+	result_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	result_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	layout.add_child(result_scroll)
+	var result_center := CenterContainer.new()
+	result_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	result_scroll.add_child(result_center)
+	gacha_result_grid = GridContainer.new()
+	gacha_result_grid.columns = 5
+	gacha_result_grid.add_theme_constant_override("h_separation", 8)
+	gacha_result_grid.add_theme_constant_override("v_separation", 8)
+	result_center.add_child(gacha_result_grid)
+
+	gacha_result_label = Label.new()
+	gacha_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gacha_result_label.add_theme_font_size_override("font_size", 13)
+	gacha_result_label.add_theme_color_override("font_color", Color("#70e0a1"))
+	layout.add_child(gacha_result_label)
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 12)
+	layout.add_child(actions)
+	var back := Button.new()
+	back.text = "BACK TO MENU"
+	back.custom_minimum_size = Vector2(180, 46)
+	back.pressed.connect(_show_main_menu)
+	actions.add_child(back)
+	gacha_roll_one_button = Button.new()
+	gacha_roll_one_button.text = "ROLL 1"
+	gacha_roll_one_button.custom_minimum_size = Vector2(180, 46)
+	gacha_roll_one_button.pressed.connect(_perform_gacha_roll.bind(1))
+	actions.add_child(gacha_roll_one_button)
+	gacha_roll_ten_button = Button.new()
+	gacha_roll_ten_button.text = "ROLL 10"
+	gacha_roll_ten_button.custom_minimum_size = Vector2(180, 46)
+	gacha_roll_ten_button.pressed.connect(_perform_gacha_roll.bind(10))
+	actions.add_child(gacha_roll_ten_button)
+
+func _open_gacha() -> void:
+	main_menu_overlay.visible = false
+	gacha_overlay.visible = true
+	gacha_pity = GachaStoreScript.load_pity()
+	gacha_result_label.text = (
+		"Requisitions are free while currency integration is pending."
+		if gacha_results.is_empty() else gacha_result_label.text
+	)
+	_refresh_gacha_status()
+
+func _perform_gacha_roll(count: int, fixed_rolls: Array = []) -> void:
+	var inventory_before := CampaignStoreScript.inventory_counts(
+		roster, earned_reward_units
+	)
+	var batch := GachaStoreScript.roll_batch(roster, count, gacha_pity, fixed_rolls)
+	var rolled_results: Array = batch.get("results", [])
+	if rolled_results.is_empty():
+		gacha_result_label.text = "No playable units are available for requisition."
+		return
+	var awarded_names: Array = []
+	var new_count := 0
+	var top_tier_count := 0
+	gacha_results = []
+	for result_value in rolled_results:
+		var result: Dictionary = result_value.duplicate(true)
+		var unit_name: String = result.name
+		var previous_copies := int(inventory_before.get(unit_name, 0))
+		result.is_new = previous_copies == 0
+		result.copy_count = previous_copies + 1
+		inventory_before[unit_name] = result.copy_count
+		new_count += 1 if result.is_new else 0
+		top_tier_count += 1 if int(result.stars) >= GachaStoreScript.PITY_RESET_MIN_STARS else 0
+		awarded_names.append(unit_name)
+		gacha_results.append(result)
+	earned_reward_units = CampaignStoreScript.award_rewards(
+		awarded_names, roster, earned_reward_units
+	)
+	gacha_pity = int(batch.get("pity", gacha_pity))
+	GachaStoreScript.save_pity(gacha_pity)
+	_sync_collection()
+	_rebuild_gacha_results()
+	gacha_result_label.text = "%d UNIT%s ACQUIRED · %d NEW · %d DUPLICATE%s" % [
+		gacha_results.size(),
+		"" if gacha_results.size() == 1 else "S",
+		new_count,
+		gacha_results.size() - new_count,
+		" · %d TOP-TIER" % top_tier_count if top_tier_count > 0 else ""
+	]
+	_refresh_gacha_status()
+
+func _rebuild_gacha_results() -> void:
+	for child in gacha_result_grid.get_children():
+		gacha_result_grid.remove_child(child)
+		child.queue_free()
+	for result in gacha_results:
+		var unit := UnitCatalogScript.by_name(result.name)
+		if unit == null:
+			continue
+		var card: SquadCard = SquadCardScript.new()
+		card.custom_minimum_size = Vector2(200, 145)
+		card.clip_contents = true
+		var portrait_texture := _unit_icon_at_size(unit.icon, 64)
+		card.configure(
+			unit.name, "reward", portrait_texture, -1, unit.kind
+		)
+		var details := VBoxContainer.new()
+		details.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		details.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		details.offset_left = 8
+		details.offset_top = 6
+		details.offset_right = -8
+		details.offset_bottom = -6
+		details.add_theme_constant_override("separation", 0)
+		card.add_child(details)
+		var portrait := TextureRect.new()
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		portrait.custom_minimum_size = Vector2(0, 68)
+		portrait.texture = portrait_texture
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		details.add_child(portrait)
+		var name_label := Label.new()
+		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		name_label.text = unit.name.to_upper()
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_label.add_theme_font_size_override("font_size", 11)
+		details.add_child(name_label)
+		var stars_label := Label.new()
+		stars_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stars_label.text = "★".repeat(unit.stars)
+		stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		stars_label.add_theme_font_size_override("font_size", 12)
+		stars_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+		details.add_child(stars_label)
+		var acquisition_label := Label.new()
+		acquisition_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		acquisition_label.text = "%s · COPY %d" % [
+			"NEW" if result.is_new else "DUPLICATE", int(result.copy_count)
+		]
+		acquisition_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		acquisition_label.add_theme_font_size_override("font_size", 10)
+		acquisition_label.add_theme_color_override(
+			"font_color", Color("#70e0a1") if result.is_new else UIThemeScript.title_color()
+		)
+		details.add_child(acquisition_label)
+		card.tooltip_text = "View %s details" % unit.name
+		_connect_card_details(card, unit.to_dict())
+		gacha_result_grid.add_child(card)
+
+func _refresh_gacha_status() -> void:
+	var odds := GachaStoreScript.rarity_odds(roster, gacha_pity)
+	var top_tier_chance := float(odds.get(5, 0.0)) + float(odds.get(6, 0.0))
+	gacha_pity_label.text = "PITY · %d / %d FAILED PULLS · NEXT TOP-TIER CHANCE %.1f%%" % [
+		gacha_pity,
+		GachaStoreScript.HARD_PITY_PULL,
+		top_tier_chance * 100.0
+	]
+	gacha_odds_label.text = (
+		"Battle reward weights: each additional star halves per-unit weight · "
+		+ "5★ %.1f%% · 6★ %.1f%% · every miss boosts both weights by 10%% · pull 50 guaranteed"
+	) % [float(odds.get(5, 0.0)) * 100.0, float(odds.get(6, 0.0)) * 100.0]
+
 func _open_kinetic_crucible() -> void:
 	main_menu_overlay.visible = false
 	crucible_overlay.visible = true
@@ -2455,7 +2685,7 @@ func _unit_with_instance(unit: UnitData, instance: Dictionary) -> Dictionary:
 func _menu_action(label: String) -> Button:
 	var button := Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(360, 52)
+	button.custom_minimum_size = Vector2(360, 46)
 	button.add_theme_font_size_override("font_size", 17)
 	return button
 
@@ -2490,6 +2720,7 @@ func _show_interlude(mission_id: int, return_action: String) -> bool:
 	mission_overlay.visible = false
 	squad_overlay.visible = false
 	crucible_overlay.visible = false
+	gacha_overlay.visible = false
 	dialogue_overlay.visible = true
 	var scene_background := _dialogue_texture(scene.get("background", ""))
 	dialogue_backdrop.texture = scene_background if scene_background != null else MAIN_MENU_BACKGROUND
@@ -2744,6 +2975,7 @@ func _show_main_menu() -> void:
 	main_menu_overlay.visible = true
 	mission_overlay.visible = false
 	crucible_overlay.visible = false
+	gacha_overlay.visible = false
 	squad_overlay.visible = false
 	dialogue_overlay.visible = false
 	overlay.visible = false

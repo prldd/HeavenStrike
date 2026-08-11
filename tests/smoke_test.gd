@@ -12,6 +12,7 @@ const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const ConductorSkillsScript = preload("res://scripts/conductor_skills.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const LegacyContentMigrationScript = preload("res://scripts/legacy_content_migration.gd")
@@ -1067,6 +1068,38 @@ func _init() -> void:
 	assert("Flux Weaver-210" not in CampaignStoreScript.REWARD_UNITS)
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.0) == "Relay Lancer-003")
 	assert(CampaignStoreScript.roll_reward(0, roster, 0.999) == "Relay Battery-004")
+	var gacha_fixture := [
+		{"name": "Low", "stars": 1},
+		{"name": "High", "stars": 5},
+		{"name": "Highest", "stars": 6}
+	]
+	assert(GachaStoreScript.battle_reward_weight(1) == 32.0)
+	assert(GachaStoreScript.battle_reward_weight(5) == 2.0)
+	assert(GachaStoreScript.battle_reward_weight(6) == 1.0)
+	var base_gacha_odds := GachaStoreScript.rarity_odds(gacha_fixture, 0)
+	var raised_gacha_odds := GachaStoreScript.rarity_odds(gacha_fixture, 10)
+	assert(is_equal_approx(base_gacha_odds[5], 2.0 / 35.0))
+	assert(is_equal_approx(base_gacha_odds[6], 1.0 / 35.0))
+	assert(raised_gacha_odds[5] + raised_gacha_odds[6] > (
+		base_gacha_odds[5] + base_gacha_odds[6]
+	))
+	var missed_pull := GachaStoreScript.roll_once(gacha_fixture, 0, 0.0)
+	assert(missed_pull.name == "Low" and missed_pull.pity_after == 1)
+	var hard_pity_pull := GachaStoreScript.roll_once(
+		gacha_fixture, GachaStoreScript.HARD_PITY_PULL - 1, 0.0
+	)
+	assert(hard_pity_pull.stars >= 5)
+	assert(hard_pity_pull.pity_reset and hard_pity_pull.pity_after == 0)
+	var sequential_pulls := GachaStoreScript.roll_batch(
+		gacha_fixture, 3, GachaStoreScript.HARD_PITY_PULL - 2, [0.0, 0.0, 0.0]
+	)
+	assert(sequential_pulls.results[0].pity_after == GachaStoreScript.HARD_PITY_PULL - 1)
+	assert(sequential_pulls.results[1].pity_reset)
+	assert(sequential_pulls.results[2].pity_after == 1)
+	assert(sequential_pulls.pity == 1)
+	assert(GachaStoreScript.save_pity(12))
+	assert(GachaStoreScript.load_pity() == 12)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
 	assert(CampaignStoreScript.reward_summary(2) == "Random: Relay Bastion-001, Relay Blade-002, Relay Lancer-003, Helio Mender-049, Cinder Blade-015")
 	assert(CampaignStoreScript.reward_summary(3) == "Random: Relay Battery-004, Relay Weaver-005, Relay Mender-006, Zephyr Lancer-037")
 	assert(CampaignStoreScript.reward_summary(7) == "Random: Relay Weaver-005, Relay Lancer-009, Relay Bastion-001, Cinder Blade-015, Cinder Lancer-017, Cinder Lancer-018, Zephyr Mender-208, Zephyr Mender-209")

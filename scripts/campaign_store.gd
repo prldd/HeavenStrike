@@ -106,10 +106,14 @@ static func load_reward_units(roster: Array) -> Array:
 	return result
 
 static func award_reward(unit_name: String, roster: Array, earned: Array) -> Array:
+	return award_rewards([unit_name], roster, earned)
+
+static func award_rewards(unit_names: Array, roster: Array, earned: Array) -> Array:
 	var valid_names: Array = roster.map(func(unit): return unit.name)
 	var result: Array = earned.duplicate()
-	if unit_name in valid_names:
-		result.append(unit_name)
+	for unit_name in unit_names:
+		if unit_name in valid_names:
+			result.append(unit_name)
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("meta", "version", SAVE_VERSION)
