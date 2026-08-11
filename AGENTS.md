@@ -162,6 +162,11 @@ The project follows `.editorconfig` and `.gitattributes`:
 - `assets/units/portraits/` — exactly 224 generated 160×160 portrait PNGs.
 - `assets/units/full/` — exactly 224 original full-body sprites used on the battlefield.
 - `assets/dialogue/original_sources/` and `assets/dialogue/portraits/` — original supporting-cast source atlas and keyed portraits.
+- `assets/units/attack/<art id>/attack_<1..6>.png` — optional per-unit attack animation frames extracted from generated video clips. When all six imported frames exist for a unit's art id, `BoardView` swaps them in during unit and Conductor attacks (progress driven by `unit_attack_frame_progress`) and skips the overlapping generic class effect; units without frames keep the static-sprite lunge and class effect. Frames share the idle sprite's canvas size and foot line. Generate them with the Python pipeline:
+  ```bash
+  .tools/anim-pipeline-venv/Scripts/python.exe tools/attack_anim/extract_attack_frames.py --video <clip.mp4> --art-id 241
+  ```
+  Install `tools/attack_anim/requirements.txt` into the gitignored `.tools/anim-pipeline-venv`; `ffmpeg` must be on PATH. The script requires exactly six timestamps (override with `--times` in seconds), crops letterbox bars, keys out the white background and gray ground shadow, and rescales/re-anchors every frame onto the idle sprite's canvas — the scale comes from the last (settled) frame, feet aligned to the idle sprite's foot line. It also writes a `preview.png` contact sheet into the output directory for review; `preview.png` is not loaded by the game. Open Godot after extraction so the PNGs are imported for export-safe runtime loading. `tests/attack_animation_visual_check.gd` directly exercises art ID 241 without depending on player save data.
 - `assets/IMAGEPROMPTS.md` — original generation briefs and provenance rules.
 - Menu and operations-map backgrounds are at the repository root under `assets/`. Battlefield stage art lives under `assets/boards/`: practice/tutorial uses the training hall, while `BoardView.set_campaign_mission()` selects Relay excavation, proving circuit, faction crossroads, coalition front, or Caelis sanctum by mission range. Normalize all runtime boards from `assets/boards/original_sources/` with `./tools/godot-headless.sh --script res://tools/build_board_background_art.gd`.
 

@@ -30,6 +30,8 @@ const PERSPECTIVE_TOP_SCALE := 0.86
 const ROW_DEPTHS := [0.0, 0.28, 0.62, 1.0]
 const UNIT_ART_CELL_SCALE := 1.82
 const UNIT_FOOT_INSET := 8.0
+const ATTACK_FRAMES_DIR := "res://assets/units/attack"
+const ATTACK_FRAME_COUNT := 6
 const READY_PULSE_FREQUENCY := 0.32
 const GRID_BRASS := Color("#b99a64")
 const GRID_PLAYER_ENAMEL := Color("#78b9c2")
@@ -88,7 +90,9 @@ var commander_effect_tween: Tween
 var unit_visual_offsets: Dictionary = {}
 var unit_flash_strength: Dictionary = {}
 var unit_defeat_strength: Dictionary = {}
+var unit_attack_frame_progress: Dictionary = {}
 var full_unit_texture_cache: Dictionary = {}
+var attack_frame_texture_cache: Dictionary = {}
 var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
@@ -331,6 +335,9 @@ func animate_attack(
 	var effect_cells := attack_effect_cells(actor, target, unit_kind)
 	var impact_cells := _attack_impact_cells(actor, target, unit_kind, effect_cells)
 	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
+	var frames := _attack_frames_for(actor)
+	if not frames.is_empty():
+		return _animate_attack_frames(actor_id, frames.size(), duration)
 	return _animate_attack_effect(
 		origin, destination, unit_kind, effect_cells, impact_cells, duration,
 		strike_index, strike_count, false
@@ -349,6 +356,9 @@ func animate_commander_attack(
 		_grid_rect().get_center().y
 	)
 	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
+	var frames := _attack_frames_for(actor)
+	if not frames.is_empty():
+		return _animate_attack_frames(actor_id, frames.size(), duration)
 	return _animate_attack_effect(
 		origin, destination, unit_kind, [], [], duration,
 		strike_index, strike_count, true
@@ -464,6 +474,51 @@ func _animate_attack_effect(
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_callback(_clear_attack_effect)
 	return tween.finished
+
+## Returns the generated per-unit attack frames for the unit's art id, or an
+## empty array when the unit has no generated frames. Frames live in
+## assets/units/attack/<art id>/attack_<1..6>.png and are loaded through the
+## import pipeline so the textures remain available in exported builds. The
+## result (including empties) is memoized per art id.
+func _attack_frames_for(unit: Dictionary) -> Array:
+	var icon_id: int = unit.get("icon", 0)
+	if icon_id < 1:
+		return []
+	var art_id: int = UnitCatalogScript.art_id(icon_id)
+	if attack_frame_texture_cache.has(art_id):
+		return attack_frame_texture_cache[art_id]
+	var frames: Array = []
+	var dir_path := "%s/%03d" % [ATTACK_FRAMES_DIR, art_id]
+	for index in range(1, ATTACK_FRAME_COUNT + 1):
+		var path := "%s/attack_%d.png" % [dir_path, index]
+		if not ResourceLoader.exists(path, "Texture2D"):
+			frames = []
+			break
+		var texture := ResourceLoader.load(path, "Texture2D") as Texture2D
+		if texture == null:
+			frames = []
+			break
+		frames.append(texture)
+	attack_frame_texture_cache[art_id] = frames
+	return frames
+
+func _animate_attack_frames(actor_id: int, frame_count: int, duration: float) -> Signal:
+	unit_attack_frame_progress[actor_id] = 0.0
+	queue_redraw()
+	var tween := create_tween()
+	tween.tween_method(
+		_set_unit_attack_frame_progress.bind(actor_id), 0.0, float(frame_count), duration
+	)
+	tween.tween_callback(_clear_unit_attack_frame_progress.bind(actor_id))
+	return tween.finished
+
+func _set_unit_attack_frame_progress(progress: float, actor_id: int) -> void:
+	unit_attack_frame_progress[actor_id] = progress
+	queue_redraw()
+
+func _clear_unit_attack_frame_progress(actor_id: int) -> void:
+	unit_attack_frame_progress.erase(actor_id)
+	queue_redraw()
 
 func animate_heal(actor_id: int, target_id: int, duration: float = 0.32) -> Signal:
 	var actor = _unit_by_id(actor_id)
@@ -1757,6 +1812,14 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	if texture == null:
 		_draw_missing_unit_art(unit, rect)
 		return
+	# Generated attack frames replace the idle art while an attack tween runs.
+	# They share the idle sprite's canvas size and character placement, so the
+	# swap does not change the drawn rect.
+	var frame_progress: float = unit_attack_frame_progress.get(unit.id, -1.0)
+	if frame_progress >= 0.0:
+		var frames := _attack_frames_for(unit)
+		if not frames.is_empty():
+			texture = frames[clampi(int(frame_progress), 0, frames.size() - 1)]
 	# Use the full generated canvas so deliberately small characters remain
 	# relatively small instead of being normalized by alpha-bound cropping.
 	var content_rect := Rect2(Vector2.ZERO, texture.get_size())
