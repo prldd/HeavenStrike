@@ -1080,6 +1080,15 @@ func _init() -> void:
 	var raised_gacha_odds := GachaStoreScript.rarity_odds(gacha_fixture, 10)
 	assert(is_equal_approx(base_gacha_odds[5], 2.0 / 35.0))
 	assert(is_equal_approx(base_gacha_odds[6], 1.0 / 35.0))
+	var full_roster_gacha_odds := GachaStoreScript.rarity_odds(roster, 0)
+	assert(is_equal_approx(full_roster_gacha_odds[1], 32.0 / 63.0))
+	assert(is_equal_approx(full_roster_gacha_odds[2], 16.0 / 63.0))
+	assert(is_equal_approx(
+		full_roster_gacha_odds[1] + full_roster_gacha_odds[2], 48.0 / 63.0
+	))
+	assert(is_equal_approx(
+		full_roster_gacha_odds[5] + full_roster_gacha_odds[6], 3.0 / 63.0
+	))
 	assert(raised_gacha_odds[5] + raised_gacha_odds[6] > (
 		base_gacha_odds[5] + base_gacha_odds[6]
 	))

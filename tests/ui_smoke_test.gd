@@ -940,7 +940,7 @@ func _run() -> void:
 	assert(game.gacha_overlay.visible)
 	assert(not game.main_menu_overlay.visible)
 	assert(game.gacha_pity_label.text.contains("PITY"))
-	assert(game.gacha_odds_label.text.contains("Battle reward weights"))
+	assert(game.gacha_odds_label.text.contains("Battle rarity curve"))
 	game._perform_gacha_roll(10, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 	assert(game.gacha_results.size() == 10)
 	assert(game.gacha_result_grid.get_child_count() == 10)

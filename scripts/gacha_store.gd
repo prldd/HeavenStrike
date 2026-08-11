@@ -29,7 +29,8 @@ static func save_pity(pity: int) -> bool:
 	)
 	return config.save(SAVE_PATH) == OK
 
-## Uses the exact per-unit rarity weight used by campaign battle rewards.
+## Uses the same rarity curve as campaign battle rewards. Candidate weights are
+## normalized within a tier so a large high-rarity catalog cannot overpower it.
 static func battle_reward_weight(stars: int) -> float:
 	return float(1 << (6 - clampi(stars, 1, 6)))
 
@@ -46,9 +47,10 @@ static func adjusted_weight(stars: int, pity: int) -> float:
 static func rarity_odds(candidates: Array, pity: int) -> Dictionary:
 	var weights := {}
 	var total_weight := 0.0
+	var rarity_counts := _rarity_counts(candidates)
 	for unit in candidates:
 		var stars := _unit_stars(unit)
-		var weight := adjusted_weight(stars, pity)
+		var weight := adjusted_weight(stars, pity) / float(rarity_counts[stars])
 		weights[stars] = float(weights.get(stars, 0.0)) + weight
 		total_weight += weight
 	var odds := {}
@@ -66,8 +68,10 @@ static func roll_once(candidates: Array, pity: int, roll: float = -1.0) -> Dicti
 	var clean_pity := clampi(pity, 0, HARD_PITY_PULL - 1)
 	var weights: Array[float] = []
 	var total_weight := 0.0
+	var rarity_counts := _rarity_counts(candidates)
 	for unit in candidates:
-		var weight := adjusted_weight(_unit_stars(unit), clean_pity)
+		var stars := _unit_stars(unit)
+		var weight := adjusted_weight(stars, clean_pity) / float(rarity_counts[stars])
 		weights.append(weight)
 		total_weight += weight
 	if total_weight <= 0.0:
@@ -110,3 +114,10 @@ static func roll_batch(
 static func _unit_stars(unit) -> int:
 	var stars_value = unit.get("stars")
 	return clampi(int(stars_value if stars_value != null else 1), 1, 6)
+
+static func _rarity_counts(candidates: Array) -> Dictionary:
+	var counts := {}
+	for unit in candidates:
+		var stars := _unit_stars(unit)
+		counts[stars] = int(counts.get(stars, 0)) + 1
+	return counts

@@ -2352,7 +2352,7 @@ func _refresh_gacha_status() -> void:
 		top_tier_chance * 100.0
 	]
 	gacha_odds_label.text = (
-		"Battle reward weights: each additional star halves per-unit weight · "
+		"Battle rarity curve: each additional star halves tier weight · "
 		+ "5★ %.1f%% · 6★ %.1f%% · every miss boosts both weights by 10%% · pull 50 guaranteed"
 	) % [float(odds.get(5, 0.0)) * 100.0, float(odds.get(6, 0.0)) * 100.0]
 

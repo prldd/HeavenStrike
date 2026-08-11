@@ -67,8 +67,9 @@ assets required by the prototype.
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Conductor information
 - Authored mission reward pools with Star-Rarity weighting and persistent unlocks
-- Full-roster Unit Requisition with battle-equivalent rarity weights, sequential
-  single/ten-pulls, persistent soft pity, and a 50-pull top-tier guarantee
+- Full-roster Unit Requisition with the battle rarity curve normalized across
+  tiers, sequential single/ten-pulls, persistent soft pity, and a 50-pull
+  top-tier guarantee
 - 112 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, copy count, and explicit
   NEW UNIT or DUPLICATE progression status
