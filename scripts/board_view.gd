@@ -36,6 +36,13 @@ const GRID_PLAYER_ENAMEL := Color("#78b9c2")
 const GRID_ENEMY_ENAMEL := Color("#bd7675")
 const DEPLOY_GREEN := Color("#70e0a1")
 const DEPLOY_GREEN_BRIGHT := Color("#c4ffda")
+const VFX_INK := Color("#302b28")
+const VFX_STEEL := Color("#a9aaa4")
+const VFX_HIGHLIGHT := Color("#fff0c8")
+const VFX_BRASS := Color("#b58a45")
+const VFX_EMBER := Color("#d66f38")
+const VFX_SMOKE := Color("#665e55")
+const VFX_STEAM := Color("#d9d0bc")
 const STAGE_TRAINING := "training"
 const STAGE_RELAY := "relay_excavation"
 const STAGE_PROVING := "proving_circuit"
@@ -304,12 +311,13 @@ func animate_attack(
 	var target = _unit_by_id(target_id)
 	if actor == null or target == null:
 		return get_tree().process_frame
-	var origin := _cell_rect(actor.row, actor.col).get_center()
-	var destination := _cell_rect(target.row, target.col).get_center()
+	var origin := _unit_art_rect(actor).get_center()
+	var destination := _unit_art_rect(target).get_center()
 	var effect_cells := attack_effect_cells(actor, target, unit_kind)
+	var impact_cells := _attack_impact_cells(actor, target, unit_kind, effect_cells)
 	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
 	return _animate_attack_effect(
-		origin, destination, unit_kind, effect_cells, duration,
+		origin, destination, unit_kind, effect_cells, impact_cells, duration,
 		strike_index, strike_count, false
 	)
 
@@ -320,27 +328,55 @@ func animate_commander_attack(
 	var actor = _unit_by_id(actor_id)
 	if actor == null:
 		return get_tree().process_frame
-	var origin := _cell_rect(actor.row, actor.col).get_center()
+	var origin := _unit_art_rect(actor).get_center()
 	var destination := Vector2(
 		size.x - 82.0 if commander_side == 1 else 82.0,
 		_grid_rect().get_center().y
 	)
 	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
 	return _animate_attack_effect(
-		origin, destination, unit_kind, [], duration,
+		origin, destination, unit_kind, [], [], duration,
 		strike_index, strike_count, true
 	)
 
-## Returns every board cell touched by the class animation. Long-range attacks
-## pulse every cell in their authored range; Arc Burst also fans into the four
-## orthogonally adjacent cells around its primary target.
+## Returns the spatial path used to stage a class animation. Rail Volley crosses
+## every authored range cell; Arc Burst uses the primary impact and its adjacent
+## blast coordinates. These cells remain internal and are never drawn as UI.
 func attack_effect_cells(actor: Dictionary, target: Dictionary, unit_kind: String) -> Array:
-	var cells: Array = BattleRulesScript.attack_cells(actor)
+	var target_cell := Vector2i(target.col, target.row)
+	var cells: Array = (
+		BattleRulesScript.attack_cells(actor)
+		if unit_kind == "Artillerist" else [target_cell]
+	)
 	if unit_kind == "Channeler":
 		for cell in BattleRulesScript.blast_cells(target):
 			if cell != Vector2i(actor.col, actor.row) and cell not in cells:
 				cells.append(cell)
 	return cells
+
+func _attack_impact_cells(
+	actor: Dictionary, target: Dictionary, unit_kind: String, effect_cells: Array
+) -> Array:
+	var impact_cells: Array = [Vector2i(target.col, target.row)]
+	if unit_kind not in ["Artillerist", "Channeler"]:
+		return impact_cells
+	var splash_cells: Array = BattleRulesScript.blast_cells(target)
+	for unit in units:
+		if unit.id == target.id or unit.side == actor.side:
+			continue
+		var cell := Vector2i(unit.col, unit.row)
+		if (
+			unit_kind == "Artillerist" and cell in effect_cells
+			or unit_kind == "Channeler" and cell in splash_cells
+		):
+			impact_cells.append(cell)
+	return impact_cells
+
+func _attack_cell_center(cell: Vector2i) -> Vector2:
+	for unit in units:
+		if unit.row == cell.y and unit.col == cell.x:
+			return _unit_art_rect(unit).get_center()
+	return _cell_rect(cell.y, cell.x).get_center()
 
 func _animate_attack_pose(
 	actor_id: int, unit_kind: String, origin: Vector2, destination: Vector2,
@@ -392,13 +428,15 @@ func _animate_attack_pose(
 
 func _animate_attack_effect(
 	origin: Vector2, destination: Vector2, unit_kind: String, cells: Array,
-	duration: float, strike_index: int, strike_count: int, commander: bool
+	impact_cells: Array, duration: float, strike_index: int,
+	strike_count: int, commander: bool
 ) -> Signal:
 	attack_effect = {
 		"origin": origin,
 		"destination": destination,
 		"kind": unit_kind,
 		"cells": cells.duplicate(),
+		"impact_cells": impact_cells.duplicate(),
 		"strike_index": strike_index,
 		"strike_count": maxi(1, strike_count),
 		"commander": commander
@@ -855,8 +893,6 @@ func _draw() -> void:
 		)
 	_draw_mana_indicator(Vector2(82, grid.get_center().y - 92), player_mana_text, false)
 	_draw_mana_indicator(Vector2(size.x - 82, grid.get_center().y - 92), enemy_mana_text, true)
-	_draw_attack_range_overlay()
-
 	for unit in units:
 		if unit.id == selected_unit_id:
 			_draw_selection(unit)
@@ -1157,172 +1193,325 @@ func _draw_attack_effect() -> void:
 	var origin: Vector2 = attack_effect.get("origin", Vector2.ZERO)
 	var destination: Vector2 = attack_effect.get("destination", Vector2.ZERO)
 	var cells: Array = attack_effect.get("cells", [])
+	var impact_cells: Array = attack_effect.get("impact_cells", [])
 	var strike_index: int = attack_effect.get("strike_index", 0)
-	var strike_count: int = attack_effect.get("strike_count", 1)
 	match kind:
 		"Strider":
-			_draw_strider_attack(destination, progress, strike_index, strike_count)
+			_draw_strider_attack(destination, progress, strike_index)
 		"Duelist":
 			_draw_duelist_attack(origin, destination, progress)
 		"Warden":
 			_draw_warden_attack(origin, destination, progress)
 		"Artillerist", "Transport":
-			_draw_artillerist_attack(origin, destination, cells, progress)
+			_draw_artillerist_attack(
+				origin, destination, cells, impact_cells, progress
+			)
 		"Channeler":
-			_draw_channeler_attack(origin, destination, cells, progress)
+			_draw_channeler_attack(origin, destination, impact_cells, progress)
 		"Lifebinder":
 			_draw_lifebinder_attack(origin, destination, progress)
 		_:
 			_draw_lifebinder_attack(origin, destination, progress)
 
-func _draw_attack_range_overlay() -> void:
-	if attack_effect.is_empty():
-		return
-	var kind: String = attack_effect.get("kind", "")
-	var cells: Array = attack_effect.get("cells", [])
-	_draw_attack_range_cells(
-		cells, attack_effect_progress, UnitCatalogScript.class_color(kind)
-	)
-
-func _draw_attack_range_cells(cells: Array, progress: float, color: Color) -> void:
-	if cells.is_empty():
-		return
-	for index in cells.size():
-		var cell: Vector2i = cells[index]
-		var delay := float(index) / maxf(float(cells.size()), 1.0) * 0.42
-		var pulse := clampf((progress - delay) * 5.0, 0.0, 1.0)
-		pulse *= clampf((1.0 - progress) * 3.2, 0.0, 1.0)
-		if pulse <= 0.0:
-			continue
-		_draw_cell_shape(
-			cell.y, cell.x, Color(color, 0.08 + pulse * 0.14),
-			Color(color, 0.32 + pulse * 0.58), 1.5 + pulse * 2.5, 0.08
-		)
-		var center := _cell_rect(cell.y, cell.x).get_center()
-		draw_circle(center, 5.0 + pulse * 10.0, Color(color, pulse * 0.14))
-		draw_arc(center, 7.0 + pulse * 12.0, 0, TAU, 20, Color(color, pulse * 0.62), 2.0)
-
 func _draw_strider_attack(
-	destination: Vector2, progress: float, strike_index: int, strike_count: int
+	destination: Vector2, progress: float, strike_index: int
 ) -> void:
-	var impact := clampf((progress - 0.25) * 2.4, 0.0, 1.0)
-	var fade := clampf((1.0 - progress) * 2.8, 0.0, 1.0)
-	var strength := impact * fade
+	var sweep := clampf((progress - 0.16) * 2.5, 0.0, 1.0)
+	var strength := sin(sweep * PI)
 	if strength <= 0.0:
 		return
 	var second_blade := strike_index % 2 == 1
-	var color := Color("#ff80cf") if second_blade else Color("#52cfff")
-	var diagonal := Vector2(22.0, 30.0)
+	var start_angle := -2.55 if not second_blade else -0.45
+	var end_angle := start_angle + PI * 1.18 * sweep
+	var radius := 30.0 + sweep * 13.0
+	# Dark painted edge, steel body, and a narrow hot glint make this read as
+	# a physical blade crossing the chassis rather than a colored UI streak.
+	draw_arc(
+		destination, radius, start_angle, end_angle, 24,
+		Color(VFX_INK, strength * 0.78), 10.0, true
+	)
+	draw_arc(
+		destination, radius, start_angle, end_angle, 24,
+		Color(VFX_STEEL, strength), 6.0, true
+	)
+	draw_arc(
+		destination, radius - 2.0, start_angle, end_angle, 24,
+		Color(VFX_HIGHLIGHT, strength * 0.92), 2.0, true
+	)
+	var slash_direction := Vector2(0.62, 0.78)
 	if second_blade:
-		diagonal.x *= -1.0
+		slash_direction.x *= -1.0
+	var slash_normal := Vector2(-slash_direction.y, slash_direction.x)
+	var slash_length := 42.0 + sweep * 15.0
+	var painted_trail := PackedVector2Array([
+		destination - slash_direction * slash_length + slash_normal * 8.0,
+		destination + slash_direction * slash_length + slash_normal * 2.0,
+		destination + slash_direction * slash_length - slash_normal * 2.0,
+		destination - slash_direction * slash_length - slash_normal * 8.0,
+	])
+	draw_colored_polygon(painted_trail, Color(VFX_STEEL, strength * 0.48))
 	draw_line(
-		destination - diagonal, destination + diagonal,
-		Color(color, strength), 4.0 + strength * 3.0, true
+		destination - slash_direction * slash_length,
+		destination + slash_direction * slash_length,
+		Color(VFX_INK, strength * 0.72), 9.0, true
 	)
 	draw_line(
-		destination - diagonal * 0.72 + Vector2(0, 9),
-		destination + diagonal * 0.72 + Vector2(0, 9),
-		Color(Color.WHITE, strength * 0.8), 2.0, true
+		destination - slash_direction * slash_length * 0.92,
+		destination + slash_direction * slash_length * 0.92,
+		Color(VFX_HIGHLIGHT, strength), 3.0, true
 	)
-	if strike_count > 1:
-		var numeral := "II" if strike_index % 2 == 1 else "I"
-		draw_string(
-			get_theme_default_font(), destination + Vector2(-8, -38), numeral,
-			HORIZONTAL_ALIGNMENT_CENTER, 16, 14, Color(color, strength)
-		)
+	_draw_sparks(destination, sweep, 0.85)
 
 func _draw_duelist_attack(origin: Vector2, destination: Vector2, progress: float) -> void:
 	var direction := (destination - origin).normalized()
-	var center := destination - direction * 5.0
-	var impact := clampf((progress - 0.22) * 2.7, 0.0, 1.0)
-	var strength := impact * clampf((1.0 - progress) * 3.0, 0.0, 1.0)
+	var center := destination - direction * 7.0
+	var sweep := clampf((progress - 0.12) * 1.85, 0.0, 1.0)
+	var strength := sin(sweep * PI)
 	var angle := direction.angle()
 	draw_arc(
-		center, 31.0 + impact * 12.0, angle - 1.35, angle + 1.35,
-		24, Color("#ff8a54", strength), 6.0, true
+		center, 34.0 + sweep * 18.0, angle - 1.65, angle - 1.65 + sweep * 3.3,
+		30, Color(VFX_INK, strength * 0.72), 13.0, true
 	)
 	draw_arc(
-		center, 24.0 + impact * 8.0, angle - 1.15, angle + 1.15,
-		20, Color("#fff1c2", strength * 0.85), 2.0, true
+		center, 34.0 + sweep * 18.0, angle - 1.65, angle - 1.65 + sweep * 3.3,
+		30, Color(VFX_BRASS, strength * 0.92), 8.0, true
 	)
+	draw_arc(
+		center, 31.0 + sweep * 18.0, angle - 1.58, angle - 1.58 + sweep * 3.15,
+		28, Color(VFX_HIGHLIGHT, strength), 2.5, true
+	)
+	_draw_sparks(destination + direction * 5.0, sweep, 1.0)
 
 func _draw_warden_attack(origin: Vector2, destination: Vector2, progress: float) -> void:
 	var direction := (destination - origin).normalized()
-	var charge := clampf(progress * 2.0, 0.0, 1.0)
-	var impact := clampf((progress - 0.38) * 3.0, 0.0, 1.0)
-	var fade := clampf((1.0 - progress) * 3.2, 0.0, 1.0)
+	var charge := clampf(progress / 0.48, 0.0, 1.0)
+	var charge_fade := clampf((0.62 - progress) * 4.0, 0.0, 1.0)
+	var ram_end := origin.lerp(destination, charge)
 	draw_line(
-		origin, origin.lerp(destination, charge),
-		Color("#56d98d", fade * 0.72), 9.0, true
+		origin, ram_end, Color(VFX_INK, charge_fade * 0.74), 13.0, true
 	)
-	for ring in 3:
-		var radius := 13.0 + impact * (18.0 + ring * 12.0)
-		draw_arc(
-			destination - direction * 4.0, radius, 0, TAU, 28,
-			Color("#8ff0b6", impact * fade * (0.75 - ring * 0.16)), 4.0 - ring * 0.7
-		)
+	draw_line(
+		origin, ram_end, Color(VFX_STEEL, charge_fade), 7.0, true
+	)
+	for collar in 3:
+		var collar_center := ram_end - direction * float(collar * 8)
+		draw_circle(collar_center, 4.5, Color(VFX_BRASS, charge_fade * 0.9))
+	var impact := clampf((progress - 0.42) / 0.58, 0.0, 1.0)
+	_draw_impact_cracks(destination, impact, 1.15)
+	var shock_strength := sin(impact * PI)
+	draw_arc(
+		destination + Vector2(0, 10), 14.0 + impact * 48.0, 0, TAU,
+		30, Color(VFX_BRASS, shock_strength * 0.58), 4.0, true
+	)
+	_draw_smoke_burst(destination, impact, 1.0)
+	_draw_sparks(destination, impact, 1.1)
 
 func _draw_artillerist_attack(
-	origin: Vector2, destination: Vector2, cells: Array, progress: float
+	origin: Vector2, destination: Vector2, cells: Array,
+	impact_cells: Array, progress: float
 ) -> void:
 	var rail_end := destination
 	if not cells.is_empty():
 		var last_cell: Vector2i = cells[-1]
-		rail_end = _cell_rect(last_cell.y, last_cell.x).get_center()
-	var beam_progress := clampf(progress * 1.75, 0.0, 1.0)
-	var beam_end := origin.lerp(rail_end, beam_progress)
-	var fade := clampf((1.0 - progress) * 3.6, 0.0, 1.0)
-	draw_line(origin, beam_end, Color("#f2c44f", fade * 0.30), 14.0, true)
-	draw_line(origin, beam_end, Color("#ffd166", fade * 0.92), 5.0, true)
-	draw_line(origin, beam_end, Color(Color.WHITE, fade * 0.88), 1.5, true)
-	var bolt := origin.lerp(rail_end, beam_progress)
-	draw_circle(bolt, 7.0, Color("#fff1ad", fade))
+		rail_end = Vector2(_cell_rect(last_cell.y, last_cell.x).get_center().x, origin.y)
+	var direction := (rail_end - origin).normalized()
+	var perpendicular := Vector2(-direction.y, direction.x)
+	var raw_travel := (progress - 0.08) / 0.62
+	var travel := clampf(raw_travel, 0.0, 1.0)
+	var bullet := origin.lerp(rail_end, travel)
+	var tracer_start := origin.lerp(rail_end, maxf(0.0, travel - 0.18))
+	var shot_fade := clampf((0.82 - progress) * 3.8, 0.0, 1.0)
+	var muzzle_phase := clampf(progress / 0.24, 0.0, 1.0)
+	_draw_muzzle_flash(origin, direction, muzzle_phase)
+	draw_line(tracer_start, bullet, Color(VFX_INK, shot_fade * 0.82), 7.0, true)
+	draw_line(tracer_start, bullet, Color(VFX_BRASS, shot_fade), 3.5, true)
+	draw_line(tracer_start, bullet, Color(VFX_HIGHLIGHT, shot_fade), 1.2, true)
+	for wake_index in 4:
+		var wake_travel := maxf(0.0, travel - 0.045 * float(wake_index + 1))
+		var wake_center := origin.lerp(rail_end, wake_travel)
+		var wake_alpha := shot_fade * (0.22 - float(wake_index) * 0.04)
+		draw_circle(
+			wake_center, 4.5 + float(wake_index) * 1.6,
+			Color(VFX_SMOKE, wake_alpha)
+		)
+	var bullet_points := PackedVector2Array([
+		bullet + direction * 13.0,
+		bullet + perpendicular * 4.5,
+		bullet - direction * 9.0,
+		bullet - perpendicular * 4.5,
+	])
+	draw_colored_polygon(bullet_points, Color(VFX_HIGHLIGHT, shot_fade))
+	var total_distance := maxf(origin.distance_to(rail_end), 1.0)
+	if impact_cells.is_empty():
+		impact_cells = [destination]
+	for cell_value in impact_cells:
+		var impact_center: Vector2
+		if cell_value is Vector2i:
+			impact_center = _attack_cell_center(cell_value)
+		else:
+			impact_center = cell_value
+		var hit_ratio := origin.distance_to(impact_center) / total_distance
+		var impact_phase := clampf((raw_travel - hit_ratio) * 2.0, 0.0, 0.999)
+		_draw_sparks(impact_center, impact_phase, 1.05)
+		_draw_smoke_burst(impact_center, impact_phase, 0.62)
 
 func _draw_channeler_attack(
-	origin: Vector2, destination: Vector2, cells: Array, progress: float
+	origin: Vector2, destination: Vector2, impact_cells: Array, progress: float
 ) -> void:
-	var travel := clampf(progress / 0.56, 0.0, 1.0)
+	var travel := clampf(progress / 0.46, 0.0, 1.0)
 	var orb := origin.lerp(destination, travel)
-	var travel_fade := clampf((0.68 - progress) * 4.5, 0.0, 1.0)
-	draw_line(origin, orb, Color("#b987ff", travel_fade * 0.35), 4.0, true)
-	draw_circle(orb, 12.0, Color("#c99cff", travel_fade * 0.88))
-	draw_arc(orb, 18.0, 0, TAU, 24, Color("#efe0ff", travel_fade), 3.0)
-	var burst := clampf((progress - 0.48) * 2.8, 0.0, 1.0)
-	var burst_fade := burst * clampf((1.0 - progress) * 3.2, 0.0, 1.0)
-	if burst_fade <= 0.0:
-		return
-	for cell in cells:
-		var cell_center := _cell_rect(cell.y, cell.x).get_center()
-		if cell_center.distance_to(destination) <= 1.0:
-			continue
-		draw_line(
-			destination, destination.lerp(cell_center, burst),
-			Color("#c99cff", burst_fade * 0.52), 3.0, true
+	var travel_fade := clampf((0.55 - progress) * 4.8, 0.0, 1.0)
+	var trail_start := origin.lerp(destination, maxf(0.0, travel - 0.16))
+	draw_line(trail_start, orb, Color(VFX_INK, travel_fade * 0.7), 7.0, true)
+	draw_line(trail_start, orb, Color(VFX_BRASS, travel_fade), 3.0, true)
+	draw_circle(orb, 10.0, Color(VFX_INK, travel_fade))
+	draw_arc(orb, 13.0, progress * 10.0, progress * 10.0 + PI * 1.6, 18,
+		Color(VFX_HIGHLIGHT, travel_fade), 3.0)
+	for satellite in 3:
+		var angle := progress * 13.0 + float(satellite) * TAU / 3.0
+		draw_circle(
+			orb + Vector2.from_angle(angle) * 16.0, 3.0,
+			Color(VFX_BRASS, travel_fade)
 		)
-	draw_circle(destination, 18.0 + burst * 34.0, Color("#b987ff", burst_fade * 0.17))
-	draw_arc(
-		destination, 16.0 + burst * 43.0, 0, TAU, 32,
-		Color("#e4c8ff", burst_fade), 4.0
-	)
+	var burst := clampf((progress - 0.40) / 0.60, 0.0, 1.0)
+	if impact_cells.is_empty():
+		impact_cells = [destination]
+	for index in impact_cells.size():
+		var cell_value = impact_cells[index]
+		var center: Vector2
+		if cell_value is Vector2i:
+			center = _attack_cell_center(cell_value)
+		else:
+			center = cell_value
+		var local_burst := clampf(burst * 1.35 - float(index) * 0.08, 0.0, 1.0)
+		_draw_explosion(center, local_burst, 1.18 if index == 0 else 0.82)
 
 func _draw_lifebinder_attack(origin: Vector2, destination: Vector2, progress: float) -> void:
-	var travel := clampf(progress * 1.45, 0.0, 1.0)
+	var travel := clampf((progress - 0.05) / 0.66, 0.0, 1.0)
 	var direction := (destination - origin).normalized()
 	var perpendicular := Vector2(-direction.y, direction.x)
-	var fade := clampf((1.0 - progress) * 3.5, 0.0, 1.0)
+	var fade := clampf((0.84 - progress) * 4.0, 0.0, 1.0)
 	for strand in [-1.0, 0.0, 1.0]:
-		var wave: float = sin(travel * TAU * 1.5 + strand * 1.6) * 8.0 * strand
-		var point: Vector2 = origin.lerp(destination, travel) + perpendicular * wave
-		var launch: Vector2 = origin + perpendicular * strand * 6.0
-		var tail := origin.lerp(destination, maxf(0.0, travel - 0.13))
-		draw_line(launch, point, Color("#ff77b2", fade * 0.26), 1.5, true)
-		draw_line(tail, point, Color("#ff77b2", fade * 0.65), 2.5, true)
-		draw_circle(point, 4.0 + absf(strand) * 2.0, Color("#ffc1df", fade * 0.9))
-	var impact := clampf((progress - 0.58) * 3.0, 0.0, 1.0)
-	draw_arc(
-		destination, 11.0 + impact * 25.0, 0, TAU, 24,
-		Color("#ff9dca", impact * fade), 3.0
-	)
+		var phase_offset: float = strand * 0.055
+		var needle_travel := clampf(travel + phase_offset, 0.0, 1.0)
+		var weave: float = sin(needle_travel * TAU * 1.6 + strand) * 7.0 * strand
+		var point: Vector2 = origin.lerp(destination, needle_travel) + perpendicular * weave
+		var tail := point - direction * 22.0
+		draw_line(tail, point, Color(VFX_INK, fade * 0.78), 5.0, true)
+		draw_line(tail, point, Color(VFX_STEEL, fade), 2.5, true)
+		draw_circle(point, 3.2, Color(VFX_HIGHLIGHT, fade))
+		draw_line(
+			point - direction * 7.0, point - direction * 12.0 + perpendicular * 5.0,
+			Color(VFX_BRASS, fade), 2.0, true
+		)
+		draw_line(
+			point - direction * 7.0, point - direction * 12.0 - perpendicular * 5.0,
+			Color(VFX_BRASS, fade), 2.0, true
+		)
+	var impact := clampf((progress - 0.60) / 0.40, 0.0, 1.0)
+	_draw_steam_burst(destination, impact, 0.9)
+	_draw_sparks(destination, impact, 0.55)
+
+func _draw_muzzle_flash(origin: Vector2, direction: Vector2, phase: float) -> void:
+	var strength := sin(clampf(phase, 0.0, 1.0) * PI)
+	if strength <= 0.0:
+		return
+	var perpendicular := Vector2(-direction.y, direction.x)
+	var points := PackedVector2Array([
+		origin + direction * (28.0 + strength * 12.0),
+		origin + perpendicular * 11.0 * strength,
+		origin - direction * 5.0,
+		origin - perpendicular * 11.0 * strength,
+	])
+	draw_colored_polygon(points, Color(VFX_EMBER, strength * 0.88))
+	var core := PackedVector2Array([
+		origin + direction * (20.0 + strength * 8.0),
+		origin + perpendicular * 5.0 * strength,
+		origin,
+		origin - perpendicular * 5.0 * strength,
+	])
+	draw_colored_polygon(core, Color(VFX_HIGHLIGHT, strength))
+
+func _draw_sparks(center: Vector2, phase: float, scale: float) -> void:
+	var clamped_phase := clampf(phase, 0.0, 1.0)
+	var strength := sin(clamped_phase * PI)
+	if strength <= 0.0:
+		return
+	for ray in 8:
+		var angle := float(ray) * TAU / 8.0 + 0.21
+		var direction := Vector2.from_angle(angle)
+		var inner := center + direction * (5.0 + clamped_phase * 5.0) * scale
+		var outer := center + direction * (
+			12.0 + float(ray % 3) * 6.0 + clamped_phase * 17.0
+		) * scale
+		draw_line(inner, outer, Color(VFX_EMBER, strength * 0.9), 2.4, true)
+		if ray % 2 == 0:
+			draw_circle(outer, 2.2 * scale, Color(VFX_HIGHLIGHT, strength))
+
+func _draw_smoke_burst(center: Vector2, phase: float, scale: float) -> void:
+	var clamped_phase := clampf(phase, 0.0, 1.0)
+	var fade := pow(1.0 - clamped_phase, 1.4)
+	if fade <= 0.0:
+		return
+	for puff in 6:
+		var angle := float(puff) * TAU / 6.0 + 0.35
+		var drift := Vector2.from_angle(angle) * clamped_phase * 28.0 * scale
+		drift.y -= clamped_phase * 12.0 * scale
+		var puff_center := center + drift
+		var radius := (7.0 + float(puff % 3) * 3.0 + clamped_phase * 10.0) * scale
+		draw_circle(puff_center, radius, Color(VFX_SMOKE, fade * 0.24))
+		draw_arc(
+			puff_center, radius, -2.8, 0.35, 14,
+			Color(VFX_INK, fade * 0.34), 1.5, true
+		)
+
+func _draw_steam_burst(center: Vector2, phase: float, scale: float) -> void:
+	var clamped_phase := clampf(phase, 0.0, 1.0)
+	var fade := pow(1.0 - clamped_phase, 1.25)
+	if fade <= 0.0:
+		return
+	for puff in 5:
+		var angle := -PI * 0.85 + float(puff) * PI * 0.42
+		var drift := Vector2.from_angle(angle) * clamped_phase * 34.0 * scale
+		drift.y -= clamped_phase * 13.0 * scale
+		var radius := (6.0 + float(puff % 2) * 4.0 + clamped_phase * 13.0) * scale
+		draw_circle(center + drift, radius, Color(VFX_STEAM, fade * 0.32))
+		draw_arc(
+			center + drift, radius, 0, TAU, 16,
+			Color(VFX_INK, fade * 0.22), 1.2, true
+		)
+
+func _draw_explosion(center: Vector2, phase: float, scale: float) -> void:
+	var clamped_phase := clampf(phase, 0.0, 1.0)
+	var flash := sin(clamped_phase * PI)
+	if flash <= 0.0:
+		return
+	var points := PackedVector2Array()
+	for point_index in 16:
+		var angle := float(point_index) * TAU / 16.0
+		var alternating := 1.0 if point_index % 2 == 0 else 0.48
+		var radius := (12.0 + clamped_phase * 34.0) * alternating * scale
+		points.append(center + Vector2.from_angle(angle) * radius)
+	draw_colored_polygon(points, Color(VFX_EMBER, flash * 0.58))
+	draw_circle(center, (8.0 + clamped_phase * 14.0) * scale,
+		Color(VFX_HIGHLIGHT, flash * 0.88))
+	_draw_sparks(center, clamped_phase, scale)
+	_draw_smoke_burst(center, clamped_phase, scale)
+
+func _draw_impact_cracks(center: Vector2, phase: float, scale: float) -> void:
+	var clamped_phase := clampf(phase, 0.0, 1.0)
+	var fade := sin(clamped_phase * PI)
+	if fade <= 0.0:
+		return
+	for crack in 7:
+		var angle := float(crack) * TAU / 7.0 + 0.18
+		var direction := Vector2.from_angle(angle)
+		var side := Vector2(-direction.y, direction.x)
+		var elbow := center + direction * (13.0 + clamped_phase * 13.0) * scale
+		var tip := elbow + direction * (10.0 + float(crack % 3) * 4.0) * scale
+		tip += side * (-4.0 if crack % 2 == 0 else 4.0) * scale
+		draw_line(center, elbow, Color(VFX_INK, fade * 0.72), 3.0, true)
+		draw_line(elbow, tip, Color(VFX_INK, fade * 0.52), 2.0, true)
 
 ## Bluish ring around a Protected unit so the status reads at a glance,
 ## complementing the S-badge in _draw_status_badges.

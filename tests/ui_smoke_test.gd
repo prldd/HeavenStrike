@@ -274,8 +274,8 @@ func _run() -> void:
 	assert(game.board.has_method("set_practice_mode"))
 	assert(game.board.has_method("set_campaign_mission"))
 	assert(game.board.has_method("set_opponent_identity"))
-	# Basic-attack visuals cover every authored range cell. Mage attacks add the
-	# Arc Burst cross around the primary target without duplicating lane cells.
+	# Rail Volley crosses every authored range cell. Arc Burst stages its primary
+	# explosion and adjacent blasts without exposing those cells as board UI.
 	var ranged_visual_actor := {
 		"id": 501, "side": 0, "row": 1, "col": 1, "range": 3
 	}
@@ -286,7 +286,7 @@ func _run() -> void:
 	assert(game.board.attack_effect_cells(
 		ranged_visual_actor, ranged_visual_target, "Channeler"
 	) == [
-		Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1),
+		Vector2i(3, 1), Vector2i(2, 1), Vector2i(4, 1),
 		Vector2i(3, 0), Vector2i(3, 2)
 	])
 	game.board.set_opponent_identity("Asha Vale", "Grand Circuit Champion")
