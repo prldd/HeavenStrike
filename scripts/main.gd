@@ -2946,17 +2946,29 @@ func _apply_next_replay_event() -> void:
 			if attacker != null and target != null:
 				_play_attack_sound(attacker.kind)
 				await board.animate_attack(
-					attacker.id, target.id, attacker.kind, _animation_duration(0.20)
+					attacker.id, target.id, attacker.kind, _animation_duration(0.20),
+					event.get("strike_index", 0), event.get("strike_count", 1)
 				)
 				target.hp = event.get("target_hp", target.hp)
-				await board.animate_hit(target.id, _animation_duration(0.14))
+				var replay_hit_ids: Array = [target.id]
+				for secondary_id in event.get("secondary_target_ids", []):
+					var secondary_target = _unit_by_id(secondary_id)
+					if secondary_target == null:
+						continue
+					var secondary_hps: Dictionary = event.get("secondary_target_hps", {})
+					secondary_target.hp = secondary_hps.get(
+						str(secondary_id), secondary_target.hp
+					)
+					replay_hit_ids.append(secondary_id)
+				await board.animate_hits(replay_hit_ids, _animation_duration(0.14))
 		"commander_attack":
 			var commander_attacker = _unit_by_id(event.get("actor_id", -1))
 			var side: int = event.get("side", ENEMY)
 			if commander_attacker != null:
 				await board.animate_commander_attack(
 					commander_attacker.id, side, commander_attacker.kind,
-					_animation_duration(0.20)
+					_animation_duration(0.20), event.get("strike_index", 0),
+					event.get("strike_count", 1)
 				)
 			if side == PLAYER:
 				player_hp = event.get(
@@ -4916,21 +4928,25 @@ func _activate_unit(actor: Dictionary) -> void:
 				# Twin Actuator keeps its unused hit after defeating the last unit
 				# between the Scout and the opposing Conductor.
 				if _commander_in_range(actor):
-					await _attack_commander(actor, strikes - hit)
+					await _attack_commander(actor, strikes - hit, hit, strikes)
 				break
 			_play_attack_sound(actor.kind)
-			await board.animate_attack(actor.id, target.id, actor.kind, _animation_duration(0.24))
+			await board.animate_attack(
+				actor.id, target.id, actor.kind, _animation_duration(0.24), hit, strikes
+			)
 			var damage_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
 				target, actor.atk, actor
 			)
 			var damage_dealt: int = damage_result.damage
 			var was_protected: bool = damage_result.get("protected", false)
 			var immunity: String = damage_result.get("immunity", "")
-			battle_simulator.record("attack", {
+			var attack_event: Dictionary = battle_simulator.record("attack", {
 				"actor_id": actor.id,
 				"target_id": target.id,
 				"damage": damage_dealt,
-				"target_hp": target.hp
+				"target_hp": target.hp,
+				"strike_index": hit,
+				"strike_count": strikes
 			})
 			if was_protected:
 				status_message = "%s's attack on %s is blocked by Protect." % [
@@ -4961,11 +4977,18 @@ func _activate_unit(actor: Dictionary) -> void:
 				impact_color = Color("#ffd166")
 			board.play_unit_effect(target.id, impact_label, impact_color)
 			var secondary_hits: Array = _apply_special_damage(actor, target)
-			battle_audio.play("hit")
-			await board.animate_hit(target.id, _animation_duration(0.18))
+			var hit_ids: Array = [target.id]
+			var secondary_target_hps := {}
 			for secondary_id in secondary_hits:
 				battle_audio.play("hit")
-				await board.animate_hit(secondary_id, _animation_duration(0.14))
+				hit_ids.append(secondary_id)
+				var secondary_target = _unit_by_id(secondary_id)
+				if secondary_target != null:
+					secondary_target_hps[str(secondary_id)] = secondary_target.hp
+			attack_event["secondary_target_ids"] = secondary_hits.duplicate()
+			attack_event["secondary_target_hps"] = secondary_target_hps
+			battle_audio.play("hit")
+			await board.animate_hits(hit_ids, _animation_duration(0.18))
 			if actor.kind == "Warden" and target.hp > 0:
 				BattleRulesScript.apply_taunt(target)
 				status_message += " Anchor Blow locks %s for 2 turns." % target.name
@@ -5101,20 +5124,29 @@ func _activate_unit(actor: Dictionary) -> void:
 			status_message += " Momentum Core grants +1 ATK."
 		return
 
-func _attack_commander(actor: Dictionary, strikes: int) -> void:
+func _attack_commander(
+	actor: Dictionary, strikes: int, starting_strike_index: int = 0,
+	total_strike_count: int = -1
+) -> void:
 	var commander_side := ENEMY if actor.side == PLAYER else PLAYER
 	var total_dealt := 0
+	if total_strike_count < 0:
+		total_strike_count = strikes
 	for hit in strikes:
+		var strike_index := starting_strike_index + hit
 		_play_attack_sound(actor.kind)
 		await board.animate_commander_attack(
-			actor.id, commander_side, actor.kind, _animation_duration(0.25)
+			actor.id, commander_side, actor.kind, _animation_duration(0.25),
+			strike_index, total_strike_count
 		)
 		var dealt := _damage_conductor(commander_side, actor.atk)
 		battle_simulator.record("commander_attack", {
 			"actor_id": actor.id,
 			"side": commander_side,
 			"damage": dealt,
-			"conductor_hp": enemy_hp if commander_side == ENEMY else player_hp
+			"conductor_hp": enemy_hp if commander_side == ENEMY else player_hp,
+			"strike_index": strike_index,
+			"strike_count": total_strike_count
 		})
 		total_dealt += dealt
 		status_message = "%s hits %s Conductor for %d." % [

@@ -265,13 +265,30 @@ func _run() -> void:
 	assert(game.board.has_method("animate_unit_move"))
 	assert(game.board.has_method("animate_attack"))
 	assert(game.board.has_method("animate_commander_attack"))
+	assert(game.board.has_method("attack_effect_cells"))
 	assert(game.board.has_method("animate_heal"))
 	assert(game.board.has_method("animate_hit"))
+	assert(game.board.has_method("animate_hits"))
 	assert(game.board.has_method("animate_defeat"))
 	assert(game.board.has_method("shake"))
 	assert(game.board.has_method("set_practice_mode"))
 	assert(game.board.has_method("set_campaign_mission"))
 	assert(game.board.has_method("set_opponent_identity"))
+	# Basic-attack visuals cover every authored range cell. Mage attacks add the
+	# Arc Burst cross around the primary target without duplicating lane cells.
+	var ranged_visual_actor := {
+		"id": 501, "side": 0, "row": 1, "col": 1, "range": 3
+	}
+	var ranged_visual_target := {"id": 502, "side": 1, "row": 1, "col": 3}
+	assert(game.board.attack_effect_cells(
+		ranged_visual_actor, ranged_visual_target, "Artillerist"
+	) == [Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1)])
+	assert(game.board.attack_effect_cells(
+		ranged_visual_actor, ranged_visual_target, "Channeler"
+	) == [
+		Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1),
+		Vector2i(3, 0), Vector2i(3, 2)
+	])
 	game.board.set_opponent_identity("Asha Vale", "Grand Circuit Champion")
 	assert(game.board.opponent_name == "Asha Vale")
 	assert(game.board.opponent_affiliation == "Grand Circuit Champion")
@@ -350,6 +367,13 @@ func _run() -> void:
 	assert(game.battle_simulator.events.filter(
 		func(event): return event.type == "commander_attack"
 	).size() == 1)
+	var split_twin_events: Array = game.battle_simulator.events.filter(
+		func(event): return event.type in ["attack", "commander_attack"]
+	)
+	assert(split_twin_events.size() == 2)
+	assert(split_twin_events[0].strike_index == 0)
+	assert(split_twin_events[1].strike_index == 1)
+	assert(split_twin_events.all(func(event): return event.strike_count == 2))
 	game.units.clear()
 	game.skip_animations = false
 	game._open_mission_select()

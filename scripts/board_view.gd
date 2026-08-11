@@ -84,6 +84,8 @@ var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
 var projectile_kind := ""
+var attack_effect: Dictionary = {}
+var attack_effect_progress := 0.0
 var shake_tween: Tween
 var reduced_motion := false
 var idle_animation_enabled := true
@@ -295,7 +297,8 @@ func animate_unit_move(
 	return tween.finished
 
 func animate_attack(
-	actor_id: int, target_id: int, unit_kind: String, duration: float = 0.24
+	actor_id: int, target_id: int, unit_kind: String, duration: float = 0.24,
+	strike_index: int = 0, strike_count: int = 1
 ) -> Signal:
 	var actor = _unit_by_id(actor_id)
 	var target = _unit_by_id(target_id)
@@ -303,27 +306,16 @@ func animate_attack(
 		return get_tree().process_frame
 	var origin := _cell_rect(actor.row, actor.col).get_center()
 	var destination := _cell_rect(target.row, target.col).get_center()
-	if unit_kind in ["Strider", "Duelist", "Warden"]:
-		var lunge_scale := 0.35 if reduced_motion else 1.0
-		var direction := (destination - origin).normalized()
-		var lunge := direction * minf(28.0, origin.distance_to(destination) * 0.22) * lunge_scale
-		# Wind up by pulling back from the target, then spring forward into the
-		# strike. The strike eases in so it accelerates through the hit.
-		var windup := -direction * minf(9.0, origin.distance_to(destination) * 0.08) * lunge_scale
-		duration *= 1.35
-		var tween := create_tween()
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, windup, duration * 0.30)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), windup, lunge, duration * 0.28)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.42)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_callback(_clear_unit_visual.bind(actor_id))
-		return tween.finished
-	return _animate_projectile(origin, destination, unit_kind, duration)
+	var effect_cells := attack_effect_cells(actor, target, unit_kind)
+	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
+	return _animate_attack_effect(
+		origin, destination, unit_kind, effect_cells, duration,
+		strike_index, strike_count, false
+	)
 
 func animate_commander_attack(
-	actor_id: int, commander_side: int, unit_kind: String, duration: float = 0.26
+	actor_id: int, commander_side: int, unit_kind: String, duration: float = 0.26,
+	strike_index: int = 0, strike_count: int = 1
 ) -> Signal:
 	var actor = _unit_by_id(actor_id)
 	if actor == null:
@@ -333,21 +325,92 @@ func animate_commander_attack(
 		size.x - 82.0 if commander_side == 1 else 82.0,
 		_grid_rect().get_center().y
 	)
-	if unit_kind in ["Strider", "Duelist", "Warden"]:
-		var direction := (destination - origin).normalized()
-		var lunge := direction * (10.0 if reduced_motion else 30.0)
-		var windup := -direction * (4.0 if reduced_motion else 11.0)
-		duration *= 1.35
-		var tween := create_tween()
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, windup, duration * 0.30)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), windup, lunge, duration * 0.28)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tween.tween_method(_set_unit_visual_offset.bind(actor_id), lunge, Vector2.ZERO, duration * 0.42)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_callback(_clear_unit_visual.bind(actor_id))
-		return tween.finished
-	return _animate_projectile(origin, destination, unit_kind, duration)
+	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
+	return _animate_attack_effect(
+		origin, destination, unit_kind, [], duration,
+		strike_index, strike_count, true
+	)
+
+## Returns every board cell touched by the class animation. Long-range attacks
+## pulse every cell in their authored range; Arc Burst also fans into the four
+## orthogonally adjacent cells around its primary target.
+func attack_effect_cells(actor: Dictionary, target: Dictionary, unit_kind: String) -> Array:
+	var cells: Array = BattleRulesScript.attack_cells(actor)
+	if unit_kind == "Channeler":
+		for cell in BattleRulesScript.blast_cells(target):
+			if cell != Vector2i(actor.col, actor.row) and cell not in cells:
+				cells.append(cell)
+	return cells
+
+func _animate_attack_pose(
+	actor_id: int, unit_kind: String, origin: Vector2, destination: Vector2,
+	duration: float, strike_index: int
+) -> void:
+	var direction := (destination - origin).normalized()
+	var motion_scale := 0.3 if reduced_motion else 1.0
+	var windup_distance := 7.0
+	var strike_distance := 15.0
+	match unit_kind:
+		"Strider":
+			windup_distance = 9.0
+			strike_distance = 30.0
+		"Duelist":
+			windup_distance = 12.0
+			strike_distance = 27.0
+		"Warden":
+			windup_distance = 6.0
+			strike_distance = 19.0
+		"Artillerist":
+			windup_distance = -10.0
+			strike_distance = -4.0
+		"Channeler":
+			windup_distance = 5.0
+			strike_distance = 10.0
+		"Lifebinder":
+			windup_distance = 4.0
+			strike_distance = 8.0
+		_:
+			windup_distance = 5.0
+			strike_distance = 10.0
+	var perpendicular := Vector2(-direction.y, direction.x)
+	var twin_offset := 0.0
+	if unit_kind == "Strider":
+		twin_offset = (-6.0 if strike_index % 2 == 0 else 6.0) * motion_scale
+	var windup := -direction * windup_distance * motion_scale + perpendicular * twin_offset
+	var strike := direction * strike_distance * motion_scale - perpendicular * twin_offset * 0.45
+	var tween := create_tween()
+	tween.tween_method(
+		_set_unit_visual_offset.bind(actor_id), Vector2.ZERO, windup, duration * 0.32
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_method(
+		_set_unit_visual_offset.bind(actor_id), windup, strike, duration * 0.25
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_method(
+		_set_unit_visual_offset.bind(actor_id), strike, Vector2.ZERO, duration * 0.43
+	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_clear_unit_visual.bind(actor_id))
+
+func _animate_attack_effect(
+	origin: Vector2, destination: Vector2, unit_kind: String, cells: Array,
+	duration: float, strike_index: int, strike_count: int, commander: bool
+) -> Signal:
+	attack_effect = {
+		"origin": origin,
+		"destination": destination,
+		"kind": unit_kind,
+		"cells": cells.duplicate(),
+		"strike_index": strike_index,
+		"strike_count": maxi(1, strike_count),
+		"commander": commander
+	}
+	attack_effect_progress = 0.0
+	queue_redraw()
+	var tween := create_tween()
+	tween.tween_method(
+		_set_attack_effect_progress, 0.0, 1.0, duration
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_callback(_clear_attack_effect)
+	return tween.finished
 
 func animate_heal(actor_id: int, target_id: int, duration: float = 0.32) -> Signal:
 	var actor = _unit_by_id(actor_id)
@@ -378,6 +441,17 @@ func animate_hit(unit_id: int, duration: float = 0.18) -> Signal:
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(_clear_unit_hit.bind(unit_id))
 	return tween.finished
+
+func animate_hits(unit_ids: Array, duration: float = 0.18) -> Signal:
+	var animated_ids: Array = []
+	for unit_id in unit_ids:
+		if unit_id in animated_ids or _unit_by_id(unit_id) == null:
+			continue
+		animated_ids.append(unit_id)
+		animate_hit(unit_id, duration)
+	if animated_ids.is_empty():
+		return get_tree().process_frame
+	return get_tree().create_timer(duration, false).timeout
 
 func animate_defeat(unit_id: int, duration: float = 0.28) -> Signal:
 	var unit = _unit_by_id(unit_id)
@@ -431,6 +505,15 @@ func _clear_unit_defeat(unit_id: int) -> void:
 
 func _set_projectile_progress(value: float) -> void:
 	projectile_progress = value
+	queue_redraw()
+
+func _set_attack_effect_progress(value: float) -> void:
+	attack_effect_progress = value
+	queue_redraw()
+
+func _clear_attack_effect() -> void:
+	attack_effect = {}
+	attack_effect_progress = 0.0
 	queue_redraw()
 
 func _set_unit_flash(value: float, unit_id: int) -> void:
@@ -772,6 +855,7 @@ func _draw() -> void:
 		)
 	_draw_mana_indicator(Vector2(82, grid.get_center().y - 92), player_mana_text, false)
 	_draw_mana_indicator(Vector2(size.x - 82, grid.get_center().y - 92), enemy_mana_text, true)
+	_draw_attack_range_overlay()
 
 	for unit in units:
 		if unit.id == selected_unit_id:
@@ -785,6 +869,7 @@ func _draw() -> void:
 	for unit in layered_units:
 		if unit.id in unit_effects:
 			_draw_effect(unit)
+	_draw_attack_effect()
 	_draw_projectile()
 
 	for target_row in targetable_rows:
@@ -1063,6 +1148,181 @@ func _draw_projectile() -> void:
 	draw_circle(projectile_position, radius + 5, Color(color, 0.14))
 	draw_circle(projectile_position, radius, Color(color, 0.88))
 	draw_arc(projectile_position, radius + 3, 0, TAU, 18, color, 2)
+
+func _draw_attack_effect() -> void:
+	if attack_effect.is_empty():
+		return
+	var progress := attack_effect_progress
+	var kind: String = attack_effect.get("kind", "")
+	var origin: Vector2 = attack_effect.get("origin", Vector2.ZERO)
+	var destination: Vector2 = attack_effect.get("destination", Vector2.ZERO)
+	var cells: Array = attack_effect.get("cells", [])
+	var strike_index: int = attack_effect.get("strike_index", 0)
+	var strike_count: int = attack_effect.get("strike_count", 1)
+	match kind:
+		"Strider":
+			_draw_strider_attack(destination, progress, strike_index, strike_count)
+		"Duelist":
+			_draw_duelist_attack(origin, destination, progress)
+		"Warden":
+			_draw_warden_attack(origin, destination, progress)
+		"Artillerist", "Transport":
+			_draw_artillerist_attack(origin, destination, cells, progress)
+		"Channeler":
+			_draw_channeler_attack(origin, destination, cells, progress)
+		"Lifebinder":
+			_draw_lifebinder_attack(origin, destination, progress)
+		_:
+			_draw_lifebinder_attack(origin, destination, progress)
+
+func _draw_attack_range_overlay() -> void:
+	if attack_effect.is_empty():
+		return
+	var kind: String = attack_effect.get("kind", "")
+	var cells: Array = attack_effect.get("cells", [])
+	_draw_attack_range_cells(
+		cells, attack_effect_progress, UnitCatalogScript.class_color(kind)
+	)
+
+func _draw_attack_range_cells(cells: Array, progress: float, color: Color) -> void:
+	if cells.is_empty():
+		return
+	for index in cells.size():
+		var cell: Vector2i = cells[index]
+		var delay := float(index) / maxf(float(cells.size()), 1.0) * 0.42
+		var pulse := clampf((progress - delay) * 5.0, 0.0, 1.0)
+		pulse *= clampf((1.0 - progress) * 3.2, 0.0, 1.0)
+		if pulse <= 0.0:
+			continue
+		_draw_cell_shape(
+			cell.y, cell.x, Color(color, 0.08 + pulse * 0.14),
+			Color(color, 0.32 + pulse * 0.58), 1.5 + pulse * 2.5, 0.08
+		)
+		var center := _cell_rect(cell.y, cell.x).get_center()
+		draw_circle(center, 5.0 + pulse * 10.0, Color(color, pulse * 0.14))
+		draw_arc(center, 7.0 + pulse * 12.0, 0, TAU, 20, Color(color, pulse * 0.62), 2.0)
+
+func _draw_strider_attack(
+	destination: Vector2, progress: float, strike_index: int, strike_count: int
+) -> void:
+	var impact := clampf((progress - 0.25) * 2.4, 0.0, 1.0)
+	var fade := clampf((1.0 - progress) * 2.8, 0.0, 1.0)
+	var strength := impact * fade
+	if strength <= 0.0:
+		return
+	var second_blade := strike_index % 2 == 1
+	var color := Color("#ff80cf") if second_blade else Color("#52cfff")
+	var diagonal := Vector2(22.0, 30.0)
+	if second_blade:
+		diagonal.x *= -1.0
+	draw_line(
+		destination - diagonal, destination + diagonal,
+		Color(color, strength), 4.0 + strength * 3.0, true
+	)
+	draw_line(
+		destination - diagonal * 0.72 + Vector2(0, 9),
+		destination + diagonal * 0.72 + Vector2(0, 9),
+		Color(Color.WHITE, strength * 0.8), 2.0, true
+	)
+	if strike_count > 1:
+		var numeral := "II" if strike_index % 2 == 1 else "I"
+		draw_string(
+			get_theme_default_font(), destination + Vector2(-8, -38), numeral,
+			HORIZONTAL_ALIGNMENT_CENTER, 16, 14, Color(color, strength)
+		)
+
+func _draw_duelist_attack(origin: Vector2, destination: Vector2, progress: float) -> void:
+	var direction := (destination - origin).normalized()
+	var center := destination - direction * 5.0
+	var impact := clampf((progress - 0.22) * 2.7, 0.0, 1.0)
+	var strength := impact * clampf((1.0 - progress) * 3.0, 0.0, 1.0)
+	var angle := direction.angle()
+	draw_arc(
+		center, 31.0 + impact * 12.0, angle - 1.35, angle + 1.35,
+		24, Color("#ff8a54", strength), 6.0, true
+	)
+	draw_arc(
+		center, 24.0 + impact * 8.0, angle - 1.15, angle + 1.15,
+		20, Color("#fff1c2", strength * 0.85), 2.0, true
+	)
+
+func _draw_warden_attack(origin: Vector2, destination: Vector2, progress: float) -> void:
+	var direction := (destination - origin).normalized()
+	var charge := clampf(progress * 2.0, 0.0, 1.0)
+	var impact := clampf((progress - 0.38) * 3.0, 0.0, 1.0)
+	var fade := clampf((1.0 - progress) * 3.2, 0.0, 1.0)
+	draw_line(
+		origin, origin.lerp(destination, charge),
+		Color("#56d98d", fade * 0.72), 9.0, true
+	)
+	for ring in 3:
+		var radius := 13.0 + impact * (18.0 + ring * 12.0)
+		draw_arc(
+			destination - direction * 4.0, radius, 0, TAU, 28,
+			Color("#8ff0b6", impact * fade * (0.75 - ring * 0.16)), 4.0 - ring * 0.7
+		)
+
+func _draw_artillerist_attack(
+	origin: Vector2, destination: Vector2, cells: Array, progress: float
+) -> void:
+	var rail_end := destination
+	if not cells.is_empty():
+		var last_cell: Vector2i = cells[-1]
+		rail_end = _cell_rect(last_cell.y, last_cell.x).get_center()
+	var beam_progress := clampf(progress * 1.75, 0.0, 1.0)
+	var beam_end := origin.lerp(rail_end, beam_progress)
+	var fade := clampf((1.0 - progress) * 3.6, 0.0, 1.0)
+	draw_line(origin, beam_end, Color("#f2c44f", fade * 0.30), 14.0, true)
+	draw_line(origin, beam_end, Color("#ffd166", fade * 0.92), 5.0, true)
+	draw_line(origin, beam_end, Color(Color.WHITE, fade * 0.88), 1.5, true)
+	var bolt := origin.lerp(rail_end, beam_progress)
+	draw_circle(bolt, 7.0, Color("#fff1ad", fade))
+
+func _draw_channeler_attack(
+	origin: Vector2, destination: Vector2, cells: Array, progress: float
+) -> void:
+	var travel := clampf(progress / 0.56, 0.0, 1.0)
+	var orb := origin.lerp(destination, travel)
+	var travel_fade := clampf((0.68 - progress) * 4.5, 0.0, 1.0)
+	draw_line(origin, orb, Color("#b987ff", travel_fade * 0.35), 4.0, true)
+	draw_circle(orb, 12.0, Color("#c99cff", travel_fade * 0.88))
+	draw_arc(orb, 18.0, 0, TAU, 24, Color("#efe0ff", travel_fade), 3.0)
+	var burst := clampf((progress - 0.48) * 2.8, 0.0, 1.0)
+	var burst_fade := burst * clampf((1.0 - progress) * 3.2, 0.0, 1.0)
+	if burst_fade <= 0.0:
+		return
+	for cell in cells:
+		var cell_center := _cell_rect(cell.y, cell.x).get_center()
+		if cell_center.distance_to(destination) <= 1.0:
+			continue
+		draw_line(
+			destination, destination.lerp(cell_center, burst),
+			Color("#c99cff", burst_fade * 0.52), 3.0, true
+		)
+	draw_circle(destination, 18.0 + burst * 34.0, Color("#b987ff", burst_fade * 0.17))
+	draw_arc(
+		destination, 16.0 + burst * 43.0, 0, TAU, 32,
+		Color("#e4c8ff", burst_fade), 4.0
+	)
+
+func _draw_lifebinder_attack(origin: Vector2, destination: Vector2, progress: float) -> void:
+	var travel := clampf(progress * 1.45, 0.0, 1.0)
+	var direction := (destination - origin).normalized()
+	var perpendicular := Vector2(-direction.y, direction.x)
+	var fade := clampf((1.0 - progress) * 3.5, 0.0, 1.0)
+	for strand in [-1.0, 0.0, 1.0]:
+		var wave: float = sin(travel * TAU * 1.5 + strand * 1.6) * 8.0 * strand
+		var point: Vector2 = origin.lerp(destination, travel) + perpendicular * wave
+		var launch: Vector2 = origin + perpendicular * strand * 6.0
+		var tail := origin.lerp(destination, maxf(0.0, travel - 0.13))
+		draw_line(launch, point, Color("#ff77b2", fade * 0.26), 1.5, true)
+		draw_line(tail, point, Color("#ff77b2", fade * 0.65), 2.5, true)
+		draw_circle(point, 4.0 + absf(strand) * 2.0, Color("#ffc1df", fade * 0.9))
+	var impact := clampf((progress - 0.58) * 3.0, 0.0, 1.0)
+	draw_arc(
+		destination, 11.0 + impact * 25.0, 0, TAU, 24,
+		Color("#ff9dca", impact * fade), 3.0
+	)
 
 ## Bluish ring around a Protected unit so the status reads at a glance,
 ## complementing the S-badge in _draw_status_badges.
