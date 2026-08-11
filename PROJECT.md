@@ -822,7 +822,12 @@ Each consecutive result below 5-star raises the relative weight of both 5-star
 and 6-star units by 10%. The 50th consecutive miss is a guaranteed 5-star or
 6-star result, and acquiring either tier resets the counter immediately,
 including midway through a ten-roll. Pity persists between sessions.
-Requisition has no cost until its currency economy is authored.
+Roll 1 costs 100 Requisition Credits and Roll 10 costs 1,000. A new profile
+receives a one-time 1,000-Credit starter grant. Each campaign mission grants
+100 Credits once after its first manual completion; repeat manual clears and
+all Autobattle clears continue awarding units but do not grant currency.
+Currency rewards use stable claim IDs so later rotating challenges can provide
+renewable income without duplicate claims or another wallet migration.
 
 The first release will not include paid energy or randomized stat growth.
 

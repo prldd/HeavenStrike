@@ -6,6 +6,7 @@ const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const GachaStoreScript = preload("res://scripts/gacha_store.gd")
+const RequisitionStoreScript = preload("res://scripts/requisition_store.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
@@ -18,6 +19,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(TutorialStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RequisitionStoreScript.SAVE_PATH))
 	BattleSettingsScript.save_settings({
 		"speed": 1.0,
 		"volume": 2,
@@ -666,6 +668,7 @@ func _run() -> void:
 	game._start_new_match()
 	var redeploy_squad: Array = game.squad_names.duplicate()
 	var rewards_before_replay: int = game.earned_reward_units.size()
+	var currency_before_manual_clear: int = game.requisition_currency
 	game.enemy_hp = 0
 	assert(game._check_game_over())
 	await process_frame
@@ -676,6 +679,10 @@ func _run() -> void:
 	assert(game.recent_reward_copy_count >= 2)
 	assert(game.reward_new_label.text.contains("DUPLICATE"))
 	assert(game.reward_new_label.text.contains("+5 MATCH POINTS"))
+	assert(game.requisition_currency == (
+		currency_before_manual_clear + RequisitionStoreScript.CAMPAIGN_MILESTONE_GRANT
+	))
+	assert(game.overlay_detail.text.contains("FIRST MANUAL CLEAR"))
 	assert(game.result_primary_button.text == "RETURN TO MENU")
 	assert(game.result_redeploy_button.visible)
 	assert(game.result_redeploy_button.text == "REDEPLOY MISSION")
@@ -945,6 +952,12 @@ func _run() -> void:
 	game._open_gacha()
 	assert(game.gacha_overlay.visible)
 	assert(not game.main_menu_overlay.visible)
+	var currency_before_gacha: int = game.requisition_currency
+	assert(currency_before_gacha >= RequisitionStoreScript.STARTER_GRANT)
+	assert(RequisitionStoreScript.has_claimed(
+		RequisitionStoreScript.campaign_milestone_claim_id(0)
+	))
+	assert(game.gacha_pity_label.text.contains("REQUISITION CREDITS"))
 	assert(game.gacha_pity_label.text.contains("PITY"))
 	assert(game.gacha_odds_label.text.contains("Battle rarity curve"))
 	game._perform_gacha_roll(10, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
@@ -952,12 +965,27 @@ func _run() -> void:
 	assert(game.gacha_result_grid.get_child_count() == 10)
 	assert(game.earned_reward_units.size() == rewards_before_gacha + 10)
 	assert(game.gacha_pity == 10)
+	assert(game.requisition_currency == (
+		currency_before_gacha - RequisitionStoreScript.TEN_PULL_COST
+	))
+	assert(game.gacha_roll_one_button.disabled == (
+		game.requisition_currency < RequisitionStoreScript.SINGLE_PULL_COST
+	))
+	assert(game.gacha_roll_ten_button.disabled)
+	if game.requisition_currency < RequisitionStoreScript.SINGLE_PULL_COST:
+		var hard_pity_credit := RequisitionStoreScript.claim("test:hard_pity", 100)
+		game.requisition_currency = hard_pity_credit.balance
+		game._refresh_gacha_status()
+	var currency_before_hard_pity: int = game.requisition_currency
 	game.gacha_pity = GachaStoreScript.HARD_PITY_PULL - 1
 	game._perform_gacha_roll(1, [0.0])
 	assert(game.gacha_results.size() == 1)
 	assert(game.gacha_results[0].stars >= 5)
 	assert(game.gacha_results[0].pity_reset)
 	assert(game.gacha_pity == 0)
+	assert(game.requisition_currency == (
+		currency_before_hard_pity - RequisitionStoreScript.SINGLE_PULL_COST
+	))
 	assert(GachaStoreScript.load_pity() == 0)
 	game._show_main_menu()
 	assert(not game.gacha_overlay.visible)
@@ -974,6 +1002,7 @@ func _run() -> void:
 	assert(game.squad_autobattle_button.visible)
 	assert(not game.squad_autobattle_button.disabled)
 	game._save_and_autobattle_mission()
+	var currency_before_autobattle: int = game.requisition_currency
 	assert(game.autobattle_active)
 	assert(game.campaign_battle)
 	assert(game.current_mission_id == 0)
@@ -990,11 +1019,14 @@ func _run() -> void:
 	if game.mission_finished:
 		assert(game.result_primary_button.text == "RETURN TO MENU")
 		assert(not game.recent_reward_name.is_empty())
+		assert(game.overlay_detail.text.contains("UNIT REWARD ONLY"))
 	else:
 		assert(game.overlay_title.text == game.LOSS_TITLE)
+	assert(game.requisition_currency == currency_before_autobattle)
 	game._show_main_menu()
 	assert(not game.autobattle_active)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RequisitionStoreScript.SAVE_PATH))
 	await create_timer(0.05).timeout
 	game.queue_free()
 	await process_frame

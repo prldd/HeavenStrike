@@ -19,6 +19,7 @@ const MissionRulesScript = preload("res://scripts/mission_rules.gd")
 const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const GachaStoreScript = preload("res://scripts/gacha_store.gd")
+const RequisitionStoreScript = preload("res://scripts/requisition_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
@@ -182,6 +183,7 @@ var crucible_donor_ids: Array = []
 var collection_instances: Array = []
 var crucible_notice := ""
 var gacha_pity := 0
+var requisition_currency := 0
 var gacha_results: Array = []
 var mission_list: Control
 var mission_map_texture: TextureRect
@@ -329,6 +331,8 @@ func _ready() -> void:
 	completed_missions = CampaignStoreScript.load_completed()
 	earned_reward_units = CampaignStoreScript.load_reward_units(roster)
 	gacha_pity = GachaStoreScript.load_pity()
+	var starter_claim := RequisitionStoreScript.ensure_starter_grant()
+	requisition_currency = int(starter_claim.balance)
 	_sync_collection()
 	squad_names = SquadStoreScript.load_instance_squad(roster, collection_instances)
 	player_conductor_skill = SquadStoreScript.load_conductor_skill(ConductorSkillsScript.SKILLS)
@@ -2213,7 +2217,7 @@ func _build_gacha() -> void:
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "TUNE THE RELAY · ACQUIRE PLAYABLE CHASSIS · NO CURRENCY COST YET"
+	subtitle.text = "TUNE THE RELAY · ACQUIRE PLAYABLE CHASSIS · PITY PERSISTS"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
@@ -2264,12 +2268,12 @@ func _build_gacha() -> void:
 	back.pressed.connect(_show_main_menu)
 	actions.add_child(back)
 	gacha_roll_one_button = Button.new()
-	gacha_roll_one_button.text = "ROLL 1"
+	gacha_roll_one_button.text = "ROLL 1 · %d" % RequisitionStoreScript.SINGLE_PULL_COST
 	gacha_roll_one_button.custom_minimum_size = Vector2(180, 46)
 	gacha_roll_one_button.pressed.connect(_perform_gacha_roll.bind(1))
 	actions.add_child(gacha_roll_one_button)
 	gacha_roll_ten_button = Button.new()
-	gacha_roll_ten_button.text = "ROLL 10"
+	gacha_roll_ten_button.text = "ROLL 10 · %d" % RequisitionStoreScript.TEN_PULL_COST
 	gacha_roll_ten_button.custom_minimum_size = Vector2(180, 46)
 	gacha_roll_ten_button.pressed.connect(_perform_gacha_roll.bind(10))
 	actions.add_child(gacha_roll_ten_button)
@@ -2278,13 +2282,24 @@ func _open_gacha() -> void:
 	main_menu_overlay.visible = false
 	gacha_overlay.visible = true
 	gacha_pity = GachaStoreScript.load_pity()
+	requisition_currency = RequisitionStoreScript.load_balance()
 	gacha_result_label.text = (
-		"Requisitions are free while currency integration is pending."
+		"Spend Requisition Credits to acquire new chassis and duplicate copies."
 		if gacha_results.is_empty() else gacha_result_label.text
 	)
 	_refresh_gacha_status()
 
 func _perform_gacha_roll(count: int, fixed_rolls: Array = []) -> void:
+	var pull_cost := RequisitionStoreScript.pull_cost(count)
+	if pull_cost < 0:
+		gacha_result_label.text = "Requisitions are available as Roll 1 or Roll 10."
+		return
+	if requisition_currency < pull_cost:
+		gacha_result_label.text = "INSUFFICIENT REQUISITION CREDITS · NEED %d" % (
+			pull_cost - requisition_currency
+		)
+		_refresh_gacha_status()
+		return
 	var inventory_before := CampaignStoreScript.inventory_counts(
 		roster, earned_reward_units
 	)
@@ -2293,6 +2308,13 @@ func _perform_gacha_roll(count: int, fixed_rolls: Array = []) -> void:
 	if rolled_results.is_empty():
 		gacha_result_label.text = "No playable units are available for requisition."
 		return
+	var spend_result := RequisitionStoreScript.spend(pull_cost)
+	if not spend_result.spent:
+		requisition_currency = int(spend_result.balance)
+		gacha_result_label.text = "REQUISITION COULD NOT BE COMPLETED."
+		_refresh_gacha_status()
+		return
+	requisition_currency = int(spend_result.balance)
 	var awarded_names: Array = []
 	var new_count := 0
 	var top_tier_count := 0
@@ -2387,11 +2409,19 @@ func _rebuild_gacha_results() -> void:
 func _refresh_gacha_status() -> void:
 	var odds := GachaStoreScript.rarity_odds(roster, gacha_pity)
 	var top_tier_chance := float(odds.get(5, 0.0)) + float(odds.get(6, 0.0))
-	gacha_pity_label.text = "PITY · %d / %d FAILED PULLS · NEXT TOP-TIER CHANCE %.1f%%" % [
+	gacha_pity_label.text = "%d %s · PITY %d / %d · NEXT TOP-TIER %.1f%%" % [
+		requisition_currency,
+		RequisitionStoreScript.CURRENCY_NAME,
 		gacha_pity,
 		GachaStoreScript.HARD_PITY_PULL,
 		top_tier_chance * 100.0
 	]
+	gacha_roll_one_button.disabled = (
+		requisition_currency < RequisitionStoreScript.SINGLE_PULL_COST
+	)
+	gacha_roll_ten_button.disabled = (
+		requisition_currency < RequisitionStoreScript.TEN_PULL_COST
+	)
 	gacha_odds_label.text = (
 		"Battle rarity curve: each additional star halves tier weight · "
 		+ "5★ %.1f%% · 6★ %.1f%% · every miss boosts both weights by 10%% · pull 50 guaranteed"
@@ -3699,6 +3729,7 @@ func _resume_mission() -> void:
 		return
 	_leave_tutorial()
 	campaign_battle = true
+	autobattle_active = bool(saved_run.get("autobattle", false))
 	board.set_campaign_mission(saved_run.mission_id)
 	current_mission_id = saved_run.mission_id
 	current_encounter_index = saved_run.encounter_index
@@ -3999,7 +4030,9 @@ func _start_new_match() -> void:
 			CampaignStoreScript.encounter_count(current_mission_id),
 			encounter.title
 		]
-		MissionRunStoreScript.save_run(current_mission_id, current_encounter_index, player_hp)
+		MissionRunStoreScript.save_run(
+			current_mission_id, current_encounter_index, player_hp, autobattle_active
+		)
 	for i in 4:
 		_draw_player_card()
 		_draw_enemy_card()
@@ -5866,6 +5899,7 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 	input_enabled = false
 	end_button.visible = false
 	var battle_rating: Dictionary = {}
+	var requisition_reward := 0
 	if player_won:
 		battle_rating = BattleResultsScript.calculate(
 			player_hp, STARTING_HP, round_number,
@@ -5908,7 +5942,10 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			if current_encounter_index + 1 < encounter_count:
 				awaiting_next_encounter = true
 				mission_run_conductor_hp = player_hp
-				MissionRunStoreScript.save_run(current_mission_id, current_encounter_index + 1, mission_run_conductor_hp)
+				MissionRunStoreScript.save_run(
+					current_mission_id, current_encounter_index + 1,
+					mission_run_conductor_hp, autobattle_active
+				)
 				if autobattle_active:
 					# Skip the "FIELD SECURED" screen and roll straight into the
 					# next encounter; _start_new_match relaunches the driver.
@@ -5933,6 +5970,13 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 				and StoryDialogueCatalogScript.has_interlude(current_mission_id)
 			)
 			completed_missions = CampaignStoreScript.complete_mission(current_mission_id, completed_missions)
+			if not autobattle_active:
+				var currency_claim := RequisitionStoreScript.claim(
+					RequisitionStoreScript.campaign_milestone_claim_id(current_mission_id),
+					RequisitionStoreScript.CAMPAIGN_MILESTONE_GRANT
+				)
+				requisition_currency = int(currency_claim.balance)
+				requisition_reward = int(currency_claim.amount)
 			MissionRunStoreScript.clear_run()
 			mission_finished = true
 			var reward := CampaignStoreScript.roll_reward(current_mission_id, roster)
@@ -5986,6 +6030,10 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
 				CampaignStoreScript.CAMPAIGN_EPILOGUE
 			]
+		if campaign_battle and autobattle_active:
+			overlay_detail.text += "\nAUTOBATTLE · UNIT REWARD ONLY · NO REQUISITION CREDITS"
+		elif requisition_reward > 0:
+			overlay_detail.text += "\n+%d REQUISITION CREDITS · FIRST MANUAL CLEAR" % requisition_reward
 		result_primary_button.text = "RETURN TO MENU" if campaign_battle else "PLAY AGAIN"
 		result_continue_button.visible = (
 			campaign_battle

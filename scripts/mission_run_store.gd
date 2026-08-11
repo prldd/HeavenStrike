@@ -2,15 +2,19 @@ class_name MissionRunStore
 extends RefCounted
 
 const SAVE_PATH := "user://mission_run.cfg"
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const LEGACY_LEADER_HP_KEY := "cap" + "tain_hp"
 
-static func save_run(mission_id: int, encounter_index: int, conductor_hp: int) -> bool:
+static func save_run(
+	mission_id: int, encounter_index: int, conductor_hp: int,
+	autobattle: bool = false
+) -> bool:
 	var config := ConfigFile.new()
 	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("run", "mission_id", mission_id)
 	config.set_value("run", "encounter_index", encounter_index)
 	config.set_value("run", "conductor_hp", conductor_hp)
+	config.set_value("run", "autobattle", autobattle)
 	return config.save(SAVE_PATH) == OK
 
 static func load_run(mission_count: int) -> Dictionary:
@@ -21,6 +25,7 @@ static func load_run(mission_count: int) -> Dictionary:
 	var encounter_index: int = config.get_value("run", "encounter_index", -1)
 	var legacy_hp: int = config.get_value("run", LEGACY_LEADER_HP_KEY, 0)
 	var conductor_hp: int = config.get_value("run", "conductor_hp", legacy_hp)
+	var autobattle: bool = bool(config.get_value("run", "autobattle", false))
 	if mission_id < 0 or mission_id >= mission_count or encounter_index < 0 or conductor_hp <= 0:
 		return {}
 	if (
@@ -34,7 +39,8 @@ static func load_run(mission_count: int) -> Dictionary:
 	return {
 		"mission_id": mission_id,
 		"encounter_index": encounter_index,
-		"conductor_hp": conductor_hp
+		"conductor_hp": conductor_hp,
+		"autobattle": autobattle
 	}
 
 static func clear_run() -> void:
@@ -43,4 +49,5 @@ static func clear_run() -> void:
 	config.set_value("run", "mission_id", -1)
 	config.set_value("run", "encounter_index", -1)
 	config.set_value("run", "conductor_hp", 0)
+	config.set_value("run", "autobattle", false)
 	config.save(SAVE_PATH)

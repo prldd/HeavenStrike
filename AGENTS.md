@@ -63,9 +63,10 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `conductor_skills.gd` | Static resolution of the eight Conductor powers and effect expiration. |
 | `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Conductor-skill storage. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
+| `requisition_store.gd` | Persistent Requisition Credit wallet, pull costs, spending, and idempotent source-owned reward claims. |
 | `story_quest_catalog.gd` | Builds the 77-mission original campaign from authored reward pools, enemy decks, and Conductor configurations. `MISSION_STORIES` holds per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number. |
 | `story_dialogue_catalog.gd` | Editable post-mission interludes. `INTERLUDES` is keyed by 1-based mission number and holds a scene title, location, and ordered speaker/text lines; `CHARACTERS` owns speaker roles, initials, and accent colors. `main.gd` owns only the dialogue presentation and return flow. |
-| `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Conductor HP). |
+| `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Conductor HP, and persisted Autobattle eligibility). |
 | `kinetic_crucible.gd` | Per-copy unit progression: levels 1–5, merge point values, donor rules, level-based stat growth (`scaled_stat`), promotion conversion (`record_promotion`), inventory sync, and migration from older name-based saves. |
 | `battle_settings.gd` | Player settings persistence (resolution speed, audio volume, reduced motion, animation skip). |
 | `battle_audio.gd` | Procedural audio generation and polyphonic playback; `AudioStreamPlayer` pool. |

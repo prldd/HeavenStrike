@@ -18,15 +18,16 @@ assets required by the prototype.
 - The starting collection contains the fifteen base 1-star units; advanced
   units are earned from campaign rewards, Unit Requisition rolls, or Kinetic
   Crucible promotions.
-- **Unit Requisition** supports free Roll 1 and Roll 10 acquisition while its
-  currency economy is pending. Its persistent pity raises 5-star and 6-star
-  odds after every miss, guarantees one by pull 50, and resets on either tier.
+- **Unit Requisition** costs 100 Requisition Credits for Roll 1 or 1,000 for
+  Roll 10. New profiles receive 1,000 Credits, and each campaign mission awards
+  100 Credits once when completed manually. Persistent pity raises 5-star and
+  6-star odds after every miss, guarantees one by pull 50, and resets on either tier.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
 - After a campaign victory, use **Redeploy Mission** to pursue a better rating
   and earn another unit reward; **Continue Campaign** remains the primary action.
 - Completed missions offer **Autobattle** in the Squad Workshop: the AI commands
   your squad through the whole mission at fast-forward speed, then shows the
-  usual victory reward or defeat screen.
+  usual unit reward or defeat screen. Autobattle never awards Requisition Credits.
 - Reward reveals label duplicates, show the owned copy count, and explain their
   same-unit Kinetic Crucible value.
 - Select a unit card whose Mana cost is currently available.
@@ -72,7 +73,7 @@ assets required by the prototype.
 - Authored mission reward pools with Star-Rarity weighting and persistent unlocks
 - Full-roster Unit Requisition with the battle rarity curve normalized across
   tiers, sequential single/ten-pulls, persistent soft pity, and a 50-pull
-  top-tier guarantee
+  top-tier guarantee; an earnable wallet funds pulls and tracks one-time claims
 - 112 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
 - End-of-mission card reveal with portrait, Star Rarity, copy count, and explicit
   NEW UNIT or DUPLICATE progression status
