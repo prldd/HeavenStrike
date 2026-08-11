@@ -140,6 +140,87 @@ func _init() -> void:
 	assert(KineticCrucibleScript.merge_value(
 		{"name": "A", "kind": "Warden"}, {"name": "A", "kind": "Warden"}
 	) == 5)
+	assert(KineticCrucibleScript.progress_points({"level": 1, "points": 2}) == 2)
+	assert(KineticCrucibleScript.progress_points({"level": 3, "points": 4}) == 13)
+	assert(KineticCrucibleScript.points_to_max({"level": 1, "points": 0}) == 45)
+	assert(KineticCrucibleScript.points_to_max({"level": 4, "points": 23}) == 1)
+	assert(KineticCrucibleScript.merge_value(
+		{"name": "Relay Lancer-003"},
+		{"name": "Relay Lancer-003", "level": 2, "points": 1},
+		roster
+	) == 9)
+	var merge_preview := KineticCrucibleScript.merge_preview(
+		{
+			"id": "target", "name": "Relay Lancer-003",
+			"level": 1, "points": 2, "consumed": false
+		},
+		[{
+			"id": "invested_donor", "name": "Relay Lancer-003",
+			"level": 2, "points": 1, "consumed": false
+		}],
+		roster
+	)
+	assert(merge_preview.progress == {"level": 3, "points": 2})
+	assert(merge_preview.offered == 9 and merge_preview.applied == 9)
+	assert(merge_preview.overflow == 0 and merge_preview.consumed == 1)
+	var capped_preview := KineticCrucibleScript.merge_preview(
+		{
+			"id": "target", "name": "Relay Lancer-003",
+			"level": 4, "points": 23, "consumed": false
+		},
+		[
+			{
+				"id": "donor_a", "name": "Relay Lancer-003",
+				"level": 1, "points": 0, "consumed": false
+			},
+			{
+				"id": "donor_b", "name": "Relay Lancer-003",
+				"level": 1, "points": 0, "consumed": false
+			}
+		],
+		roster
+	)
+	assert(capped_preview.progress == {"level": 5, "points": 0})
+	assert(capped_preview.offered == 5 and capped_preview.applied == 1)
+	assert(capped_preview.overflow == 4 and capped_preview.consumed == 1)
+	assert(capped_preview.untouched == 1)
+	var merge_config := ConfigFile.new()
+	merge_config.set_value("meta", "instances_migrated", true)
+	merge_config.set_value("collection", "next_id", 4)
+	merge_config.set_value("collection", "instances", [
+		{
+			"id": "target", "name": "Relay Lancer-003",
+			"level": 4, "points": 23, "consumed": false
+		},
+		{
+			"id": "donor_a", "name": "Relay Lancer-003",
+			"level": 1, "points": 0, "consumed": false
+		},
+		{
+			"id": "donor_b", "name": "Relay Lancer-003",
+			"level": 1, "points": 0, "consumed": false
+		}
+	])
+	assert(merge_config.save(KineticCrucibleScript.SAVE_PATH) == OK)
+	var merge_result := KineticCrucibleScript.record_merge_batch(
+		"target", ["donor_a", "donor_b"], roster, {"Relay Lancer-003": 3}
+	)
+	assert(merge_result.ok)
+	assert(merge_result.gained == 1 and merge_result.overflow == 4)
+	assert(merge_result.merged == 1 and merge_result.untouched == 1)
+	assert(merge_result.progress == {"level": 5, "points": 0})
+	assert(merge_result.message.contains("excess"))
+	assert(merge_result.message.contains("left untouched"))
+	var merged_instances := KineticCrucibleScript.sync_instances(
+		roster, {"Relay Lancer-003": 3}
+	)
+	assert(KineticCrucibleScript.instance_by_id(
+		merged_instances, "donor_a"
+	).consumed)
+	assert(not KineticCrucibleScript.instance_by_id(
+		merged_instances, "donor_b"
+	).consumed)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	var instance_copies: Array = [
 		{"id": "copy_a", "name": "Relay Lancer-003", "level": 3, "points": 1, "consumed": false},
 		{"id": "copy_b", "name": "Relay Lancer-003", "level": 1, "points": 0, "consumed": false},
@@ -166,11 +247,21 @@ func _init() -> void:
 		"unit_000006",
 		"unit_000004"
 	])
-	assert(KineticCrucibleScript.can_merge(
+	assert(not KineticCrucibleScript.can_merge(
 		instance_copies[0], instance_copies[1], roster, true, instance_copies
 	))
 	assert(not KineticCrucibleScript.can_merge(
 		instance_copies[0], instance_copies[2], roster, true, instance_copies
+	))
+	var extras_copies: Array = instance_copies + [{
+		"id": "copy_d", "name": "Relay Lancer-003",
+		"level": 1, "points": 0, "consumed": false
+	}]
+	var protected_ids := KineticCrucibleScript.protected_instance_ids(extras_copies)
+	assert("copy_a" in protected_ids and "copy_b" in protected_ids)
+	assert("copy_d" not in protected_ids)
+	assert(KineticCrucibleScript.can_merge(
+		instance_copies[0], extras_copies[3], roster, true, extras_copies
 	))
 	assert(SquadStoreScript.sanitize_instances(
 		["copy_a", "copy_b", "copy_c"], instance_copies

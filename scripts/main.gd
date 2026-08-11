@@ -243,6 +243,9 @@ var squad_opened_from_menu := false
 var squad_opened_for_mission := false
 var pending_mission_id := -1
 var recent_reward_name := ""
+var recent_reward_instance_id := ""
+var recent_reward_is_duplicate := false
+var recent_reward_copy_count := 0
 var reward_detail_unit: Dictionary = {}
 
 var units: Array = []
@@ -844,7 +847,7 @@ func _build_overlay() -> void:
 	reward_reveal.add_child(reward_stars_label)
 
 	reward_new_label = Label.new()
-	reward_new_label.text = "NEW"
+	reward_new_label.text = "NEW UNIT · COPY 1"
 	reward_new_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_new_label.add_theme_font_size_override("font_size", 15)
 	reward_new_label.add_theme_color_override("font_color", Color("#70e0a1"))
@@ -1234,15 +1237,29 @@ func _rebuild_squad_grid() -> void:
 		squad_selection_grid.remove_child(child)
 		child.queue_free()
 	_refresh_mission_intel()
-	reward_carry_label.visible = not recent_reward_name.is_empty()
-	reward_carry_label.text = "★ NEW REWARD ADDED · %s" % recent_reward_name.to_upper()
-
 	_sync_collection()
+	var active_collection := KineticCrucibleScript.active_instances(collection_instances)
+	var recent_copy_available := active_collection.any(
+		func(instance): return (
+			instance.id == recent_reward_instance_id
+			if not recent_reward_instance_id.is_empty()
+			else instance.name == recent_reward_name
+		)
+	)
+	reward_carry_label.visible = not recent_reward_name.is_empty() and recent_copy_available
+	var reward_kind := "DUPLICATE" if recent_reward_is_duplicate else "NEW UNIT"
+	var copy_suffix := (
+		" · COPY %d" % recent_reward_copy_count
+		if recent_reward_copy_count > 0 else ""
+	)
+	reward_carry_label.text = "★ %s REWARD ADDED · %s%s" % [
+		reward_kind, recent_reward_name.to_upper(), copy_suffix
+	]
 	var selected_names := SquadStoreScript.instance_names(
 		editing_squad_names, collection_instances
 	)
 	var reserves := KineticCrucibleScript.sort_reserves(
-		KineticCrucibleScript.active_instances(collection_instances), roster
+		active_collection, roster
 	)
 	for instance in reserves:
 		var unit := UnitCatalogScript.by_name(instance.name)
@@ -1261,14 +1278,19 @@ func _rebuild_squad_grid() -> void:
 			or copies >= 2
 			or editing_squad_names.size() >= SquadStoreScript.SQUAD_SIZE
 		)
+		var is_recent_reward: bool = (
+			instance.id == recent_reward_instance_id
+			if not recent_reward_instance_id.is_empty()
+			else unit.name == recent_reward_name
+		)
 		button.text = "%s%s · LV %d\n%s" % [
-			"★ NEW REWARD · " if unit.name == recent_reward_name else "",
+			"★ %s · " % reward_kind if is_recent_reward else "",
 			unit.name.to_upper(), instance.level,
 			"IN FORMATION" if in_formation else "AVAILABLE"
 		]
 		if in_formation:
 			button.add_theme_color_override("font_disabled_color", UIThemeScript.title_color())
-		if unit.name == recent_reward_name:
+		if is_recent_reward:
 			button.add_theme_color_override("font_color", UIThemeScript.title_color())
 		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(_add_squad_unit.bind(instance.id))
@@ -1457,6 +1479,9 @@ func _save_and_start_mission() -> void:
 	pending_mission_id = -1
 	squad_overlay.visible = false
 	recent_reward_name = ""
+	recent_reward_instance_id = ""
+	recent_reward_is_duplicate = false
+	recent_reward_copy_count = 0
 	_begin_mission(mission_id)
 
 func _sanitize_squad_unlocks() -> void:
@@ -1998,7 +2023,7 @@ func _build_kinetic_crucible() -> void:
 	crucible_extras_toggle = CheckButton.new()
 	crucible_extras_toggle.text = "EXTRAS ONLY"
 	crucible_extras_toggle.tooltip_text = (
-		"Only show spare copies: the two highest-level copies of each unit stay protected and hidden."
+		"Protect the two most-invested copies of each unit from being used as donors."
 	)
 	crucible_extras_toggle.button_pressed = true
 	crucible_extras_toggle.toggled.connect(_toggle_crucible_extras)
@@ -2062,7 +2087,7 @@ func _build_kinetic_crucible() -> void:
 	crucible_donor_grid.add_theme_constant_override("v_separation", 8)
 	donor_scroll.add_child(crucible_donor_grid)
 	crucible_detail_label = Label.new()
-	crucible_detail_label.custom_minimum_size = Vector2(0, 72)
+	crucible_detail_label.custom_minimum_size = Vector2(0, 92)
 	crucible_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	crucible_detail_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	crucible_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -2158,16 +2183,17 @@ func _debug_grant_four_of_each() -> void:
 	)
 	_rebuild_crucible()
 
-func _rebuild_crucible() -> void:
-	_sync_collection()
+func _rebuild_crucible(sync_collection: bool = true) -> void:
+	if sync_collection:
+		_sync_collection()
 	var active := KineticCrucibleScript.active_instances(collection_instances)
 	if not active.any(func(instance): return instance.id == crucible_target_id):
 		crucible_target_id = ""
 		crucible_donor_ids.clear()
 	crucible_donor_ids = crucible_donor_ids.filter(
-		func(instance_id): return active.any(
-			func(instance): return instance.id == instance_id
-		)
+		func(instance_id):
+			var donor := KineticCrucibleScript.instance_by_id(active, instance_id)
+			return not donor.is_empty() and _crucible_donor_allowed(donor)
 	)
 	for grid in [crucible_reserve_grid, crucible_target_grid, crucible_donor_grid]:
 		for child in grid.get_children():
@@ -2175,8 +2201,6 @@ func _rebuild_crucible() -> void:
 			child.queue_free()
 	var protected_ids := _crucible_protected_ids(active)
 	for instance in KineticCrucibleScript.sort_reserves(active, roster):
-		if instance.id in protected_ids:
-			continue
 		var unit := UnitCatalogScript.by_name(instance.name)
 		if unit == null or not _reserve_visible(unit, crucible_filter_class, crucible_filter_text):
 			continue
@@ -2196,10 +2220,17 @@ func _rebuild_crucible() -> void:
 			elif instance.id in crucible_donor_ids:
 				state = "QUEUED FOR MERGE"
 				card.disabled = true
+			elif instance.id in protected_ids:
+				state = "PROTECTED · FORMATION COPY"
+				card.disabled = true
 			elif _crucible_donor_allowed(instance):
-				state = "+%d POINTS · CLICK TO QUEUE" % KineticCrucibleScript.merge_value(
+				var donor_value := KineticCrucibleScript.merge_value(
 					_crucible_target(), instance, roster
 				)
+				var recovered := KineticCrucibleScript.progress_points(instance)
+				state = "+%d POINTS · CLICK TO QUEUE" % donor_value
+				if recovered > 0:
+					state = "+%d POINTS · %d RECOVERED" % [donor_value, recovered]
 			else:
 				state = "NOT A VALID DONOR"
 				card.disabled = true
@@ -2230,8 +2261,15 @@ func _build_crucible_selection_cards() -> void:
 	target_card.custom_minimum_size = Vector2(0, SquadCardScript.CARD_HEIGHT)
 	target_card.icon = _unit_icon(target_unit.icon)
 	target_card.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	target_card.text = "%s · LV %d\nENHANCEMENT TARGET" % [
-		target.name.to_upper(), target.level
+	var target_progress := (
+		"MAXIMUM"
+		if target.level >= KineticCrucibleScript.MAX_LEVEL
+		else "%d / %d POINTS" % [
+			target.points, KineticCrucibleScript.LEVEL_COSTS[target.level - 1]
+		]
+	)
+	target_card.text = "%s · LV %d · %s\nENHANCEMENT TARGET" % [
+		target.name.to_upper(), target.level, target_progress
 	]
 	target_card.pressed.connect(_clear_crucible_target)
 	_connect_card_details(target_card, _unit_with_instance(target_unit, target))
@@ -2249,10 +2287,16 @@ func _build_crucible_selection_cards() -> void:
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.icon = _unit_icon(unit.icon)
 		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		card.text = "%s · LV %d\nCONSUME · +%d POINTS" % [
+		var donor_value := KineticCrucibleScript.merge_value(target, donor, roster)
+		var recovered := KineticCrucibleScript.progress_points(donor)
+		var recovery_text := ""
+		if recovered > 0:
+			recovery_text = " · %d RECOVERED" % recovered
+		card.text = "%s · LV %d\nCONSUME · +%d%s" % [
 			donor.name.to_upper(),
 			donor.level,
-			KineticCrucibleScript.merge_value(target, donor, roster)
+			donor_value,
+			recovery_text
 		]
 		card.pressed.connect(_remove_crucible_donor.bind(donor.id))
 		_connect_card_details(card, _unit_with_instance(unit, donor))
@@ -2265,37 +2309,31 @@ func _crucible_target() -> Dictionary:
 
 func _crucible_donor_allowed(donor: Dictionary) -> bool:
 	var target := _crucible_target()
-	return KineticCrucibleScript.can_merge(target, donor, roster)
+	return KineticCrucibleScript.can_merge(
+		target,
+		donor,
+		roster,
+		crucible_extras_toggle.button_pressed,
+		KineticCrucibleScript.active_instances(collection_instances)
+	)
 
 ## When EXTRAS ONLY is on, the two most-invested copies of each unit name
-## (highest level, then points) are protected from sacrifice and hidden from
-## the reserves list, so only spare copies are offered for consumption.
+## are protected from sacrifice. They stay visible so they can still be chosen
+## as enhancement targets and so the player can see why they cannot be queued.
 func _crucible_protected_ids(active: Array) -> Array:
 	if not crucible_extras_toggle.button_pressed:
 		return []
-	var by_name := {}
-	for instance in active:
-		if not by_name.has(instance.name):
-			by_name[instance.name] = []
-		by_name[instance.name].append(instance)
-	var protected: Array = []
-	for copies in by_name.values():
-		copies.sort_custom(
-			func(a, b):
-				if a.level != b.level:
-					return a.level > b.level
-				if a.get("points", 0) != b.get("points", 0):
-					return a.get("points", 0) > b.get("points", 0)
-				return a.id < b.id
-		)
-		for index in mini(2, copies.size()):
-			protected.append(copies[index].id)
-	return protected
+	return KineticCrucibleScript.protected_instance_ids(active)
 
 func _refresh_crucible_detail() -> void:
 	var target := _crucible_target()
+	crucible_merge_button.text = "MERGE QUEUE"
+	crucible_promote_button.text = "PROMOTE"
 	if target.is_empty():
-		crucible_detail_label.text = "Choose the individual unit you want to enhance."
+		crucible_detail_label.text = (
+			"Choose any owned unit to enhance. Extras Only keeps your two best "
+			+ "formation copies safe when you select donors."
+		)
 		crucible_merge_button.disabled = true
 		crucible_promote_button.disabled = true
 		return
@@ -2314,12 +2352,18 @@ func _refresh_crucible_detail() -> void:
 			KineticCrucibleScript.points_to_next(target)
 		]
 	)
-	var total_points := 0
+	var donors: Array = []
 	for donor_id in crucible_donor_ids:
 		var donor := KineticCrucibleScript.instance_by_id(
 			collection_instances, donor_id
 		)
-		total_points += KineticCrucibleScript.merge_value(target, donor, roster)
+		if not donor.is_empty():
+			donors.append(donor)
+	var preview := KineticCrucibleScript.merge_preview(target, donors, roster)
+	var target_unit := UnitCatalogScript.by_name(target.name)
+	var current_atk := KineticCrucibleScript.scaled_stat(target_unit.atk, target.level)
+	var current_hp := KineticCrucibleScript.scaled_stat(target_unit.hp, target.level)
+	var stats_text := "CURRENT STATS · %d ATK · %d HP" % [current_atk, current_hp]
 	var merge_text := "Select one or more donor units from Reserves."
 	if target.level >= KineticCrucibleScript.MAX_LEVEL:
 		merge_text = (
@@ -2327,18 +2371,38 @@ func _refresh_crucible_detail() -> void:
 			if promotion_available
 			else "This unit has reached its final form."
 		)
-	elif not crucible_donor_ids.is_empty():
-		var projected := KineticCrucibleScript.apply_points(target, total_points)
-		merge_text = "%d queued · +%d points · result: Level %d, %d points." % [
-			crucible_donor_ids.size(), total_points, projected.level, projected.points
+	elif not donors.is_empty():
+		var projected: Dictionary = preview.progress
+		merge_text = "%d consumed · +%d applied · result: Level %d, %d points" % [
+			preview.consumed, preview.applied, projected.level, projected.points
 		]
-	crucible_detail_label.text = "%s\n%s%s" % [
+		if preview.overflow > 0:
+			merge_text += " · %d OVERFLOW" % preview.overflow
+		if preview.untouched > 0:
+			merge_text += " · %d LEFT UNTOUCHED" % preview.untouched
+		merge_text += "."
+		var projected_atk := KineticCrucibleScript.scaled_stat(
+			target_unit.atk, projected.level
+		)
+		var projected_hp := KineticCrucibleScript.scaled_stat(
+			target_unit.hp, projected.level
+		)
+		stats_text = "PROJECTED STATS · %d → %d ATK · %d → %d HP" % [
+			current_atk, projected_atk, current_hp, projected_hp
+		]
+		crucible_merge_button.text = "MERGE %d · +%d" % [
+			preview.consumed, preview.applied
+		]
+	if promotion_available:
+		crucible_promote_button.text = "PROMOTE → %s" % promoted.name.to_upper()
+	crucible_detail_label.text = "%s\n%s\n%s%s" % [
 		progression,
 		merge_text,
+		stats_text,
 		"\n" + crucible_notice if not crucible_notice.is_empty() else ""
 	]
 	crucible_merge_button.disabled = (
-		crucible_donor_ids.is_empty()
+		int(preview.get("consumed", 0)) == 0
 		or target.level >= KineticCrucibleScript.MAX_LEVEL
 	)
 	crucible_promote_button.disabled = (
@@ -3993,7 +4057,7 @@ func _unit_definition(unit_name: String) -> UnitData:
 	var definition := UnitCatalogScript.by_name(unit_name)
 	return definition if definition != null else MissionUnitCatalogScript.by_name(unit_name)
 
-func _show_card_reward(unit_name: String, is_new: bool) -> void:
+func _show_card_reward(unit_name: String, is_new: bool, copy_count: int = 1) -> void:
 	var unit := UnitCatalogScript.by_name(unit_name)
 	reward_reveal.visible = unit != null
 	reward_detail_unit = unit.to_dict() if unit != null else {}
@@ -4004,7 +4068,17 @@ func _show_card_reward(unit_name: String, is_new: bool) -> void:
 	reward_portrait.configure(unit.name, "reward", portrait, -1, unit.kind)
 	reward_portrait.icon = portrait
 	reward_stars_label.text = "★".repeat(unit.stars)
-	reward_new_label.visible = is_new
+	reward_new_label.visible = true
+	if is_new:
+		reward_new_label.text = "NEW UNIT · COPY %d" % maxi(1, copy_count)
+		reward_new_label.add_theme_color_override("font_color", Color("#70e0a1"))
+	else:
+		reward_new_label.text = "DUPLICATE · COPY %d · +5 MATCH POINTS" % maxi(
+			1, copy_count
+		)
+		reward_new_label.add_theme_color_override(
+			"font_color", UIThemeScript.title_color()
+		)
 
 func _show_battle_rating(result: Dictionary) -> void:
 	var rating := clampi(int(result.get("rating", 1)), 1, 10)
@@ -5362,14 +5436,35 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			MissionRunStoreScript.clear_run()
 			mission_finished = true
 			var reward := CampaignStoreScript.roll_reward(current_mission_id, roster)
-			var was_unlocked := reward in CampaignStoreScript.unlocked_unit_names(
-				roster, earned_reward_units
+			_sync_collection()
+			var previous_reward_ids: Array = KineticCrucibleScript.active_instances(
+				collection_instances
+			).filter(
+				func(instance): return instance.name == reward
+			).map(func(instance): return instance.id)
+			var was_unlocked := (
+				not previous_reward_ids.is_empty()
+				or reward in CampaignStoreScript.unlocked_unit_names(
+					roster, earned_reward_units
+				)
 			)
 			earned_reward_units = CampaignStoreScript.award_reward(
 				reward, roster, earned_reward_units
 			)
+			_sync_collection()
+			var reward_copies: Array = KineticCrucibleScript.active_instances(
+				collection_instances
+			).filter(func(instance): return instance.name == reward)
+			var new_reward_copy: Dictionary = {}
+			for copy in reward_copies:
+				if copy.id not in previous_reward_ids:
+					new_reward_copy = copy
+					break
 			recent_reward_name = reward
-			_show_card_reward(reward, not was_unlocked)
+			recent_reward_instance_id = new_reward_copy.get("id", "")
+			recent_reward_is_duplicate = was_unlocked
+			recent_reward_copy_count = reward_copies.size()
+			_show_card_reward(reward, not was_unlocked, recent_reward_copy_count)
 		overlay_title.text = (
 			"OPERATION COMPLETE" if campaign_battle
 			else "TACTICAL VICTORY"

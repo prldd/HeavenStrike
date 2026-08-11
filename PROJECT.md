@@ -607,6 +607,8 @@ Before battle, each side prepares a squad of up to 8 units:
 - A bench can hold up to six units.
 - A squad may contain no more than two copies of the same unit.
 - The Barracks begins with one copy of every base-set card and permanently keeps every card reward, including duplicates.
+- Reward reveals distinguish first unlocks from duplicates, report the owned copy
+  count, and identify a fresh duplicate's 5-point same-unit Crucible value.
 - Players can drag cards between Barracks and Squad; clicking a selected squad card removes one copy.
 - Players can drag selected cards to reorder the squad or right-click a card to make it the Vanguard.
 - PvE opponents follow the same squad, opening hand, hand limit, draw, and deck-exhaustion rules.
@@ -709,7 +711,11 @@ copy can have its own level and Crucible progress. Units begin at level 1 and
 advance to level 5 by consuming spare collection copies in the Kinetic Crucible.
 Level thresholds are 3, 6, 12, and 24 points. An unrelated donor
 grants 1 point, a donor of the same class grants 2 points, and another copy of the
-same unit grants 5 points. Overflow carries into the next level. Each level
+same unit grants 5 points. A donor also returns every Crucible point already
+invested in its completed levels and current progress, so changing enhancement
+targets does not erase prior work. Overflow carries between levels; the merge
+preview identifies any excess that would cross the level-5 cap before commit.
+Each level
 raises the copy's ATK and max HP by 10% of its base value (level 5 ≈ 1.4×),
 and its secondary skill uses the matching rank of the authored value table:
 level 1 is the base effect and level 5 is the strongest rank.
@@ -725,12 +731,16 @@ The Crucible uses the same two-panel collection language as Formation Command.
 Every individual owned copy appears in Reserves on the left. The first selected
 copy becomes the enhancement target at the top of the right panel; any number of
 additional copies can then be queued beneath it and merged together. Target and
-queue cards can be clicked to clear or remove them before committing.
+queue cards can be clicked to clear or remove them before committing. The preview
+reports donors consumed, points applied, the resulting level and stats, cap
+overflow, and any queued copies that will remain untouched after level 5.
 
 The Crucible includes an “extras only” donor filter. When enabled, unsafe donor
-copies remain visible but disabled, and only unit types with at least two active
-copies can be queued. Consumed copies disappear from the collection and are
-removed from any saved squad that referenced them.
+copies remain visible and selectable as enhancement targets, but become disabled
+as donors. The two most-invested copies of every exact unit stay protected for
+the formation, leaving only further copies available for consumption. Consumed
+copies disappear from the collection and are removed from any saved squad that
+referenced them.
 
 For development, the Crucible also exposes a clearly labeled debug inventory
 button that grants enough copies to leave at least four active copies of every
@@ -871,7 +881,10 @@ The replay and battle-interface cleanup is in a stable, tested state:
   round limits, terrain, setup units, reinforcements, and Mana variants; Missions
   3–9 provide the first playable campaign set.
 
-At the start of the next development session, run the gameplay and UI smoke tests and play Missions 3–9 at the target 16:9 window size. Pay particular attention to objective clarity, blocked-cell readability, protection-target durability, reinforcement timing, and round limits. Once those encounters are tuned, the next productive focus is progression polish rather than additional replay UI.
+Duplicate rewards and Kinetic Crucible progression now expose copy identity,
+safe formation-copy protection, recovered donor investment, projected stat and
+level gains, overflow, and untouched queued donors. The next balance pass should
+validate the duplicate cadence and level curve over a representative campaign run.
 
 ## First Milestone
 

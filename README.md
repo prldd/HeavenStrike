@@ -20,6 +20,8 @@ assets required by the prototype.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
 - After a campaign victory, use **Redeploy Mission** to pursue a better rating
   and earn another unit reward; **Continue Campaign** remains the primary action.
+- Reward reveals label duplicates, show the owned copy count, and explain their
+  same-unit Kinetic Crucible value.
 - Select a unit card whose Mana cost is currently available.
 - Select a highlighted tile in the leftmost column to deploy it.
 - Select a deployed unit, then a reachable tile in any other row to reposition it; friendly units may be crossed, but enemies block the path.
@@ -62,7 +64,8 @@ assets required by the prototype.
 - Encounter transition screens with upcoming Conductor information
 - Authored mission reward pools with Star-Rarity weighting and persistent unlocks
 - 112 promotion roots or standalone units plus 103 promotion forms with implemented secondary abilities
-- End-of-mission card reveal with portrait, Star Rarity, and first-unlock NEW tag
+- End-of-mission card reveal with portrait, Star Rarity, copy count, and explicit
+  NEW UNIT or DUPLICATE progression status
 - Post-battle 1–10 performance ratings with Conductor integrity, formation
   survival, and completion-tempo scoring
 - Main menu, three region-accurate illustrated Act maps, practice mode, and campaign briefings
@@ -74,7 +77,8 @@ assets required by the prototype.
 - Deployment skills for repair, corrosion, targeted status effects, and lane control
 - Strike skills for damage-over-time pressure, vulnerability, knockback, and suppression
 - Persistent per-copy Kinetic Crucible progression with five unit levels, donor merging,
-  collection consumption, level-scaled stats and skills, and promotion into the next form
+  invested-point recovery, safe-copy protection, projected results, collection
+  consumption, level-scaled stats and skills, and promotion into the next form
 - Full-body sprites on the battlefield and unit-list portraits throughout menus and progression screens
 - Original full-body and portrait art for every playable unit
 - Enemy deployment AI
@@ -89,8 +93,8 @@ assets required by the prototype.
 - 46 first-completion character interludes with named human/android portrait
   busts, location-driven scene backgrounds, and operations-map replay,
   spanning the campaign's major cast introductions and reveals
-- Continued campaign victories carry the awarded card into Barracks with a
-  visible new-reward marker
+- Continued campaign victories carry the exact awarded copy into Barracks with
+  a visible new-unit or duplicate-reward marker
 - Optional 1×/2×/4× combat resolution speed and a toggleable action log
 - Persistent battlefield badges for Taunt, Immobilise, attack modifiers, and temporary health
 - Player-selected ally, enemy, and lane targets for authored Warcries
@@ -164,8 +168,6 @@ The current interface cleanup is complete:
   priority-target, and protection objectives plus terrain, timing, reinforcement,
   and Mana modifiers.
 
-For the next session, begin by running the validation commands above. Then play
-Missions 3–9 at the target window size, concentrating on objective clarity,
-blocked-cell readability, protection-target durability, reinforcement timing,
-and the round-limit difficulty. After that balance pass, progression polish is
-the next productive focus.
+Duplicate rewards and Kinetic Crucible progression now communicate exact copy
+identity, protected formation copies, recovered donor investment, projected
+levels and stats, cap overflow, and donors left untouched at maximum level.

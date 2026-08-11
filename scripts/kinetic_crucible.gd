@@ -6,6 +6,7 @@ const SAVE_PATH := "user://kinetic_crucible.cfg"
 const SAVE_VERSION := 2
 const MAX_LEVEL := 5
 const LEVEL_COSTS := [3, 6, 12, 24]
+const FORMATION_COPIES_TO_KEEP := 2
 ## Fraction of base ATK / max HP gained per level above 1 (level 5 = 1.4x).
 const STAT_GROWTH_PER_LEVEL := 0.1
 
@@ -112,17 +113,60 @@ static func inventory_counts(instances: Array) -> Dictionary:
 		counts[instance.name] = int(counts.get(instance.name, 0)) + 1
 	return counts
 
+## Total Crucible points already invested in this copy, including completed
+## levels. When the copy is used as a donor these points are recovered so
+## changing enhancement targets never destroys previous progression.
+static func progress_points(progress: Dictionary) -> int:
+	var clean := _sanitize_progress(progress)
+	var total: int = clean.points
+	for completed_level in range(1, clean.level):
+		total += LEVEL_COSTS[completed_level - 1]
+	return total
+
 static func merge_value(target: Dictionary, donor: Dictionary, roster: Array = []) -> int:
+	var chassis_value := 1
 	if target.get("name", "") == donor.get("name", ""):
-		return 5
-	var target_unit := _definition(target, roster)
-	var donor_unit := _definition(donor, roster)
-	if target_unit != null and donor_unit != null and target_unit.kind == donor_unit.kind:
-		return 2
-	# Retain pure-data compatibility for rules tests.
-	if target.get("kind", "") != "" and target.get("kind", "") == donor.get("kind", ""):
-		return 2
-	return 1
+		chassis_value = 5
+	else:
+		var target_unit := _definition(target, roster)
+		var donor_unit := _definition(donor, roster)
+		if target_unit != null and donor_unit != null and target_unit.kind == donor_unit.kind:
+			chassis_value = 2
+		# Retain pure-data compatibility for rules tests.
+		elif (
+			target.get("kind", "") != ""
+			and target.get("kind", "") == donor.get("kind", "")
+		):
+			chassis_value = 2
+	return chassis_value + progress_points(donor)
+
+## The two strongest copies of each exact unit are formation-safe. They remain
+## selectable as enhancement targets but Extras Only will not sacrifice them.
+static func protected_instance_ids(
+	active: Array, copies_to_keep: int = FORMATION_COPIES_TO_KEEP
+) -> Array:
+	var by_name := {}
+	for instance in active:
+		if instance.get("consumed", false):
+			continue
+		var unit_name: String = instance.get("name", "")
+		if not by_name.has(unit_name):
+			by_name[unit_name] = []
+		by_name[unit_name].append(instance)
+	var protected: Array = []
+	for copies_value in by_name.values():
+		var copies: Array = copies_value
+		copies.sort_custom(
+			func(a, b):
+				var progress_a := progress_points(a)
+				var progress_b := progress_points(b)
+				if progress_a != progress_b:
+					return progress_a > progress_b
+				return str(a.get("id", "")) < str(b.get("id", ""))
+		)
+		for index in mini(maxi(0, copies_to_keep), copies.size()):
+			protected.append(copies[index].get("id", ""))
+	return protected
 
 static func can_merge(
 	target: Dictionary,
@@ -141,11 +185,52 @@ static func can_merge(
 		var collection := active
 		if collection.is_empty():
 			return false
-		if collection.filter(
-			func(instance): return instance.name == donor.name
-		).size() < 2:
+		if donor.get("id", "") in protected_instance_ids(collection):
 			return false
 	return _definition(target, roster) != null and _definition(donor, roster) != null
+
+## Deterministically projects a queued batch using the same stop-at-level-5
+## behavior as record_merge_batch. Donors after the target reaches maximum are
+## left untouched; points on the donor that crosses the cap are reported as
+## overflow before the player commits.
+static func merge_preview(target: Dictionary, donors: Array, roster: Array) -> Dictionary:
+	var projected: Dictionary = target.duplicate(true)
+	var offered := 0
+	var applied := 0
+	var overflow := 0
+	var consumed := 0
+	var used_ids: Array = []
+	for donor_value in donors:
+		if int(projected.get("level", 1)) >= MAX_LEVEL:
+			break
+		if donor_value is not Dictionary:
+			continue
+		var donor: Dictionary = donor_value
+		var donor_id: String = donor.get("id", "")
+		if donor_id in used_ids or not can_merge(projected, donor, roster):
+			continue
+		used_ids.append(donor_id)
+		var value := merge_value(projected, donor, roster)
+		var point_capacity := points_to_max(projected)
+		var point_applied := mini(value, point_capacity)
+		var next_progress := apply_points(projected, value)
+		projected.level = next_progress.level
+		projected.points = next_progress.points
+		offered += value
+		applied += point_applied
+		overflow += value - point_applied
+		consumed += 1
+	return {
+		"progress": {
+			"level": projected.get("level", 1),
+			"points": projected.get("points", 0)
+		},
+		"offered": offered,
+		"applied": applied,
+		"overflow": overflow,
+		"consumed": consumed,
+		"untouched": maxi(0, donors.size() - consumed)
+	}
 
 static func record_merge(
 	target_id: String,
@@ -165,20 +250,29 @@ static func record_merge_batch(
 	var target := instance_by_id(instances, target_id)
 	if target.is_empty() or int(target.get("level", 1)) >= MAX_LEVEL:
 		return {"ok": false, "message": "That merge is no longer available."}
-	var gained := 0
+	var starting_level: int = target.get("level", 1)
+	var offered := 0
+	var applied := 0
+	var overflow := 0
 	var merged := 0
+	var used_ids: Array = []
 	for donor_id in donor_ids:
 		if int(target.get("level", 1)) >= MAX_LEVEL:
 			break
 		var donor := instance_by_id(instances, str(donor_id))
-		if not can_merge(target, donor, roster):
+		if str(donor_id) in used_ids or not can_merge(target, donor, roster):
 			continue
+		used_ids.append(str(donor_id))
 		var value := merge_value(target, donor, roster)
+		var point_capacity := points_to_max(target)
+		var point_applied := mini(value, point_capacity)
 		var progress := apply_points(target, value)
 		target.level = progress.level
 		target.points = progress.points
 		donor.consumed = true
-		gained += value
+		offered += value
+		applied += point_applied
+		overflow += value - point_applied
 		merged += 1
 	if merged == 0:
 		return {"ok": false, "message": "No queued units could be merged."}
@@ -187,18 +281,34 @@ static func record_merge_batch(
 	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("collection", "instances", instances)
 	var error := config.save(SAVE_PATH)
+	var untouched := maxi(0, donor_ids.size() - merged)
+	var message := "%s absorbed %d unit%s · +%d Crucible point%s" % [
+		target.name,
+		merged,
+		"" if merged == 1 else "s",
+		applied,
+		"" if applied == 1 else "s"
+	]
+	if target.level > starting_level:
+		message += " · Level %d → %d" % [starting_level, target.level]
+	if overflow > 0:
+		message += " · %d excess point%s dissipated at maximum" % [
+			overflow, "" if overflow == 1 else "s"
+		]
+	if untouched > 0:
+		message += " · %d queued unit%s left untouched" % [
+			untouched, "" if untouched == 1 else "s"
+		]
+	message += "."
 	return {
 		"ok": error == OK,
-		"gained": gained,
+		"gained": applied,
+		"offered": offered,
+		"overflow": overflow,
 		"merged": merged,
+		"untouched": untouched,
 		"progress": {"level": target.level, "points": target.points},
-		"message": "%s absorbed %d unit%s and gained %d Crucible point%s." % [
-			target.name,
-			merged,
-			"" if merged == 1 else "s",
-			gained,
-			"" if gained == 1 else "s"
-		]
+		"message": message
 	}
 
 static func instance_by_id(instances: Array, instance_id: String) -> Dictionary:
@@ -344,6 +454,12 @@ static func points_to_next(progress: Dictionary) -> int:
 	if clean.level >= MAX_LEVEL:
 		return 0
 	return LEVEL_COSTS[clean.level - 1] - clean.points
+
+static func points_to_max(progress: Dictionary) -> int:
+	var total_cost := 0
+	for cost in LEVEL_COSTS:
+		total_cost += cost
+	return maxi(0, total_cost - progress_points(progress))
 
 static func _definition(instance: Dictionary, roster: Array) -> UnitData:
 	for unit in roster:

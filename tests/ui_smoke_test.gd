@@ -396,7 +396,7 @@ func _run() -> void:
 	assert(not game.result_continue_button.visible)
 	assert(not game.result_redeploy_button.visible)
 	assert(not game.result_menu_button.visible)
-	game._show_card_reward("Relay Bastion-013", true)
+	game._show_card_reward("Relay Bastion-013", true, 1)
 	assert(game.reward_reveal.visible)
 	assert(game.reward_portrait.icon != null)
 	assert(game.reward_portrait.drag_source == "reward")
@@ -404,6 +404,7 @@ func _run() -> void:
 	assert(game.reward_hint_label.text.contains("ABILITIES"))
 	assert(game.reward_stars_label.text == "★★")
 	assert(game.reward_new_label.visible)
+	assert(game.reward_new_label.text == "NEW UNIT · COPY 1")
 	game.reward_portrait.mouse_entered.emit()
 	assert(game.hover_card.visible)
 	assert(game.hover_name_label.text.contains("RELAY BASTION-013"))
@@ -411,24 +412,26 @@ func _run() -> void:
 	assert(game.hover_ability_label.text.contains("BRACE PROTOCOL"))
 	game.reward_portrait.mouse_exited.emit()
 	assert(not game.hover_card.visible)
-	game._show_card_reward("Relay Bastion-013", false)
-	assert(not game.reward_new_label.visible)
+	game._show_card_reward("Relay Bastion-013", false, 3)
+	assert(game.reward_new_label.visible)
+	assert(game.reward_new_label.text.contains("DUPLICATE"))
+	assert(game.reward_new_label.text.contains("COPY 3"))
+	assert(game.reward_new_label.text.contains("+5 MATCH POINTS"))
 	game._open_kinetic_crucible()
 	await process_frame
 	var crucible_units: Array = KineticCrucibleScript.active_instances(
 		game.collection_instances
 	)
-	# EXTRAS ONLY hides the two highest-level copies of each unit name.
+	# EXTRAS ONLY keeps every copy visible as a possible target. Protection is
+	# applied only after a target is chosen, when the remaining cards are donors.
 	var names_seen := {}
 	var protected_count := 0
 	for instance in crucible_units:
 		names_seen[instance.name] = names_seen.get(instance.name, 0) + 1
 	for copy_count in names_seen.values():
 		protected_count += mini(2, copy_count)
-	assert(
-		game.crucible_reserve_grid.get_child_count()
-		== crucible_units.size() - protected_count
-	)
+	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
+	assert(protected_count > 0)
 	game.crucible_extras_toggle.button_pressed = false
 	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
 	# Class filter and name search narrow the crucible reserves list.
@@ -466,14 +469,14 @@ func _run() -> void:
 	assert(game.crucible_target_id.is_empty())
 	assert(game.crucible_donor_ids.is_empty())
 	assert(game.crucible_promote_button.disabled)
-	# EXTRAS ONLY protects the two highest-level copies, exposing the lowest.
+	# EXTRAS ONLY protects the two most-invested donors while leaving them visible.
 	var extras_config := ConfigFile.new()
 	extras_config.set_value("meta", "instances_migrated", true)
 	extras_config.set_value("collection", "next_id", 4)
 	extras_config.set_value("collection", "instances", [
 		{
 			"id": "unit_000001", "name": "Relay Bastion-013",
-			"level": 1, "points": 0, "consumed": false
+			"level": 2, "points": 1, "consumed": false
 		},
 		{
 			"id": "unit_000002", "name": "Relay Bastion-013",
@@ -492,8 +495,20 @@ func _run() -> void:
 	for card in game.crucible_reserve_grid.get_children():
 		visible_ids.append(card.unit_name)
 	assert("unit_000001" in visible_ids)
-	assert("unit_000002" not in visible_ids)
-	assert("unit_000003" not in visible_ids)
+	assert("unit_000002" in visible_ids)
+	assert("unit_000003" in visible_ids)
+	game._select_crucible_unit("unit_000003")
+	var cards_by_id := {}
+	for card in game.crucible_reserve_grid.get_children():
+		cards_by_id[card.unit_name] = card
+	assert(not cards_by_id["unit_000001"].disabled)
+	assert(cards_by_id["unit_000001"].text.contains("RECOVERED"))
+	assert(cards_by_id["unit_000002"].disabled)
+	assert(cards_by_id["unit_000002"].text.contains("PROTECTED"))
+	game._select_crucible_unit("unit_000001")
+	assert(game.crucible_donor_ids == ["unit_000001"])
+	assert(game.crucible_detail_label.text.contains("PROJECTED STATS"))
+	assert(game.crucible_merge_button.text.contains("+9"))
 	game.crucible_extras_toggle.button_pressed = false
 	visible_ids = []
 	for card in game.crucible_reserve_grid.get_children():
@@ -624,6 +639,11 @@ func _run() -> void:
 	await process_frame
 	assert(game.mission_finished)
 	assert(game.earned_reward_units.size() == rewards_before_replay + 1)
+	assert(game.recent_reward_is_duplicate)
+	assert(not game.recent_reward_instance_id.is_empty())
+	assert(game.recent_reward_copy_count >= 2)
+	assert(game.reward_new_label.text.contains("DUPLICATE"))
+	assert(game.reward_new_label.text.contains("+5 MATCH POINTS"))
 	assert(game.result_primary_button.text == "RETURN TO MENU")
 	assert(game.result_redeploy_button.visible)
 	assert(game.result_redeploy_button.text == "REDEPLOY MISSION")
@@ -657,6 +677,9 @@ func _run() -> void:
 	game.mission_finished = true
 	game.mission_interlude_pending = true
 	game.recent_reward_name = "Relay Mender-006"
+	game.recent_reward_instance_id = ""
+	game.recent_reward_is_duplicate = true
+	game.recent_reward_copy_count = 2
 	game.overlay.visible = true
 	game.squad_overlay.visible = false
 	game._continue_campaign()
@@ -725,6 +748,8 @@ func _run() -> void:
 		<= game.mission_intel_panel.get_global_rect().end.x + 0.5)
 	assert(game.reward_carry_label.visible)
 	assert(game.reward_carry_label.text.contains("RELAY MENDER-006"))
+	assert(game.reward_carry_label.text.contains("DUPLICATE"))
+	assert(game.reward_carry_label.text.contains("COPY 2"))
 	game.squad_overlay.visible = false
 	game.squad_opened_for_mission = false
 	game.pending_mission_id = -1
