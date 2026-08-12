@@ -13,6 +13,7 @@ func _init() -> void:
 
 func _render() -> void:
 	root.size = Vector2i(1280, 720)
+	_assert_attack_frame_imports()
 	var board := BoardViewScript.new()
 	root.add_child(board)
 	board.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -79,6 +80,22 @@ func _render() -> void:
 	assert(sheet.save_png(OUTPUT_PATH) == OK)
 	print("Attack-animation visual written to %s." % OUTPUT_PATH)
 	quit()
+
+func _assert_attack_frame_imports() -> void:
+	var art_directories := DirAccess.get_directories_at(
+		"res://assets/units/attack"
+	)
+	assert(not art_directories.is_empty())
+	for art_directory in art_directories:
+		assert(art_directory.is_valid_int())
+		assert(FileAccess.file_exists(
+			"res://assets/units/full/%03d.png" % int(art_directory)
+		))
+		for frame_index in range(1, 7):
+			var frame_path := "res://assets/units/attack/%s/attack_%d.png" % [
+				art_directory, frame_index
+			]
+			assert(ResourceLoader.exists(frame_path, "Texture2D"))
 
 func _unit(
 	id: int, side: int, icon: int, kind: String,
