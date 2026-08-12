@@ -141,6 +141,32 @@ def crop_to_bbox(arr: np.ndarray) -> np.ndarray:
     return arr[y0:y1, x0:x1]
 
 
+def remove_border_white_remnants(
+    arr: np.ndarray, white_threshold: int = 245,
+) -> np.ndarray:
+    """Remove backdrop-sized white regions missed by the initial flood fill."""
+    rgb = arr[..., :3]
+    candidate = (rgb.min(axis=-1) >= white_threshold) & (arr[..., 3] > 8)
+    labels, _ = ndimage.label(candidate, structure=np.ones((3, 3)))
+    border_labels = np.unique(
+        np.concatenate([labels[0], labels[-1], labels[:, 0], labels[:, -1]])
+    )
+    out = arr.copy()
+    large_area = candidate.size // 50
+    cleanup_labels = set(int(label_id) for label_id in border_labels if label_id != 0)
+    for label_id in range(1, int(labels.max()) + 1):
+        if (labels == label_id).sum() >= large_area:
+            cleanup_labels.add(label_id)
+    cleanup_mask = np.zeros(candidate.shape, dtype=bool)
+    for label_id in cleanup_labels:
+        mask = labels == label_id
+        if mask.sum() >= 32:
+            cleanup_mask |= mask
+    cleanup_mask = ndimage.binary_dilation(cleanup_mask, iterations=1)
+    out[cleanup_mask, 3] = 0
+    return out
+
+
 def paste_anchored(
     frame: np.ndarray, canvas_size: tuple[int, int], scale: float,
     foot_y: int, center_x: int,
@@ -231,7 +257,9 @@ def main() -> int:
             arr = remove_background(
                 arr, args.white_threshold, args.gray_min, args.gray_sat, args.feather
             )
-            cropped_frames.append(crop_to_bbox(arr))
+            cropped = crop_to_bbox(arr)
+            cropped = remove_border_white_remnants(cropped, args.white_threshold)
+            cropped_frames.append(crop_to_bbox(cropped))
 
     # Scale every frame by the LAST frame (the settled, idle-like pose) so the
     # whole sequence matches the idle sprite's height and crouched poses stay
@@ -241,7 +269,10 @@ def main() -> int:
     print(f"idle bbox height {idle_h}px, last frame {last_h}px, scale {scale:.3f}")
 
     source_frames = [
-        paste_anchored(frame, canvas_size, scale, idle_foot_y, idle_center_x)
+        remove_border_white_remnants(
+            paste_anchored(frame, canvas_size, scale, idle_foot_y, idle_center_x),
+            args.white_threshold,
+        )
         for frame in cropped_frames
     ]
     normalized_frames = [
