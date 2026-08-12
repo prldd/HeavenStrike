@@ -13,7 +13,7 @@ func _init() -> void:
 
 func _render() -> void:
 	root.size = Vector2i(1280, 720)
-	_assert_attack_frame_imports()
+	_assert_attack_atlas_imports()
 	var board := BoardViewScript.new()
 	root.add_child(board)
 	board.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -33,8 +33,9 @@ func _render() -> void:
 	await process_frame
 	await process_frame
 
-	var loaded_frames: Array = board._attack_frames_for(board.units[0])
-	assert(loaded_frames.size() == 6)
+	var attack_atlas: Texture2D = board._attack_atlas_for(board.units[0])
+	assert(attack_atlas != null)
+	assert(attack_atlas.get_size() == Vector2(1536, 1024))
 	Engine.time_scale = TEST_TIME_SCALE
 	var attack_finished: Signal = board.animate_attack(1, 2, "Warden", ATTACK_DURATION)
 	var playback_duration := board._attack_frame_duration(ATTACK_DURATION)
@@ -81,21 +82,22 @@ func _render() -> void:
 	print("Attack-animation visual written to %s." % OUTPUT_PATH)
 	quit()
 
-func _assert_attack_frame_imports() -> void:
-	var art_directories := DirAccess.get_directories_at(
-		"res://assets/units/attack"
-	)
-	assert(not art_directories.is_empty())
-	for art_directory in art_directories:
-		assert(art_directory.is_valid_int())
+func _assert_attack_atlas_imports() -> void:
+	var atlas_files: Array[String] = []
+	for path in DirAccess.get_files_at("res://assets/units/attack"):
+		if path.ends_with(".png"):
+			atlas_files.append(path)
+	assert(not atlas_files.is_empty())
+	for atlas_file in atlas_files:
+		var art_id := atlas_file.get_basename()
+		assert(art_id.is_valid_int())
 		assert(FileAccess.file_exists(
-			"res://assets/units/full/%03d.png" % int(art_directory)
+			"res://assets/units/full/%03d.png" % int(art_id)
 		))
-		for frame_index in range(1, 7):
-			var frame_path := "res://assets/units/attack/%s/attack_%d.png" % [
-				art_directory, frame_index
-			]
-			assert(ResourceLoader.exists(frame_path, "Texture2D"))
+		var atlas_path := "res://assets/units/attack/%s" % atlas_file
+		assert(ResourceLoader.exists(atlas_path, "Texture2D"))
+		var texture := ResourceLoader.load(atlas_path, "Texture2D") as Texture2D
+		assert(texture != null and texture.get_size() == Vector2(1536, 1024))
 
 func _unit(
 	id: int, side: int, icon: int, kind: String,

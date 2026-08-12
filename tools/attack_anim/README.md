@@ -1,7 +1,7 @@
 # Attack animation pipeline
 
-Generated attack clips become six optional sprite frames. `BoardView` loads a
-complete frame set automatically and uses it in place of the unit's generic
+Generated attack clips become one optional 3×2 sprite atlas per unit. `BoardView`
+loads the atlas automatically and uses it in place of the unit's generic
 class attack effect; units without one retain the standard static sprite lunge
 and class effect. Sound, lunge motion, damage flashes, and combat timing remain
 shared. Generated frames remain visible at 2×/4× speed and during autobattle
@@ -46,10 +46,12 @@ For a differently timed attack, provide exactly six timestamps in seconds:
   --times 0,0.15,0.30,0.50,1.00,1.50
 ```
 
-Output is written to `assets/units/attack/241/attack_1.png` through
-`attack_6.png`, plus `preview.png`. The script removes letterboxing and the
-connected white/gray background, then scales and anchors every frame to the
-unit's existing idle canvas.
+Output is written to `assets/units/attack/241.png`. Its six 512×512 cells are
+arranged left-to-right in a 3×2 grid. The script removes letterboxing and the
+connected white/gray background, then scales and anchors every cell to the
+unit's existing idle canvas before reducing it to the runtime resolution. A
+review image is written to the ignored
+`.tools/attack-previews/241.png` path.
 
 Open the Godot editor after extraction so the new PNG files are imported.
 Runtime loading uses those imported textures because raw image loading is not
@@ -64,6 +66,6 @@ The focused visual check does not depend on player save data or Reserves:
   --script res://tests/attack_animation_visual_check.gd
 ```
 
-It validates all six imported frames and writes
+It validates every imported atlas and writes
 `tests/attack-animation-visual.png`. Normal gameplay uses the same
 `BoardView.animate_attack` path.

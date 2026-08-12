@@ -2,8 +2,8 @@
 """Extract attack-animation frames from a generated video clip.
 
 Turns a short AI-generated attack clip (character on a white background) into
-the six transparent PNG frames the game loads from
-assets/units/attack/<art id>/attack_<1..6>.png (see BoardView._attack_frames_for).
+the 3x2 transparent PNG atlas the game loads from
+assets/units/attack/<art id>.png (see BoardView._attack_atlas_for).
 
 Steps per frame:
   1. ffmpeg extracts the frame at a chosen timestamp.
@@ -27,7 +27,7 @@ Usage:
 
 Without --times, frames are sampled at --fractions of the clip duration
 (default skews early, because generated clips usually front-load the action).
-A preview.png contact sheet is written next to the frames for quick review.
+A compact preview is written under the ignored `.tools/attack-previews/` folder.
 """
 
 import argparse
@@ -42,6 +42,7 @@ from scipy import ndimage
 
 DEFAULT_FRACTIONS = [0.0, 0.08, 0.16, 0.3, 0.5, 0.8]
 FRAME_COUNT = 6
+ATLAS_CELL_SIZE = 512
 
 
 def probe_duration(video: Path) -> float:
@@ -170,6 +171,7 @@ def main() -> int:
     parser.add_argument("--fractions", default="", help="comma-separated 0..1")
     parser.add_argument("--idle", type=Path, default=None)
     parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--preview-out", type=Path, default=None)
     parser.add_argument("--white-threshold", type=int, default=245)
     parser.add_argument("--gray-min", type=int, default=150)
     parser.add_argument("--gray-sat", type=float, default=0.12)
@@ -178,7 +180,10 @@ def main() -> int:
 
     art_id = args.art_id
     idle_path = args.idle or Path(f"assets/units/full/{art_id:03d}.png")
-    out_dir = args.out or Path(f"assets/units/attack/{art_id:03d}")
+    out_path = args.out or Path(f"assets/units/attack/{art_id:03d}.png")
+    preview_path = args.preview_out or Path(
+        f".tools/attack-previews/{art_id:03d}.png"
+    )
     if not args.video.is_file():
         sys.exit(f"video not found: {args.video}")
     if not idle_path.is_file():
@@ -196,7 +201,7 @@ def main() -> int:
     if len(times) != FRAME_COUNT:
         sys.exit(
             f"expected exactly {FRAME_COUNT} timestamps, got {len(times)}; "
-            "BoardView only loads attack_1.png through attack_6.png"
+            "the runtime atlas always contains six cells"
         )
     if any(time_s < 0.0 or time_s >= duration for time_s in times):
         sys.exit(
@@ -214,7 +219,8 @@ def main() -> int:
     idle_center_x = (idle_x0 + idle_x1) / 2
     canvas_size = (idle.shape[1], idle.shape[0])
 
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    preview_path.parent.mkdir(parents=True, exist_ok=True)
     cropped_frames: list[np.ndarray] = []
     with tempfile.TemporaryDirectory() as tmp:
         for index, time_s in enumerate(times):
@@ -234,21 +240,38 @@ def main() -> int:
     scale = idle_h / last_h
     print(f"idle bbox height {idle_h}px, last frame {last_h}px, scale {scale:.3f}")
 
-    for index, frame in enumerate(cropped_frames):
-        canvas = paste_anchored(frame, canvas_size, scale, idle_foot_y, idle_center_x)
-        Image.fromarray(canvas).save(out_dir / f"attack_{index + 1}.png")
+    source_frames = [
+        paste_anchored(frame, canvas_size, scale, idle_foot_y, idle_center_x)
+        for frame in cropped_frames
+    ]
+    normalized_frames = [
+        np.array(
+            Image.fromarray(frame).resize(
+                (ATLAS_CELL_SIZE, ATLAS_CELL_SIZE), Image.LANCZOS
+            )
+        )
+        for frame in source_frames
+    ]
+    atlas = Image.new(
+        "RGBA", (ATLAS_CELL_SIZE * 3, ATLAS_CELL_SIZE * 2), (0, 0, 0, 0)
+    )
+    for index, frame in enumerate(normalized_frames):
+        atlas.alpha_composite(
+            Image.fromarray(frame),
+            ((index % 3) * ATLAS_CELL_SIZE, (index // 3) * ATLAS_CELL_SIZE),
+        )
+    atlas.save(out_path)
 
     # Contact sheet for review: frames side by side on a neutral checker.
     tile = 256
     sheet = Image.new("RGBA", (tile * len(cropped_frames), tile), (40, 40, 48, 255))
-    for index, frame in enumerate(cropped_frames):
-        canvas = paste_anchored(frame, canvas_size, scale, idle_foot_y, idle_center_x)
-        thumb = Image.fromarray(canvas)
+    for index, frame in enumerate(normalized_frames):
+        thumb = Image.fromarray(frame)
         thumb.thumbnail((tile, tile), Image.LANCZOS)
         sheet.paste(thumb, (tile * index + (tile - thumb.width) // 2, tile - thumb.height), thumb)
-    sheet.save(out_dir / "preview.png")
+    sheet.save(preview_path)
 
-    print(f"wrote {len(cropped_frames)} frames + preview.png to {out_dir}")
+    print(f"wrote 3x2 attack atlas to {out_path}; preview to {preview_path}")
     return 0
 
 

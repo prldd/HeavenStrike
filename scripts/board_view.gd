@@ -30,8 +30,10 @@ const PERSPECTIVE_TOP_SCALE := 0.86
 const ROW_DEPTHS := [0.0, 0.28, 0.62, 1.0]
 const UNIT_ART_CELL_SCALE := 1.82
 const UNIT_FOOT_INSET := 8.0
-const ATTACK_FRAMES_DIR := "res://assets/units/attack"
+const ATTACK_ATLAS_DIR := "res://assets/units/attack"
 const ATTACK_FRAME_COUNT := 6
+const ATTACK_ATLAS_COLUMNS := 3
+const ATTACK_ATLAS_ROWS := 2
 const MIN_ATTACK_FRAME_WALL_DURATION := 0.30
 const READY_PULSE_FREQUENCY := 0.32
 const GRID_BRASS := Color("#b99a64")
@@ -93,7 +95,7 @@ var unit_flash_strength: Dictionary = {}
 var unit_defeat_strength: Dictionary = {}
 var unit_attack_frame_progress: Dictionary = {}
 var full_unit_texture_cache: Dictionary = {}
-var attack_frame_texture_cache: Dictionary = {}
+var attack_atlas_texture_cache: Dictionary = {}
 var projectile_from := Vector2.ZERO
 var projectile_to := Vector2.ZERO
 var projectile_progress := 0.0
@@ -336,13 +338,15 @@ func animate_attack(
 	var destination := _unit_art_rect(target).get_center()
 	var effect_cells := attack_effect_cells(actor, target, unit_kind)
 	var impact_cells := _attack_impact_cells(actor, target, unit_kind, effect_cells)
-	var frames := _attack_frames_for(actor) if attack_frame_animation_enabled else []
-	if not frames.is_empty():
+	var attack_atlas := (
+		_attack_atlas_for(actor) if attack_frame_animation_enabled else null
+	)
+	if attack_atlas != null:
 		var frame_duration := _attack_frame_duration(duration)
 		_animate_attack_pose(
 			actor_id, unit_kind, origin, destination, frame_duration, strike_index
 		)
-		return _animate_attack_frames(actor_id, frames.size(), frame_duration)
+		return _animate_attack_frames(actor_id, ATTACK_FRAME_COUNT, frame_duration)
 	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
 	return _animate_attack_effect(
 		origin, destination, unit_kind, effect_cells, impact_cells, duration,
@@ -361,13 +365,15 @@ func animate_commander_attack(
 		size.x - 82.0 if commander_side == 1 else 82.0,
 		_grid_rect().get_center().y
 	)
-	var frames := _attack_frames_for(actor) if attack_frame_animation_enabled else []
-	if not frames.is_empty():
+	var attack_atlas := (
+		_attack_atlas_for(actor) if attack_frame_animation_enabled else null
+	)
+	if attack_atlas != null:
 		var frame_duration := _attack_frame_duration(duration)
 		_animate_attack_pose(
 			actor_id, unit_kind, origin, destination, frame_duration, strike_index
 		)
-		return _animate_attack_frames(actor_id, frames.size(), frame_duration)
+		return _animate_attack_frames(actor_id, ATTACK_FRAME_COUNT, frame_duration)
 	_animate_attack_pose(actor_id, unit_kind, origin, destination, duration, strike_index)
 	return _animate_attack_effect(
 		origin, destination, unit_kind, [], [], duration,
@@ -485,32 +491,48 @@ func _animate_attack_effect(
 	tween.tween_callback(_clear_attack_effect)
 	return tween.finished
 
-## Returns the generated per-unit attack frames for the unit's art id, or an
-## empty array when the unit has no generated frames. Frames live in
-## assets/units/attack/<art id>/attack_<1..6>.png and are loaded through the
-## import pipeline so the textures remain available in exported builds. The
-## result (including empties) is memoized per art id.
-func _attack_frames_for(unit: Dictionary) -> Array:
+## Returns the generated 3x2 attack atlas for the unit's art id, or null when
+## the unit has no generated animation. Atlases live at
+## assets/units/attack/<art id>.png and are loaded through the import pipeline
+## so they remain available in exported builds. Results are memoized per art id.
+func _attack_atlas_for(unit: Dictionary) -> Texture2D:
 	var icon_id: int = unit.get("icon", 0)
 	if icon_id < 1:
-		return []
+		return null
 	var art_id: int = UnitCatalogScript.art_id(icon_id)
-	if attack_frame_texture_cache.has(art_id):
-		return attack_frame_texture_cache[art_id]
-	var frames: Array = []
-	var dir_path := "%s/%03d" % [ATTACK_FRAMES_DIR, art_id]
-	for index in range(1, ATTACK_FRAME_COUNT + 1):
-		var path := "%s/attack_%d.png" % [dir_path, index]
-		if not ResourceLoader.exists(path, "Texture2D"):
-			frames = []
-			break
-		var texture := ResourceLoader.load(path, "Texture2D") as Texture2D
-		if texture == null:
-			frames = []
-			break
-		frames.append(texture)
-	attack_frame_texture_cache[art_id] = frames
-	return frames
+	if attack_atlas_texture_cache.has(art_id):
+		return attack_atlas_texture_cache[art_id]
+	var path := "%s/%03d.png" % [ATTACK_ATLAS_DIR, art_id]
+	var texture: Texture2D = null
+	if ResourceLoader.exists(path, "Texture2D"):
+		texture = ResourceLoader.load(path, "Texture2D") as Texture2D
+		if texture != null and not _is_valid_attack_atlas(texture):
+			push_warning("Ignoring malformed attack atlas: %s" % path)
+			texture = null
+	attack_atlas_texture_cache[art_id] = texture
+	return texture
+
+func _is_valid_attack_atlas(texture: Texture2D) -> bool:
+	var atlas_size := texture.get_size()
+	return (
+		int(atlas_size.x) % ATTACK_ATLAS_COLUMNS == 0
+		and int(atlas_size.y) % ATTACK_ATLAS_ROWS == 0
+		and atlas_size.x / ATTACK_ATLAS_COLUMNS == atlas_size.y / ATTACK_ATLAS_ROWS
+	)
+
+func _attack_atlas_frame_rect(texture: Texture2D, frame_index: int) -> Rect2:
+	var frame_size := Vector2(
+		texture.get_width() / ATTACK_ATLAS_COLUMNS,
+		texture.get_height() / ATTACK_ATLAS_ROWS
+	)
+	var clamped_index := clampi(frame_index, 0, ATTACK_FRAME_COUNT - 1)
+	return Rect2(
+		Vector2(
+			(clamped_index % ATTACK_ATLAS_COLUMNS) * frame_size.x,
+			(clamped_index / ATTACK_ATLAS_COLUMNS) * frame_size.y
+		),
+		frame_size
+	)
 
 func _animate_attack_frames(actor_id: int, frame_count: int, duration: float) -> Signal:
 	unit_attack_frame_progress[actor_id] = 0.0
@@ -1829,17 +1851,17 @@ func _draw_unit_art(unit: Dictionary, rect: Rect2) -> void:
 	if texture == null:
 		_draw_missing_unit_art(unit, rect)
 		return
-	# Generated attack frames replace the idle art while an attack tween runs.
-	# They share the idle sprite's canvas size and character placement, so the
-	# swap does not change the drawn rect.
+	var content_rect := Rect2(Vector2.ZERO, texture.get_size())
+	# The selected 512x512 attack-atlas cell replaces the idle art while the
+	# tween runs. Every cell shares the idle canvas and foot line.
 	var frame_progress: float = unit_attack_frame_progress.get(unit.id, -1.0)
 	if frame_progress >= 0.0:
-		var frames := _attack_frames_for(unit)
-		if not frames.is_empty():
-			texture = frames[clampi(int(frame_progress), 0, frames.size() - 1)]
+		var attack_atlas := _attack_atlas_for(unit)
+		if attack_atlas != null:
+			texture = attack_atlas
+			content_rect = _attack_atlas_frame_rect(texture, int(frame_progress))
 	# Use the full generated canvas so deliberately small characters remain
 	# relatively small instead of being normalized by alpha-bound cropping.
-	var content_rect := Rect2(Vector2.ZERO, texture.get_size())
 	var content_size := content_rect.size
 	var art_scale := minf(rect.size.x / content_size.x, rect.size.y / content_size.y)
 	var draw_size := (content_size * art_scale).round()
