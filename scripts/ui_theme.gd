@@ -75,6 +75,7 @@ static func muted_color() -> Color:
 static func home_icon(size: int = 28) -> ImageTexture:
 	var image := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
+	@warning_ignore("integer_division")
 	var center := size / 2
 	var roof_peak := int(size * 0.06)
 	var roof_base := int(size * 0.48)

@@ -92,6 +92,20 @@ func _run() -> void:
 	assert(game.command_dock.is_ancestor_of(game.end_button))
 	assert(game.command_dock.is_ancestor_of(game.hand_row))
 	assert(game.command_dock.is_ancestor_of(game.power_button))
+	var home_buttons: Array[Node] = game.find_children("*", "Button", true, false).filter(
+		func(action): return action.get_meta("home_button", false)
+	)
+	assert(not home_buttons.is_empty())
+	assert(home_buttons.all(func(action):
+		return (
+			action.custom_minimum_size == Vector2(42, 42)
+			and action.get_meta("instrument_accent") == game.UIThemeScript.BRASS
+			and not action.get_meta("instrument_emphasis")
+			and action.has_theme_stylebox_override("normal")
+			and action.has_theme_stylebox_override("hover")
+			and action.has_theme_stylebox_override("pressed")
+		)
+	))
 	assert(game.command_bridge.is_ancestor_of(game.turn_label))
 	assert(game.command_bridge.is_ancestor_of(game.hint_label))
 	assert(game.end_button.text == "END TURN")
@@ -429,6 +443,8 @@ func _run() -> void:
 	game._emphasize_result_action(game.result_continue_button)
 	assert(game.result_continue_button.has_theme_stylebox_override("normal"))
 	assert(not game.result_primary_button.has_theme_stylebox_override("normal"))
+	assert(game.result_menu_button.has_theme_stylebox_override("normal"))
+	assert(game.result_menu_button.get_meta("instrument_accent") == game.UIThemeScript.BRASS)
 	assert(game.get_viewport().gui_get_focus_owner() == game.result_continue_button)
 	assert(game.overlay_detail.get_parent() is ScrollContainer)
 	assert(game.overlay_detail.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART)
@@ -760,7 +776,7 @@ func _run() -> void:
 	assert(game.dialogue_speaker_label.text == "Cassian")
 	assert(game.dialogue_progress_label.text == "1  /  4")
 	assert(game.dialogue_portrait.texture != null)
-	assert(game.dialogue_portrait.texture.resource_path.ends_with("ComfyUI_00160_.png"))
+	assert(game.dialogue_portrait.texture.resource_path.ends_with("cassian.png"))
 	assert(game.dialogue_portrait.texture_filter
 		== CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
 	assert(game.dialogue_portrait.texture.get_image().has_mipmaps())
@@ -773,7 +789,7 @@ func _run() -> void:
 		<= game.get_viewport_rect().end.y)
 	game._advance_interlude()
 	assert(game.dialogue_speaker_label.text == "Conductor")
-	assert(game.dialogue_portrait.texture.resource_path.ends_with("Conductor.png"))
+	assert(game.dialogue_portrait.texture.resource_path.ends_with("conductor.png"))
 	game._finish_interlude()
 	assert(not game.dialogue_overlay.visible)
 	assert(game.mission_overlay.visible)

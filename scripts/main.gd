@@ -458,8 +458,6 @@ func _build_interface() -> void:
 	dock_row.add_child(utility_stack)
 
 	menu_button = _make_home_button()
-	menu_button.custom_minimum_size = Vector2(42, 41)
-	_apply_instrument_button_style(menu_button, UIThemeScript.BRASS, false)
 	menu_button.pressed.connect(_show_main_menu)
 	utility_stack.add_child(menu_button)
 
@@ -743,8 +741,11 @@ func _wait(seconds: float) -> Signal:
 ## of a text label.
 func _make_home_button() -> Button:
 	var button := Button.new()
+	button.custom_minimum_size = Vector2(42, 42)
 	button.icon = UIThemeScript.home_icon()
 	button.tooltip_text = "Return to the main menu."
+	button.set_meta("home_button", true)
+	_apply_instrument_button_style(button, UIThemeScript.BRASS, false)
 	return button
 
 func _apply_instrument_button_style(
@@ -957,7 +958,6 @@ func _build_overlay() -> void:
 	result_actions.add_child(result_continue_button)
 
 	result_menu_button = _make_home_button()
-	result_menu_button.custom_minimum_size = Vector2(72, 48)
 	result_menu_button.visible = false
 	result_menu_button.pressed.connect(_show_main_menu)
 	result_actions.add_child(result_menu_button)
@@ -1695,7 +1695,6 @@ func _build_replay_controls() -> void:
 	menu_center.custom_minimum_size.x = 76
 	row.add_child(menu_center)
 	var back := _make_home_button()
-	back.custom_minimum_size = Vector2(68, 46)
 	back.pressed.connect(_close_replay)
 	menu_center.add_child(back)
 
@@ -1947,7 +1946,6 @@ func _build_mission_select() -> void:
 	footer.add_theme_constant_override("separation", 12)
 	layout.add_child(footer)
 	var back := _make_home_button()
-	back.custom_minimum_size = Vector2(72, 44)
 	back.pressed.connect(_show_main_menu)
 	footer.add_child(back)
 	var legend := Label.new()
@@ -2213,7 +2211,6 @@ func _build_kinetic_crucible() -> void:
 	actions.add_theme_constant_override("separation", 12)
 	layout.add_child(actions)
 	var back := _make_home_button()
-	back.custom_minimum_size = Vector2(72, 46)
 	back.pressed.connect(_show_main_menu)
 	actions.add_child(back)
 	var debug_copies := Button.new()
@@ -2314,7 +2311,6 @@ func _build_gacha() -> void:
 	actions.add_theme_constant_override("separation", 12)
 	layout.add_child(actions)
 	var back := _make_home_button()
-	back.custom_minimum_size = Vector2(72, 46)
 	back.pressed.connect(_show_main_menu)
 	actions.add_child(back)
 	gacha_roll_one_button = Button.new()
@@ -5948,6 +5944,8 @@ func _emphasize_result_action(primary_action: Button) -> void:
 			action.remove_theme_stylebox_override(style_name)
 		for color_name in ["font_color", "font_hover_color", "font_pressed_color"]:
 			action.remove_theme_color_override(color_name)
+		if action != primary_action and action.get_meta("home_button", false):
+			_apply_instrument_button_style(action, UIThemeScript.BRASS, false)
 	primary_action.add_theme_stylebox_override(
 		"normal", UIThemeScript.card_style(UIThemeScript.BRASS, 0.44, 1.0, 4)
 	)

@@ -6,16 +6,16 @@ extends RefCounted
 ## script separate from main.gd lets dialogue be revised without touching UI
 ## or campaign-flow code.
 
-const PORTRAIT_ROOT := "res://assets/Unused Explorations/Talking Heads/"
+const PORTRAIT_ROOT := "res://assets/dialogue/talking_heads/"
 const ORIGINAL_PORTRAIT_ROOT := "res://assets/dialogue/portraits/"
 const PORTRAITS := {
-	"conductor": PORTRAIT_ROOT + "Conductor.png",
-	"nara": PORTRAIT_ROOT + "ComfyUI_00110_.png",
-	"serin": PORTRAIT_ROOT + "ComfyUI_00118_.png",
-	"ilyra": PORTRAIT_ROOT + "ComfyUI_00119_.png",
-	"cassian": PORTRAIT_ROOT + "ComfyUI_00160_.png",
-	"rook": PORTRAIT_ROOT + "ComfyUI_00167_.png",
-	"first_conductor": PORTRAIT_ROOT + "ComfyUI_00169_.png",
+	"conductor": PORTRAIT_ROOT + "conductor.png",
+	"nara": PORTRAIT_ROOT + "nara.png",
+	"serin": PORTRAIT_ROOT + "serin.png",
+	"ilyra": PORTRAIT_ROOT + "ilyra.png",
+	"cassian": PORTRAIT_ROOT + "cassian.png",
+	"rook": PORTRAIT_ROOT + "rook.png",
+	"first_conductor": PORTRAIT_ROOT + "first_conductor.png",
 	"lysa": ORIGINAL_PORTRAIT_ROOT + "lysa-vey.png",
 	"asha": ORIGINAL_PORTRAIT_ROOT + "asha-vale.png",
 	"dax": ORIGINAL_PORTRAIT_ROOT + "dax-calder.png"
@@ -26,8 +26,8 @@ const BACKGROUNDS := {
 	"field": "res://assets/coal-set.png",
 	"arena": "res://assets/neutral-set.png",
 	"technical": "res://assets/fusion-menu.png",
-	"workshop": "res://assets/Unused Explorations/caelise-workshop.png",
-	"caelis": "res://assets/Unused Explorations/caelis-city.png"
+	"workshop": "res://assets/dialogue/backgrounds/caelise-workshop.png",
+	"caelis": "res://assets/dialogue/backgrounds/caelis-city.png"
 }
 
 const CHARACTERS := {

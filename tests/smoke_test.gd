@@ -972,7 +972,7 @@ func _init() -> void:
 		var portrait_texture: Texture2D = load(portrait_path)
 		assert(portrait_texture != null)
 		assert(portrait_texture.get_image().has_mipmaps())
-	assert(StoryDialogueCatalogScript.CHARACTERS.Conductor.portrait.ends_with("Conductor.png"))
+	assert(StoryDialogueCatalogScript.CHARACTERS.Conductor.portrait.ends_with("conductor.png"))
 	assert(StoryDialogueCatalogScript.CHARACTERS["Brass Bastion-136"].portrait_kind == "android")
 	assert(StoryDialogueCatalogScript.CHARACTERS["First Conductor"].portrait_kind == "android")
 	for character in StoryDialogueCatalogScript.CHARACTERS.values():

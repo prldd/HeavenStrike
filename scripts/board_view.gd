@@ -522,14 +522,16 @@ func _is_valid_attack_atlas(texture: Texture2D) -> bool:
 
 func _attack_atlas_frame_rect(texture: Texture2D, frame_index: int) -> Rect2:
 	var frame_size := Vector2(
-		texture.get_width() / ATTACK_ATLAS_COLUMNS,
-		texture.get_height() / ATTACK_ATLAS_ROWS
+		float(texture.get_width()) / ATTACK_ATLAS_COLUMNS,
+		float(texture.get_height()) / ATTACK_ATLAS_ROWS
 	)
 	var clamped_index := clampi(frame_index, 0, ATTACK_FRAME_COUNT - 1)
+	@warning_ignore("integer_division")
+	var atlas_row := clamped_index / ATTACK_ATLAS_COLUMNS
 	return Rect2(
 		Vector2(
 			(clamped_index % ATTACK_ATLAS_COLUMNS) * frame_size.x,
-			(clamped_index / ATTACK_ATLAS_COLUMNS) * frame_size.y
+			atlas_row * frame_size.y
 		),
 		frame_size
 	)
@@ -1197,15 +1199,15 @@ func _draw_commander(
 		)
 
 func _draw_commander_stat(
-	position: Vector2, label: String, value: String, accent: Color
+	origin: Vector2, label: String, value: String, accent: Color
 ) -> void:
 	var font := get_theme_default_font()
 	draw_string(
-		font, position + Vector2(0, 10), label,
+		font, origin + Vector2(0, 10), label,
 		HORIZONTAL_ALIGNMENT_LEFT, 54, 9, Color("#9eadaf")
 	)
 	draw_string(
-		font, position + Vector2(54, 12), value,
+		font, origin + Vector2(54, 12), value,
 		HORIZONTAL_ALIGNMENT_RIGHT, 38, 13, accent
 	)
 
@@ -1568,7 +1570,7 @@ func _draw_muzzle_flash(origin: Vector2, direction: Vector2, phase: float) -> vo
 	])
 	draw_colored_polygon(core, Color(VFX_HIGHLIGHT, strength))
 
-func _draw_sparks(center: Vector2, phase: float, scale: float) -> void:
+func _draw_sparks(center: Vector2, phase: float, effect_scale: float) -> void:
 	var clamped_phase := clampf(phase, 0.0, 1.0)
 	var strength := sin(clamped_phase * PI)
 	if strength <= 0.0:
@@ -1576,48 +1578,48 @@ func _draw_sparks(center: Vector2, phase: float, scale: float) -> void:
 	for ray in 8:
 		var angle := float(ray) * TAU / 8.0 + 0.21
 		var direction := Vector2.from_angle(angle)
-		var inner := center + direction * (5.0 + clamped_phase * 5.0) * scale
+		var inner := center + direction * (5.0 + clamped_phase * 5.0) * effect_scale
 		var outer := center + direction * (
 			12.0 + float(ray % 3) * 6.0 + clamped_phase * 17.0
-		) * scale
+		) * effect_scale
 		draw_line(inner, outer, Color(VFX_EMBER, strength * 0.9), 2.4, true)
 		if ray % 2 == 0:
-			draw_circle(outer, 2.2 * scale, Color(VFX_HIGHLIGHT, strength))
+			draw_circle(outer, 2.2 * effect_scale, Color(VFX_HIGHLIGHT, strength))
 
-func _draw_smoke_burst(center: Vector2, phase: float, scale: float) -> void:
+func _draw_smoke_burst(center: Vector2, phase: float, effect_scale: float) -> void:
 	var clamped_phase := clampf(phase, 0.0, 1.0)
 	var fade := pow(1.0 - clamped_phase, 1.4)
 	if fade <= 0.0:
 		return
 	for puff in 6:
 		var angle := float(puff) * TAU / 6.0 + 0.35
-		var drift := Vector2.from_angle(angle) * clamped_phase * 28.0 * scale
-		drift.y -= clamped_phase * 12.0 * scale
+		var drift := Vector2.from_angle(angle) * clamped_phase * 28.0 * effect_scale
+		drift.y -= clamped_phase * 12.0 * effect_scale
 		var puff_center := center + drift
-		var radius := (7.0 + float(puff % 3) * 3.0 + clamped_phase * 10.0) * scale
+		var radius := (7.0 + float(puff % 3) * 3.0 + clamped_phase * 10.0) * effect_scale
 		draw_circle(puff_center, radius, Color(VFX_SMOKE, fade * 0.24))
 		draw_arc(
 			puff_center, radius, -2.8, 0.35, 14,
 			Color(VFX_INK, fade * 0.34), 1.5, true
 		)
 
-func _draw_steam_burst(center: Vector2, phase: float, scale: float) -> void:
+func _draw_steam_burst(center: Vector2, phase: float, effect_scale: float) -> void:
 	var clamped_phase := clampf(phase, 0.0, 1.0)
 	var fade := pow(1.0 - clamped_phase, 1.25)
 	if fade <= 0.0:
 		return
 	for puff in 5:
 		var angle := -PI * 0.85 + float(puff) * PI * 0.42
-		var drift := Vector2.from_angle(angle) * clamped_phase * 34.0 * scale
-		drift.y -= clamped_phase * 13.0 * scale
-		var radius := (6.0 + float(puff % 2) * 4.0 + clamped_phase * 13.0) * scale
+		var drift := Vector2.from_angle(angle) * clamped_phase * 34.0 * effect_scale
+		drift.y -= clamped_phase * 13.0 * effect_scale
+		var radius := (6.0 + float(puff % 2) * 4.0 + clamped_phase * 13.0) * effect_scale
 		draw_circle(center + drift, radius, Color(VFX_STEAM, fade * 0.32))
 		draw_arc(
 			center + drift, radius, 0, TAU, 16,
 			Color(VFX_INK, fade * 0.22), 1.2, true
 		)
 
-func _draw_explosion(center: Vector2, phase: float, scale: float) -> void:
+func _draw_explosion(center: Vector2, phase: float, effect_scale: float) -> void:
 	var clamped_phase := clampf(phase, 0.0, 1.0)
 	var flash := sin(clamped_phase * PI)
 	if flash <= 0.0:
@@ -1626,15 +1628,15 @@ func _draw_explosion(center: Vector2, phase: float, scale: float) -> void:
 	for point_index in 16:
 		var angle := float(point_index) * TAU / 16.0
 		var alternating := 1.0 if point_index % 2 == 0 else 0.48
-		var radius := (12.0 + clamped_phase * 34.0) * alternating * scale
+		var radius := (12.0 + clamped_phase * 34.0) * alternating * effect_scale
 		points.append(center + Vector2.from_angle(angle) * radius)
 	draw_colored_polygon(points, Color(VFX_EMBER, flash * 0.58))
-	draw_circle(center, (8.0 + clamped_phase * 14.0) * scale,
+	draw_circle(center, (8.0 + clamped_phase * 14.0) * effect_scale,
 		Color(VFX_HIGHLIGHT, flash * 0.88))
-	_draw_sparks(center, clamped_phase, scale)
-	_draw_smoke_burst(center, clamped_phase, scale)
+	_draw_sparks(center, clamped_phase, effect_scale)
+	_draw_smoke_burst(center, clamped_phase, effect_scale)
 
-func _draw_impact_cracks(center: Vector2, phase: float, scale: float) -> void:
+func _draw_impact_cracks(center: Vector2, phase: float, effect_scale: float) -> void:
 	var clamped_phase := clampf(phase, 0.0, 1.0)
 	var fade := sin(clamped_phase * PI)
 	if fade <= 0.0:
@@ -1643,9 +1645,9 @@ func _draw_impact_cracks(center: Vector2, phase: float, scale: float) -> void:
 		var angle := float(crack) * TAU / 7.0 + 0.18
 		var direction := Vector2.from_angle(angle)
 		var side := Vector2(-direction.y, direction.x)
-		var elbow := center + direction * (13.0 + clamped_phase * 13.0) * scale
-		var tip := elbow + direction * (10.0 + float(crack % 3) * 4.0) * scale
-		tip += side * (-4.0 if crack % 2 == 0 else 4.0) * scale
+		var elbow := center + direction * (13.0 + clamped_phase * 13.0) * effect_scale
+		var tip := elbow + direction * (10.0 + float(crack % 3) * 4.0) * effect_scale
+		tip += side * (-4.0 if crack % 2 == 0 else 4.0) * effect_scale
 		draw_line(center, elbow, Color(VFX_INK, fade * 0.72), 3.0, true)
 		draw_line(elbow, tip, Color(VFX_INK, fade * 0.52), 2.0, true)
 
