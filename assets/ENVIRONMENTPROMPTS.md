@@ -6,6 +6,10 @@ lighting, sparse warning amber, angular modular architecture, and clean
 tactical negative space. Avoid medieval, cathedral, heraldic, parchment,
 brass, and Victorian-steampunk cues.
 
+The canonical guide for palette, scale, faction translation, UI relationship,
+motion, and review criteria is
+[`documentation/Modern_Field_Command_Visual_Direction.md`](../documentation/Modern_Field_Command_Visual_Direction.md).
+
 Composition reference: `assets/boards/reference-playboard.png`. Preserve its
 clear floor footprint; vary only the setting and palette around it.
 
@@ -42,13 +46,14 @@ grid or unit sprites.
 
 ## Faction palette
 
-- **Solar:** white-gold, blue-black roofs, amber light.
-- **Steam:** brass, copper, verdigris, clean steam.
-- **Coal:** black iron, soot, ash, ember orange.
-- **Wind:** pale blue, silver, turbines, open sky.
-- **Fusion:** graphite, compact green core, restrained circuits.
-- **Caelis:** ivory, silver-gold, dormant relay machinery.
-- **Neutral:** stone, timber, plain metal, soft daylight.
+- **Solar:** ceramic white, blue-black structure, precise amber charge.
+- **Steam:** oxidized teal, cool steel, white pressure vapor, turbines and pumps.
+- **Coal:** graphite armor, heat-shield red, ash, thermal orange.
+- **Wind:** pale blue, silver, cyan navigation light, stabilizers and open routes.
+- **Fusion:** graphite, compact violet or green containment light, sparse coils.
+- **Caelis:** graphite and ceramic-white monoliths, precise cyan-violet systems.
+- **Universal:** blue-grey modules, cool white data light, cyan interfaces.
+- **Neutral:** weathered concrete, graphite metal, soft overcast daylight.
 
 ## Other environments
 

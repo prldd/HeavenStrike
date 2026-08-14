@@ -2,16 +2,34 @@ ARTSTYLES.md
 
 ## Active direction: Modern Field Command
 
+The canonical cross-discipline guide is
+[`documentation/Modern_Field_Command_Visual_Direction.md`](../documentation/Modern_Field_Command_Visual_Direction.md).
+It governs environments, UI, units, VFX, animation, narrative staging, and
+promotional media.
+
 Environment and UI art use contemporary tactical science fiction: angular
 modular construction, graphite composite surfaces, cool readout whites, cyan
-signal light, sparse warning amber, and restrained coral threat accents.
-Avoid medieval architecture, heraldry, parchment, antique brass decoration,
-gothic arches, and exposed Victorian machinery. Unit art keeps the readable
-Ink and Cell treatment below, but new chassis should express it through modern
-enclosed armor shells, clean joints, sensor optics, and manufactured panels.
+signal light, sparse warning amber, and restrained coral threat accents. Unit
+art keeps the readable Ink and Cell rendering method below, but new chassis
+express it through strong silhouettes, modern enclosed armor shells, clean dark
+joints, compact sensor optics, manufactured panels, modular role equipment, and
+sparse functional emission.
+
+Avoid medieval architecture and armor, heraldry, parchment, antique-brass
+decoration, gothic arches, exposed Victorian machinery, ornamental gears,
+decorative filigree, generic giant-mech proportions, and equal-density surface
+noise. Where the historical style sections below conflict with the canonical
+guide, use their rendering technique only and follow Modern Field Command for
+shape, material, color, interface, and setting decisions.
 
 ## Ink and Cell
 ### Unit-art style
+
+> This section preserves the detailed rendering workflow and historical prompt
+> language used by the existing roster. For all new work, apply it together
+> with Modern Field Command above. References to techno-fantasy, antique
+> materials, costume translation, or a source character are not permission to
+> introduce medieval styling or third-party source art.
 
 Use the source sprite as the definitive base design.
 

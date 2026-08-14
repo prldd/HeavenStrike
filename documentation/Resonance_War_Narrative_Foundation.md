@@ -22,6 +22,26 @@ what those solutions mean politically.
 -   Technology is never neutral.
 -   Every victory creates new political consequences.
 -   There are no purely good factions.
+-   Assigned purpose versus chosen purpose.
+-   The language of ownership conceals moral responsibility.
+
+## Presentation Lens
+
+The active visual and cinematic direction is documented in
+[`Modern_Field_Command_Visual_Direction.md`](Modern_Field_Command_Visual_Direction.md).
+It does not add a new plot or faction. It gives the existing narrative a clear
+way to appear on screen.
+
+Institutions speak in operational terms: registered assets, claims, contracts,
+routes, tolerances, losses, and continuity. Personal scenes reveal what that
+language omits. Protection, repair, hesitation, refusal, and the private naming
+of machines show that a useful system can still be coercive and that an
+autonomous machine can accept, reinterpret, or reject an assigned purpose.
+
+Briefings should be concise and utilitarian. Debriefings and interludes should
+show who benefited, who paid the cost, and what precedent the victory created.
+Do not resolve this tension through speeches alone; let unit behavior, access
+restrictions, maintenance choices, and changed routes carry part of the story.
 
 # The World
 
@@ -322,3 +342,7 @@ and continues evolving over time without invalidating earlier events.
 -   History is incomplete and contested.
 -   Institutions matter more than individuals in the long term.
 -   Every major revelation should recontextualize earlier events.
+-   Contrast institutional language with observable human and machine behavior.
+-   Let automatons demonstrate judgment before characters explain it.
+-   Treat chosen purpose as costly and politically consequential, not as a
+    simple declaration of freedom.

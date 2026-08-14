@@ -4,6 +4,12 @@ War of Resonance is an original compact, turn-based strategy RPG. Players assemb
 
 Its setting, characters, artwork, audio, story, terminology, interface, and progression are created specifically for this project.
 
+The canonical art and presentation guide is
+[`documentation/Modern_Field_Command_Visual_Direction.md`](documentation/Modern_Field_Command_Visual_Direction.md).
+It governs new visual assets, interface work, animation, narrative staging, and
+promotional media. Historical art prompts remain useful provenance, but they do
+not override the active direction.
+
 ## Narrative Foundation
 
 Everything in this section is established canon unless a subsection is explicitly marked as a hidden in-world truth, an unresolved mystery, or a future design decision. Gameplay systems described elsewhere in this document remain in force where they do not conflict with this canon; contradictions are flagged in place rather than silently rewritten.
@@ -242,6 +248,14 @@ The narrative should draw from the political and tragic structure of *Final Fant
 Good people may make terrible decisions. Self-interested people may create stability. Idealists may cause disaster. Pragmatists may prevent catastrophe at an unacceptable moral cost. Villains should often have understandable goals. Heroes should often be compromised.
 
 Avoid resolving every conflict through friendship, mutual understanding, or a final alliance against a clearly evil enemy. Temporary cooperation is acceptable, but it should be shaped by leverage, necessity, fear, debt, common enemies, or political calculation.
+
+Presentation should repeatedly contrast assigned purpose with chosen purpose.
+Institutions describe Conductors and automatons through claims, registration,
+contracts, infrastructure, and acceptable losses; character scenes answer with
+repair, protection, refusal, hesitation, and private loyalty. Briefings should
+sound efficient and operational, while debriefings and interludes reveal the
+human or political cost hidden by that language. Machine agency is strongest
+when shown through behavior rather than immediately explained in dialogue.
 
 ### The Player's Political Rival: Cassian
 
@@ -845,32 +859,43 @@ The first release will not include paid energy or randomized stat growth.
 
 ## Presentation
 
-Battlefield and menu backdrops may retain sky and floating-island atmosphere from earlier art direction, but this is aesthetic only and not setting canon. The post-Caelian world of the Narrative Foundation is authoritative, and the sky aspect should not drive story, faction, or quest design.
+The active direction is **Modern Field Command**, defined in
+[`documentation/Modern_Field_Command_Visual_Direction.md`](documentation/Modern_Field_Command_Visual_Direction.md).
+It replaces the earlier ornate storybook, parchment, antique-brass, and
+industrial-fantasy interface direction. Floating terrain may survive as a rare
+infrastructure condition, but it is not the visual premise or setting canon.
 
 The visual direction combines:
 
-- Illustrated character cards
-- Readable, small battlefield figures
-- Bright elemental effects
-- A clean interface designed for mouse and touch
-- Strong lane, range, target, and movement indicators
+- Human-scale autonomous machines with strong class silhouettes, enclosed
+  contemporary armor shells, dark joints, and sparse functional emission.
+- Monumental modular infrastructure, broad operational decks, severe vertical
+  scale, and atmospheric depth from rain, fog, snow, dust, or haze.
+- Graphite and cool-white foundations with stable signal colors: cyan for
+  player synchronization and selection, coral for hostile or invalid states,
+  amber for warnings and impacts, green for repair and valid deployment, and
+  rare violet for anomalous Source or Fusion activity.
+- A field-instrument interface with thin borders, clipped geometry, uppercase
+  system labels, deliberate negative space, and dense telemetry only where
+  comparison or planning warrants it.
+- Illustrated character cards and readable small battlefield figures. Portrait
+  sprites belong in menus, rewards, decks, and workshop cards; full-body sprites
+  remain exclusive to the battlefield.
+- Strong lane, range, target, movement, objective, and status indicators that
+  remain understandable with animation disabled.
 
-Combat information must remain readable even when several abilities resolve in sequence.
+Combat should feel fast without pretending to be real-time. Each activation
+uses a readable actor, motion vector, contact, result, and recovery. Short
+trails, displaced particles, recoil, and tightly limited impact pauses create
+velocity; effects remain concentrated around their cause. Reduced-motion mode
+removes shake and aggressive travel while preserving the contact and result
+cues. Combat information must remain readable when several abilities resolve
+in sequence.
 
-The current prototype uses its original unit illustrations as the visual source of
-truth. Its interface should feel like a richly illustrated industrial-fantasy strategy
-game presented through an ornate, tactile storybook:
-
-- Deep ink navy and charcoal establish field and panel surfaces.
-- Warm parchment, antique brass, and muted cream define hierarchy and readable text.
-- Class colors communicate roles on cards and the battlefield without replacing the
-  shared brass-and-parchment interface language.
-- Compact bevels, double-line borders, and subtle shadows take precedence over
-  luminous science-fiction glass.
-- Background paintings remain low-contrast atmosphere so units carry the strongest
-  color, contrast, and detail.
-- Portrait sprites appear in menus, rewards, decks, and workshop cards. Full-body
-  sprites remain exclusive to the battlefield.
+Quiet presentation frames are equally important. Maintenance activity,
+weather, distance, a machine lens turn, or an autonomous protective step should
+create contrast with brief combat bursts and reinforce the theme of assigned
+purpose versus chosen purpose.
 
 Original class atlases live in `assets/units/original_sources/class_atlases/`.
 `tools/build_original_unit_art.gd` derives faction-colored provenance copies,

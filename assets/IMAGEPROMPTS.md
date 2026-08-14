@@ -5,6 +5,15 @@ Generation prompts must describe War of Resonance's own visual language and
 must not name, upload, transform, or imitate a third-party character, sprite,
 game, artist, or franchise.
 
+The active target for all new and revised assets is
+[`documentation/Modern_Field_Command_Visual_Direction.md`](../documentation/Modern_Field_Command_Visual_Direction.md).
+It supersedes the industrial-fantasy, antique-brass, parchment, and ornate
+storybook language preserved in older briefs below. Those passages document how
+committed source art was produced; they are provenance, not current generation
+instructions. New prompts may retain the Ink and Cell rendering technique but
+must use modern enclosed shells, dark joints, modular equipment, restrained
+signal light, contemporary infrastructure, and the canonical color semantics.
+
 ## Playable chassis atlases
 
 The seven committed atlases in `assets/units/original_sources/class_atlases/`

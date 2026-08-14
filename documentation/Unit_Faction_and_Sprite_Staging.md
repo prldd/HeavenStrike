@@ -6,6 +6,14 @@ or a standalone project-generated chassis source.
 No third-party sprite, portrait, character design, or extracted sheet is part of
 the runtime or source-art tree.
 
+New and revised unit art follows
+[`Modern_Field_Command_Visual_Direction.md`](Modern_Field_Command_Visual_Direction.md).
+The Ink and Cell rendering method remains valid, but the active design language
+uses enclosed contemporary armor shells, dark manufactured joints, compact
+optics, modular role equipment, and sparse functional light. Historical
+industrial-fantasy atlas prompts are retained as provenance, not as the target
+for future chassis.
+
 ## Source and outputs
 
 - `assets/units/original_sources/class_atlases/` contains seven original source
@@ -39,15 +47,17 @@ art ID for every playable and mission unit.
 
 | Pool | Palette treatment | Narrative use |
 |---|---|---|
-| Coal | ember red and furnace orange | heavy industrial districts |
-| Steam | oxidized teal and brass | civic engineering authorities |
-| Wind | pale blue and silver | highland transport networks |
-| Fusion | violet and electric indigo | experimental energy enclaves |
-| Solar | warm gold and ivory | heliostat city-states |
-| Universal | blue-grey and neutral brass | shared or unaffiliated chassis |
+| Coal | graphite, heat-shield red, thermal orange | extraction and heavy logistics |
+| Steam | oxidized teal, cool steel, pressure white | civic engineering and transit authorities |
+| Wind | pale blue, silver, cyan navigation light | distributed highland and aerial networks |
+| Fusion | graphite, restrained violet or green containment light | experimental energy enclaves |
+| Solar | ceramic white, blue-black, precise amber charge | heliostat city-states |
+| Universal | blue-grey, cool white, cyan interfaces | shared or unaffiliated chassis |
 
-Faction palettes change enamel and power-light hues while preserving the
-original neutral metal, brass, and ink structure. Promotion families must stay
+Faction palettes change broad armor zones and one restrained signal-light hue
+while preserving graphite understructure and strong ink separation. Interaction
+colors remain stable regardless of faction: cyan player, coral threat, green
+repair or valid deployment, and amber warning. Promotion families must stay
 within one pool. Numeric art filenames are stable persistence identifiers and
 must not be renumbered casually.
 
@@ -66,3 +76,7 @@ must not be renumbered casually.
 New art must extend this language without imitating an existing entertainment
 property. Record any new generation brief and source file in
 `assets/IMAGEPROMPTS.md`, then regenerate and run the IP-boundary smoke checks.
+Reject medieval armor, heraldry, ornamental filigree, exposed Victorian boilers,
+decorative gear motifs, giant piloted-mech proportions, and equal-density
+greebling. At gameplay size, class silhouette and facing must read before
+surface detail.
