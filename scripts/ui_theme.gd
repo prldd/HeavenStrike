@@ -1,49 +1,52 @@
-class_name AetherEngineUITheme
+class_name ResonanceUITheme
 extends RefCounted
 
-const INK := Color("#241b19")
-const INK_SOFT := Color("#51423a")
-const PARCHMENT := Color("#e7d4ad")
-const PARCHMENT_LIGHT := Color("#f4e6c7")
-const PARCHMENT_DARK := Color("#b99b6a")
-const NAVY := Color("#172334")
-const NAVY_DEEP := Color("#0c1420")
-const BRASS := Color("#c49a52")
-const BRASS_LIGHT := Color("#efd38a")
-const BRASS_DARK := Color("#75542c")
-const CRIMSON := Color("#8f3941")
+# These legacy constant names are part of the UI API used across main.gd.
+# Their values now describe the modern field-command palette: graphite,
+# cool readout white, cyan signal light, and coral threat indication.
+const INK := Color("#061016")
+const INK_SOFT := Color("#52666f")
+const PARCHMENT := Color("#d7e4e7")
+const PARCHMENT_LIGHT := Color("#f2f8f9")
+const PARCHMENT_DARK := Color("#6f8790")
+const NAVY := Color("#101d26")
+const NAVY_DEEP := Color("#061018")
+const BRASS := Color("#38c7d6")
+const BRASS_LIGHT := Color("#b8f3f5")
+const BRASS_DARK := Color("#236a76")
+const CRIMSON := Color("#ef6078")
 
 static func create() -> Theme:
 	var theme := Theme.new()
 	theme.default_font_size = 15
 
 	theme.set_color("font_color", "Label", PARCHMENT_LIGHT)
-	theme.set_color("font_shadow_color", "Label", Color(0.04, 0.025, 0.02, 0.75))
+	theme.set_color("font_shadow_color", "Label", Color(0.01, 0.025, 0.035, 0.78))
 	theme.set_constant("shadow_offset_x", "Label", 1)
 	theme.set_constant("shadow_offset_y", "Label", 2)
 
-	theme.set_stylebox("panel", "PanelContainer", _panel(NAVY, BRASS_DARK, 2, 8, 12))
-	theme.set_stylebox("normal", "Button", _button(NAVY, BRASS_DARK, 1))
-	theme.set_stylebox("hover", "Button", _button(Color("#29364a"), BRASS_LIGHT, 2))
-	theme.set_stylebox("pressed", "Button", _button(Color("#101927"), BRASS, 1))
-	theme.set_stylebox("focus", "Button", _outline(BRASS_LIGHT, 2, 7))
-	theme.set_stylebox("disabled", "Button", _button(Color("#22262c"), Color("#5d5549"), 0))
+	theme.set_stylebox("panel", "PanelContainer", _panel(NAVY, BRASS_DARK, 1, 3, 12))
+	theme.set_stylebox("normal", "Button", _button(NAVY, Color("#31515b"), 1))
+	theme.set_stylebox("hover", "Button", _button(Color("#16313d"), BRASS, 3))
+	theme.set_stylebox("pressed", "Button", _button(Color("#0a202a"), BRASS_LIGHT, 1))
+	theme.set_stylebox("focus", "Button", _outline(BRASS_LIGHT, 2, 2))
+	theme.set_stylebox("disabled", "Button", _button(Color("#172128"), Color("#3b4b51"), 0))
 	theme.set_color("font_color", "Button", PARCHMENT_LIGHT)
 	theme.set_color("font_hover_color", "Button", Color.WHITE)
 	theme.set_color("font_pressed_color", "Button", BRASS_LIGHT)
-	theme.set_color("font_disabled_color", "Button", Color("#7f7a70"))
+	theme.set_color("font_disabled_color", "Button", Color("#718087"))
 
 	for control_type in ["OptionButton", "LineEdit"]:
 		theme.set_stylebox("normal", control_type, _button(NAVY_DEEP, BRASS_DARK, 0))
-		theme.set_stylebox("focus", control_type, _outline(BRASS_LIGHT, 2, 7))
+		theme.set_stylebox("focus", control_type, _outline(BRASS_LIGHT, 2, 2))
 		theme.set_color("font_color", control_type, PARCHMENT_LIGHT)
 
-	theme.set_stylebox("panel", "PopupMenu", _panel(NAVY_DEEP, BRASS_DARK, 2, 6, 8))
+	theme.set_stylebox("panel", "PopupMenu", _panel(NAVY_DEEP, BRASS_DARK, 1, 2, 8))
 	theme.set_color("font_color", "PopupMenu", PARCHMENT_LIGHT)
 	theme.set_color("font_hover_color", "PopupMenu", Color.WHITE)
-	theme.set_stylebox("hover", "PopupMenu", _flat(Color("#3a3440"), 4))
+	theme.set_stylebox("hover", "PopupMenu", _flat(Color("#15343f"), 2))
 
-	theme.set_stylebox("normal", "RichTextLabel", _panel(Color("#101a27"), BRASS_DARK, 1, 5, 8))
+	theme.set_stylebox("normal", "RichTextLabel", _panel(Color("#0b1720"), BRASS_DARK, 1, 2, 8))
 	theme.set_color("default_color", "RichTextLabel", PARCHMENT_LIGHT)
 	theme.set_color("font_color", "CheckButton", PARCHMENT_LIGHT)
 
@@ -67,11 +70,11 @@ static func title_color() -> Color:
 	return BRASS_LIGHT
 
 static func muted_color() -> Color:
-	return Color("#c4b99f")
+	return Color("#a8b9bd")
 
 ## Procedural house glyph shared by every return-to-menu button. Drawn as a
-## brass roof triangle over a body block with a door cutout, so the app needs
-## no icon asset files.
+## cyan signal roof over a body block with a door cutout, so the app needs no
+## icon asset files.
 static func home_icon(size: int = 28) -> ImageTexture:
 	var image := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
@@ -95,21 +98,22 @@ static func home_icon(size: int = 28) -> ImageTexture:
 	return ImageTexture.create_from_image(image)
 
 static func parchment_panel() -> StyleBoxFlat:
-	var style := _panel(PARCHMENT, BRASS_DARK, 3, 9, 18)
+	var style := _panel(PARCHMENT, BRASS_DARK, 1, 2, 18)
 	style.border_color = BRASS
-	style.shadow_color = Color(0.02, 0.015, 0.01, 0.72)
-	style.shadow_size = 12
+	style.shadow_color = Color(0.01, 0.04, 0.06, 0.58)
+	style.shadow_size = 8
 	return style
 
 static func dark_plaque() -> StyleBoxFlat:
-	var style := _panel(Color(0.055, 0.075, 0.105, 0.95), BRASS, 3, 10, 24)
-	style.shadow_color = Color(0.01, 0.01, 0.015, 0.82)
-	style.shadow_size = 14
+	var style := _panel(Color(0.025, 0.06, 0.082, 0.94), Color(BRASS, 0.68), 1, 2, 24)
+	style.set_border_width(SIDE_LEFT, 4)
+	style.shadow_color = Color(0.0, 0.03, 0.05, 0.86)
+	style.shadow_size = 16
 	return style
 
 static func command_bridge_style() -> StyleBoxFlat:
 	var style := _panel(
-		Color(0.035, 0.068, 0.096, 0.96), Color.TRANSPARENT, 0, 10, 10
+		Color(0.018, 0.050, 0.070, 0.97), Color.TRANSPARENT, 0, 2, 10
 	)
 	style.border_color = Color("#789096", 0.30)
 	style.set_border_width(SIDE_BOTTOM, 1)
@@ -119,7 +123,7 @@ static func command_bridge_style() -> StyleBoxFlat:
 
 static func command_dock_style() -> StyleBoxFlat:
 	var style := _panel(
-		Color(0.025, 0.052, 0.075, 0.97), Color("#789096", 0.28), 1, 12, 8
+		Color(0.014, 0.042, 0.061, 0.98), Color(BRASS, 0.32), 1, 3, 8
 	)
 	style.shadow_color = Color(0.01, 0.02, 0.03, 0.56)
 	style.shadow_size = 6
@@ -128,21 +132,22 @@ static func command_dock_style() -> StyleBoxFlat:
 static func instrument_style(
 	accent: Color, tint: float, border_alpha: float, glow: int, margin: float = 8.0
 ) -> StyleBoxFlat:
-	var fill := Color("#0c1a25").lerp(accent.darkened(0.62), tint)
-	var style := _panel(fill, Color(accent, border_alpha * 0.74), 1, 10, margin)
-	style.shadow_color = Color(accent, 0.10 if glow > 0 else 0.0)
-	style.shadow_size = mini(glow, 3)
+	var fill := Color("#081822").lerp(accent.darkened(0.72), tint)
+	var style := _panel(fill, Color(accent, border_alpha * 0.78), 1, 3, margin)
+	style.set_border_width(SIDE_BOTTOM, 2 if glow > 0 else 1)
+	style.shadow_color = Color(accent, 0.13 if glow > 0 else 0.0)
+	style.shadow_size = mini(glow, 4)
 	return style
 
 static func card_style(color: Color, tint: float, border_alpha: float, glow: int) -> StyleBoxFlat:
-	var style := _panel(NAVY_DEEP.lerp(color.darkened(0.28), tint), Color(color, border_alpha), 2, 6, 7)
+	var style := _panel(NAVY_DEEP.lerp(color.darkened(0.36), tint), Color(color, border_alpha), 1, 3, 7)
 	style.shadow_color = Color(color, 0.22 if glow > 0 else 0.0)
 	style.shadow_size = glow
 	return style
 
 static func _button(fill: Color, border: Color, shadow: int) -> StyleBoxFlat:
-	var style := _panel(fill, border, 2, 6, 10)
-	style.shadow_color = Color(0.02, 0.015, 0.01, 0.65 if shadow > 0 else 0.0)
+	var style := _panel(fill, border, 1, 2, 10)
+	style.shadow_color = Color(0.0, 0.04, 0.06, 0.68 if shadow > 0 else 0.0)
 	style.shadow_size = shadow
 	return style
 

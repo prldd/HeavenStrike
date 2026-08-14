@@ -25,11 +25,11 @@ const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
-const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-steampunk-deck.png")
+const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-command-deck.png")
 const OPERATIONS_MAP_BACKGROUNDS := {
-	1: preload("res://assets/operations-map-act-1-reclamation.png"),
-	2: preload("res://assets/operations-map-act-2-crisis.png"),
-	3: preload("res://assets/operations-map-act-3-caelis.png")
+	1: preload("res://assets/operations_maps/modern/act-1-reclamation.png"),
+	2: preload("res://assets/operations_maps/modern/act-2-crisis.png"),
+	3: preload("res://assets/operations_maps/modern/act-3-caelis.png")
 }
 
 # Each chapter follows landmarks authored into its Act map. Missions are spaced
@@ -813,7 +813,7 @@ func _log_action(message: String) -> void:
 
 func _build_overlay() -> void:
 	overlay = ColorRect.new()
-	overlay.color = Color(0.035, 0.026, 0.02, 0.94)
+	overlay.color = Color(0.012, 0.030, 0.043, 0.95)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.visible = false
@@ -1002,7 +1002,7 @@ func _build_squad_builder() -> void:
 	_add_overlay_background(
 		squad_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.035, 0.025, 0.02, 0.68)
+		Color(0.010, 0.028, 0.040, 0.72)
 	)
 
 	var margin := MarginContainer.new()
@@ -1842,34 +1842,45 @@ func _build_main_menu() -> void:
 	_add_overlay_background(
 		main_menu_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.035, 0.025, 0.02, 0.66)
+		Color(0.008, 0.024, 0.036, 0.40)
 	)
 
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	main_menu_overlay.add_child(center)
+	var frame := MarginContainer.new()
+	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	frame.add_theme_constant_override("margin_left", 62)
+	frame.add_theme_constant_override("margin_right", 742)
+	frame.add_theme_constant_override("margin_top", 34)
+	frame.add_theme_constant_override("margin_bottom", 34)
+	main_menu_overlay.add_child(frame)
 
 	var plaque := PanelContainer.new()
-	plaque.custom_minimum_size = Vector2(480, 650)
+	plaque.custom_minimum_size = Vector2(476, 652)
 	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
-	center.add_child(plaque)
+	frame.add_child(plaque)
 
 	var layout := VBoxContainer.new()
-	layout.custom_minimum_size = Vector2(420, 600)
+	layout.custom_minimum_size = Vector2(416, 600)
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override("separation", 8)
+	layout.add_theme_constant_override("separation", 7)
 	plaque.add_child(layout)
+
+	var system_label := Label.new()
+	system_label.text = "TACTICAL CONTROL  //  LINK READY"
+	system_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	system_label.add_theme_font_size_override("font_size", 11)
+	system_label.add_theme_color_override("font_color", UIThemeScript.BRASS)
+	layout.add_child(system_label)
 
 	var title := Label.new()
 	title.text = "WAR OF\nRESONANCE"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.add_theme_font_size_override("font_size", 46)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	layout.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "CONTROL THE LANE  ·  BREAK THE LINE"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.text = "CONTROL THE LANE  //  BREAK THE LINE"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	layout.add_child(subtitle)
@@ -1916,7 +1927,7 @@ func _build_challenge_operations() -> void:
 	_add_overlay_background(
 		challenge_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.025, 0.022, 0.025, 0.86)
+		Color(0.008, 0.025, 0.038, 0.88)
 	)
 
 	var margin := MarginContainer.new()
@@ -2177,7 +2188,7 @@ func _build_replay_controls() -> void:
 
 func _build_replay_squad_overlay() -> void:
 	replay_squad_overlay = ColorRect.new()
-	replay_squad_overlay.color = Color(0.035, 0.026, 0.02, 0.97)
+	replay_squad_overlay.color = Color(0.008, 0.025, 0.038, 0.97)
 	replay_squad_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	replay_squad_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	replay_squad_overlay.z_index = 110
@@ -2244,7 +2255,7 @@ func _build_mission_select() -> void:
 	_add_overlay_background(
 		mission_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.025, 0.022, 0.025, 0.86)
+		Color(0.008, 0.025, 0.038, 0.88)
 	)
 
 	var margin := MarginContainer.new()
@@ -2407,7 +2418,7 @@ func _build_dialogue_overlay() -> void:
 	dialogue_backdrop = _add_overlay_background(
 		dialogue_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.025, 0.022, 0.03, 0.68)
+		Color(0.008, 0.025, 0.042, 0.72)
 	)
 
 	var margin := MarginContainer.new()
@@ -2527,7 +2538,7 @@ func _build_kinetic_crucible() -> void:
 	_add_overlay_background(
 		crucible_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.035, 0.025, 0.02, 0.76)
+		Color(0.008, 0.025, 0.038, 0.80)
 	)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -2678,7 +2689,7 @@ func _build_gacha() -> void:
 	_add_overlay_background(
 		gacha_overlay,
 		MAIN_MENU_BACKGROUND,
-		Color(0.035, 0.025, 0.02, 0.78)
+		Color(0.008, 0.025, 0.038, 0.82)
 	)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

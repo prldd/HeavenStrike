@@ -4,12 +4,12 @@ extends Control
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const UnitSkillsScript = preload("res://scripts/unit_skills.gd")
-const TRAINING_BACKGROUND := preload("res://assets/boards/stage-training.png")
-const RELAY_BACKGROUND := preload("res://assets/boards/stage-relay-excavation.png")
-const PROVING_BACKGROUND := preload("res://assets/boards/stage-proving-circuit.png")
-const FACTION_BACKGROUND := preload("res://assets/boards/stage-faction-crossroads.png")
-const COALITION_BACKGROUND := preload("res://assets/boards/stage-coalition-front.png")
-const CAELIS_BACKGROUND := preload("res://assets/boards/stage-caelis-sanctum.png")
+const TRAINING_BACKGROUND := preload("res://assets/boards/modern/stage-training.png")
+const RELAY_BACKGROUND := preload("res://assets/boards/modern/stage-relay-excavation.png")
+const PROVING_BACKGROUND := preload("res://assets/boards/modern/stage-proving-circuit.png")
+const FACTION_BACKGROUND := preload("res://assets/boards/modern/stage-faction-crossroads.png")
+const COALITION_BACKGROUND := preload("res://assets/boards/modern/stage-coalition-front.png")
+const CAELIS_BACKGROUND := preload("res://assets/boards/modern/stage-caelis-sanctum.png")
 
 signal deployment_clicked(row: int)
 signal board_cell_clicked(row: int, col: int)
@@ -36,18 +36,18 @@ const ATTACK_ATLAS_COLUMNS := 3
 const ATTACK_ATLAS_ROWS := 2
 const MIN_ATTACK_FRAME_WALL_DURATION := 0.30
 const READY_PULSE_FREQUENCY := 0.32
-const GRID_BRASS := Color("#b99a64")
-const GRID_PLAYER_ENAMEL := Color("#78b9c2")
-const GRID_ENEMY_ENAMEL := Color("#bd7675")
+const GRID_BRASS := Color("#6f929b")
+const GRID_PLAYER_ENAMEL := Color("#49d3e3")
+const GRID_ENEMY_ENAMEL := Color("#ef6680")
 const DEPLOY_GREEN := Color("#70e0a1")
 const DEPLOY_GREEN_BRIGHT := Color("#c4ffda")
-const VFX_INK := Color("#302b28")
-const VFX_STEEL := Color("#a9aaa4")
-const VFX_HIGHLIGHT := Color("#fff0c8")
-const VFX_BRASS := Color("#b58a45")
-const VFX_EMBER := Color("#d66f38")
-const VFX_SMOKE := Color("#665e55")
-const VFX_STEAM := Color("#d9d0bc")
+const VFX_INK := Color("#061117")
+const VFX_STEEL := Color("#9fb5ba")
+const VFX_HIGHLIGHT := Color("#e8feff")
+const VFX_BRASS := Color("#38c7d6")
+const VFX_EMBER := Color("#ff884d")
+const VFX_SMOKE := Color("#4f6168")
+const VFX_STEAM := Color("#cde7eb")
 const STAGE_TRAINING := "training"
 const STAGE_RELAY := "relay_excavation"
 const STAGE_PROVING := "proving_circuit"
@@ -869,7 +869,7 @@ func _draw_board_grid() -> void:
 		for col in COLS:
 			var polygon := _cell_polygon(row, col)
 			var fill := (
-				Color(0.80, 0.77, 0.67, 0.018)
+				Color(0.60, 0.78, 0.82, 0.018)
 				if (row + col) % 2 == 0
 				else Color(0.075, 0.09, 0.10, 0.024)
 			)
@@ -904,9 +904,9 @@ func _draw_board_grid() -> void:
 func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
 	draw_texture_rect(_background_texture(), panel, false)
-	# A light cool glaze seats the background behind the units without muting
-	# the painted enamel values or turning the scene uniformly brown.
-	draw_rect(panel, Color(0.035, 0.045, 0.055, 0.08))
+	# A light cool glaze seats the background behind the units and keeps the
+	# command-grid accents coherent across differently lit campaign stages.
+	draw_rect(panel, Color(0.018, 0.042, 0.055, 0.08))
 
 	var grid := _grid_rect()
 	_draw_board_grid()
@@ -939,8 +939,8 @@ func _draw() -> void:
 		)
 		draw_style_box(
 			_box(
-				Color(0.055, 0.06, 0.07, 0.72),
-				Color(0.72, 0.54, 0.30, 0.68), 6, 1
+				Color(0.018, 0.045, 0.060, 0.78),
+				Color("#38c7d6", 0.68), 3, 1
 			),
 			event_rect
 		)
@@ -951,7 +951,7 @@ func _draw() -> void:
 			HORIZONTAL_ALIGNMENT_CENTER,
 			event_rect.size.x,
 			12,
-			Color("#f4e6c7")
+			Color("#e8f7f8")
 		)
 		if not mission_objective_text.is_empty():
 			var objective_rect := Rect2(
@@ -965,7 +965,7 @@ func _draw() -> void:
 				HORIZONTAL_ALIGNMENT_CENTER,
 				objective_rect.size.x,
 				10,
-				Color("#e8c77b")
+				Color("#7fd7e1")
 			)
 		_draw_opponent_identity()
 

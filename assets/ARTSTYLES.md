@@ -1,6 +1,17 @@
 ARTSTYLES.md
+
+## Active direction: Modern Field Command
+
+Environment and UI art use contemporary tactical science fiction: angular
+modular construction, graphite composite surfaces, cool readout whites, cyan
+signal light, sparse warning amber, and restrained coral threat accents.
+Avoid medieval architecture, heraldry, parchment, antique brass decoration,
+gothic arches, and exposed Victorian machinery. Unit art keeps the readable
+Ink and Cell treatment below, but new chassis should express it through modern
+enclosed armor shells, clean joints, sensor optics, and manufactured panels.
+
 ## Ink and Cell
-### General Style (use for every prompt)
+### Unit-art style
 
 Use the source sprite as the definitive base design.
 

@@ -496,7 +496,7 @@ func _run() -> void:
 		wait_frames += 1
 	assert(game.mission_node_buttons.size() == 22)
 	assert(game.mission_map_texture.texture.resource_path.ends_with(
-		"operations-map-act-1-reclamation.png"
+		"operations_maps/modern/act-1-reclamation.png"
 	))
 	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
 	assert(game.mission_act_buttons.size() == 3)
@@ -955,7 +955,7 @@ func _run() -> void:
 	assert(game.mission_map_act == 2)
 	assert(game.mission_node_buttons.size() == 40)
 	assert(game.mission_map_texture.texture.resource_path.ends_with(
-		"operations-map-act-2-crisis.png"
+		"operations_maps/modern/act-2-crisis.png"
 	))
 	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
 	assert(game.mission_selected_id == 61)
@@ -970,7 +970,7 @@ func _run() -> void:
 	assert(game.mission_map_act == 3)
 	assert(game.mission_node_buttons.size() == 15)
 	assert(game.mission_map_texture.texture.resource_path.ends_with(
-		"operations-map-act-3-caelis.png"
+		"operations_maps/modern/act-3-caelis.png"
 	))
 	assert(game.mission_map_texture.texture.get_image().has_mipmaps())
 	assert(game.mission_selected_id == 62)
