@@ -257,21 +257,14 @@ func _init() -> void:
 		"unit_000006",
 		"unit_000004"
 	])
-	assert(not KineticCrucibleScript.can_merge(
-		instance_copies[0], instance_copies[1], roster, true, instance_copies
-	))
-	assert(not KineticCrucibleScript.can_merge(
-		instance_copies[0], instance_copies[2], roster, true, instance_copies
-	))
-	var extras_copies: Array = instance_copies + [{
-		"id": "copy_d", "name": "Relay Lancer-003",
-		"level": 1, "points": 0, "consumed": false
-	}]
-	var protected_ids := KineticCrucibleScript.protected_instance_ids(extras_copies)
-	assert("copy_a" in protected_ids and "copy_b" in protected_ids)
-	assert("copy_d" not in protected_ids)
 	assert(KineticCrucibleScript.can_merge(
-		instance_copies[0], extras_copies[3], roster, true, extras_copies
+		instance_copies[0], instance_copies[1], roster
+	))
+	assert(KineticCrucibleScript.can_merge(
+		instance_copies[0], instance_copies[2], roster
+	))
+	assert(not KineticCrucibleScript.can_merge(
+		instance_copies[0], instance_copies[0], roster
 	))
 	assert(SquadStoreScript.sanitize_instances(
 		["copy_a", "copy_b", "copy_c"], instance_copies

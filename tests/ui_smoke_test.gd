@@ -7,6 +7,8 @@ const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const RequisitionStoreScript = preload("res://scripts/requisition_store.gd")
+const ChallengeCatalogScript = preload("res://scripts/challenge_catalog.gd")
+const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
@@ -20,6 +22,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(GachaStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RequisitionStoreScript.SAVE_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ChallengeStoreScript.SAVE_PATH))
 	BattleSettingsScript.save_settings({
 		"speed": 1.0,
 		"volume": 2,
@@ -55,15 +58,92 @@ func _run() -> void:
 	assert(game.speed_button.get_parent().get_parent() == game.settings_panel)
 	assert(game.has_method("_begin_tutorial"))
 	var tutorial_menu_found := false
+	var challenge_menu_found := false
 	for action in game.main_menu_overlay.find_children("*", "Button", true, false):
 		if action.text == "GUIDED TUTORIAL":
 			tutorial_menu_found = true
+		if action.text == "CHALLENGE OPERATIONS":
+			challenge_menu_found = true
 	assert(tutorial_menu_found)
+	assert(not challenge_menu_found)
 	var main_menu_plaques: Array[Node] = game.main_menu_overlay.find_children(
 		"*", "PanelContainer", true, false
 	)
 	assert(main_menu_plaques.size() == 1)
 	assert(main_menu_plaques[0].get_global_rect().end.y <= game.get_viewport_rect().end.y)
+	# Weekly Challenge Operations lives on the campaign maps instead of adding
+	# another main-menu action. It exposes the active UTC rotation, authored
+	# rules, opposition, formation handoff, battle flow, and idempotent reward.
+	game._open_mission_select()
+	await process_frame
+	await process_frame
+	var map_challenge_actions: Array[Node] = game.mission_overlay.find_children(
+		"*", "Button", true, false
+	).filter(func(action): return action.text == "CHALLENGE OPERATIONS")
+	assert(map_challenge_actions.size() == 1)
+	map_challenge_actions[0].pressed.emit()
+	await process_frame
+	var expected_challenge := ChallengeCatalogScript.active_for_unix_time()
+	assert(game.challenge_overlay.visible)
+	assert(not game.main_menu_overlay.visible)
+	assert(game.active_challenge.id == expected_challenge.id)
+	assert(game.challenge_title_label.text == expected_challenge.title.to_upper())
+	assert(game.challenge_subtitle_label.text == expected_challenge.subtitle.to_upper())
+	assert(game.challenge_cycle_label.text.contains(expected_challenge.cycle_id))
+	assert(game.challenge_cycle_label.text.contains("ROTATES IN"))
+	assert(game.challenge_cycle_label.text.contains("UTC"))
+	assert(game.challenge_status_label.text.contains("REWARD AVAILABLE"))
+	assert(game.challenge_rules_label.text.contains("OPPONENT"))
+	assert(game.challenge_rules_label.text.contains("OBJECTIVE"))
+	assert(game.challenge_enemy_grid.get_child_count() == 8)
+	assert(game.challenge_launch_button.text == "ASSEMBLE FORMATION")
+	assert(game.challenge_overlay.get_global_rect().end.y <= game.get_viewport_rect().end.y)
+	var challenge_back_actions: Array[Node] = game.challenge_overlay.find_children(
+		"*", "Button", true, false
+	).filter(func(action): return action.text == "← OPERATIONS MAP")
+	assert(challenge_back_actions.size() == 1)
+	challenge_back_actions[0].pressed.emit()
+	await process_frame
+	await process_frame
+	assert(game.mission_overlay.visible and not game.challenge_overlay.visible)
+	map_challenge_actions[0].pressed.emit()
+	await process_frame
+	game._prepare_challenge()
+	await process_frame
+	assert(game.squad_overlay.visible)
+	assert(not game.challenge_overlay.visible)
+	assert(game.squad_opened_for_challenge)
+	assert(game.mission_intel_panel.visible)
+	assert(game.mission_intel_label.text.contains("WEEKLY CHALLENGE"))
+	assert(game.mission_enemy_preview_row.get_child_count() == 8)
+	var challenge_currency_before: int = game.requisition_currency
+	game._save_and_start_mission()
+	assert(game.challenge_battle and not game.campaign_battle)
+	assert(not game.squad_overlay.visible)
+	assert(game.active_mission_rules.objective.type == expected_challenge.rules.objective.type)
+	assert(game.enemy_deck.size() == expected_challenge.enemy_squad.size())
+	assert(game.board.opponent_name == expected_challenge.opponent_name)
+	game.enemy_hp = 0
+	assert(game._check_game_over())
+	await process_frame
+	assert(game.challenge_finished)
+	assert(game.overlay.visible)
+	assert(game.overlay_title.text == "CHALLENGE COMPLETE")
+	assert(game.overlay_detail.text.contains("WEEKLY FIRST CLEAR"))
+	assert(game.requisition_currency == challenge_currency_before + expected_challenge.reward_credits)
+	assert(ChallengeStoreScript.is_completed(expected_challenge.cycle_id, expected_challenge.id))
+	assert(game.result_primary_button.text.is_empty())
+	assert(game.result_primary_button.icon != null)
+	assert(game.result_redeploy_button.visible)
+	assert(game.result_redeploy_button.text == "REPLAY CHALLENGE")
+	assert(not game.result_autobattle_button.visible)
+	assert(not game.reward_reveal.visible)
+	game._redeploy_mission()
+	assert(game.challenge_battle and not game.challenge_finished)
+	assert(not game.overlay.visible)
+	assert(game.round_number == 1)
+	game._show_main_menu()
+	assert(game.main_menu_overlay.visible and not game.challenge_battle)
 	assert(not game.tutorial_panel.visible)
 	assert(not game.settings_panel.visible)
 	game._toggle_settings()
@@ -479,21 +559,12 @@ func _run() -> void:
 	var crucible_units: Array = KineticCrucibleScript.active_instances(
 		game.collection_instances
 	)
-	# EXTRAS ONLY visibly filters out unit groups that do not have a third copy
-	# available beyond the protected two formation copies.
-	var names_seen := {}
-	var protected_count := 0
-	var extras_group_count := 0
-	for instance in crucible_units:
-		names_seen[instance.name] = names_seen.get(instance.name, 0) + 1
-	for copy_count in names_seen.values():
-		protected_count += mini(2, copy_count)
-		if copy_count > 2:
-			extras_group_count += copy_count
-	assert(game.crucible_reserve_grid.get_child_count() == extras_group_count)
-	assert(protected_count > 0)
-	game.crucible_extras_toggle.button_pressed = false
+	# Every owned copy remains visible. Donor safety is communicated with an
+	# explicit warning instead of hiding or disabling formation copies.
 	assert(game.crucible_reserve_grid.get_child_count() == crucible_units.size())
+	assert(not game.find_children("*", "CheckButton", true, false).any(
+		func(toggle): return toggle.text == "EXTRAS ONLY"
+	))
 	# Class filter and name search narrow the crucible reserves list.
 	game.crucible_class_option.select(1)
 	game.crucible_class_option.item_selected.emit(1)
@@ -529,13 +600,12 @@ func _run() -> void:
 	assert(game.crucible_target_id.is_empty())
 	assert(game.crucible_donor_ids.is_empty())
 	assert(game.crucible_promote_button.disabled)
-	# Before target selection, a three-copy group remains fully visible so the
-	# strongest copy can be selected as the target. Afterwards, protected
-	# non-target copies disappear and only the safe extra donor remains.
-	var extras_config := ConfigFile.new()
-	extras_config.set_value("meta", "instances_migrated", true)
-	extras_config.set_value("collection", "next_id", 4)
-	extras_config.set_value("collection", "instances", [
+	# A three-copy group remains fully visible. Queuing one donor leaves two
+	# copies and is safe; queuing a second warns that only one copy will remain.
+	var low_copy_config := ConfigFile.new()
+	low_copy_config.set_value("meta", "instances_migrated", true)
+	low_copy_config.set_value("collection", "next_id", 4)
+	low_copy_config.set_value("collection", "instances", [
 		{
 			"id": "unit_000001", "name": "Relay Bastion-013",
 			"level": 2, "points": 1, "consumed": false
@@ -549,8 +619,7 @@ func _run() -> void:
 			"level": 3, "points": 0, "consumed": false
 		}
 	])
-	extras_config.save(KineticCrucibleScript.SAVE_PATH)
-	game.crucible_extras_toggle.button_pressed = true
+	low_copy_config.save(KineticCrucibleScript.SAVE_PATH)
 	game._open_kinetic_crucible()
 	await process_frame
 	var visible_ids: Array = []
@@ -565,18 +634,20 @@ func _run() -> void:
 		cards_by_id[card.unit_name] = card
 	assert(not cards_by_id["unit_000001"].disabled)
 	assert(cards_by_id["unit_000001"].text.contains("RECOVERED"))
-	assert(not cards_by_id.has("unit_000002"))
+	assert(not cards_by_id["unit_000002"].disabled)
 	assert(cards_by_id["unit_000003"].disabled)
 	assert(cards_by_id["unit_000003"].text.contains("TARGET"))
 	game._select_crucible_unit("unit_000001")
 	assert(game.crucible_donor_ids == ["unit_000001"])
+	assert(not game.crucible_warning_label.visible)
 	assert(game.crucible_detail_label.text.contains("PROJECTED STATS"))
 	assert(game.crucible_merge_button.text.contains("+9"))
-	game.crucible_extras_toggle.button_pressed = false
-	visible_ids = []
-	for card in game.crucible_reserve_grid.get_children():
-		visible_ids.append(card.unit_name)
-	assert("unit_000002" in visible_ids and "unit_000003" in visible_ids)
+	game._select_crucible_unit("unit_000002")
+	assert(game.crucible_warning_label.visible)
+	assert(game.crucible_warning_label.text.contains("ONLY 1 COPY"))
+	assert(game.crucible_warning_label.text.contains("RELAY BASTION-013"))
+	game._remove_crucible_donor("unit_000002")
+	assert(not game.crucible_warning_label.visible)
 	# Promotion: a level-5 copy with an implemented next form can be promoted.
 	var promo_config := ConfigFile.new()
 	promo_config.set_value("meta", "instances_migrated", true)

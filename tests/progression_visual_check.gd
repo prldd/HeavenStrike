@@ -15,7 +15,6 @@ func _render() -> void:
 
 	game.main_menu_overlay.visible = false
 	game.crucible_overlay.visible = true
-	game.crucible_extras_toggle.set_pressed_no_signal(false)
 	game.crucible_filter_text = "Relay Bastion-013"
 	game.collection_instances = [
 		_instance("unit_000001", 3, 8),
@@ -24,7 +23,7 @@ func _render() -> void:
 		_instance("unit_000004", 1, 0)
 	]
 	game.crucible_target_id = "unit_000001"
-	game.crucible_donor_ids = ["unit_000002", "unit_000003"]
+	game.crucible_donor_ids = ["unit_000002", "unit_000003", "unit_000004"]
 	game._rebuild_crucible(false)
 	await _save_frame(CRUCIBLE_OUTPUT)
 

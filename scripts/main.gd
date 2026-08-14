@@ -20,6 +20,8 @@ const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
 const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const RequisitionStoreScript = preload("res://scripts/requisition_store.gd")
+const ChallengeCatalogScript = preload("res://scripts/challenge_catalog.gd")
+const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
@@ -163,6 +165,15 @@ var combat_log_panel: PanelContainer
 var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
 var mission_overlay: ColorRect
+var challenge_overlay: ColorRect
+var challenge_cycle_label: Label
+var challenge_title_label: Label
+var challenge_subtitle_label: Label
+var challenge_status_label: Label
+var challenge_briefing_label: Label
+var challenge_rules_label: Label
+var challenge_enemy_grid: GridContainer
+var challenge_launch_button: Button
 var crucible_overlay: ColorRect
 var gacha_overlay: ColorRect
 var gacha_pity_label: Label
@@ -175,9 +186,9 @@ var crucible_reserve_grid: GridContainer
 var crucible_target_grid: GridContainer
 var crucible_donor_grid: GridContainer
 var crucible_detail_label: Label
+var crucible_warning_label: Label
 var crucible_merge_button: Button
 var crucible_promote_button: Button
-var crucible_extras_toggle: CheckButton
 var crucible_class_option: OptionButton
 var crucible_search_edit: LineEdit
 var crucible_filter_class := ""
@@ -257,6 +268,11 @@ var mission_finished := false
 var autobattle_active := false
 var mission_interlude_pending := false
 var campaign_battle := false
+var challenge_battle := false
+var active_challenge: Dictionary = {}
+var challenge_finished := false
+var squad_opened_for_challenge := false
+var challenge_countdown_second := -1
 var squad_opened_from_menu := false
 var squad_opened_for_mission := false
 var pending_mission_id := -1
@@ -494,6 +510,7 @@ func _build_interface() -> void:
 	_build_squad_builder()
 	_build_main_menu()
 	_build_mission_select()
+	_build_challenge_operations()
 	_build_dialogue_overlay()
 	_build_kinetic_crucible()
 	_build_gacha()
@@ -1170,6 +1187,7 @@ func _open_squad_builder() -> void:
 		return
 	squad_opened_from_menu = false
 	squad_opened_for_mission = false
+	squad_opened_for_challenge = false
 	pending_mission_id = -1
 	editing_squad_names = squad_names.duplicate()
 	editing_conductor_skill = player_conductor_skill
@@ -1232,6 +1250,10 @@ func _close_replay_squads() -> void:
 
 func _close_squad_builder() -> void:
 	squad_overlay.visible = false
+	if squad_opened_for_challenge:
+		squad_opened_for_challenge = false
+		_open_challenge_operations()
+		return
 	if squad_opened_for_mission:
 		squad_opened_for_mission = false
 		pending_mission_id = -1
@@ -1411,7 +1433,7 @@ func _rebuild_squad_grid() -> void:
 	squad_count_label.text = "%d / %d SELECTED" % [editing_squad_names.size(), SquadStoreScript.SQUAD_SIZE]
 	squad_count_label.add_theme_color_override("font_color", Color("#70e0a1") if not editing_squad_names.is_empty() else Color("#ff8f8f"))
 	squad_save_button.disabled = editing_squad_names.is_empty()
-	squad_start_button.visible = squad_opened_for_mission
+	squad_start_button.visible = squad_opened_for_mission or squad_opened_for_challenge
 	squad_start_button.disabled = editing_squad_names.is_empty()
 	squad_autobattle_button.visible = (
 		squad_opened_for_mission and pending_mission_id in completed_missions
@@ -1422,29 +1444,42 @@ func _refresh_mission_intel() -> void:
 	for child in mission_enemy_preview_row.get_children():
 		mission_enemy_preview_row.remove_child(child)
 		child.queue_free()
-	mission_intel_panel.visible = (
-		squad_opened_for_mission
-		and pending_mission_id >= 0
+	mission_intel_panel.visible = squad_opened_for_challenge or (
+		squad_opened_for_mission and pending_mission_id >= 0
 		and pending_mission_id < CampaignStoreScript.MISSIONS.size()
 	)
 	if not mission_intel_panel.visible:
 		return
-	var mission: Dictionary = CampaignStoreScript.MISSIONS[pending_mission_id]
-	var encounter: Dictionary = mission.encounters[0]
-	var chapter_label := ""
-	if mission.get("chapter", "") != "":
-		chapter_label = " · %s" % String(mission.chapter).to_upper()
-	mission_intel_label.text = (
-		"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CONDUCTOR: %s\nOPPONENT: %s · %s\nOBJECTIVE: %s"
-		% [
-			mission.act, mission.act_mission, chapter_label,
-			mission.short_title.to_upper(),
-			encounter.enemy_hp, encounter.skill.to_upper(),
-			String(encounter.opponent_name).to_upper(),
-			String(encounter.opponent_affiliation).to_upper(),
-			MissionRulesScript.objective_title(encounter.get("rules", {}))
-		]
-	)
+	var encounter: Dictionary
+	if squad_opened_for_challenge:
+		encounter = active_challenge
+		mission_intel_label.text = (
+			"WEEKLY CHALLENGE · %s\n%s · %d HP · CONDUCTOR: %s\nOPPONENT: %s · %s\nOBJECTIVE: %s"
+			% [
+				String(active_challenge.cycle_id), String(active_challenge.title).to_upper(),
+				int(active_challenge.enemy_hp), String(active_challenge.skill).to_upper(),
+				String(active_challenge.opponent_name).to_upper(),
+				String(active_challenge.opponent_affiliation).to_upper(),
+				MissionRulesScript.objective_title(active_challenge.rules)
+			]
+		)
+	else:
+		var mission: Dictionary = CampaignStoreScript.MISSIONS[pending_mission_id]
+		encounter = mission.encounters[0]
+		var chapter_label := ""
+		if mission.get("chapter", "") != "":
+			chapter_label = " · %s" % String(mission.chapter).to_upper()
+		mission_intel_label.text = (
+			"UPCOMING · ACT %d / MISSION %d%s\n%s · %d HP · CONDUCTOR: %s\nOPPONENT: %s · %s\nOBJECTIVE: %s"
+			% [
+				mission.act, mission.act_mission, chapter_label,
+				mission.short_title.to_upper(),
+				encounter.enemy_hp, encounter.skill.to_upper(),
+				String(encounter.opponent_name).to_upper(),
+				String(encounter.opponent_affiliation).to_upper(),
+				MissionRulesScript.objective_title(encounter.get("rules", {}))
+			]
+		)
 	mission_intel_stats_label.text = _enemy_squad_summary(encounter.enemy_squad)
 	for unit_name in encounter.enemy_squad:
 		var unit := UnitCatalogScript.by_name(unit_name)
@@ -1556,7 +1591,19 @@ func _save_squad() -> void:
 	_refresh()
 
 func _save_and_start_mission() -> void:
-	if editing_squad_names.is_empty() or pending_mission_id < 0:
+	if editing_squad_names.is_empty():
+		return
+	if squad_opened_for_challenge:
+		autobattle_active = false
+		squad_names = editing_squad_names.duplicate()
+		player_conductor_skill = editing_conductor_skill
+		SquadStoreScript.save_instance_squad(squad_names, collection_instances)
+		SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
+		squad_opened_for_challenge = false
+		squad_overlay.visible = false
+		_begin_challenge()
+		return
+	if pending_mission_id < 0:
 		return
 	autobattle_active = false
 	squad_names = editing_squad_names.duplicate()
@@ -1678,6 +1725,209 @@ func _build_main_menu() -> void:
 	var crucible := _menu_action("KINETIC CRUCIBLE")
 	crucible.pressed.connect(_open_kinetic_crucible)
 	layout.add_child(crucible)
+
+func _build_challenge_operations() -> void:
+	challenge_overlay = ColorRect.new()
+	challenge_overlay.color = Color.TRANSPARENT
+	challenge_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	challenge_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	challenge_overlay.visible = false
+	add_child(challenge_overlay)
+	_add_overlay_background(
+		challenge_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.025, 0.022, 0.025, 0.86)
+	)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 52)
+	margin.add_theme_constant_override("margin_right", 52)
+	margin.add_theme_constant_override("margin_top", 34)
+	margin.add_theme_constant_override("margin_bottom", 30)
+	challenge_overlay.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	margin.add_child(layout)
+
+	var heading_row := HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 18)
+	layout.add_child(heading_row)
+	var heading := Label.new()
+	heading.text = "CHALLENGE OPERATIONS"
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_theme_font_size_override("font_size", 30)
+	heading.add_theme_color_override("font_color", UIThemeScript.title_color())
+	heading_row.add_child(heading)
+	challenge_cycle_label = Label.new()
+	challenge_cycle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	challenge_cycle_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	challenge_cycle_label.add_theme_font_size_override("font_size", 12)
+	challenge_cycle_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	heading_row.add_child(challenge_cycle_label)
+
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 16)
+	layout.add_child(body)
+
+	var dossier := PanelContainer.new()
+	dossier.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dossier.size_flags_stretch_ratio = 1.15
+	body.add_child(dossier)
+	var dossier_layout := VBoxContainer.new()
+	dossier_layout.add_theme_constant_override("separation", 10)
+	dossier.add_child(dossier_layout)
+	var kicker := Label.new()
+	kicker.text = "WEEKLY ROTATION · SPECIAL-RULE ENGAGEMENT"
+	kicker.add_theme_font_size_override("font_size", 11)
+	kicker.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	dossier_layout.add_child(kicker)
+	challenge_title_label = Label.new()
+	challenge_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	challenge_title_label.add_theme_font_size_override("font_size", 28)
+	challenge_title_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	dossier_layout.add_child(challenge_title_label)
+	challenge_subtitle_label = Label.new()
+	challenge_subtitle_label.add_theme_font_size_override("font_size", 16)
+	challenge_subtitle_label.add_theme_color_override("font_color", Color("#e8b4a2"))
+	dossier_layout.add_child(challenge_subtitle_label)
+	challenge_status_label = Label.new()
+	challenge_status_label.add_theme_font_size_override("font_size", 13)
+	dossier_layout.add_child(challenge_status_label)
+	dossier_layout.add_child(HSeparator.new())
+	challenge_briefing_label = Label.new()
+	challenge_briefing_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	challenge_briefing_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dossier_layout.add_child(challenge_briefing_label)
+	challenge_rules_label = Label.new()
+	challenge_rules_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	challenge_rules_label.add_theme_font_size_override("font_size", 12)
+	challenge_rules_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	dossier_layout.add_child(challenge_rules_label)
+
+	var opposition := PanelContainer.new()
+	opposition.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	opposition.size_flags_stretch_ratio = 0.85
+	body.add_child(opposition)
+	var opposition_layout := VBoxContainer.new()
+	opposition_layout.add_theme_constant_override("separation", 10)
+	opposition.add_child(opposition_layout)
+	var opposition_heading := Label.new()
+	opposition_heading.text = "OPPOSITION FORMATION"
+	opposition_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	opposition_heading.add_theme_font_size_override("font_size", 17)
+	opposition_heading.add_theme_color_override("font_color", UIThemeScript.title_color())
+	opposition_layout.add_child(opposition_heading)
+	challenge_enemy_grid = GridContainer.new()
+	challenge_enemy_grid.columns = 2
+	challenge_enemy_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	challenge_enemy_grid.add_theme_constant_override("h_separation", 8)
+	challenge_enemy_grid.add_theme_constant_override("v_separation", 8)
+	opposition_layout.add_child(challenge_enemy_grid)
+
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 12)
+	layout.add_child(footer)
+	var back := Button.new()
+	back.text = "← OPERATIONS MAP"
+	back.custom_minimum_size = Vector2(190, 46)
+	back.pressed.connect(_open_mission_select)
+	footer.add_child(back)
+	var reward_note := Label.new()
+	reward_note.text = "FIRST CLEAR EACH ROTATION · 250 REQUISITION CREDITS"
+	reward_note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reward_note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reward_note.add_theme_font_size_override("font_size", 12)
+	reward_note.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	footer.add_child(reward_note)
+	challenge_launch_button = Button.new()
+	challenge_launch_button.text = "ASSEMBLE FORMATION"
+	challenge_launch_button.custom_minimum_size = Vector2(230, 46)
+	challenge_launch_button.pressed.connect(_prepare_challenge)
+	footer.add_child(challenge_launch_button)
+
+func _open_challenge_operations() -> void:
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	challenge_overlay.visible = true
+	active_challenge = ChallengeStoreScript.active_status()
+	challenge_countdown_second = -1
+	_refresh_challenge_operations()
+
+func _refresh_challenge_operations() -> void:
+	if active_challenge.is_empty():
+		return
+	challenge_title_label.text = String(active_challenge.title).to_upper()
+	challenge_subtitle_label.text = String(active_challenge.subtitle).to_upper()
+	var completed: bool = bool(active_challenge.get("completed", false))
+	challenge_status_label.text = (
+		"✓ REWARD CLAIMED THIS ROTATION · REPLAY FOR RATING"
+		if completed else "◆ REWARD AVAILABLE · 250 REQUISITION CREDITS"
+	)
+	challenge_status_label.add_theme_color_override(
+		"font_color", Color("#67e6f4") if completed else UIThemeScript.BRASS_LIGHT
+	)
+	challenge_briefing_label.text = active_challenge.briefing
+	challenge_rules_label.text = (
+		"OPPONENT · %s\n%s\nENEMY CONDUCTOR · %s · %d HP\n\n%s" % [
+			String(active_challenge.opponent_name).to_upper(),
+			String(active_challenge.opponent_affiliation).to_upper(),
+			String(active_challenge.skill).to_upper(),
+			int(active_challenge.enemy_hp),
+			MissionRulesScript.dossier_text(active_challenge.rules)
+		]
+	)
+	for child in challenge_enemy_grid.get_children():
+		challenge_enemy_grid.remove_child(child)
+		child.queue_free()
+	for unit_name in active_challenge.enemy_squad:
+		var unit := UnitCatalogScript.by_name(unit_name)
+		if unit == null:
+			continue
+		var card := Button.new()
+		card.custom_minimum_size = Vector2(0, 92)
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.icon = _unit_icon(unit.icon)
+		card.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		card.text = "%s\n%s · %d MANA" % [
+			unit.name.to_upper(), UnitCatalogScript.display_class(unit.kind).to_upper(), unit.cost
+		]
+		card.add_theme_font_size_override("font_size", 10)
+		_apply_class_card_style(card, unit.kind)
+		if OS.has_feature("mobile"):
+			card.mouse_filter = Control.MOUSE_FILTER_PASS
+		else:
+			card.mouse_entered.connect(_show_unit_details.bind(unit.to_dict()))
+			card.mouse_exited.connect(_hide_unit_details)
+		challenge_enemy_grid.add_child(card)
+	_refresh_challenge_countdown()
+
+func _refresh_challenge_countdown() -> void:
+	if active_challenge.is_empty():
+		return
+	var now := int(Time.get_unix_time_from_system())
+	if now >= int(active_challenge.ends_unix):
+		active_challenge = ChallengeStoreScript.active_status(now)
+		_refresh_challenge_operations()
+		return
+	var remaining := maxi(0, int(active_challenge.ends_unix) - now)
+	var days := remaining / ChallengeCatalogScript.SECONDS_PER_DAY
+	var hours := (remaining % ChallengeCatalogScript.SECONDS_PER_DAY) / 3600
+	var minutes := (remaining % 3600) / 60
+	challenge_cycle_label.text = "%s · ROTATES IN %dD %02dH %02dM · UTC" % [
+		active_challenge.cycle_id, days, hours, minutes
+	]
+
+func _prepare_challenge() -> void:
+	if active_challenge.is_empty():
+		return
+	challenge_overlay.visible = false
+	input_enabled = true
+	_open_squad_builder()
+	squad_opened_for_challenge = true
+	_rebuild_squad_grid()
 
 func _build_replay_controls() -> void:
 	replay_panel = PanelContainer.new()
@@ -1854,6 +2104,15 @@ func _build_mission_select() -> void:
 		act_button.pressed.connect(_switch_operations_act.bind(act))
 		act_row.add_child(act_button)
 		mission_act_buttons.append(act_button)
+	var act_spacer := Control.new()
+	act_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	act_row.add_child(act_spacer)
+	var challenge_operations := Button.new()
+	challenge_operations.text = "CHALLENGE OPERATIONS"
+	challenge_operations.tooltip_text = "Open the current weekly special-rule operation."
+	challenge_operations.custom_minimum_size = Vector2(220, 38)
+	challenge_operations.pressed.connect(_open_challenge_operations)
+	act_row.add_child(challenge_operations)
 
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -2124,23 +2383,11 @@ func _build_kinetic_crucible() -> void:
 	var reserves_layout := VBoxContainer.new()
 	reserves_layout.add_theme_constant_override("separation", 8)
 	reserves_panel.add_child(reserves_layout)
-	var reserves_header := HBoxContainer.new()
-	reserves_layout.add_child(reserves_header)
 	var reserves_title := Label.new()
 	reserves_title.text = "RESERVES · OWNED UNITS"
-	reserves_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reserves_title.add_theme_font_size_override("font_size", 16)
 	reserves_title.add_theme_color_override("font_color", UIThemeScript.title_color())
-	reserves_header.add_child(reserves_title)
-	crucible_extras_toggle = CheckButton.new()
-	crucible_extras_toggle.text = "EXTRAS ONLY"
-	crucible_extras_toggle.tooltip_text = (
-		"Show unit groups with copies beyond the protected two; after choosing a "
-		+ "target, show only copies that are safe to merge."
-	)
-	crucible_extras_toggle.button_pressed = true
-	crucible_extras_toggle.toggled.connect(_toggle_crucible_extras)
-	reserves_header.add_child(crucible_extras_toggle)
+	reserves_layout.add_child(reserves_title)
 	var crucible_filter_row := HBoxContainer.new()
 	crucible_filter_row.add_theme_constant_override("separation", 8)
 	reserves_layout.add_child(crucible_filter_row)
@@ -2189,6 +2436,12 @@ func _build_kinetic_crucible() -> void:
 	donor_title.add_theme_font_size_override("font_size", 14)
 	donor_title.add_theme_color_override("font_color", Color("#e8b4a2"))
 	crucible_layout.add_child(donor_title)
+	crucible_warning_label = Label.new()
+	crucible_warning_label.visible = false
+	crucible_warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	crucible_warning_label.add_theme_font_size_override("font_size", 12)
+	crucible_warning_label.add_theme_color_override("font_color", Color("#ff9b73"))
+	crucible_layout.add_child(crucible_warning_label)
 	var donor_scroll := ScrollContainer.new()
 	donor_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	donor_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2482,10 +2735,6 @@ func _open_kinetic_crucible() -> void:
 	await get_tree().process_frame
 	_rebuild_crucible()
 
-func _toggle_crucible_extras(_enabled: bool) -> void:
-	crucible_notice = ""
-	_rebuild_crucible()
-
 func _select_crucible_unit(instance_id: String) -> void:
 	if _touch_details_active:
 		return
@@ -2548,21 +2797,10 @@ func _rebuild_crucible(sync_collection: bool = true) -> void:
 		for child in grid.get_children():
 			grid.remove_child(child)
 			child.queue_free()
-	var protected_ids := _crucible_protected_ids(active)
-	var extra_names := _crucible_extra_names(active, protected_ids)
 	for instance in KineticCrucibleScript.sort_reserves(active, roster):
 		var unit := UnitCatalogScript.by_name(instance.name)
 		if unit == null or not _reserve_visible(unit, crucible_filter_class, crucible_filter_text):
 			continue
-		if crucible_extras_toggle.button_pressed:
-			if crucible_target_id.is_empty() and instance.name not in extra_names:
-				continue
-			if (
-				not crucible_target_id.is_empty()
-				and instance.id != crucible_target_id
-				and instance.id in protected_ids
-			):
-				continue
 		var card: Button = SquadCardScript.new()
 		card.configure(
 			instance.id, "crucible_reserve", _unit_icon(unit.icon), -1, unit.kind
@@ -2578,9 +2816,6 @@ func _rebuild_crucible(sync_collection: bool = true) -> void:
 				card.disabled = true
 			elif instance.id in crucible_donor_ids:
 				state = "QUEUED FOR MERGE"
-				card.disabled = true
-			elif instance.id in protected_ids:
-				state = "PROTECTED · FORMATION COPY"
 				card.disabled = true
 			elif _crucible_donor_allowed(instance):
 				var donor_value := KineticCrucibleScript.merge_value(
@@ -2668,44 +2903,15 @@ func _crucible_target() -> Dictionary:
 
 func _crucible_donor_allowed(donor: Dictionary) -> bool:
 	var target := _crucible_target()
-	return KineticCrucibleScript.can_merge(
-		target,
-		donor,
-		roster,
-		crucible_extras_toggle.button_pressed,
-		KineticCrucibleScript.active_instances(collection_instances)
-	)
-
-## When EXTRAS ONLY is on, the two most-invested copies of each unit name
-## are protected from sacrifice. They stay visible so they can still be chosen
-## as enhancement targets and so the player can see why they cannot be queued.
-func _crucible_protected_ids(active: Array) -> Array:
-	if not crucible_extras_toggle.button_pressed:
-		return []
-	return KineticCrucibleScript.protected_instance_ids(active)
-
-## Before target selection, Extras Only keeps complete unit groups visible when
-## at least one copy is safe to sacrifice. This lets the player choose the best
-## copy as the enhancement target. Once selected, the reserve list is narrowed
-## to that target plus the actual unprotected donors.
-func _crucible_extra_names(active: Array, protected_ids: Array) -> Array:
-	if not crucible_extras_toggle.button_pressed:
-		return active.map(func(instance): return instance.name)
-	var names: Array = []
-	for instance in active:
-		if instance.id not in protected_ids and instance.name not in names:
-			names.append(instance.name)
-	return names
+	return KineticCrucibleScript.can_merge(target, donor, roster)
 
 func _refresh_crucible_detail() -> void:
 	var target := _crucible_target()
 	crucible_merge_button.text = "MERGE QUEUE"
 	crucible_promote_button.text = "PROMOTE"
 	if target.is_empty():
-		crucible_detail_label.text = (
-			"Choose a unit to enhance. Extras Only shows unit groups with a copy "
-			+ "beyond your protected two; turn it off to browse the full collection."
-		)
+		crucible_warning_label.visible = false
+		crucible_detail_label.text = "Choose any owned unit to enhance. All copies remain available as potential donors."
 		crucible_merge_button.disabled = true
 		crucible_promote_button.disabled = true
 		return
@@ -2732,6 +2938,9 @@ func _refresh_crucible_detail() -> void:
 		if not donor.is_empty():
 			donors.append(donor)
 	var preview := KineticCrucibleScript.merge_preview(target, donors, roster)
+	var sacrifice_warnings := _crucible_sacrifice_warnings(donors, preview)
+	crucible_warning_label.visible = not sacrifice_warnings.is_empty()
+	crucible_warning_label.text = "\n".join(sacrifice_warnings)
 	var target_unit := UnitCatalogScript.by_name(target.name)
 	var current_atk := KineticCrucibleScript.scaled_stat(target_unit.atk, target.level)
 	var current_hp := KineticCrucibleScript.scaled_stat(target_unit.hp, target.level)
@@ -2781,6 +2990,31 @@ func _refresh_crucible_detail() -> void:
 		target.level < KineticCrucibleScript.MAX_LEVEL
 		or not promotion_available
 	)
+
+func _crucible_sacrifice_warnings(donors: Array, preview: Dictionary) -> Array:
+	var consumed_count := mini(int(preview.get("consumed", 0)), donors.size())
+	if consumed_count <= 0:
+		return []
+	var active_counts := KineticCrucibleScript.inventory_counts(
+		KineticCrucibleScript.active_instances(collection_instances)
+	)
+	var consumed_by_name := {}
+	for index in consumed_count:
+		var donor: Dictionary = donors[index]
+		var unit_name: String = donor.get("name", "")
+		consumed_by_name[unit_name] = int(consumed_by_name.get(unit_name, 0)) + 1
+	var warnings: Array = []
+	for unit_name in consumed_by_name:
+		var remaining := int(active_counts.get(unit_name, 0)) - int(consumed_by_name[unit_name])
+		if remaining >= 2:
+			continue
+		warnings.append(
+			"WARNING · MERGING THIS QUEUE WILL LEAVE %s OF %s." % [
+				"NO COPIES" if remaining <= 0 else "ONLY 1 COPY",
+				String(unit_name).to_upper()
+			]
+		)
+	return warnings
 
 func _promote_crucible_unit() -> void:
 	var result: Dictionary = KineticCrucibleScript.record_promotion(
@@ -3102,6 +3336,8 @@ func _show_main_menu() -> void:
 	replay_mode = false
 	replay_playing = false
 	autobattle_active = false
+	challenge_battle = false
+	challenge_finished = false
 	if replay_panel != null:
 		replay_panel.visible = false
 	if replay_squad_overlay != null:
@@ -3112,14 +3348,20 @@ func _show_main_menu() -> void:
 	input_enabled = false
 	squad_opened_from_menu = false
 	squad_opened_for_mission = false
+	squad_opened_for_challenge = false
 	pending_mission_id = -1
 	main_menu_overlay.visible = true
 	mission_overlay.visible = false
+	challenge_overlay.visible = false
 	crucible_overlay.visible = false
 	gacha_overlay.visible = false
 	squad_overlay.visible = false
 	dialogue_overlay.visible = false
 	overlay.visible = false
+	result_redeploy_button.visible = false
+	result_autobattle_button.visible = false
+	result_continue_button.visible = false
+	result_menu_button.visible = false
 	hover_card.visible = false
 	combat_log_panel.visible = false
 	var saved_run: Dictionary = MissionRunStoreScript.load_run(CampaignStoreScript.MISSIONS.size())
@@ -3138,6 +3380,7 @@ func _open_mission_select(focus_mission_id: int = -1) -> void:
 	if focus_mission_id < 0:
 		focus_mission_id = _latest_campaign_mission_id()
 	main_menu_overlay.visible = false
+	challenge_overlay.visible = false
 	mission_overlay.visible = true
 	await get_tree().process_frame
 	_rebuild_mission_list(focus_mission_id)
@@ -3199,10 +3442,19 @@ func _load_replay_at_index() -> void:
 	active_mission_rules = MissionRulesScript.default_rules()
 	status_message = "Replay ready."
 	var metadata: Dictionary = replay_data.get("metadata", {})
-	var replay_encounter := CampaignStoreScript.encounter(
-		int(metadata.get("mission_id", -1)),
-		int(metadata.get("encounter_index", 0))
-	)
+	var replay_encounter: Dictionary
+	if metadata.get("battle_kind", "") == "challenge":
+		replay_encounter = ChallengeCatalogScript.by_id(
+			str(metadata.get("challenge_id", ""))
+		)
+		board.set_campaign_mission(_challenge_stage_mission_id(
+			str(metadata.get("challenge_id", ""))
+		))
+	else:
+		replay_encounter = CampaignStoreScript.encounter(
+			int(metadata.get("mission_id", -1)),
+			int(metadata.get("encounter_index", 0))
+		)
 	_set_board_opponent(replay_encounter)
 	var events: Array = replay_data.get("events", [])
 	for event in events:
@@ -3401,8 +3653,17 @@ func _verify_replay_result(event: Dictionary) -> void:
 func _update_replay_timeline() -> void:
 	var count: int = replay_data.get("events", []).size()
 	replay_event_label.text = "EVENT %d / %d" % [replay_event_index, count]
-	replay_timeline_label.text = "REPLAY %d / %d  ·  SEED %s" % [
+	var metadata: Dictionary = replay_data.get("metadata", {})
+	var replay_kind := ""
+	if metadata.get("battle_kind", "") == "challenge":
+		var replay_challenge := ChallengeCatalogScript.by_id(
+			str(metadata.get("challenge_id", ""))
+		)
+		if not replay_challenge.is_empty():
+			replay_kind = "  ·  %s" % String(replay_challenge.title).to_upper()
+	replay_timeline_label.text = "REPLAY %d / %d%s  ·  SEED %s" % [
 		replay_history_index + 1, replay_history.size(),
+		replay_kind,
 		str(replay_data.get("seed", 0))
 	]
 	replay_previous_button.disabled = replay_history_index + 1 >= replay_history.size()
@@ -3740,6 +4001,7 @@ func _replay_interlude(mission_id: int) -> void:
 func _begin_practice() -> void:
 	_leave_tutorial()
 	campaign_battle = false
+	challenge_battle = false
 	autobattle_active = false
 	board.set_practice_mode(true)
 	current_mission_id = -1
@@ -3754,6 +4016,7 @@ func _begin_mission(mission_id: int) -> void:
 		return
 	_leave_tutorial()
 	campaign_battle = true
+	challenge_battle = false
 	board.set_campaign_mission(mission_id)
 	current_mission_id = mission_id
 	current_encounter_index = 0
@@ -3775,6 +4038,7 @@ func _resume_mission() -> void:
 		return
 	_leave_tutorial()
 	campaign_battle = true
+	challenge_battle = false
 	autobattle_active = bool(saved_run.get("autobattle", false))
 	board.set_campaign_mission(saved_run.mission_id)
 	current_mission_id = saved_run.mission_id
@@ -3784,6 +4048,34 @@ func _resume_mission() -> void:
 	main_menu_overlay.visible = false
 	mission_overlay.visible = false
 	_start_new_match()
+
+func _begin_challenge() -> void:
+	if active_challenge.is_empty():
+		return
+	_leave_tutorial()
+	campaign_battle = false
+	challenge_battle = true
+	autobattle_active = false
+	challenge_finished = false
+	current_mission_id = -1
+	current_encounter_index = 0
+	mission_run_conductor_hp = STARTING_HP
+	awaiting_next_encounter = false
+	board.set_campaign_mission(_challenge_stage_mission_id(active_challenge.id))
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	challenge_overlay.visible = false
+	_start_new_match()
+	status_message = active_challenge.briefing
+	_refresh()
+
+func _challenge_stage_mission_id(challenge_id: String) -> int:
+	match challenge_id:
+		"overclock_gauntlet":
+			return 20
+		"null_hunt":
+			return 36
+	return 0
 
 func _open_squad_from_menu() -> void:
 	main_menu_overlay.visible = false
@@ -3956,6 +4248,11 @@ func _on_card_long_press_released() -> void:
 
 func _process(delta: float) -> void:
 	_update_tutorial_pulses(delta)
+	if challenge_overlay != null and challenge_overlay.visible:
+		var current_second := int(Time.get_unix_time_from_system())
+		if current_second != challenge_countdown_second:
+			challenge_countdown_second = current_second
+			_refresh_challenge_countdown()
 	if hover_card != null and hover_card.visible:
 		_position_hover_card()
 
@@ -4001,21 +4298,27 @@ func _start_new_match() -> void:
 		SquadStoreScript.build_deck(squad_names, roster, collection_instances),
 		battle_simulator.rng
 	)
-	var encounter: Dictionary = CampaignStoreScript.encounter(current_mission_id, current_encounter_index) if campaign_battle else {}
+	var authored_battle := campaign_battle or challenge_battle
+	var encounter: Dictionary = (
+		CampaignStoreScript.encounter(current_mission_id, current_encounter_index)
+		if campaign_battle else (active_challenge if challenge_battle else {})
+	)
 	active_mission_rules = MissionRulesScript.normalize(
-		encounter.get("rules", {}) if campaign_battle and not tutorial_mode else {}
+		encounter.get("rules", {}) if authored_battle and not tutorial_mode else {}
 	)
 	deployed_reinforcement_indices.clear()
 	battle_simulator.set_blocked_cells(active_mission_rules.blocked_cells)
 	board.set_mission_rules(
 		active_mission_rules.blocked_cells,
 		MissionRulesScript.objective_banner(active_mission_rules, 1)
-		if campaign_battle and MissionRulesScript.has_authored_rules(active_mission_rules)
+		if authored_battle and MissionRulesScript.has_authored_rules(active_mission_rules)
 		else ""
 	)
 	_set_board_opponent(encounter)
-	var enemy_squad_names: Array = TUTORIAL_ENEMY_SQUAD.duplicate() if tutorial_mode else (
-		CampaignStoreScript.enemy_squad_names(
+	var enemy_squad_names: Array = (
+		TUTORIAL_ENEMY_SQUAD.duplicate() if tutorial_mode
+		else encounter.get("enemy_squad", []).duplicate() if challenge_battle
+		else CampaignStoreScript.enemy_squad_names(
 			current_mission_id, current_encounter_index, roster
 		)
 	)
@@ -4037,7 +4340,7 @@ func _start_new_match() -> void:
 	round_number = 1
 	player_hp = mission_run_conductor_hp if campaign_battle else STARTING_HP
 	enemy_hp = TUTORIAL_ENEMY_HP if tutorial_mode else (
-		STARTING_HP if not campaign_battle else encounter.enemy_hp
+		int(encounter.get("enemy_hp", STARTING_HP)) if authored_battle else STARTING_HP
 	)
 	var mana_rules: Dictionary = active_mission_rules.mana
 	mana_growth = mana_rules.growth
@@ -4052,8 +4355,13 @@ func _start_new_match() -> void:
 	enemy_shield = 0
 	player_shield_turns = 0
 	enemy_shield_turns = 0
-	enemy_conductor_skill = encounter.get("skill", "Shield") if campaign_battle else "Shield"
+	enemy_conductor_skill = encounter.get("skill", "Shield") if authored_battle else "Shield"
 	battle_simulator.record("battle_started", {
+		"battle_kind": "challenge" if challenge_battle else (
+			"campaign" if campaign_battle else ("tutorial" if tutorial_mode else "practice")
+		),
+		"challenge_id": active_challenge.get("id", "") if challenge_battle else "",
+		"challenge_cycle_id": active_challenge.get("cycle_id", "") if challenge_battle else "",
 		"mission_id": current_mission_id,
 		"encounter_index": current_encounter_index,
 		"player_hp": player_hp,
@@ -4067,6 +4375,7 @@ func _start_new_match() -> void:
 	input_enabled = true
 	battle_over = false
 	mission_finished = false
+	challenge_finished = false
 	mission_interlude_pending = false
 	overlay.visible = false
 	status_message = "Select a unit card, then choose a deployment lane."
@@ -4079,10 +4388,14 @@ func _start_new_match() -> void:
 		MissionRunStoreScript.save_run(
 			current_mission_id, current_encounter_index, player_hp, autobattle_active
 		)
+	elif challenge_battle:
+		status_message = "Weekly Challenge · %s · %s" % [
+			active_challenge.title, MissionRulesScript.objective_title(active_mission_rules)
+		]
 	for i in 4:
 		_draw_player_card()
 		_draw_enemy_card()
-	if campaign_battle and not tutorial_mode:
+	if authored_battle and not tutorial_mode:
 		_apply_mission_setup_units()
 	if tutorial_mode:
 		_setup_tutorial_target()
@@ -4168,7 +4481,7 @@ func _spawn_mission_unit(deployment: Dictionary, setup: bool = false) -> Diction
 	return spawned
 
 func _deploy_mission_reinforcements(side: int) -> void:
-	if not campaign_battle or tutorial_mode or replay_mode:
+	if not (campaign_battle or challenge_battle) or tutorial_mode or replay_mode:
 		return
 	for index in active_mission_rules.reinforcements.size():
 		if index in deployed_reinforcement_indices:
@@ -4303,7 +4616,7 @@ func _refresh() -> void:
 		active_mission_rules.blocked_cells,
 		MissionRulesScript.objective_banner(active_mission_rules, round_number)
 		if (
-			(campaign_battle or replay_mode)
+			(campaign_battle or challenge_battle or replay_mode)
 			and MissionRulesScript.has_authored_rules(active_mission_rules)
 		)
 		else ""
@@ -5347,7 +5660,7 @@ func _resolve_side(side: int) -> void:
 		if (
 			player_hp <= 0 or enemy_hp <= 0
 			or (
-				campaign_battle
+				(campaign_battle or challenge_battle)
 				and MissionRulesScript.evaluate(
 					active_mission_rules, units, round_number,
 					player_hp, enemy_hp, "action"
@@ -5880,6 +6193,8 @@ func _on_result_primary() -> void:
 		awaiting_next_encounter = false
 		current_encounter_index += 1
 		_start_new_match()
+	elif challenge_finished:
+		_show_main_menu()
 	elif mission_finished:
 		_leave_completed_mission("menu")
 	else:
@@ -5909,6 +6224,10 @@ func _continue_campaign() -> void:
 	_leave_completed_mission("continue_campaign")
 
 func _redeploy_mission() -> void:
+	if challenge_finished and challenge_battle:
+		challenge_finished = false
+		_start_new_match()
+		return
 	if (
 		not mission_finished or not campaign_battle
 		or current_mission_id < 0
@@ -5962,7 +6281,7 @@ func _emphasize_result_action(primary_action: Button) -> void:
 
 func _check_game_over(checkpoint: String = "action") -> bool:
 	var outcome: Dictionary
-	if campaign_battle and not tutorial_mode:
+	if (campaign_battle or challenge_battle) and not tutorial_mode:
 		outcome = MissionRulesScript.evaluate(
 			active_mission_rules, units, round_number,
 			player_hp, enemy_hp, checkpoint
@@ -5998,7 +6317,10 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 		"reason": outcome_reason,
 		"objective": active_mission_rules.objective.duplicate(true)
 	}
-	if campaign_battle and MissionRulesScript.has_authored_rules(active_mission_rules):
+	if (
+		(campaign_battle or challenge_battle)
+		and MissionRulesScript.has_authored_rules(active_mission_rules)
+	):
 		battle_simulator.record("mission_objective_resolved", {
 			"winner": outcome.winner,
 			"reason": outcome_reason,
@@ -6009,7 +6331,12 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 	battle_simulator.record("battle_finished", finish_event)
 	var replay_metadata := {
 		"mission_id": current_mission_id,
-		"encounter_index": current_encounter_index
+		"encounter_index": current_encounter_index,
+		"battle_kind": "challenge" if challenge_battle else (
+			"campaign" if campaign_battle else ("tutorial" if tutorial_mode else "practice")
+		),
+		"challenge_id": active_challenge.get("id", "") if challenge_battle else "",
+		"challenge_cycle_id": active_challenge.get("cycle_id", "") if challenge_battle else ""
 	}
 	battle_simulator.save_replay(REPLAY_PATH, replay_metadata)
 	battle_simulator.archive_replay(REPLAY_HISTORY_PATH, replay_metadata)
@@ -6020,10 +6347,23 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 	result_autobattle_button.visible = false
 	result_continue_button.visible = false
 	result_menu_button.visible = false
+	result_redeploy_button.text = "REDEPLOY"
+	result_redeploy_button.tooltip_text = (
+		"Replay this mission with the same squad for a new rating and another unit reward."
+	)
 	if player_won:
 		battle_audio.play("victory")
 		_show_battle_rating(battle_rating)
-		if campaign_battle:
+		if challenge_battle:
+			var challenge_result := ChallengeStoreScript.record_victory(
+				int(active_challenge.starts_unix)
+			)
+			requisition_currency = int(challenge_result.balance)
+			requisition_reward = int(challenge_result.reward_amount)
+			active_challenge["completed"] = bool(challenge_result.completed)
+			active_challenge["reward_available"] = false
+			challenge_finished = true
+		elif campaign_battle:
 			var encounter_count := CampaignStoreScript.encounter_count(current_mission_id)
 			if current_encounter_index + 1 < encounter_count:
 				awaiting_next_encounter = true
@@ -6097,11 +6437,16 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			recent_reward_copy_count = reward_copies.size()
 			_show_card_reward(reward, not was_unlocked, recent_reward_copy_count)
 		overlay_title.text = (
-			"OPERATION COMPLETE" if campaign_battle
-			else "TACTICAL VICTORY"
+			"CHALLENGE COMPLETE" if challenge_battle else (
+				"OPERATION COMPLETE" if campaign_battle else "TACTICAL VICTORY"
+			)
 		)
 		overlay_title.add_theme_color_override("font_color", Color("#67e6f4"))
 		overlay_detail.text = (
+			"%s\n%s\nVictory achieved in %d rounds." % [
+				active_challenge.subtitle, outcome_reason, round_number
+			]
+			if challenge_battle else (
 			"%s\n%s\nVictory achieved in %d rounds."
 			% [
 				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
@@ -6110,6 +6455,7 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			]
 			if campaign_battle
 			else "%s\nVictory achieved in %d rounds." % [outcome_reason, round_number]
+			)
 		)
 		if campaign_battle and current_mission_id == CampaignStoreScript.MISSIONS.size() - 1:
 			overlay_title.text = "END OF CAMPAIGN 1"
@@ -6117,11 +6463,24 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 				CampaignStoreScript.MISSIONS[current_mission_id].debriefing,
 				CampaignStoreScript.CAMPAIGN_EPILOGUE
 			]
-		if campaign_battle and autobattle_active:
+		if challenge_battle:
+			if requisition_reward > 0:
+				overlay_detail.text += "\n+%d REQUISITION CREDITS · WEEKLY FIRST CLEAR" % requisition_reward
+			else:
+				overlay_detail.text += "\nWEEKLY REWARD ALREADY CLAIMED · RATING RECORDED"
+		elif campaign_battle and autobattle_active:
 			overlay_detail.text += "\nAUTOBATTLE · UNIT REWARD ONLY · NO REQUISITION CREDITS"
 		elif requisition_reward > 0:
 			overlay_detail.text += "\n+%d REQUISITION CREDITS · FIRST MANUAL CLEAR" % requisition_reward
-		if campaign_battle:
+		if challenge_battle:
+			result_primary_button.text = ""
+			result_primary_button.icon = UIThemeScript.home_icon()
+			result_primary_button.tooltip_text = "Return to the main menu."
+			result_redeploy_button.text = "REPLAY CHALLENGE"
+			result_redeploy_button.tooltip_text = (
+				"Replay this weekly challenge with the same formation for a new rating."
+			)
+		elif campaign_battle:
 			result_primary_button.text = ""
 			result_primary_button.icon = UIThemeScript.home_icon()
 			result_primary_button.tooltip_text = "Return to the main menu."
@@ -6133,9 +6492,9 @@ func _check_game_over(checkpoint: String = "action") -> bool:
 			campaign_battle
 			and current_mission_id + 1 < CampaignStoreScript.MISSIONS.size()
 		)
-		result_redeploy_button.visible = campaign_battle
+		result_redeploy_button.visible = campaign_battle or challenge_battle
 		result_autobattle_button.visible = campaign_battle
-		result_menu_button.visible = not campaign_battle
+		result_menu_button.visible = not campaign_battle and not challenge_battle
 		_emphasize_result_action(
 			result_continue_button if result_continue_button.visible else result_primary_button
 		)

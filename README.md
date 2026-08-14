@@ -23,6 +23,11 @@ assets required by the prototype.
   100 Credits once when completed manually. Persistent pity raises 5-star and
   6-star odds after every miss, guarantees one by pull 50, and resets on either tier.
 - Start a full battle from the main menu in **Campaign** or **Practice Battle**.
+- Open **Campaign**, then select **Challenge Operations** from any Act map to
+  enter the weekly battle dossier. It rotates one of three special-rule battles
+  every UTC ISO week. Its dossier shows the objective, modifiers, enemy formation, and
+  rotation timer. The first victory each rotation awards 250 Requisition Credits;
+  replays remain available for battle ratings without paying the reward twice.
 - After a campaign victory, use **Redeploy** to pursue a better rating
   and earn another unit reward; **Campaign** remains the primary action.
 - Completed missions offer **Autobattle** in the Squad Workshop and on the
@@ -70,6 +75,9 @@ assets required by the prototype.
 - Data-driven campaign encounter rules with survival, protection, and priority-target
   objectives; round limits; blocked terrain; predeployed units; reinforcements; and
   per-encounter Mana parameters
+- Three rotating weekly Challenge Operations with full dossiers, formation
+  selection, special-rule battle integration, persistent first-clear status,
+  deterministic replay metadata, and 250-Credit rotation rewards
 - Persistent in-progress mission runs and main-menu resume
 - Encounter transition screens with upcoming Conductor information
 - Authored mission reward pools with Star-Rarity weighting and persistent unlocks
@@ -90,7 +98,7 @@ assets required by the prototype.
 - Deployment skills for repair, corrosion, targeted status effects, and lane control
 - Strike skills for damage-over-time pressure, vulnerability, knockback, and suppression
 - Persistent per-copy Kinetic Crucible progression with five unit levels, donor merging,
-  invested-point recovery, safe-copy protection, projected results, collection
+  invested-point recovery, low-copy sacrifice warnings, projected results, collection
   consumption, level-scaled stats and skills, and promotion into the next form
 - Full-body sprites on the battlefield and unit-list portraits throughout menus and progression screens
 - Original full-body and portrait art for every playable unit
@@ -185,5 +193,6 @@ The current interface cleanup is complete:
   and Mana modifiers.
 
 Duplicate rewards and Kinetic Crucible progression now communicate exact copy
-identity, protected formation copies, recovered donor investment, projected
-levels and stats, cap overflow, and donors left untouched at maximum level.
+identity, warnings before a merge leaves fewer than two exact copies, recovered
+donor investment, projected levels and stats, cap overflow, and donors left
+untouched at maximum level.

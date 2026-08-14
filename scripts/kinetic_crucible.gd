@@ -6,7 +6,6 @@ const SAVE_PATH := "user://kinetic_crucible.cfg"
 const SAVE_VERSION := 2
 const MAX_LEVEL := 5
 const LEVEL_COSTS := [3, 6, 12, 24]
-const FORMATION_COPIES_TO_KEEP := 2
 ## Fraction of base ATK / max HP gained per level above 1 (level 5 = 1.4x).
 const STAT_GROWTH_PER_LEVEL := 0.1
 
@@ -140,40 +139,10 @@ static func merge_value(target: Dictionary, donor: Dictionary, roster: Array = [
 			chassis_value = 2
 	return chassis_value + progress_points(donor)
 
-## The two strongest copies of each exact unit are formation-safe. They remain
-## selectable as enhancement targets but Extras Only will not sacrifice them.
-static func protected_instance_ids(
-	active: Array, copies_to_keep: int = FORMATION_COPIES_TO_KEEP
-) -> Array:
-	var by_name := {}
-	for instance in active:
-		if instance.get("consumed", false):
-			continue
-		var unit_name: String = instance.get("name", "")
-		if not by_name.has(unit_name):
-			by_name[unit_name] = []
-		by_name[unit_name].append(instance)
-	var protected: Array = []
-	for copies_value in by_name.values():
-		var copies: Array = copies_value
-		copies.sort_custom(
-			func(a, b):
-				var progress_a := progress_points(a)
-				var progress_b := progress_points(b)
-				if progress_a != progress_b:
-					return progress_a > progress_b
-				return str(a.get("id", "")) < str(b.get("id", ""))
-		)
-		for index in mini(maxi(0, copies_to_keep), copies.size()):
-			protected.append(copies[index].get("id", ""))
-	return protected
-
 static func can_merge(
 	target: Dictionary,
 	donor: Dictionary,
-	roster: Array,
-	only_extras: bool = false,
-	active: Array = []
+	roster: Array
 ) -> bool:
 	if target.is_empty() or donor.is_empty():
 		return false
@@ -181,12 +150,6 @@ static func can_merge(
 		return false
 	if int(target.get("level", 1)) >= MAX_LEVEL:
 		return false
-	if only_extras:
-		var collection := active
-		if collection.is_empty():
-			return false
-		if donor.get("id", "") in protected_instance_ids(collection):
-			return false
 	return _definition(target, roster) != null and _definition(donor, roster) != null
 
 ## Deterministically projects a queued batch using the same stop-at-level-5

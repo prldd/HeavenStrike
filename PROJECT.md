@@ -735,12 +735,12 @@ queue cards can be clicked to clear or remove them before committing. The previe
 reports donors consumed, points applied, the resulting level and stats, cap
 overflow, and any queued copies that will remain untouched after level 5.
 
-The Crucible includes an “extras only” donor filter. When enabled, unsafe donor
-copies remain visible and selectable as enhancement targets, but become disabled
-as donors. The two most-invested copies of every exact unit stay protected for
-the formation, leaving only further copies available for consumption. Consumed
-copies disappear from the collection and are removed from any saved squad that
-referenced them.
+Every owned copy remains visible and can be selected as either the enhancement
+target or a donor. When the projected consumed donors would leave fewer than two
+active copies of an exact unit, the queue displays a prominent warning before
+the player commits the merge. Donors left untouched because the target reaches
+level 5 do not count against that warning. Consumed copies disappear from the
+collection and are removed from any saved squad that referenced them.
 
 For development, the Crucible also exposes a clearly labeled debug inventory
 button that grants enough copies to leave at least four active copies of every
@@ -781,7 +781,6 @@ Conductor selection changes a squad's strategy without adding another unit to th
 ### Later Possibilities
 
 - Additional campaign chapters
-- Challenge battles with special board rules
 - Draft mode
 - Local pass-and-play
 - Online competitive matches
@@ -829,12 +828,15 @@ all Autobattle clears continue awarding units but do not grant currency.
 Currency rewards use stable claim IDs so later rotating challenges can provide
 renewable income without duplicate claims or another wallet migration.
 
-The rotating-challenge backend authors three special-rule battles and selects
-one on deterministic UTC ISO-week boundaries. A first victory in each weekly
-rotation grants 250 Credits through a cycle-specific claim ID; repeat victories
-do not pay again. Challenge completion persists independently and can recover
-from the wallet's claim record. The player-facing Challenge Operations menu and
-battle-flow integration remain a presentation task.
+Challenge Operations authors three special-rule battles and selects one on
+deterministic UTC ISO-week boundaries. Its player-facing dossier shows the live
+rotation timer, objective, modifiers, opposing formation, Conductor, and reward
+state before handing off to Formation Command. The dossier is entered from every
+Act map, keeping the main menu focused on primary game areas. A first victory in
+each weekly rotation grants 250 Credits through a cycle-specific claim ID; repeat victories
+remain playable for ratings but do not pay again. Challenge completion persists
+independently and can recover from the wallet's claim record. Challenge battle
+identity and authored rules are retained in deterministic replay metadata.
 
 The first release will not include paid energy or randomized stat growth.
 
@@ -904,7 +906,7 @@ The replay and battle-interface cleanup is in a stable, tested state:
   3–9 provide the first playable campaign set.
 
 Duplicate rewards and Kinetic Crucible progression now expose copy identity,
-safe formation-copy protection, recovered donor investment, projected stat and
+low-copy sacrifice warnings, recovered donor investment, projected stat and
 level gains, overflow, and untouched queued donors. The next balance pass should
 validate the duplicate cadence and level curve over a representative campaign run.
 
