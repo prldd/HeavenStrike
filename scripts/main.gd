@@ -36,32 +36,32 @@ const OPERATIONS_MAP_BACKGROUNDS := {
 # along these polylines, keeping every operation inside its narrative region.
 const OPERATIONS_CHAPTER_PATHS := {
 	1: {
-		"The Salvage": [Vector2(0.08, 0.82), Vector2(0.12, 0.70), Vector2(0.19, 0.62)],
-		"The Aftermath": [Vector2(0.20, 0.59), Vector2(0.27, 0.48), Vector2(0.35, 0.58)],
-		"Claims": [Vector2(0.37, 0.61), Vector2(0.45, 0.70), Vector2(0.53, 0.60)],
-		"The Proving": [Vector2(0.55, 0.56), Vector2(0.61, 0.46), Vector2(0.69, 0.39), Vector2(0.77, 0.42)],
-		"Sanctuary": [Vector2(0.78, 0.34), Vector2(0.88, 0.16)]
+		"The Salvage": [Vector2(0.08, 0.82), Vector2(0.13, 0.70), Vector2(0.21, 0.63)],
+		"The Aftermath": [Vector2(0.24, 0.56), Vector2(0.20, 0.47), Vector2(0.27, 0.37), Vector2(0.38, 0.42)],
+		"Claims": [Vector2(0.35, 0.51), Vector2(0.40, 0.64), Vector2(0.48, 0.60), Vector2(0.45, 0.54)],
+		"The Proving": [Vector2(0.49, 0.48), Vector2(0.56, 0.41), Vector2(0.65, 0.39), Vector2(0.72, 0.36)],
+		"Sanctuary": [Vector2(0.78, 0.30), Vector2(0.88, 0.16)]
 	},
 	2: {
-		"The Arena": [Vector2(0.07, 0.76), Vector2(0.14, 0.66), Vector2(0.22, 0.72), Vector2(0.26, 0.59)],
-		"Fault Lines": [Vector2(0.27, 0.55), Vector2(0.32, 0.42), Vector2(0.39, 0.51), Vector2(0.43, 0.37)],
-		"Heroes and Costs": [Vector2(0.44, 0.33), Vector2(0.49, 0.20), Vector2(0.57, 0.28), Vector2(0.63, 0.20)],
-		"Cores": [Vector2(0.58, 0.71), Vector2(0.65, 0.61), Vector2(0.72, 0.70), Vector2(0.77, 0.57)],
-		"Coalition Fracture": [Vector2(0.77, 0.54), Vector2(0.84, 0.68), Vector2(0.89, 0.53), Vector2(0.85, 0.35), Vector2(0.93, 0.17)]
+		"The Arena": [Vector2(0.07, 0.78), Vector2(0.17, 0.67), Vector2(0.30, 0.57), Vector2(0.43, 0.51)],
+		"Fault Lines": [Vector2(0.47, 0.43), Vector2(0.37, 0.36), Vector2(0.24, 0.27), Vector2(0.13, 0.22)],
+		"Heroes and Costs": [Vector2(0.08, 0.18), Vector2(0.29, 0.15), Vector2(0.49, 0.16), Vector2(0.66, 0.23), Vector2(0.78, 0.25)],
+		"Cores": [Vector2(0.82, 0.32), Vector2(0.75, 0.40), Vector2(0.67, 0.49), Vector2(0.71, 0.61), Vector2(0.76, 0.68)],
+		"Coalition Fracture": [Vector2(0.82, 0.65), Vector2(0.89, 0.57), Vector2(0.85, 0.44), Vector2(0.79, 0.31), Vector2(0.68, 0.22), Vector2(0.57, 0.14)]
 	},
 	3: {
 		"The Outer City": [Vector2(0.07, 0.84), Vector2(0.14, 0.75), Vector2(0.23, 0.67)],
-		"The Imperial Archive": [Vector2(0.25, 0.58), Vector2(0.29, 0.42), Vector2(0.34, 0.27)],
-		"The Conductor Vault": [Vector2(0.40, 0.58), Vector2(0.50, 0.66), Vector2(0.57, 0.52)],
-		"The Civic Core": [Vector2(0.64, 0.51), Vector2(0.73, 0.61), Vector2(0.78, 0.43)],
-		"The Source": [Vector2(0.79, 0.34), Vector2(0.86, 0.24), Vector2(0.92, 0.15)]
+		"The Imperial Archive": [Vector2(0.25, 0.58), Vector2(0.29, 0.43), Vector2(0.34, 0.30)],
+		"The Conductor Vault": [Vector2(0.39, 0.42), Vector2(0.47, 0.55), Vector2(0.57, 0.65)],
+		"The Civic Core": [Vector2(0.65, 0.67), Vector2(0.75, 0.57), Vector2(0.81, 0.44)],
+		"The Source": [Vector2(0.72, 0.36), Vector2(0.62, 0.25), Vector2(0.53, 0.14)]
 	}
 }
 
 const OPERATIONS_CHAPTER_LABEL_POSITIONS := {
-	1: [Vector2(0.04, 0.90), Vector2(0.19, 0.35), Vector2(0.40, 0.79), Vector2(0.61, 0.27), Vector2(0.76, 0.06)],
-	2: [Vector2(0.04, 0.86), Vector2(0.25, 0.58), Vector2(0.43, 0.07), Vector2(0.57, 0.82), Vector2(0.76, 0.04)],
-	3: [Vector2(0.03, 0.91), Vector2(0.18, 0.08), Vector2(0.42, 0.75), Vector2(0.66, 0.72), Vector2(0.78, 0.05)]
+	1: [Vector2(0.04, 0.90), Vector2(0.17, 0.31), Vector2(0.40, 0.79), Vector2(0.59, 0.27), Vector2(0.76, 0.06)],
+	2: [Vector2(0.04, 0.86), Vector2(0.06, 0.08), Vector2(0.43, 0.07), Vector2(0.65, 0.82), Vector2(0.76, 0.08)],
+	3: [Vector2(0.03, 0.91), Vector2(0.18, 0.08), Vector2(0.42, 0.75), Vector2(0.66, 0.72), Vector2(0.57, 0.05)]
 }
 
 const PLAYER := 0

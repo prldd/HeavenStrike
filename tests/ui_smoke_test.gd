@@ -518,6 +518,19 @@ func _run() -> void:
 	).size() == 5)
 	assert(game.mission_node_buttons[21].position.x > game.mission_node_buttons[0].position.x)
 	assert(game.mission_node_buttons[21].position.y < game.mission_node_buttons[0].position.y)
+	for mission_id in range(1, 22):
+		var previous_center: Vector2 = (
+			game.mission_node_buttons[mission_id - 1].position
+			+ game.mission_node_buttons[mission_id - 1].size * 0.5
+		)
+		var current_center: Vector2 = (
+			game.mission_node_buttons[mission_id].position
+			+ game.mission_node_buttons[mission_id].size * 0.5
+		)
+		var node_distance := previous_center.distance_to(current_center)
+		assert(node_distance >= 36.0, "Act I operations %d and %d overlap: %.1f px" % [
+			mission_id, mission_id + 1, node_distance
+		])
 	var result_buttons: Array[Node] = game.overlay.find_children("*", "Button", true, false)
 	assert(result_buttons.size() == 6)
 	assert(game.reward_portrait in result_buttons)
@@ -964,6 +977,16 @@ func _run() -> void:
 	assert(game.mission_node_buttons[61].get_meta("operation_region") == "Coalition Fracture")
 	assert(game.mission_detail_kicker.text.contains("ACT 2"))
 	assert(game.mission_detail_kicker.text.contains("OPERATION 40"))
+	for mission_id in range(23, 62):
+		var previous_center: Vector2 = (
+			game.mission_node_buttons[mission_id - 1].position
+			+ game.mission_node_buttons[mission_id - 1].size * 0.5
+		)
+		var current_center: Vector2 = (
+			game.mission_node_buttons[mission_id].position
+			+ game.mission_node_buttons[mission_id].size * 0.5
+		)
+		assert(previous_center.distance_to(current_center) < game.mission_list.size.x * 0.18)
 	game._switch_operations_act(3)
 	for frame in 3:
 		await process_frame
@@ -976,6 +999,12 @@ func _run() -> void:
 	assert(game.mission_selected_id == 62)
 	assert(game.mission_node_buttons[62].get_meta("operation_region") == "The Outer City")
 	assert(game.mission_node_buttons[76].get_meta("operation_region") == "The Source")
+	var source_center: Vector2 = (
+		game.mission_node_buttons[76].position
+		+ game.mission_node_buttons[76].size * 0.5
+	)
+	assert(source_center.x < game.mission_list.size.x * 0.62)
+	assert(source_center.y < game.mission_list.size.y * 0.20)
 	assert(game.mission_launch_button.disabled)
 	game.mission_overlay.visible = false
 	# Authored mission rules load into the deterministic runtime and board.
