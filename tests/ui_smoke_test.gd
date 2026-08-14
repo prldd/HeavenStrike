@@ -5,6 +5,7 @@ const BattleSettingsScript = preload("res://scripts/battle_settings.gd")
 const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 const KineticCrucibleScript = preload("res://scripts/kinetic_crucible.gd")
+const SquadStoreScript = preload("res://scripts/squad_store.gd")
 const GachaStoreScript = preload("res://scripts/gacha_store.gd")
 const RequisitionStoreScript = preload("res://scripts/requisition_store.gd")
 const ChallengeCatalogScript = preload("res://scripts/challenge_catalog.gd")
@@ -17,6 +18,7 @@ func _init() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SquadStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(KineticCrucibleScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(TutorialStoreScript.SAVE_PATH))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(CampaignStoreScript.SAVE_PATH))
@@ -679,6 +681,39 @@ func _run() -> void:
 	game.input_enabled = true
 	game._open_squad_builder()
 	await process_frame
+	assert(game.saved_squads.size() == 1)
+	assert(game.squad_selector.item_count == 1)
+	var original_squad_id: String = game.editing_squad_id
+	var original_formation: Array = game.editing_squad_names.duplicate()
+	game._create_named_squad()
+	assert(game.saved_squads.size() == 2)
+	assert(game.squad_selector.item_count == 2)
+	assert(game.editing_squad_id != original_squad_id)
+	assert(game.editing_squad_names == original_formation)
+	game.squad_name_edit.text = "Vanguard Test"
+	game._rename_named_squad()
+	assert(game.squad_selector.get_item_text(1) == "VANGUARD TEST")
+	game._remove_squad_unit_at(0)
+	var second_formation: Array = game.editing_squad_names.duplicate()
+	game._select_conductor_skill(game.ConductorSkillsScript.SKILLS.find("Firestorm"))
+	game._select_named_squad(0)
+	assert(game.editing_squad_id == original_squad_id)
+	assert(game.editing_squad_names == original_formation)
+	game._select_named_squad(1)
+	assert(game.editing_squad_names == second_formation)
+	assert(game.editing_conductor_skill == "Firestorm")
+	var persisted_squads := SquadStoreScript.load_named_squads(
+		game.roster, game.collection_instances, game.ConductorSkillsScript.SKILLS
+	)
+	assert(persisted_squads.squads.size() == 2)
+	assert(persisted_squads.active_id == game.editing_squad_id)
+	game._delete_named_squad()
+	assert(game.squad_delete_button.text == "CONFIRM DELETE")
+	assert(game.saved_squads.size() == 2)
+	game._delete_named_squad()
+	assert(game.saved_squads.size() == 1)
+	assert(game.editing_squad_id == original_squad_id)
+	assert(game.squad_delete_button.disabled)
 	for action in game.squad_overlay.find_children("*", "Button", true, false):
 		assert(action.text != "RESET")
 	var inventory: Dictionary = CampaignStoreScript.inventory_counts(

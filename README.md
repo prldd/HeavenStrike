@@ -57,7 +57,9 @@ assets required by the prototype.
 - Use **Older** and **Newer** beneath the replay seed to page through the ten
   most recently completed battles.
 - Select **Squad** during a replay to compare the recorded player and enemy squads side by side.
-- Select **Squad** to choose up to 8 units including the Vanguard, with at most two copies of each.
+- Open **Formation Command** to create, rename, switch, or delete named squads.
+  Each squad stores up to 8 units, its Vanguard order, and its Conductor skill,
+  with at most two copies of each exact unit.
 - In campaign interludes, select **Next** or press **Enter/Space** to advance;
   **Skip Scene** returns directly to the menu or operations map. Completed
   missions with an interlude offer **View Scene** on the operations map.
@@ -69,7 +71,8 @@ assets required by the prototype.
 
 - Three-lane, seven-column battlefield
 - 223 units across six distinct classes
-- Persistent 1–8 unit squad construction with a two-copy limit
+- Multiple persistent named squads with independent 1–8 unit formations,
+  Vanguard order, Conductor skill, and a two-copy limit
 - 77 sequential story missions across three acts with escalating difficulty
 - One-to-three battle encounter sequences with Conductor-HP attrition
 - Data-driven campaign encounter rules with survival, protection, and priority-target

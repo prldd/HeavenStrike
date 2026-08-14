@@ -135,6 +135,11 @@ var squad_count_label: Label
 var squad_save_button: Button
 var squad_start_button: Button
 var squad_autobattle_button: Button
+var squad_selector: OptionButton
+var squad_name_edit: LineEdit
+var squad_new_button: Button
+var squad_rename_button: Button
+var squad_delete_button: Button
 var conductor_skill_option: OptionButton
 var reserve_class_option: OptionButton
 var reserve_search_edit: LineEdit
@@ -249,6 +254,10 @@ var tutorial_menu_button: Button
 var roster: Array = UnitCatalogScript.all_units()
 var squad_names: Array = []
 var editing_squad_names: Array = []
+var saved_squads: Array = []
+var active_squad_id := ""
+var editing_squad_id := ""
+var squad_delete_armed := false
 var battle_deck: Array = []
 var enemy_deck: Array = []
 var player_conductor_skill := "Rally"
@@ -354,8 +363,12 @@ func _ready() -> void:
 	var starter_claim := RequisitionStoreScript.ensure_starter_grant()
 	requisition_currency = int(starter_claim.balance)
 	_sync_collection()
-	squad_names = SquadStoreScript.load_instance_squad(roster, collection_instances)
-	player_conductor_skill = SquadStoreScript.load_conductor_skill(ConductorSkillsScript.SKILLS)
+	var named_squad_state := SquadStoreScript.load_named_squads(
+		roster, collection_instances, ConductorSkillsScript.SKILLS
+	)
+	saved_squads = named_squad_state.squads
+	active_squad_id = named_squad_state.active_id
+	_load_active_squad()
 	_sanitize_squad_unlocks()
 	_start_new_match()
 	_show_main_menu()
@@ -1019,6 +1032,43 @@ func _build_squad_builder() -> void:
 	squad_count_label.add_theme_font_size_override("font_size", 18)
 	title_row.add_child(squad_count_label)
 
+	var squad_manager := HBoxContainer.new()
+	squad_manager.add_theme_constant_override("separation", 8)
+	layout.add_child(squad_manager)
+	var squad_manager_label := Label.new()
+	squad_manager_label.text = "SAVED SQUAD"
+	squad_manager_label.custom_minimum_size.x = 110
+	squad_manager_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	squad_manager_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	squad_manager.add_child(squad_manager_label)
+	squad_selector = OptionButton.new()
+	squad_selector.custom_minimum_size.x = 210
+	squad_selector.item_selected.connect(_select_named_squad)
+	squad_manager.add_child(squad_selector)
+	squad_name_edit = LineEdit.new()
+	squad_name_edit.placeholder_text = "SQUAD NAME"
+	squad_name_edit.max_length = SquadStoreScript.MAX_SQUAD_NAME_LENGTH
+	squad_name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	squad_name_edit.text_submitted.connect(func(_text): _rename_named_squad())
+	squad_manager.add_child(squad_name_edit)
+	squad_new_button = Button.new()
+	squad_new_button.text = "NEW"
+	squad_new_button.tooltip_text = "Create a new squad using the current formation."
+	squad_new_button.custom_minimum_size.x = 78
+	squad_new_button.pressed.connect(_create_named_squad)
+	squad_manager.add_child(squad_new_button)
+	squad_rename_button = Button.new()
+	squad_rename_button.text = "RENAME"
+	squad_rename_button.custom_minimum_size.x = 96
+	squad_rename_button.pressed.connect(_rename_named_squad)
+	squad_manager.add_child(squad_rename_button)
+	squad_delete_button = Button.new()
+	squad_delete_button.text = "DELETE"
+	squad_delete_button.tooltip_text = "Select twice to confirm deleting this saved squad."
+	squad_delete_button.custom_minimum_size.x = 112
+	squad_delete_button.pressed.connect(_delete_named_squad)
+	squad_manager.add_child(squad_delete_button)
+
 	mission_intel_panel = PanelContainer.new()
 	mission_intel_panel.visible = false
 	layout.add_child(mission_intel_panel)
@@ -1189,14 +1239,145 @@ func _open_squad_builder() -> void:
 	squad_opened_for_mission = false
 	squad_opened_for_challenge = false
 	pending_mission_id = -1
-	editing_squad_names = squad_names.duplicate()
-	editing_conductor_skill = player_conductor_skill
-	conductor_skill_option.select(ConductorSkillsScript.SKILLS.find(editing_conductor_skill))
+	editing_squad_id = active_squad_id
+	_load_editing_squad(editing_squad_id)
+	_refresh_named_squad_controls()
 	end_button.visible = false
 	squad_overlay.visible = true
 	# Let the overlay render before the (potentially heavy) grid rebuild so the
 	# tap shows the new page immediately instead of freezing on the old one.
 	await get_tree().process_frame
+	_rebuild_squad_grid()
+
+func _saved_squad_index(squad_id: String) -> int:
+	for index in saved_squads.size():
+		if saved_squads[index].get("id", "") == squad_id:
+			return index
+	return -1
+
+func _load_active_squad() -> void:
+	if saved_squads.is_empty():
+		return
+	var index := _saved_squad_index(active_squad_id)
+	if index < 0:
+		index = 0
+		active_squad_id = saved_squads[0].id
+	var squad: Dictionary = saved_squads[index]
+	squad_names = SquadStoreScript.sanitize_instances(
+		squad.get("instance_ids", []), collection_instances
+	)
+	player_conductor_skill = squad.get(
+		"conductor_skill", SquadStoreScript.DEFAULT_CONDUCTOR_SKILL
+	)
+
+func _load_editing_squad(squad_id: String) -> void:
+	var index := _saved_squad_index(squad_id)
+	if index < 0:
+		return
+	var squad: Dictionary = saved_squads[index]
+	editing_squad_id = squad.id
+	active_squad_id = squad.id
+	editing_squad_names = SquadStoreScript.sanitize_instances(
+		squad.get("instance_ids", []), collection_instances
+	)
+	editing_conductor_skill = squad.get(
+		"conductor_skill", SquadStoreScript.DEFAULT_CONDUCTOR_SKILL
+	)
+	conductor_skill_option.select(
+		maxi(0, ConductorSkillsScript.SKILLS.find(editing_conductor_skill))
+	)
+	squad_delete_armed = false
+
+func _store_editing_squad_in_memory() -> bool:
+	if editing_squad_names.is_empty():
+		return false
+	var index := _saved_squad_index(editing_squad_id)
+	if index < 0:
+		return false
+	var squad: Dictionary = saved_squads[index]
+	squad["instance_ids"] = editing_squad_names.duplicate()
+	squad["conductor_skill"] = editing_conductor_skill
+	saved_squads[index] = squad
+	active_squad_id = editing_squad_id
+	squad_names = editing_squad_names.duplicate()
+	player_conductor_skill = editing_conductor_skill
+	return true
+
+func _persist_named_squads() -> bool:
+	return SquadStoreScript.save_named_squads(
+		saved_squads, active_squad_id, collection_instances,
+		ConductorSkillsScript.SKILLS
+	)
+
+func _refresh_named_squad_controls() -> void:
+	if squad_selector == null:
+		return
+	squad_selector.clear()
+	for squad in saved_squads:
+		squad_selector.add_item(str(squad.get("name", "SQUAD")).to_upper())
+		squad_selector.set_item_metadata(squad_selector.item_count - 1, squad.id)
+	var selected_index := _saved_squad_index(editing_squad_id)
+	if selected_index >= 0:
+		squad_selector.select(selected_index)
+		squad_name_edit.text = saved_squads[selected_index].name
+	squad_delete_button.disabled = saved_squads.size() <= 1
+	squad_delete_button.text = "CONFIRM DELETE" if squad_delete_armed else "DELETE"
+
+func _select_named_squad(index: int) -> void:
+	if index < 0 or index >= saved_squads.size():
+		return
+	_store_editing_squad_in_memory()
+	_load_editing_squad(saved_squads[index].id)
+	_persist_named_squads()
+	_refresh_named_squad_controls()
+	_rebuild_squad_grid()
+
+func _create_named_squad() -> void:
+	_store_editing_squad_in_memory()
+	var squad_id := SquadStoreScript.next_named_squad_id(saved_squads)
+	var requested_name := "Squad %d" % (saved_squads.size() + 1)
+	var squad_name := SquadStoreScript.unique_squad_name(requested_name, saved_squads)
+	saved_squads.append({
+		"id": squad_id,
+		"name": squad_name,
+		"instance_ids": editing_squad_names.duplicate(),
+		"conductor_skill": editing_conductor_skill
+	})
+	_load_editing_squad(squad_id)
+	_persist_named_squads()
+	_refresh_named_squad_controls()
+	_rebuild_squad_grid()
+	squad_name_edit.select_all()
+	squad_name_edit.grab_focus()
+
+func _rename_named_squad() -> void:
+	var index := _saved_squad_index(editing_squad_id)
+	if index < 0:
+		return
+	var squad: Dictionary = saved_squads[index]
+	squad["name"] = SquadStoreScript.unique_squad_name(
+		squad_name_edit.text, saved_squads, editing_squad_id
+	)
+	saved_squads[index] = squad
+	squad_delete_armed = false
+	_persist_named_squads()
+	_refresh_named_squad_controls()
+
+func _delete_named_squad() -> void:
+	if saved_squads.size() <= 1:
+		return
+	if not squad_delete_armed:
+		squad_delete_armed = true
+		_refresh_named_squad_controls()
+		return
+	var index := _saved_squad_index(editing_squad_id)
+	if index < 0:
+		return
+	saved_squads.remove_at(index)
+	var next_index := mini(index, saved_squads.size() - 1)
+	_load_editing_squad(saved_squads[next_index].id)
+	_persist_named_squads()
+	_refresh_named_squad_controls()
 	_rebuild_squad_grid()
 
 func _open_replay_squads() -> void:
@@ -1580,10 +1761,8 @@ func _on_squad_card_gui_input(event: InputEvent, index: int) -> void:
 func _save_squad() -> void:
 	if editing_squad_names.is_empty() or editing_squad_names.size() > SquadStoreScript.SQUAD_SIZE:
 		return
-	squad_names = editing_squad_names.duplicate()
-	player_conductor_skill = editing_conductor_skill
-	if SquadStoreScript.save_instance_squad(squad_names, collection_instances):
-		SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
+	_store_editing_squad_in_memory()
+	if _persist_named_squads():
 		status_message = "Squad saved. It will be used in the next battle."
 	else:
 		status_message = "Squad selected for this session, but the save file could not be written."
@@ -1595,10 +1774,8 @@ func _save_and_start_mission() -> void:
 		return
 	if squad_opened_for_challenge:
 		autobattle_active = false
-		squad_names = editing_squad_names.duplicate()
-		player_conductor_skill = editing_conductor_skill
-		SquadStoreScript.save_instance_squad(squad_names, collection_instances)
-		SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
+		_store_editing_squad_in_memory()
+		_persist_named_squads()
 		squad_opened_for_challenge = false
 		squad_overlay.visible = false
 		_begin_challenge()
@@ -1606,10 +1783,8 @@ func _save_and_start_mission() -> void:
 	if pending_mission_id < 0:
 		return
 	autobattle_active = false
-	squad_names = editing_squad_names.duplicate()
-	player_conductor_skill = editing_conductor_skill
-	SquadStoreScript.save_instance_squad(squad_names, collection_instances)
-	SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
+	_store_editing_squad_in_memory()
+	_persist_named_squads()
 	var mission_id := pending_mission_id
 	squad_opened_for_mission = false
 	pending_mission_id = -1
@@ -1629,10 +1804,8 @@ func _save_and_autobattle_mission() -> void:
 	if pending_mission_id not in completed_missions:
 		return
 	autobattle_active = true
-	squad_names = editing_squad_names.duplicate()
-	player_conductor_skill = editing_conductor_skill
-	SquadStoreScript.save_instance_squad(squad_names, collection_instances)
-	SquadStoreScript.save_conductor_skill(player_conductor_skill, ConductorSkillsScript.SKILLS)
+	_store_editing_squad_in_memory()
+	_persist_named_squads()
 	var mission_id := pending_mission_id
 	squad_opened_for_mission = false
 	pending_mission_id = -1
@@ -1645,12 +1818,19 @@ func _save_and_autobattle_mission() -> void:
 
 func _sanitize_squad_unlocks() -> void:
 	_sync_collection()
-	var clean_squad: Array = SquadStoreScript.sanitize_instances(
-		squad_names, collection_instances
-	)
-	if clean_squad != squad_names:
-		squad_names = clean_squad
-		SquadStoreScript.save_instance_squad(squad_names, collection_instances)
+	var changed := false
+	for index in saved_squads.size():
+		var squad: Dictionary = saved_squads[index]
+		var clean_squad: Array = SquadStoreScript.sanitize_instances(
+			squad.get("instance_ids", []), collection_instances
+		)
+		if clean_squad != squad.get("instance_ids", []):
+			squad["instance_ids"] = clean_squad
+			saved_squads[index] = squad
+			changed = true
+	_load_active_squad()
+	if changed:
+		_persist_named_squads()
 
 func _build_main_menu() -> void:
 	main_menu_overlay = ColorRect.new()

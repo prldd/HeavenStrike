@@ -606,6 +606,9 @@ Before battle, each side prepares a squad of up to 8 units:
 - Reserve cards are shuffled at the start of every battle; the Vanguard remains the guaranteed first card.
 - A bench can hold up to six units.
 - A squad may contain no more than two copies of the same unit.
+- Players can maintain multiple named squads. Each saved squad owns its ordered
+  unit-copy formation, Vanguard, and Conductor skill; the active squad is used
+  by practice, campaign, Challenge Operations, retries, and Autobattle.
 - The Barracks begins with one copy of every base-set card and permanently keeps every card reward, including duplicates.
 - Reward reveals distinguish first unlocks from duplicates, report the owned copy
   count, and identify a fresh duplicate's 5-point same-unit Crucible value.

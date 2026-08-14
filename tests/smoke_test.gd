@@ -936,7 +936,45 @@ func _init() -> void:
 	])
 	assert(ConductorSkillsScript.SKILLS.size() == 8)
 	assert(CampaignStoreScript.SAVE_VERSION == 1)
-	assert(SquadStoreScript.SAVE_VERSION == 3)
+	assert(SquadStoreScript.SAVE_VERSION == 4)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SquadStoreScript.SAVE_PATH))
+	var legacy_squad_config := ConfigFile.new()
+	legacy_squad_config.set_value("squad", "instance_ids", ["copy_a", "copy_c"])
+	legacy_squad_config.set_value("squad", "conductor_skill", "Shield")
+	assert(legacy_squad_config.save(SquadStoreScript.SAVE_PATH) == OK)
+	var named_state := SquadStoreScript.load_named_squads(
+		roster, instance_copies, ConductorSkillsScript.SKILLS
+	)
+	assert(named_state.squads.size() == 1)
+	assert(named_state.squads[0].name == SquadStoreScript.DEFAULT_SQUAD_NAME)
+	assert(named_state.squads[0].instance_ids == ["copy_a", "copy_c"])
+	assert(named_state.squads[0].conductor_skill == "Shield")
+	var second_squad_id := SquadStoreScript.next_named_squad_id(named_state.squads)
+	assert(second_squad_id != named_state.active_id)
+	named_state.squads.append({
+		"id": second_squad_id,
+		"name": SquadStoreScript.unique_squad_name("Squad 1", named_state.squads),
+		"instance_ids": ["copy_b"],
+		"conductor_skill": "Firestorm"
+	})
+	assert(named_state.squads[1].name == "Squad 1 (2)")
+	assert(SquadStoreScript.save_named_squads(
+		named_state.squads, second_squad_id, instance_copies,
+		ConductorSkillsScript.SKILLS
+	))
+	var reloaded_named_state := SquadStoreScript.load_named_squads(
+		roster, instance_copies, ConductorSkillsScript.SKILLS
+	)
+	assert(reloaded_named_state.squads.size() == 2)
+	assert(reloaded_named_state.active_id == second_squad_id)
+	assert(reloaded_named_state.squads[1].instance_ids == ["copy_b"])
+	assert(reloaded_named_state.squads[1].conductor_skill == "Firestorm")
+	var named_config := ConfigFile.new()
+	assert(named_config.load(SquadStoreScript.SAVE_PATH) == OK)
+	assert(named_config.get_value("meta", "version", 0) == 4)
+	assert(named_config.get_value("squad", "instance_ids", []) == ["copy_b"])
+	assert(named_config.get_value("squad", "conductor_skill", "") == "Firestorm")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SquadStoreScript.SAVE_PATH))
 
 	assert(CampaignStoreScript.MISSIONS.size() == 77)
 	assert(CampaignStoreScript.MISSIONS[0].title == "Act 1 Mission 1 - First Synchrony")

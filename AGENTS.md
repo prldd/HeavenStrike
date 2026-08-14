@@ -63,7 +63,7 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `resources/skill_data.gd` | `SkillData` Resource: a secondary skill's name, timing type, optional trigger chance, and description. |
 | `unit_skills.gd` | Static resolution of secondary unit skills: Warcry, Chant, Strike, and Reaction timing hooks, plus status effect helpers. |
 | `conductor_skills.gd` | Static resolution of the eight Conductor powers and effect expiration. |
-| `squad_store.gd` | Squad persistence (names or instance IDs), validation, default squads, shuffling, and Conductor-skill storage. |
+| `squad_store.gd` | Backward-compatible named-squad persistence (ordered instance IDs plus per-squad Conductor skills), validation, legacy single-squad migration, defaults, and shuffling. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
 | `requisition_store.gd` | Persistent Requisition Credit wallet, pull costs, spending, and idempotent source-owned reward claims. |
 | `story_quest_catalog.gd` | Builds the 77-mission original campaign from authored reward pools, enemy decks, and Conductor configurations. `MISSION_STORIES` holds per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number. |
@@ -184,7 +184,7 @@ Do not add external audio files. Audio is synthesized in `battle_audio.gd`.
 
 Godot `user://` resolves to the project-local user dir when run through `tools/godot-headless.sh`. Important persistent files:
 
-- `user://player.cfg` — battle settings, squad name list, and squad instance IDs.
+- `user://player.cfg` — battle settings and named squads with ordered instance IDs, active squad ID, and per-squad Conductor skills.
 - `user://campaign.cfg` — completed missions, reward units, and debug-granted inventory.
 - `user://requisition.cfg` — Requisition Credit balance and idempotent reward claim IDs.
 - `user://challenges.cfg` — completed rotating-challenge claim IDs.

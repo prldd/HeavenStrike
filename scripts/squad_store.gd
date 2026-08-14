@@ -4,8 +4,10 @@ extends RefCounted
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 const SQUAD_SIZE := 8
 const SAVE_PATH := "user://player.cfg"
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 const DEFAULT_CONDUCTOR_SKILL := "Rally"
+const DEFAULT_SQUAD_NAME := "Squad 1"
+const MAX_SQUAD_NAME_LENGTH := 24
 const LEGACY_LEADER_SKILL_KEY := "cap" + "tain_skill"
 
 static func default_squad(roster: Array) -> Array:
@@ -108,6 +110,122 @@ static func save_instance_squad(instance_ids: Array, instances: Array) -> bool:
 	config.set_value("squad", "instance_ids", clean)
 	config.set_value("squad", "units", instance_names(clean, instances))
 	return config.save(SAVE_PATH) == OK
+
+## Loads the named-squad collection. Older single-formation saves migrate into
+## one named squad without changing its unit order or Conductor skill.
+static func load_named_squads(
+	roster: Array, instances: Array, valid_skills: Array
+) -> Dictionary:
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	var saved_entries = config.get_value("squads", "entries", [])
+	var entries: Array = []
+	if saved_entries is Array:
+		for saved_value in saved_entries:
+			if saved_value is not Dictionary:
+				continue
+			var saved: Dictionary = saved_value
+			var squad_id := str(saved.get("id", "")).strip_edges()
+			if squad_id.is_empty() or entries.any(func(entry): return entry.id == squad_id):
+				squad_id = next_named_squad_id(entries)
+			var fallback_name := "Squad %d" % (entries.size() + 1)
+			entries.append({
+				"id": squad_id,
+				"name": unique_squad_name(
+					sanitize_squad_name(saved.get("name", ""), fallback_name), entries
+				),
+				"instance_ids": sanitize_instances(
+					saved.get("instance_ids", []), instances
+				),
+				"conductor_skill": (
+					saved.get("conductor_skill", DEFAULT_CONDUCTOR_SKILL)
+					if saved.get("conductor_skill", DEFAULT_CONDUCTOR_SKILL) in valid_skills
+					else DEFAULT_CONDUCTOR_SKILL
+				)
+			})
+	if entries.is_empty():
+		entries.append({
+			"id": "squad_001",
+			"name": DEFAULT_SQUAD_NAME,
+			"instance_ids": load_instance_squad(roster, instances),
+			"conductor_skill": load_conductor_skill(valid_skills)
+		})
+	var active_id := str(config.get_value("squads", "active_id", ""))
+	if not entries.any(func(entry): return entry.id == active_id):
+		active_id = entries[0].id
+	var state := {"active_id": active_id, "squads": entries}
+	save_named_squads(entries, active_id, instances, valid_skills)
+	return state
+
+static func save_named_squads(
+	entries: Array, active_id: String, instances: Array, valid_skills: Array
+) -> bool:
+	if entries.is_empty():
+		return false
+	var clean_entries: Array = []
+	for entry_value in entries:
+		if entry_value is not Dictionary:
+			continue
+		var entry: Dictionary = entry_value
+		var squad_id := str(entry.get("id", "")).strip_edges()
+		if squad_id.is_empty() or clean_entries.any(func(saved): return saved.id == squad_id):
+			squad_id = next_named_squad_id(clean_entries)
+		var fallback_name := "Squad %d" % (clean_entries.size() + 1)
+		var skill_name: String = entry.get("conductor_skill", DEFAULT_CONDUCTOR_SKILL)
+		clean_entries.append({
+			"id": squad_id,
+			"name": unique_squad_name(
+				sanitize_squad_name(entry.get("name", ""), fallback_name), clean_entries
+			),
+			"instance_ids": sanitize_instances(entry.get("instance_ids", []), instances),
+			"conductor_skill": (
+				skill_name if skill_name in valid_skills else DEFAULT_CONDUCTOR_SKILL
+			)
+		})
+	if clean_entries.is_empty():
+		return false
+	var clean_active_id := active_id
+	if not clean_entries.any(func(entry): return entry.id == clean_active_id):
+		clean_active_id = clean_entries[0].id
+	var active: Dictionary = clean_entries.filter(
+		func(entry): return entry.id == clean_active_id
+	)[0]
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("meta", "version", SAVE_VERSION)
+	config.set_value("squads", "active_id", clean_active_id)
+	config.set_value("squads", "entries", clean_entries)
+	# Keep the version-three keys synchronized for older builds and utilities.
+	config.set_value("squad", "instance_ids", active.instance_ids)
+	config.set_value("squad", "units", instance_names(active.instance_ids, instances))
+	config.set_value("squad", "conductor_skill", active.conductor_skill)
+	return config.save(SAVE_PATH) == OK
+
+static func sanitize_squad_name(value: Variant, fallback: String = DEFAULT_SQUAD_NAME) -> String:
+	var clean := str(value).replace("\n", " ").replace("\r", " ").replace("\t", " ")
+	clean = clean.strip_edges().left(MAX_SQUAD_NAME_LENGTH).strip_edges()
+	return clean if not clean.is_empty() else fallback
+
+static func unique_squad_name(
+	requested: String, entries: Array, excluded_id: String = ""
+) -> String:
+	var base := sanitize_squad_name(requested)
+	var candidate := base
+	var suffix := 2
+	var used_names: Array = entries.filter(
+		func(entry): return str(entry.get("id", "")) != excluded_id
+	).map(func(entry): return str(entry.get("name", "")).to_lower())
+	while candidate.to_lower() in used_names:
+		var suffix_text := " (%d)" % suffix
+		candidate = base.left(MAX_SQUAD_NAME_LENGTH - suffix_text.length()) + suffix_text
+		suffix += 1
+	return candidate
+
+static func next_named_squad_id(entries: Array) -> String:
+	var next_number := 1
+	while entries.any(func(entry): return entry.get("id", "") == "squad_%03d" % next_number):
+		next_number += 1
+	return "squad_%03d" % next_number
 
 static func sanitize_instances(candidate_ids: Array, instances: Array) -> Array:
 	var result: Array = []
