@@ -61,76 +61,18 @@ func _run() -> void:
 	assert(game.has_method("_begin_tutorial"))
 	var tutorial_menu_found := false
 	var challenge_menu_found := false
-	var unit_creator_action: Button
 	for action in game.main_menu_overlay.find_children("*", "Button", true, false):
 		if action.text == "GUIDED TUTORIAL":
 			tutorial_menu_found = true
 		if action.text == "CHALLENGE OPERATIONS":
 			challenge_menu_found = true
-		if action.text == "UNIT VIEW / CREATOR":
-			unit_creator_action = action
 	assert(tutorial_menu_found)
 	assert(not challenge_menu_found)
-	assert(unit_creator_action != null)
 	var main_menu_plaques: Array[Node] = game.main_menu_overlay.find_children(
 		"*", "PanelContainer", true, false
 	)
 	assert(main_menu_plaques.size() == 1)
 	assert(main_menu_plaques[0].get_global_rect().end.y <= game.get_viewport_rect().end.y)
-	assert(not game.unit_creator_overlay.visible)
-	unit_creator_action.pressed.emit()
-	await process_frame
-	await process_frame
-	assert(game.unit_creator_overlay.visible)
-	assert(not game.main_menu_overlay.visible)
-	assert(game.unit_creator_view.recipe == game.MechaConceptCatalogScript.default_recipe())
-	assert(game.unit_creator_view.textures_ready())
-	assert(game.unit_creator_view.part_count() == 34)
-	for faction in game.MechaConceptCatalogScript.FACTIONS:
-		var weapon_image: Image = game.unit_creator_view._weapon_textures[faction].get_image()
-		assert(weapon_image.get_size() == Vector2i(1254, 1254))
-		assert(weapon_image.get_pixel(0, 0).a < 0.05)
-		assert(game.unit_creator_view._parts[faction].size() == 17)
-		for part_name in game.MechaConceptCatalogScript.PART_NAMES:
-			var part_image: Image = game.unit_creator_view._parts[faction][part_name].get_image()
-			assert(part_image.detect_alpha() != Image.ALPHA_NONE)
-	assert(game.unit_creator_faction_option.item_count == 2)
-	assert(game.unit_creator_class_option.item_count == 2)
-	assert(game.unit_creator_weapon_option.item_count == 3)
-	assert(game.unit_creator_pose_option.item_count == 3)
-	assert(game.unit_creator_detail_label.text.contains("current portraits"))
-	assert(game.unit_creator_recipe["class"] == "Artillerist")
-	assert(game.unit_creator_view.recipe["class"] == "Artillerist")
-	game.unit_creator_weapon_option.select(1)
-	game.unit_creator_weapon_option.item_selected.emit(1)
-	assert(game.unit_creator_recipe.weapon == "foundry_rotary")
-	assert(game.unit_creator_detail_label.text.contains("Drum-fed repeater"))
-	game.unit_creator_faction_option.select(1)
-	game.unit_creator_faction_option.item_selected.emit(1)
-	assert(game.unit_creator_recipe.faction == "Wind")
-	assert(game.unit_creator_recipe.weapon == "focus_lance")
-	assert(game.unit_creator_weapon_option.get_item_text(2) == "Dart Cell")
-	game.unit_creator_pose_option.select(2)
-	game.unit_creator_pose_option.item_selected.emit(2)
-	assert(game.unit_creator_view.recipe.pose == "Attack")
-	game.unit_creator_pivot_toggle.button_pressed = true
-	assert(game.unit_creator_view.show_hardpoints)
-	await process_frame
-	assert(game.unit_creator_view.weapon_hardpoints_connected())
-	game.unit_creator_class_option.select(1)
-	game.unit_creator_class_option.item_selected.emit(1)
-	assert(game.unit_creator_recipe["class"] == "Duelist")
-	assert(game.unit_creator_recipe.weapon == "unarmed")
-	assert(game.unit_creator_weapon_option.item_count == 1)
-	assert(game.unit_creator_weapon_option.get_item_text(0) == "Unarmed")
-	await process_frame
-	assert(game.unit_creator_view.weapon_hardpoints_connected())
-	var recipe_before_random: Dictionary = game.unit_creator_recipe.duplicate()
-	game._randomize_unit_creator()
-	assert(game.unit_creator_recipe != recipe_before_random)
-	assert(game.unit_creator_overlay.get_global_rect().end.y <= game.get_viewport_rect().end.y)
-	game._show_main_menu()
-	assert(game.main_menu_overlay.visible and not game.unit_creator_overlay.visible)
 	# Weekly Challenge Operations lives on the campaign maps instead of adding
 	# another main-menu action. It exposes the active UTC rotation, authored
 	# rules, opposition, formation handoff, battle flow, and idempotent reward.

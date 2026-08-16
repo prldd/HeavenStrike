@@ -252,46 +252,6 @@ Remove the matte and rebuild the runtime copies with:
 ./tools/godot-headless.sh --script res://tools/build_conductor_hud_art.gd
 ```
 
-## Modular anime-mecha vertical slice
-
-The four untouched transparent concept sources under
-`assets/units/modular/concepts/` were generated with the built-in OpenAI
-image-generation tool on 2026-08-15, without input images or external visual
-references. They are an art-direction vertical slice used only by Unit View /
-Creator; deployed units and portraits still use the existing runtime art.
-
-The two socket-compatible body masters share a neutral ready stance, full-body
-square canvas, empty universal hand hardpoints, strong outer contours, broad
-cel-shaded masses, and detail intended to survive near 120 pixels tall. Their
-construction briefs deliberately diverged:
-
-- Coal: heavyweight furnace machine with riveted overlapping slab armor,
-  exposed hydraulic pistons, a protected ember core, asymmetrical exhaust, and
-  broad load-bearing feet in soot iron, burnt umber, steel, and orange heat.
-- Wind: lightweight turbine machine with swept ceramic shells, interlocking
-  plates, tension struts, calf turbines, compact sensors, and integrated
-  airfoils in pearl white, navy, teal, and cyan energy.
-
-Each matching Artillerist weapon sheet requested exactly three isolated,
-right-facing cutouts in equal horizontal rows with the faction's common
-circular hardpoint. Coal contains a magnetic rail cannon, rotary autocannon,
-and twin siege launcher. Wind contains a beam rifle, turbine repeater, and
-guided dart cell. All prompts required genuine transparency, complete
-silhouettes, original designs, no robots or hands in weapon sheets, no text,
-logos, watermark, ground shadow, familiar franchise motifs, or excessive
-micro-detail.
-
-The articulated follow-up used each approved body master as its sole edit
-target. The prompt preserved faction identity while requesting an exploded
-transparent inventory with separate head, torso/pelvis, back accessory,
-shoulders, paired upper arms, paired forearms, paired hands, paired thighs,
-paired shins, and paired feet. Every piece was required to keep the source
-view direction and end at a clean circular mechanical socket, with no assembled
-robot, weapons, labels, overlaps, missing hands/feet, redesign, or added parts.
-A second background-extraction edit changed only the generated checkerboard to
-genuine alpha. `tools/build_modular_mecha_parts.gd` then crops 17 runtime PNGs
-per faction into `assets/units/modular/parts/`.
-
 ## Adding art
 
 1. Write a project-specific visual brief and record it here.

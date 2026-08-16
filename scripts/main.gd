@@ -25,8 +25,6 @@ const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
-const MechaConceptCatalogScript = preload("res://scripts/mecha_concept_catalog.gd")
-const AnimeMechaCreatorViewScript = preload("res://scripts/anime_mecha_creator_view.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-command-deck.png")
 const OPERATIONS_MAP_BACKGROUNDS := {
 	1: preload("res://assets/operations_maps/modern/act-1-reclamation.png"),
@@ -171,18 +169,6 @@ var battle_simulator: BattleSimulator
 var combat_log_panel: PanelContainer
 var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
-var unit_creator_overlay: ColorRect
-var unit_creator_view: Control
-var unit_creator_faction_option: OptionButton
-var unit_creator_class_option: OptionButton
-var unit_creator_weapon_option: OptionButton
-var unit_creator_pose_option: OptionButton
-var unit_creator_recipe_label: Label
-var unit_creator_detail_label: Label
-var unit_creator_animation_toggle: CheckButton
-var unit_creator_pivot_toggle: CheckButton
-var unit_creator_recipe: Dictionary = MechaConceptCatalogScript.default_recipe()
-var unit_creator_random_seed := 1
 var mission_overlay: ColorRect
 var challenge_overlay: ColorRect
 var challenge_cycle_label: Label
@@ -234,6 +220,7 @@ var mission_detail_rewards: HBoxContainer
 var mission_launch_button: Button
 var mission_scene_button: Button
 var _touch_details_active := false
+var campaign_progress_label: Label
 var resume_button: Button
 var replay_button: Button
 var replay_panel: PanelContainer
@@ -535,7 +522,6 @@ func _build_interface() -> void:
 	_build_overlay()
 	_build_squad_builder()
 	_build_main_menu()
-	_build_unit_creator()
 	_build_mission_select()
 	_build_challenge_operations()
 	_build_dialogue_overlay()
@@ -568,7 +554,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		and not replay_mode
 		and not main_menu_overlay.visible
 		and not mission_overlay.visible
-		and not unit_creator_overlay.visible
 		and not crucible_overlay.visible
 		and not squad_overlay.visible
 		and not overlay.visible
@@ -1932,266 +1917,6 @@ func _build_main_menu() -> void:
 	crucible.pressed.connect(_open_kinetic_crucible)
 	layout.add_child(crucible)
 
-	var unit_creator := _menu_action("UNIT VIEW / CREATOR")
-	unit_creator.pressed.connect(_open_unit_creator)
-	layout.add_child(unit_creator)
-
-func _build_unit_creator() -> void:
-	unit_creator_overlay = ColorRect.new()
-	unit_creator_overlay.color = Color.TRANSPARENT
-	unit_creator_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	unit_creator_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	unit_creator_overlay.visible = false
-	add_child(unit_creator_overlay)
-	_add_overlay_background(
-		unit_creator_overlay,
-		MAIN_MENU_BACKGROUND,
-		Color(0.005, 0.018, 0.026, 0.92)
-	)
-
-	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 42)
-	margin.add_theme_constant_override("margin_right", 42)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
-	unit_creator_overlay.add_child(margin)
-
-	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 12)
-	margin.add_child(layout)
-	var heading_row := HBoxContainer.new()
-	heading_row.add_theme_constant_override("separation", 14)
-	layout.add_child(heading_row)
-	var heading := Label.new()
-	heading.text = "UNIT VIEW / CREATOR"
-	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	heading.add_theme_font_size_override("font_size", 30)
-	heading.add_theme_color_override("font_color", UIThemeScript.title_color())
-	heading_row.add_child(heading)
-	var prototype := Label.new()
-	prototype.text = "ANIME-MECHA VERTICAL SLICE  //  DEPLOYMENT DISCONNECTED"
-	prototype.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	prototype.add_theme_font_size_override("font_size", 11)
-	prototype.add_theme_color_override("font_color", UIThemeScript.BRASS)
-	heading_row.add_child(prototype)
-	var home := _make_home_button()
-	home.pressed.connect(_show_main_menu)
-	heading_row.add_child(home)
-
-	var body := HBoxContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 16)
-	layout.add_child(body)
-
-	var preview_panel := PanelContainer.new()
-	preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	preview_panel.size_flags_stretch_ratio = 1.55
-	body.add_child(preview_panel)
-	var preview_layout := VBoxContainer.new()
-	preview_layout.add_theme_constant_override("separation", 7)
-	preview_panel.add_child(preview_layout)
-	unit_creator_recipe_label = Label.new()
-	unit_creator_recipe_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	unit_creator_recipe_label.add_theme_font_size_override("font_size", 18)
-	unit_creator_recipe_label.add_theme_color_override("font_color", UIThemeScript.title_color())
-	preview_layout.add_child(unit_creator_recipe_label)
-	unit_creator_view = AnimeMechaCreatorViewScript.new()
-	unit_creator_view.custom_minimum_size = Vector2(560, 500)
-	unit_creator_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	unit_creator_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	preview_layout.add_child(unit_creator_view)
-
-	var controls_panel := PanelContainer.new()
-	controls_panel.custom_minimum_size.x = 390
-	controls_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	controls_panel.size_flags_stretch_ratio = 0.85
-	body.add_child(controls_panel)
-	var controls := VBoxContainer.new()
-	controls.add_theme_constant_override("separation", 7)
-	controls_panel.add_child(controls)
-	var controls_kicker := Label.new()
-	controls_kicker.text = "ASSEMBLY RECIPE"
-	controls_kicker.add_theme_font_size_override("font_size", 17)
-	controls_kicker.add_theme_color_override("font_color", UIThemeScript.title_color())
-	controls.add_child(controls_kicker)
-
-	unit_creator_faction_option = _creator_option(
-		controls, "FACTION", MechaConceptCatalogScript.FACTIONS, "faction"
-	)
-	unit_creator_class_option = _creator_option(
-		controls, "CLASS", MechaConceptCatalogScript.CLASSES, "class"
-	)
-	var body_readout := Label.new()
-	body_readout.text = "BODY  ·  17-PART SHARED LINE CHASSIS"
-	body_readout.add_theme_font_size_override("font_size", 11)
-	body_readout.add_theme_color_override("font_color", UIThemeScript.BRASS_LIGHT)
-	controls.add_child(body_readout)
-	unit_creator_weapon_option = _creator_option(
-		controls, "LOADOUT", _unit_creator_loadout_names("Coal", "Artillerist"), "weapon"
-	)
-	unit_creator_pose_option = _creator_option(
-		controls, "POSE", MechaConceptCatalogScript.POSES, "pose"
-	)
-
-	var toggles := HBoxContainer.new()
-	toggles.add_theme_constant_override("separation", 10)
-	controls.add_child(toggles)
-	unit_creator_animation_toggle = CheckButton.new()
-	unit_creator_animation_toggle.text = "ANIMATE"
-	unit_creator_animation_toggle.button_pressed = true
-	unit_creator_animation_toggle.toggled.connect(unit_creator_view.set_animation_enabled)
-	toggles.add_child(unit_creator_animation_toggle)
-	unit_creator_pivot_toggle = CheckButton.new()
-	unit_creator_pivot_toggle.text = "HARDPOINTS"
-	unit_creator_pivot_toggle.toggled.connect(unit_creator_view.set_show_hardpoints)
-	toggles.add_child(unit_creator_pivot_toggle)
-
-	var randomize := Button.new()
-	randomize.text = "CYCLE FACTION / LOADOUT"
-	randomize.custom_minimum_size.y = 42
-	randomize.pressed.connect(_randomize_unit_creator)
-	_apply_instrument_button_style(randomize, UIThemeScript.BRASS_LIGHT, true)
-	controls.add_child(randomize)
-	unit_creator_detail_label = Label.new()
-	unit_creator_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	unit_creator_detail_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	unit_creator_detail_label.add_theme_font_size_override("font_size", 11)
-	unit_creator_detail_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	controls.add_child(unit_creator_detail_label)
-
-	_sync_unit_creator_controls()
-	_refresh_unit_creator()
-
-func _creator_option(parent: VBoxContainer, label_text: String, values: Array, key: String) -> OptionButton:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	parent.add_child(row)
-	var label := Label.new()
-	label.text = label_text
-	label.custom_minimum_size.x = 92
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
-	label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	row.add_child(label)
-	var option := OptionButton.new()
-	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	option.custom_minimum_size.y = 36
-	for value in values:
-		option.add_item(String(value))
-	option.item_selected.connect(_on_unit_creator_option_changed.bind(key))
-	row.add_child(option)
-	return option
-
-func _on_unit_creator_option_changed(index: int, key: String) -> void:
-	var option: OptionButton = _unit_creator_option_for_key(key)
-	if option == null or index < 0 or index >= option.item_count:
-		return
-	if key == "weapon":
-		unit_creator_recipe.weapon = MechaConceptCatalogScript.loadouts_for(
-			unit_creator_recipe.faction, unit_creator_recipe["class"]
-		)[index].id
-	elif key in ["faction", "class"]:
-		unit_creator_recipe[key] = option.get_item_text(index)
-		unit_creator_recipe.weapon = MechaConceptCatalogScript.loadouts_for(
-			unit_creator_recipe.faction, unit_creator_recipe["class"]
-		)[0].id
-		_rebuild_unit_creator_weapon_options()
-	else:
-		unit_creator_recipe[key] = option.get_item_text(index)
-	_refresh_unit_creator()
-
-func _unit_creator_option_for_key(key: String) -> OptionButton:
-	match key:
-		"faction": return unit_creator_faction_option
-		"class": return unit_creator_class_option
-		"weapon": return unit_creator_weapon_option
-		"pose": return unit_creator_pose_option
-	return null
-
-func _sync_unit_creator_controls() -> void:
-	_rebuild_unit_creator_weapon_options()
-	for key in ["faction", "class", "pose"]:
-		var option := _unit_creator_option_for_key(key)
-		if option == null:
-			continue
-		for index in option.item_count:
-			if option.get_item_text(index) == String(unit_creator_recipe[key]):
-				option.select(index)
-				break
-	unit_creator_weapon_option.select(MechaConceptCatalogScript.loadout_index(
-		unit_creator_recipe.faction, unit_creator_recipe["class"], unit_creator_recipe.weapon
-	))
-
-func _unit_creator_loadout_names(faction: String, kind: String) -> Array:
-	return MechaConceptCatalogScript.loadouts_for(faction, kind).map(
-		func(loadout): return loadout.name
-	)
-
-func _rebuild_unit_creator_weapon_options() -> void:
-	if unit_creator_weapon_option == null:
-		return
-	unit_creator_weapon_option.clear()
-	for loadout in MechaConceptCatalogScript.loadouts_for(
-		unit_creator_recipe.faction, unit_creator_recipe["class"]
-	):
-		unit_creator_weapon_option.add_item(loadout.name)
-
-func _refresh_unit_creator() -> void:
-	unit_creator_recipe = MechaConceptCatalogScript.normalize(unit_creator_recipe)
-	unit_creator_view.set_recipe(unit_creator_recipe)
-	var loadout := MechaConceptCatalogScript.loadout_by_id(
-		unit_creator_recipe.faction, unit_creator_recipe["class"], unit_creator_recipe.weapon
-	)
-	unit_creator_recipe_label.text = "%s  //  %s %s  //  %s" % [
-		MechaConceptCatalogScript.recipe_code(unit_creator_recipe),
-		String(unit_creator_recipe.faction).to_upper(),
-		String(unit_creator_recipe["class"]).to_upper(),
-		String(loadout.name).to_upper()
-	]
-	unit_creator_detail_label.text = (
-		"CONSTRUCTION · %s\nLOADOUT · %s\n"
-		+ "RIG · Head, torso, accessory, shoulders, upper arms, forearms, hands, "
-		+ "thighs, shins, and feet are independent layers.\n"
-		+ "HARDPOINTS · Held weapons own primary/support grips; hand sockets solve "
-		+ "to those exact positions. Unarmed melee skips the weapon layer.\n"
-		+ "SCOPE · Creator only; current portraits and deployed units remain active."
-	) % [
-		MechaConceptCatalogScript.CONSTRUCTION_NOTES[unit_creator_recipe.faction],
-		loadout.description
-	]
-
-func _randomize_unit_creator() -> void:
-	unit_creator_random_seed += 1
-	var weapon_index := MechaConceptCatalogScript.loadout_index(
-		unit_creator_recipe.faction, unit_creator_recipe["class"], unit_creator_recipe.weapon
-	) + 1
-	if weapon_index >= MechaConceptCatalogScript.loadouts_for(
-		unit_creator_recipe.faction, unit_creator_recipe["class"]
-	).size():
-		var faction_index := MechaConceptCatalogScript.FACTIONS.find(unit_creator_recipe.faction)
-		unit_creator_recipe.faction = MechaConceptCatalogScript.FACTIONS[
-			(faction_index + 1) % MechaConceptCatalogScript.FACTIONS.size()
-		]
-		weapon_index = 0
-	unit_creator_recipe.weapon = MechaConceptCatalogScript.loadouts_for(
-		unit_creator_recipe.faction, unit_creator_recipe["class"]
-	)[weapon_index].id
-	_sync_unit_creator_controls()
-	_refresh_unit_creator()
-
-func _open_unit_creator() -> void:
-	main_menu_overlay.visible = false
-	mission_overlay.visible = false
-	challenge_overlay.visible = false
-	squad_overlay.visible = false
-	crucible_overlay.visible = false
-	gacha_overlay.visible = false
-	dialogue_overlay.visible = false
-	overlay.visible = false
-	unit_creator_overlay.visible = true
-	_refresh_unit_creator()
-
 func _build_challenge_operations() -> void:
 	challenge_overlay = ColorRect.new()
 	challenge_overlay.color = Color.TRANSPARENT
@@ -2554,6 +2279,12 @@ func _build_mission_select() -> void:
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	title_row.add_child(title)
+
+	campaign_progress_label = Label.new()
+	campaign_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	campaign_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	campaign_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	title_row.add_child(campaign_progress_label)
 
 	var act_row := HBoxContainer.new()
 	act_row.add_theme_constant_override("separation", 8)
@@ -3519,7 +3250,7 @@ func _unit_with_instance(unit: UnitData, instance: Dictionary) -> Dictionary:
 func _menu_action(label: String) -> Button:
 	var button := Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(360, 40)
+	button.custom_minimum_size = Vector2(360, 46)
 	button.add_theme_font_size_override("font_size", 17)
 	return button
 
@@ -3555,7 +3286,6 @@ func _show_interlude(mission_id: int, return_action: String) -> bool:
 	squad_overlay.visible = false
 	crucible_overlay.visible = false
 	gacha_overlay.visible = false
-	unit_creator_overlay.visible = false
 	dialogue_overlay.visible = true
 	var scene_background := _dialogue_texture(scene.get("background", ""))
 	dialogue_backdrop.texture = scene_background if scene_background != null else MAIN_MENU_BACKGROUND
@@ -3816,7 +3546,6 @@ func _show_main_menu() -> void:
 	challenge_overlay.visible = false
 	crucible_overlay.visible = false
 	gacha_overlay.visible = false
-	unit_creator_overlay.visible = false
 	squad_overlay.visible = false
 	dialogue_overlay.visible = false
 	overlay.visible = false
@@ -4159,6 +3888,19 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 		func(id): return (id >= 22 and id < 62)
 	).size()
 	var act_three_complete := completed_missions.filter(func(id): return id >= 62).size()
+	var saved_run: Dictionary = MissionRunStoreScript.load_run(
+		CampaignStoreScript.MISSIONS.size()
+	)
+	var run_text := ""
+	if not saved_run.is_empty():
+		var run_mission: Dictionary = CampaignStoreScript.MISSIONS[saved_run.mission_id]
+		run_text = "  ·  ACTIVE: A%d M%02d BATTLE %d/%d" % [
+			run_mission.act, run_mission.act_mission,
+			saved_run.encounter_index + 1, run_mission.encounters.size()
+		]
+	campaign_progress_label.text = "A1 %d/22  ·  A2 %d/40  ·  A3 %d/15%s" % [
+		act_one_complete, act_two_complete, act_three_complete, run_text
+	]
 	if focus_mission_id >= 0 and focus_mission_id < CampaignStoreScript.MISSIONS.size():
 		mission_map_act = CampaignStoreScript.MISSIONS[focus_mission_id].act
 	var act_missions: Array = CampaignStoreScript.MISSIONS.filter(
