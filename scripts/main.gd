@@ -25,8 +25,8 @@ const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
-const UnitAssemblyCatalogScript = preload("res://scripts/unit_assembly_catalog.gd")
-const UnitCreatorViewScript = preload("res://scripts/unit_creator_view.gd")
+const MechaConceptCatalogScript = preload("res://scripts/mecha_concept_catalog.gd")
+const AnimeMechaCreatorViewScript = preload("res://scripts/anime_mecha_creator_view.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-command-deck.png")
 const OPERATIONS_MAP_BACKGROUNDS := {
 	1: preload("res://assets/operations_maps/modern/act-1-reclamation.png"),
@@ -174,16 +174,13 @@ var main_menu_overlay: ColorRect
 var unit_creator_overlay: ColorRect
 var unit_creator_view: Control
 var unit_creator_faction_option: OptionButton
-var unit_creator_class_option: OptionButton
-var unit_creator_frame_option: OptionButton
-var unit_creator_head_option: OptionButton
-var unit_creator_finish_option: OptionButton
+var unit_creator_weapon_option: OptionButton
 var unit_creator_pose_option: OptionButton
 var unit_creator_recipe_label: Label
 var unit_creator_detail_label: Label
 var unit_creator_animation_toggle: CheckButton
 var unit_creator_pivot_toggle: CheckButton
-var unit_creator_recipe: Dictionary = UnitAssemblyCatalogScript.default_recipe()
+var unit_creator_recipe: Dictionary = MechaConceptCatalogScript.default_recipe()
 var unit_creator_random_seed := 1
 var mission_overlay: ColorRect
 var challenge_overlay: ColorRect
@@ -1972,7 +1969,7 @@ func _build_unit_creator() -> void:
 	heading.add_theme_color_override("font_color", UIThemeScript.title_color())
 	heading_row.add_child(heading)
 	var prototype := Label.new()
-	prototype.text = "MODULAR ART PROTOTYPE  //  DEPLOYMENT DISCONNECTED"
+	prototype.text = "ANIME-MECHA VERTICAL SLICE  //  DEPLOYMENT DISCONNECTED"
 	prototype.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	prototype.add_theme_font_size_override("font_size", 11)
 	prototype.add_theme_color_override("font_color", UIThemeScript.BRASS)
@@ -1998,7 +1995,7 @@ func _build_unit_creator() -> void:
 	unit_creator_recipe_label.add_theme_font_size_override("font_size", 18)
 	unit_creator_recipe_label.add_theme_color_override("font_color", UIThemeScript.title_color())
 	preview_layout.add_child(unit_creator_recipe_label)
-	unit_creator_view = UnitCreatorViewScript.new()
+	unit_creator_view = AnimeMechaCreatorViewScript.new()
 	unit_creator_view.custom_minimum_size = Vector2(560, 500)
 	unit_creator_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	unit_creator_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -2018,12 +2015,20 @@ func _build_unit_creator() -> void:
 	controls_kicker.add_theme_color_override("font_color", UIThemeScript.title_color())
 	controls.add_child(controls_kicker)
 
-	unit_creator_faction_option = _creator_option(controls, "FACTION", UnitAssemblyCatalogScript.FACTIONS, "faction")
-	unit_creator_class_option = _creator_option(controls, "CLASS KIT", UnitAssemblyCatalogScript.CLASSES, "class")
-	unit_creator_frame_option = _creator_option(controls, "FRAME", UnitAssemblyCatalogScript.FRAMES, "frame")
-	unit_creator_head_option = _creator_option(controls, "HEAD", UnitAssemblyCatalogScript.HEADS, "head")
-	unit_creator_finish_option = _creator_option(controls, "FINISH", UnitAssemblyCatalogScript.FINISHES, "finish")
-	unit_creator_pose_option = _creator_option(controls, "POSE", UnitAssemblyCatalogScript.POSES, "pose")
+	unit_creator_faction_option = _creator_option(
+		controls, "FACTION", MechaConceptCatalogScript.FACTIONS, "faction"
+	)
+	var body_readout := Label.new()
+	body_readout.text = "BODY  ·  SHARED LINE CHASSIS\nCLASS  ·  ARTILLERIST VERTICAL SLICE"
+	body_readout.add_theme_font_size_override("font_size", 11)
+	body_readout.add_theme_color_override("font_color", UIThemeScript.BRASS_LIGHT)
+	controls.add_child(body_readout)
+	unit_creator_weapon_option = _creator_option(
+		controls, "WEAPON", _unit_creator_weapon_names("Coal"), "weapon"
+	)
+	unit_creator_pose_option = _creator_option(
+		controls, "POSE", MechaConceptCatalogScript.POSES, "pose"
+	)
 
 	var toggles := HBoxContainer.new()
 	toggles.add_theme_constant_override("separation", 10)
@@ -2034,12 +2039,12 @@ func _build_unit_creator() -> void:
 	unit_creator_animation_toggle.toggled.connect(unit_creator_view.set_animation_enabled)
 	toggles.add_child(unit_creator_animation_toggle)
 	unit_creator_pivot_toggle = CheckButton.new()
-	unit_creator_pivot_toggle.text = "SHOW PIVOTS"
-	unit_creator_pivot_toggle.toggled.connect(unit_creator_view.set_show_pivots)
+	unit_creator_pivot_toggle.text = "HARDPOINTS"
+	unit_creator_pivot_toggle.toggled.connect(unit_creator_view.set_show_hardpoints)
 	toggles.add_child(unit_creator_pivot_toggle)
 
 	var randomize := Button.new()
-	randomize.text = "RANDOMIZE ASSEMBLY"
+	randomize.text = "CYCLE FACTION / LOADOUT"
 	randomize.custom_minimum_size.y = 42
 	randomize.pressed.connect(_randomize_unit_creator)
 	_apply_instrument_button_style(randomize, UIThemeScript.BRASS_LIGHT, true)
@@ -2078,21 +2083,30 @@ func _on_unit_creator_option_changed(index: int, key: String) -> void:
 	var option: OptionButton = _unit_creator_option_for_key(key)
 	if option == null or index < 0 or index >= option.item_count:
 		return
-	unit_creator_recipe[key] = option.get_item_text(index)
+	if key == "weapon":
+		unit_creator_recipe.weapon = MechaConceptCatalogScript.weapons_for(
+			unit_creator_recipe.faction
+		)[index].id
+	elif key == "faction":
+		unit_creator_recipe.faction = option.get_item_text(index)
+		unit_creator_recipe.weapon = MechaConceptCatalogScript.weapons_for(
+			unit_creator_recipe.faction
+		)[0].id
+		_rebuild_unit_creator_weapon_options()
+	else:
+		unit_creator_recipe[key] = option.get_item_text(index)
 	_refresh_unit_creator()
 
 func _unit_creator_option_for_key(key: String) -> OptionButton:
 	match key:
 		"faction": return unit_creator_faction_option
-		"class": return unit_creator_class_option
-		"frame": return unit_creator_frame_option
-		"head": return unit_creator_head_option
-		"finish": return unit_creator_finish_option
+		"weapon": return unit_creator_weapon_option
 		"pose": return unit_creator_pose_option
 	return null
 
 func _sync_unit_creator_controls() -> void:
-	for key in ["faction", "class", "frame", "head", "finish", "pose"]:
+	_rebuild_unit_creator_weapon_options()
+	for key in ["faction", "pose"]:
 		var option := _unit_creator_option_for_key(key)
 		if option == null:
 			continue
@@ -2100,31 +2114,57 @@ func _sync_unit_creator_controls() -> void:
 			if option.get_item_text(index) == String(unit_creator_recipe[key]):
 				option.select(index)
 				break
+	unit_creator_weapon_option.select(MechaConceptCatalogScript.weapon_index(
+		unit_creator_recipe.faction, unit_creator_recipe.weapon
+	))
+
+func _unit_creator_weapon_names(faction: String) -> Array:
+	return MechaConceptCatalogScript.weapons_for(faction).map(
+		func(weapon): return weapon.name
+	)
+
+func _rebuild_unit_creator_weapon_options() -> void:
+	if unit_creator_weapon_option == null:
+		return
+	unit_creator_weapon_option.clear()
+	for weapon in MechaConceptCatalogScript.weapons_for(unit_creator_recipe.faction):
+		unit_creator_weapon_option.add_item(weapon.name)
 
 func _refresh_unit_creator() -> void:
-	unit_creator_recipe = UnitAssemblyCatalogScript.normalize(unit_creator_recipe)
+	unit_creator_recipe = MechaConceptCatalogScript.normalize(unit_creator_recipe)
 	unit_creator_view.set_recipe(unit_creator_recipe)
-	var kit := UnitAssemblyCatalogScript.class_kit(unit_creator_recipe["class"])
-	unit_creator_recipe_label.text = "%s  //  %s %s  //  %s" % [
-		UnitAssemblyCatalogScript.recipe_code(unit_creator_recipe),
+	var weapon := MechaConceptCatalogScript.weapon_by_id(
+		unit_creator_recipe.faction, unit_creator_recipe.weapon
+	)
+	unit_creator_recipe_label.text = "%s  //  %s ARTILLERIST  //  %s" % [
+		MechaConceptCatalogScript.recipe_code(unit_creator_recipe),
 		String(unit_creator_recipe.faction).to_upper(),
-		String(kit.role).to_upper(),
-		String(unit_creator_recipe.frame).to_upper()
+		String(weapon.name).to_upper()
 	]
 	unit_creator_detail_label.text = (
-		"FACTION · %s\nLOADOUT · %s\nMOTION · %s\n"
-		+ "SCOPE · Creator only; does not replace current art.\n"
-		+ "LIBRARY · %d combinations before per-part variants."
+		"CONSTRUCTION · %s\n\nWEAPON · %s\n\n"
+		+ "SHARED BODY TEST · One faction body accepts all three class weapons.\n\n"
+		+ "SCALE TEST · The lower rail renders all loadouts near battlefield size.\n\n"
+		+ "SCOPE · Creator only; current portraits and deployed units remain active."
 	) % [
-		UnitAssemblyCatalogScript.FACTION_NOTES[unit_creator_recipe.faction],
-		kit.weapon,
-		kit.motion,
-		UnitAssemblyCatalogScript.combination_count()
+		MechaConceptCatalogScript.CONSTRUCTION_NOTES[unit_creator_recipe.faction],
+		weapon.description
 	]
 
 func _randomize_unit_creator() -> void:
 	unit_creator_random_seed += 1
-	unit_creator_recipe = UnitAssemblyCatalogScript.random_recipe(unit_creator_random_seed)
+	var weapon_index := MechaConceptCatalogScript.weapon_index(
+		unit_creator_recipe.faction, unit_creator_recipe.weapon
+	) + 1
+	if weapon_index >= MechaConceptCatalogScript.weapons_for(unit_creator_recipe.faction).size():
+		var faction_index := MechaConceptCatalogScript.FACTIONS.find(unit_creator_recipe.faction)
+		unit_creator_recipe.faction = MechaConceptCatalogScript.FACTIONS[
+			(faction_index + 1) % MechaConceptCatalogScript.FACTIONS.size()
+		]
+		weapon_index = 0
+	unit_creator_recipe.weapon = MechaConceptCatalogScript.weapons_for(
+		unit_creator_recipe.faction
+	)[weapon_index].id
 	_sync_unit_creator_controls()
 	_refresh_unit_creator()
 

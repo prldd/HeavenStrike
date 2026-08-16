@@ -116,3 +116,18 @@ and `assets/units/portraits/` art until its visual tests pass.
   reliable animation/VFX sockets?
 - Does the design survive at roughly 160 px tall?
 - Which combinations look accidental, overly human, or too visually noisy?
+
+## Vertical-slice decision — anime mecha
+
+The first authored slice now targets original cel-shaded anime mecha rather
+than the procedural rig's geometric look. Coal and Wind use compatible body and
+weapon-layer canvases while changing their construction language, not merely
+their colors. One body per faction accepts three distinct Artillerist weapons.
+The creator renders the selected assembly large and repeats all three loadouts
+at approximately battlefield scale across a three-lane strip.
+
+This slice intentionally stops before deployment integration. Its next exit
+gate is approval of faction construction, contour weight, body proportions,
+weapon mounting, and small-scale readability. After that, Warden and Strider
+kits can establish the heavy/melee/light silhouette extremes before expanding
+the remaining factions or assigning recipes to the catalog.
