@@ -25,6 +25,8 @@ const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
+const UnitAssemblyCatalogScript = preload("res://scripts/unit_assembly_catalog.gd")
+const UnitCreatorViewScript = preload("res://scripts/unit_creator_view.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-command-deck.png")
 const OPERATIONS_MAP_BACKGROUNDS := {
 	1: preload("res://assets/operations_maps/modern/act-1-reclamation.png"),
@@ -169,6 +171,20 @@ var battle_simulator: BattleSimulator
 var combat_log_panel: PanelContainer
 var combat_log_label: RichTextLabel
 var main_menu_overlay: ColorRect
+var unit_creator_overlay: ColorRect
+var unit_creator_view: Control
+var unit_creator_faction_option: OptionButton
+var unit_creator_class_option: OptionButton
+var unit_creator_frame_option: OptionButton
+var unit_creator_head_option: OptionButton
+var unit_creator_finish_option: OptionButton
+var unit_creator_pose_option: OptionButton
+var unit_creator_recipe_label: Label
+var unit_creator_detail_label: Label
+var unit_creator_animation_toggle: CheckButton
+var unit_creator_pivot_toggle: CheckButton
+var unit_creator_recipe: Dictionary = UnitAssemblyCatalogScript.default_recipe()
+var unit_creator_random_seed := 1
 var mission_overlay: ColorRect
 var challenge_overlay: ColorRect
 var challenge_cycle_label: Label
@@ -220,7 +236,6 @@ var mission_detail_rewards: HBoxContainer
 var mission_launch_button: Button
 var mission_scene_button: Button
 var _touch_details_active := false
-var campaign_progress_label: Label
 var resume_button: Button
 var replay_button: Button
 var replay_panel: PanelContainer
@@ -522,6 +537,7 @@ func _build_interface() -> void:
 	_build_overlay()
 	_build_squad_builder()
 	_build_main_menu()
+	_build_unit_creator()
 	_build_mission_select()
 	_build_challenge_operations()
 	_build_dialogue_overlay()
@@ -554,6 +570,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		and not replay_mode
 		and not main_menu_overlay.visible
 		and not mission_overlay.visible
+		and not unit_creator_overlay.visible
 		and not crucible_overlay.visible
 		and not squad_overlay.visible
 		and not overlay.visible
@@ -1917,6 +1934,212 @@ func _build_main_menu() -> void:
 	crucible.pressed.connect(_open_kinetic_crucible)
 	layout.add_child(crucible)
 
+	var unit_creator := _menu_action("UNIT VIEW / CREATOR")
+	unit_creator.pressed.connect(_open_unit_creator)
+	layout.add_child(unit_creator)
+
+func _build_unit_creator() -> void:
+	unit_creator_overlay = ColorRect.new()
+	unit_creator_overlay.color = Color.TRANSPARENT
+	unit_creator_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	unit_creator_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	unit_creator_overlay.visible = false
+	add_child(unit_creator_overlay)
+	_add_overlay_background(
+		unit_creator_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.005, 0.018, 0.026, 0.92)
+	)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 42)
+	margin.add_theme_constant_override("margin_right", 42)
+	margin.add_theme_constant_override("margin_top", 28)
+	margin.add_theme_constant_override("margin_bottom", 28)
+	unit_creator_overlay.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	margin.add_child(layout)
+	var heading_row := HBoxContainer.new()
+	heading_row.add_theme_constant_override("separation", 14)
+	layout.add_child(heading_row)
+	var heading := Label.new()
+	heading.text = "UNIT VIEW / CREATOR"
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_theme_font_size_override("font_size", 30)
+	heading.add_theme_color_override("font_color", UIThemeScript.title_color())
+	heading_row.add_child(heading)
+	var prototype := Label.new()
+	prototype.text = "MODULAR ART PROTOTYPE  //  DEPLOYMENT DISCONNECTED"
+	prototype.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	prototype.add_theme_font_size_override("font_size", 11)
+	prototype.add_theme_color_override("font_color", UIThemeScript.BRASS)
+	heading_row.add_child(prototype)
+	var home := _make_home_button()
+	home.pressed.connect(_show_main_menu)
+	heading_row.add_child(home)
+
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 16)
+	layout.add_child(body)
+
+	var preview_panel := PanelContainer.new()
+	preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_panel.size_flags_stretch_ratio = 1.55
+	body.add_child(preview_panel)
+	var preview_layout := VBoxContainer.new()
+	preview_layout.add_theme_constant_override("separation", 7)
+	preview_panel.add_child(preview_layout)
+	unit_creator_recipe_label = Label.new()
+	unit_creator_recipe_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	unit_creator_recipe_label.add_theme_font_size_override("font_size", 18)
+	unit_creator_recipe_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	preview_layout.add_child(unit_creator_recipe_label)
+	unit_creator_view = UnitCreatorViewScript.new()
+	unit_creator_view.custom_minimum_size = Vector2(560, 500)
+	unit_creator_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	unit_creator_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	preview_layout.add_child(unit_creator_view)
+
+	var controls_panel := PanelContainer.new()
+	controls_panel.custom_minimum_size.x = 390
+	controls_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls_panel.size_flags_stretch_ratio = 0.85
+	body.add_child(controls_panel)
+	var controls := VBoxContainer.new()
+	controls.add_theme_constant_override("separation", 7)
+	controls_panel.add_child(controls)
+	var controls_kicker := Label.new()
+	controls_kicker.text = "ASSEMBLY RECIPE"
+	controls_kicker.add_theme_font_size_override("font_size", 17)
+	controls_kicker.add_theme_color_override("font_color", UIThemeScript.title_color())
+	controls.add_child(controls_kicker)
+
+	unit_creator_faction_option = _creator_option(controls, "FACTION", UnitAssemblyCatalogScript.FACTIONS, "faction")
+	unit_creator_class_option = _creator_option(controls, "CLASS KIT", UnitAssemblyCatalogScript.CLASSES, "class")
+	unit_creator_frame_option = _creator_option(controls, "FRAME", UnitAssemblyCatalogScript.FRAMES, "frame")
+	unit_creator_head_option = _creator_option(controls, "HEAD", UnitAssemblyCatalogScript.HEADS, "head")
+	unit_creator_finish_option = _creator_option(controls, "FINISH", UnitAssemblyCatalogScript.FINISHES, "finish")
+	unit_creator_pose_option = _creator_option(controls, "POSE", UnitAssemblyCatalogScript.POSES, "pose")
+
+	var toggles := HBoxContainer.new()
+	toggles.add_theme_constant_override("separation", 10)
+	controls.add_child(toggles)
+	unit_creator_animation_toggle = CheckButton.new()
+	unit_creator_animation_toggle.text = "ANIMATE"
+	unit_creator_animation_toggle.button_pressed = true
+	unit_creator_animation_toggle.toggled.connect(unit_creator_view.set_animation_enabled)
+	toggles.add_child(unit_creator_animation_toggle)
+	unit_creator_pivot_toggle = CheckButton.new()
+	unit_creator_pivot_toggle.text = "SHOW PIVOTS"
+	unit_creator_pivot_toggle.toggled.connect(unit_creator_view.set_show_pivots)
+	toggles.add_child(unit_creator_pivot_toggle)
+
+	var randomize := Button.new()
+	randomize.text = "RANDOMIZE ASSEMBLY"
+	randomize.custom_minimum_size.y = 42
+	randomize.pressed.connect(_randomize_unit_creator)
+	_apply_instrument_button_style(randomize, UIThemeScript.BRASS_LIGHT, true)
+	controls.add_child(randomize)
+	unit_creator_detail_label = Label.new()
+	unit_creator_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	unit_creator_detail_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	unit_creator_detail_label.add_theme_font_size_override("font_size", 12)
+	unit_creator_detail_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	controls.add_child(unit_creator_detail_label)
+
+	_sync_unit_creator_controls()
+	_refresh_unit_creator()
+
+func _creator_option(parent: VBoxContainer, label_text: String, values: Array, key: String) -> OptionButton:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	parent.add_child(row)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size.x = 92
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	row.add_child(label)
+	var option := OptionButton.new()
+	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	option.custom_minimum_size.y = 36
+	for value in values:
+		option.add_item(String(value))
+	option.item_selected.connect(_on_unit_creator_option_changed.bind(key))
+	row.add_child(option)
+	return option
+
+func _on_unit_creator_option_changed(index: int, key: String) -> void:
+	var option: OptionButton = _unit_creator_option_for_key(key)
+	if option == null or index < 0 or index >= option.item_count:
+		return
+	unit_creator_recipe[key] = option.get_item_text(index)
+	_refresh_unit_creator()
+
+func _unit_creator_option_for_key(key: String) -> OptionButton:
+	match key:
+		"faction": return unit_creator_faction_option
+		"class": return unit_creator_class_option
+		"frame": return unit_creator_frame_option
+		"head": return unit_creator_head_option
+		"finish": return unit_creator_finish_option
+		"pose": return unit_creator_pose_option
+	return null
+
+func _sync_unit_creator_controls() -> void:
+	for key in ["faction", "class", "frame", "head", "finish", "pose"]:
+		var option := _unit_creator_option_for_key(key)
+		if option == null:
+			continue
+		for index in option.item_count:
+			if option.get_item_text(index) == String(unit_creator_recipe[key]):
+				option.select(index)
+				break
+
+func _refresh_unit_creator() -> void:
+	unit_creator_recipe = UnitAssemblyCatalogScript.normalize(unit_creator_recipe)
+	unit_creator_view.set_recipe(unit_creator_recipe)
+	var kit := UnitAssemblyCatalogScript.class_kit(unit_creator_recipe["class"])
+	unit_creator_recipe_label.text = "%s  //  %s %s  //  %s" % [
+		UnitAssemblyCatalogScript.recipe_code(unit_creator_recipe),
+		String(unit_creator_recipe.faction).to_upper(),
+		String(kit.role).to_upper(),
+		String(unit_creator_recipe.frame).to_upper()
+	]
+	unit_creator_detail_label.text = (
+		"FACTION · %s\nLOADOUT · %s\nMOTION · %s\n"
+		+ "SCOPE · Creator only; does not replace current art.\n"
+		+ "LIBRARY · %d combinations before per-part variants."
+	) % [
+		UnitAssemblyCatalogScript.FACTION_NOTES[unit_creator_recipe.faction],
+		kit.weapon,
+		kit.motion,
+		UnitAssemblyCatalogScript.combination_count()
+	]
+
+func _randomize_unit_creator() -> void:
+	unit_creator_random_seed += 1
+	unit_creator_recipe = UnitAssemblyCatalogScript.random_recipe(unit_creator_random_seed)
+	_sync_unit_creator_controls()
+	_refresh_unit_creator()
+
+func _open_unit_creator() -> void:
+	main_menu_overlay.visible = false
+	mission_overlay.visible = false
+	challenge_overlay.visible = false
+	squad_overlay.visible = false
+	crucible_overlay.visible = false
+	gacha_overlay.visible = false
+	dialogue_overlay.visible = false
+	overlay.visible = false
+	unit_creator_overlay.visible = true
+	_refresh_unit_creator()
+
 func _build_challenge_operations() -> void:
 	challenge_overlay = ColorRect.new()
 	challenge_overlay.color = Color.TRANSPARENT
@@ -2279,12 +2502,6 @@ func _build_mission_select() -> void:
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", UIThemeScript.title_color())
 	title_row.add_child(title)
-
-	campaign_progress_label = Label.new()
-	campaign_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	campaign_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	campaign_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
-	title_row.add_child(campaign_progress_label)
 
 	var act_row := HBoxContainer.new()
 	act_row.add_theme_constant_override("separation", 8)
@@ -3250,7 +3467,7 @@ func _unit_with_instance(unit: UnitData, instance: Dictionary) -> Dictionary:
 func _menu_action(label: String) -> Button:
 	var button := Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(360, 46)
+	button.custom_minimum_size = Vector2(360, 40)
 	button.add_theme_font_size_override("font_size", 17)
 	return button
 
@@ -3286,6 +3503,7 @@ func _show_interlude(mission_id: int, return_action: String) -> bool:
 	squad_overlay.visible = false
 	crucible_overlay.visible = false
 	gacha_overlay.visible = false
+	unit_creator_overlay.visible = false
 	dialogue_overlay.visible = true
 	var scene_background := _dialogue_texture(scene.get("background", ""))
 	dialogue_backdrop.texture = scene_background if scene_background != null else MAIN_MENU_BACKGROUND
@@ -3546,6 +3764,7 @@ func _show_main_menu() -> void:
 	challenge_overlay.visible = false
 	crucible_overlay.visible = false
 	gacha_overlay.visible = false
+	unit_creator_overlay.visible = false
 	squad_overlay.visible = false
 	dialogue_overlay.visible = false
 	overlay.visible = false
@@ -3888,19 +4107,6 @@ func _rebuild_mission_list(focus_mission_id: int = -1) -> void:
 		func(id): return (id >= 22 and id < 62)
 	).size()
 	var act_three_complete := completed_missions.filter(func(id): return id >= 62).size()
-	var saved_run: Dictionary = MissionRunStoreScript.load_run(
-		CampaignStoreScript.MISSIONS.size()
-	)
-	var run_text := ""
-	if not saved_run.is_empty():
-		var run_mission: Dictionary = CampaignStoreScript.MISSIONS[saved_run.mission_id]
-		run_text = "  ·  ACTIVE: A%d M%02d BATTLE %d/%d" % [
-			run_mission.act, run_mission.act_mission,
-			saved_run.encounter_index + 1, run_mission.encounters.size()
-		]
-	campaign_progress_label.text = "A1 %d/22  ·  A2 %d/40  ·  A3 %d/15%s" % [
-		act_one_complete, act_two_complete, act_three_complete, run_text
-	]
 	if focus_mission_id >= 0 and focus_mission_id < CampaignStoreScript.MISSIONS.size():
 		mission_map_act = CampaignStoreScript.MISSIONS[focus_mission_id].act
 	var act_missions: Array = CampaignStoreScript.MISSIONS.filter(

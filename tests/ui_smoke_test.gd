@@ -61,18 +61,53 @@ func _run() -> void:
 	assert(game.has_method("_begin_tutorial"))
 	var tutorial_menu_found := false
 	var challenge_menu_found := false
+	var unit_creator_action: Button
 	for action in game.main_menu_overlay.find_children("*", "Button", true, false):
 		if action.text == "GUIDED TUTORIAL":
 			tutorial_menu_found = true
 		if action.text == "CHALLENGE OPERATIONS":
 			challenge_menu_found = true
+		if action.text == "UNIT VIEW / CREATOR":
+			unit_creator_action = action
 	assert(tutorial_menu_found)
 	assert(not challenge_menu_found)
+	assert(unit_creator_action != null)
 	var main_menu_plaques: Array[Node] = game.main_menu_overlay.find_children(
 		"*", "PanelContainer", true, false
 	)
 	assert(main_menu_plaques.size() == 1)
 	assert(main_menu_plaques[0].get_global_rect().end.y <= game.get_viewport_rect().end.y)
+	assert(not game.unit_creator_overlay.visible)
+	unit_creator_action.pressed.emit()
+	await process_frame
+	await process_frame
+	assert(game.unit_creator_overlay.visible)
+	assert(not game.main_menu_overlay.visible)
+	assert(game.unit_creator_view.recipe == game.UnitAssemblyCatalogScript.default_recipe())
+	assert(game.unit_creator_faction_option.item_count == 6)
+	assert(game.unit_creator_class_option.item_count == 6)
+	assert(game.unit_creator_frame_option.item_count == 4)
+	assert(game.unit_creator_head_option.item_count == 4)
+	assert(game.unit_creator_finish_option.item_count == 3)
+	assert(game.unit_creator_pose_option.item_count == 3)
+	assert(game.UnitAssemblyCatalogScript.combination_count() == 1728)
+	assert(game.unit_creator_detail_label.text.contains("does not replace"))
+	game.unit_creator_class_option.select(3)
+	game.unit_creator_class_option.item_selected.emit(3)
+	assert(game.unit_creator_recipe["class"] == "Artillerist")
+	assert(game.unit_creator_view.recipe["class"] == "Artillerist")
+	assert(game.unit_creator_detail_label.text.contains("Shoulder rail assembly"))
+	game.unit_creator_pose_option.select(2)
+	game.unit_creator_pose_option.item_selected.emit(2)
+	assert(game.unit_creator_view.recipe.pose == "Attack")
+	game.unit_creator_pivot_toggle.button_pressed = true
+	assert(game.unit_creator_view.show_pivots)
+	var recipe_before_random: Dictionary = game.unit_creator_recipe.duplicate()
+	game._randomize_unit_creator()
+	assert(game.unit_creator_recipe != recipe_before_random)
+	assert(game.unit_creator_overlay.get_global_rect().end.y <= game.get_viewport_rect().end.y)
+	game._show_main_menu()
+	assert(game.main_menu_overlay.visible and not game.unit_creator_overlay.visible)
 	# Weekly Challenge Operations lives on the campaign maps instead of adding
 	# another main-menu action. It exposes the active UTC rotation, authored
 	# rules, opposition, formation handoff, battle flow, and idempotent reward.
