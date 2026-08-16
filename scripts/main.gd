@@ -174,6 +174,7 @@ var main_menu_overlay: ColorRect
 var unit_creator_overlay: ColorRect
 var unit_creator_view: Control
 var unit_creator_faction_option: OptionButton
+var unit_creator_class_option: OptionButton
 var unit_creator_weapon_option: OptionButton
 var unit_creator_pose_option: OptionButton
 var unit_creator_recipe_label: Label
@@ -2018,13 +2019,16 @@ func _build_unit_creator() -> void:
 	unit_creator_faction_option = _creator_option(
 		controls, "FACTION", MechaConceptCatalogScript.FACTIONS, "faction"
 	)
+	unit_creator_class_option = _creator_option(
+		controls, "CLASS", MechaConceptCatalogScript.CLASSES, "class"
+	)
 	var body_readout := Label.new()
-	body_readout.text = "BODY  ·  SHARED LINE CHASSIS\nCLASS  ·  ARTILLERIST VERTICAL SLICE"
+	body_readout.text = "BODY  ·  17-PART SHARED LINE CHASSIS"
 	body_readout.add_theme_font_size_override("font_size", 11)
 	body_readout.add_theme_color_override("font_color", UIThemeScript.BRASS_LIGHT)
 	controls.add_child(body_readout)
 	unit_creator_weapon_option = _creator_option(
-		controls, "WEAPON", _unit_creator_weapon_names("Coal"), "weapon"
+		controls, "LOADOUT", _unit_creator_loadout_names("Coal", "Artillerist"), "weapon"
 	)
 	unit_creator_pose_option = _creator_option(
 		controls, "POSE", MechaConceptCatalogScript.POSES, "pose"
@@ -2052,7 +2056,7 @@ func _build_unit_creator() -> void:
 	unit_creator_detail_label = Label.new()
 	unit_creator_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	unit_creator_detail_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	unit_creator_detail_label.add_theme_font_size_override("font_size", 12)
+	unit_creator_detail_label.add_theme_font_size_override("font_size", 11)
 	unit_creator_detail_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	controls.add_child(unit_creator_detail_label)
 
@@ -2084,13 +2088,13 @@ func _on_unit_creator_option_changed(index: int, key: String) -> void:
 	if option == null or index < 0 or index >= option.item_count:
 		return
 	if key == "weapon":
-		unit_creator_recipe.weapon = MechaConceptCatalogScript.weapons_for(
-			unit_creator_recipe.faction
+		unit_creator_recipe.weapon = MechaConceptCatalogScript.loadouts_for(
+			unit_creator_recipe.faction, unit_creator_recipe["class"]
 		)[index].id
-	elif key == "faction":
-		unit_creator_recipe.faction = option.get_item_text(index)
-		unit_creator_recipe.weapon = MechaConceptCatalogScript.weapons_for(
-			unit_creator_recipe.faction
+	elif key in ["faction", "class"]:
+		unit_creator_recipe[key] = option.get_item_text(index)
+		unit_creator_recipe.weapon = MechaConceptCatalogScript.loadouts_for(
+			unit_creator_recipe.faction, unit_creator_recipe["class"]
 		)[0].id
 		_rebuild_unit_creator_weapon_options()
 	else:
@@ -2100,13 +2104,14 @@ func _on_unit_creator_option_changed(index: int, key: String) -> void:
 func _unit_creator_option_for_key(key: String) -> OptionButton:
 	match key:
 		"faction": return unit_creator_faction_option
+		"class": return unit_creator_class_option
 		"weapon": return unit_creator_weapon_option
 		"pose": return unit_creator_pose_option
 	return null
 
 func _sync_unit_creator_controls() -> void:
 	_rebuild_unit_creator_weapon_options()
-	for key in ["faction", "pose"]:
+	for key in ["faction", "class", "pose"]:
 		var option := _unit_creator_option_for_key(key)
 		if option == null:
 			continue
@@ -2114,56 +2119,63 @@ func _sync_unit_creator_controls() -> void:
 			if option.get_item_text(index) == String(unit_creator_recipe[key]):
 				option.select(index)
 				break
-	unit_creator_weapon_option.select(MechaConceptCatalogScript.weapon_index(
-		unit_creator_recipe.faction, unit_creator_recipe.weapon
+	unit_creator_weapon_option.select(MechaConceptCatalogScript.loadout_index(
+		unit_creator_recipe.faction, unit_creator_recipe["class"], unit_creator_recipe.weapon
 	))
 
-func _unit_creator_weapon_names(faction: String) -> Array:
-	return MechaConceptCatalogScript.weapons_for(faction).map(
-		func(weapon): return weapon.name
+func _unit_creator_loadout_names(faction: String, kind: String) -> Array:
+	return MechaConceptCatalogScript.loadouts_for(faction, kind).map(
+		func(loadout): return loadout.name
 	)
 
 func _rebuild_unit_creator_weapon_options() -> void:
 	if unit_creator_weapon_option == null:
 		return
 	unit_creator_weapon_option.clear()
-	for weapon in MechaConceptCatalogScript.weapons_for(unit_creator_recipe.faction):
-		unit_creator_weapon_option.add_item(weapon.name)
+	for loadout in MechaConceptCatalogScript.loadouts_for(
+		unit_creator_recipe.faction, unit_creator_recipe["class"]
+	):
+		unit_creator_weapon_option.add_item(loadout.name)
 
 func _refresh_unit_creator() -> void:
 	unit_creator_recipe = MechaConceptCatalogScript.normalize(unit_creator_recipe)
 	unit_creator_view.set_recipe(unit_creator_recipe)
-	var weapon := MechaConceptCatalogScript.weapon_by_id(
-		unit_creator_recipe.faction, unit_creator_recipe.weapon
+	var loadout := MechaConceptCatalogScript.loadout_by_id(
+		unit_creator_recipe.faction, unit_creator_recipe["class"], unit_creator_recipe.weapon
 	)
-	unit_creator_recipe_label.text = "%s  //  %s ARTILLERIST  //  %s" % [
+	unit_creator_recipe_label.text = "%s  //  %s %s  //  %s" % [
 		MechaConceptCatalogScript.recipe_code(unit_creator_recipe),
 		String(unit_creator_recipe.faction).to_upper(),
-		String(weapon.name).to_upper()
+		String(unit_creator_recipe["class"]).to_upper(),
+		String(loadout.name).to_upper()
 	]
 	unit_creator_detail_label.text = (
-		"CONSTRUCTION · %s\n\nWEAPON · %s\n\n"
-		+ "SHARED BODY TEST · One faction body accepts all three class weapons.\n\n"
-		+ "SCALE TEST · The lower rail renders all loadouts near battlefield size.\n\n"
+		"CONSTRUCTION · %s\nLOADOUT · %s\n"
+		+ "RIG · Head, torso, accessory, shoulders, upper arms, forearms, hands, "
+		+ "thighs, shins, and feet are independent layers.\n"
+		+ "HARDPOINTS · Held weapons own primary/support grips; hand sockets solve "
+		+ "to those exact positions. Unarmed melee skips the weapon layer.\n"
 		+ "SCOPE · Creator only; current portraits and deployed units remain active."
 	) % [
 		MechaConceptCatalogScript.CONSTRUCTION_NOTES[unit_creator_recipe.faction],
-		weapon.description
+		loadout.description
 	]
 
 func _randomize_unit_creator() -> void:
 	unit_creator_random_seed += 1
-	var weapon_index := MechaConceptCatalogScript.weapon_index(
-		unit_creator_recipe.faction, unit_creator_recipe.weapon
+	var weapon_index := MechaConceptCatalogScript.loadout_index(
+		unit_creator_recipe.faction, unit_creator_recipe["class"], unit_creator_recipe.weapon
 	) + 1
-	if weapon_index >= MechaConceptCatalogScript.weapons_for(unit_creator_recipe.faction).size():
+	if weapon_index >= MechaConceptCatalogScript.loadouts_for(
+		unit_creator_recipe.faction, unit_creator_recipe["class"]
+	).size():
 		var faction_index := MechaConceptCatalogScript.FACTIONS.find(unit_creator_recipe.faction)
 		unit_creator_recipe.faction = MechaConceptCatalogScript.FACTIONS[
 			(faction_index + 1) % MechaConceptCatalogScript.FACTIONS.size()
 		]
 		weapon_index = 0
-	unit_creator_recipe.weapon = MechaConceptCatalogScript.weapons_for(
-		unit_creator_recipe.faction
+	unit_creator_recipe.weapon = MechaConceptCatalogScript.loadouts_for(
+		unit_creator_recipe.faction, unit_creator_recipe["class"]
 	)[weapon_index].id
 	_sync_unit_creator_controls()
 	_refresh_unit_creator()

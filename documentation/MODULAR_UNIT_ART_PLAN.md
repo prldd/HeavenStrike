@@ -131,3 +131,12 @@ gate is approval of faction construction, contour weight, body proportions,
 weapon mounting, and small-scale readability. After that, Warden and Strider
 kits can establish the heavy/melee/light silhouette extremes before expanding
 the remaining factions or assigning recipes to the catalog.
+
+The body masters have now been decomposed into 17 independently transformed
+runtime parts per faction: head, torso, accessory, paired shoulders, upper
+arms, forearms, hands, thighs, shins, and feet. The creator's skeleton owns
+neck, shoulder, elbow, wrist, hand, hip, knee, ankle, primary-grip, and
+support-grip sockets. Held weapons are positioned by their grip sockets and
+both arms solve to the same coordinates; an unarmed Duelist loadout omits the
+weapon layer and uses the free hand chains for its attack pose. Idle, Traverse,
+and Attack now move articulated parts instead of a flattened body image.

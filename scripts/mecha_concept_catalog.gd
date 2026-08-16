@@ -2,9 +2,15 @@ class_name MechaConceptCatalog
 extends RefCounted
 
 const FACTIONS := ["Coal", "Wind"]
-const POSES := ["Ready", "Fire Cycle"]
+const CLASSES := ["Artillerist", "Duelist"]
+const POSES := ["Idle", "Traverse", "Attack"]
 const BODY_NAME := "Shared Line Chassis"
-const CLASS_NAME := "Artillerist"
+const PART_NAMES := [
+	"head", "torso", "accessory", "shoulder_left", "shoulder_right",
+	"upper_arm_left", "upper_arm_right", "forearm_left", "forearm_right",
+	"hand_left", "hand_right", "thigh_left", "thigh_right", "shin_left",
+	"shin_right", "foot_left", "foot_right"
+]
 
 const BODY_PATHS := {
 	"Coal": "res://assets/units/modular/concepts/coal-body.png",
@@ -35,6 +41,11 @@ const WEAPONS := {
 	]
 }
 
+const UNARMED_LOADOUT := {
+	"id": "unarmed", "name": "Unarmed", "row": -1,
+	"description": "No held weapon. Independent hands drive guarded idle, traversal, and impact poses."
+}
+
 const CONSTRUCTION_NOTES := {
 	"Coal": (
 		"Furnace-built construction: riveted overlapping slabs, exposed pistons, "
@@ -49,10 +60,10 @@ const CONSTRUCTION_NOTES := {
 static func default_recipe() -> Dictionary:
 	return {
 		"faction": "Coal",
-		"class": CLASS_NAME,
+		"class": "Artillerist",
 		"body": BODY_NAME,
 		"weapon": "rail_furnace",
-		"pose": "Ready"
+		"pose": "Idle"
 	}
 
 static func normalize(recipe: Dictionary) -> Dictionary:
@@ -62,21 +73,31 @@ static func normalize(recipe: Dictionary) -> Dictionary:
 			result[key] = recipe[key]
 	if result.faction not in FACTIONS:
 		result.faction = "Coal"
+	if result["class"] not in CLASSES:
+		result["class"] = "Artillerist"
 	if result.pose not in POSES:
-		result.pose = "Ready"
-	result["class"] = CLASS_NAME
+		result.pose = "Idle"
 	result.body = BODY_NAME
-	if weapon_by_id(String(result.faction), String(result.weapon)).is_empty():
-		result.weapon = weapons_for(String(result.faction))[0].id
+	if loadout_by_id(String(result.faction), String(result["class"]), String(result.weapon)).is_empty():
+		result.weapon = loadouts_for(String(result.faction), String(result["class"]))[0].id
 	return result
 
 static func weapons_for(faction: String) -> Array:
 	return WEAPONS.get(faction, WEAPONS.Coal)
 
+static func loadouts_for(faction: String, kind: String) -> Array:
+	return weapons_for(faction) if kind == "Artillerist" else [UNARMED_LOADOUT]
+
 static func weapon_by_id(faction: String, weapon_id: String) -> Dictionary:
 	for weapon in weapons_for(faction):
 		if weapon.id == weapon_id:
 			return weapon
+	return {}
+
+static func loadout_by_id(faction: String, kind: String, loadout_id: String) -> Dictionary:
+	for loadout in loadouts_for(faction, kind):
+		if loadout.id == loadout_id:
+			return loadout
 	return {}
 
 static func weapon_index(faction: String, weapon_id: String) -> int:
@@ -86,7 +107,23 @@ static func weapon_index(faction: String, weapon_id: String) -> int:
 			return index
 	return 0
 
+static func loadout_index(faction: String, kind: String, loadout_id: String) -> int:
+	var loadouts := loadouts_for(faction, kind)
+	for index in loadouts.size():
+		if loadouts[index].id == loadout_id:
+			return index
+	return 0
+
+static func part_path(faction: String, part_name: String) -> String:
+	return "res://assets/units/modular/parts/%s/%s.png" % [
+		faction.to_lower(), part_name
+	]
+
 static func recipe_code(recipe: Dictionary) -> String:
 	var clean := normalize(recipe)
-	var weapon := weapon_by_id(clean.faction, clean.weapon)
-	return "%s-AR-%s" % [String(clean.faction).left(2).to_upper(), String(weapon.id).left(3).to_upper()]
+	var loadout := loadout_by_id(clean.faction, clean["class"], clean.weapon)
+	return "%s-%s-%s" % [
+		String(clean.faction).left(2).to_upper(),
+		String(clean["class"]).left(2).to_upper(),
+		String(loadout.id).left(3).to_upper()
+	]

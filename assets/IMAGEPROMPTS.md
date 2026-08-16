@@ -281,6 +281,17 @@ silhouettes, original designs, no robots or hands in weapon sheets, no text,
 logos, watermark, ground shadow, familiar franchise motifs, or excessive
 micro-detail.
 
+The articulated follow-up used each approved body master as its sole edit
+target. The prompt preserved faction identity while requesting an exploded
+transparent inventory with separate head, torso/pelvis, back accessory,
+shoulders, paired upper arms, paired forearms, paired hands, paired thighs,
+paired shins, and paired feet. Every piece was required to keep the source
+view direction and end at a clean circular mechanical socket, with no assembled
+robot, weapons, labels, overlaps, missing hands/feet, redesign, or added parts.
+A second background-extraction edit changed only the generated checkerboard to
+genuine alpha. `tools/build_modular_mecha_parts.gd` then crops 17 runtime PNGs
+per faction into `assets/units/modular/parts/`.
+
 ## Adding art
 
 1. Write a project-specific visual brief and record it here.
