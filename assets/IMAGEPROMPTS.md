@@ -73,14 +73,66 @@ edge by one pixel, normalizes each cutout to a transparent 1024×1024 canvas,
 and writes `cutouts/`, `gen/`, faction provenance, runtime full-body art, and
 portraits. The roster now has generated `gen/` art for every active art ID.
 
+### Priority roster modernization
+
+Forty-three standalone replacement sources were generated with the built-in
+OpenAI image-generation tool on 2026-08-17. No external images, characters,
+artists, games, or franchises were referenced. The work targets the units that
+previously repeated the general class-atlas frames most visibly: the four
+chassis-synergy families, the Resonant Chorus carriers, Helio Mender-162, four
+late dramatic promotions, the Steam faction anchor, and the skill-defining
+late-game roster from icons 188 through 207. Untouched opaque chroma sources
+are retained in `assets/units/original_sources/generated_chassis/chroma/`.
+
+The shared prompt direction requested one complete original autonomous machine,
+centered in three-quarter view against perfectly uniform opaque `#ff00ff`, with
+modern enclosed armor, dark mechanical joints, sparse functional signal light,
+clean Ink and Cell contours, controlled cel shading, and a silhouette readable
+at card scale. It excluded people, pilots, text, logos, scenery, cast shadows,
+medieval armor, heraldry, steampunk, exposed gears, giant-mech proportions,
+photorealism, and equal-density greebling. Promotion edits used only their
+project-original base source as a reference and preserved its chassis identity.
+
+Faction and mechanic motifs were deliberately separated:
+
+- Universal Foundation Grid uses blue-grey relay rails and modular braces:
+  `217`, `218`.
+- Coal Aegis Lattice uses graphite armor, ember-red heat channels, and broad
+  interlocking shields: `219`, `220`.
+- Wind Vector Manifold uses pale-blue aerodynamic outriggers and vector fins:
+  `221`, `222`.
+- Solar Resonance Pulse uses white ceramic medical armor and a segmented amber
+  pulse halo: `223`, `224`.
+- Resonant Chorus carriers use paired/tuned emitter geometry while retaining
+  faction palettes: art IDs `35`, `36`, `69`, `70`, `603`, `107`, `108`, `633`.
+- Helio Mender-162 is the restrained precursor to the existing elite
+  Helio Mender-163: art ID `865`.
+- Zephyr Weaver-168/169 and Cinder Battery-170/171 turn their one-star tools
+  into unmistakable twin-channel six-star forms: `1025`–`1028`.
+- Brass Bastion-186/187 establishes a modern Steam-faction Dragnet anchor with
+  civic teal pressure armor and deployable restraint vanes: `1011`, `1012`.
+- Retaliation Screen uses deployed interception surfaces: `697`, `698`, `1123`,
+  `1124`; Petrify Loop uses nested phase rings: `747`, `748`; Silent Cycle uses
+  a progressively closed suppression halo: `1019`, `1020`.
+- Thermal Wrap is expressed by mantle-like heat shielding across distinct Steam
+  Lifebinder, Coal Channeler, and Steam Warden bodies: `263`, `264`, `321`,
+  `322`, `567`, `568`.
+- Umbral Clamp has three intentionally different capture silhouettes: Wind
+  biped interceptors (`693`, `694`), low Wind quadrupeds (`1053`, `1054`), and
+  Fusion tripod field clamps with nested magnetic jaws (`1153`, `1154`).
+
+`tools/build_original_unit_art.gd` removes the matte, normalizes the transparent
+canvas, and installs these sources under their existing numeric art IDs, so no
+catalog identity, promotion link, replay, or save mapping changes.
+
 ### Chassis-synergy atlas extensions
 
 Icons `217`–`224` were added on 2026-08-10 as four two-stage promotion
-families for the Standard, Bulwark, Swift, and Resonant synergy mechanics. No
-new external or AI-generated source was used. Their full-body provenance is
-derived reproducibly from the project-owned class atlases by
-`tools/build_original_unit_art.gd`, using the established faction recoloring,
-transparent 1024×1024 canvas, right-facing orientation, and portrait crop:
+families for the Standard, Bulwark, Swift, and Resonant synergy mechanics.
+Their original full-body provenance was derived reproducibly from the
+project-owned class atlases. Those initial sources were replaced in the
+2026-08-17 modernization batch above while retaining the same stable art IDs,
+transparent 1024×1024 canvas, orientation, and portrait crop:
 
 - `217` / `218` — Relay Battery, Universal Artillerist, Foundation Grid.
 - `219` / `220` — Cinder Bastion, Coal Warden, Aegis Lattice.
