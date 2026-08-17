@@ -4,8 +4,6 @@ const BOARD_SIZE := Vector2i(2167, 726)
 const SOURCE_ROOT := "res://assets/boards/original_sources"
 const OUTPUT_ROOT := "res://assets"
 const BOARDS := {
-	"courtyard-ink-cell.png": "board-steampunk-courtyard.png",
-	"training-hall-ink-cell.png": "board-steampunk-training-hall.png",
 	"reference-playboard.png": "boards/reference-playboard.png",
 	"stage-training.png": "boards/stage-training.png",
 	"stage-relay-excavation.png": "boards/stage-relay-excavation.png",

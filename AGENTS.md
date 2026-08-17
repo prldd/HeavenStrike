@@ -66,6 +66,8 @@ All source is in `scripts/`. The architecture separates deterministic simulation
 | `squad_store.gd` | Backward-compatible named-squad persistence (ordered instance IDs plus per-squad Conductor skills), validation, legacy single-squad migration, defaults, and shuffling. |
 | `campaign_store.gd` | Campaign completion, reward pools, reward roll logic, and enemy squad lookup per mission/encounter. |
 | `requisition_store.gd` | Persistent Requisition Credit wallet, pull costs, spending, and idempotent source-owned reward claims. |
+| `gacha_store.gd` | Requisition pull pity state (`user://gacha.cfg`): consecutive pulls without a 5- or 6-star unit, hard pity at 50, and the weighted pity bonus. |
+| `tutorial_store.gd` | Tutorial completion flag, stored in the `tutorial` section of `user://player.cfg`. |
 | `story_quest_catalog.gd` | Builds the 77-mission original campaign from authored reward pools, enemy decks, and Conductor configurations. `MISSION_STORIES` holds per-mission story text (chapter label, briefing, debriefing) keyed by 1-based mission number. |
 | `story_dialogue_catalog.gd` | Editable post-mission interludes. `INTERLUDES` is keyed by 1-based mission number and holds a scene title, location, and ordered speaker/text lines; `CHARACTERS` owns speaker roles, initials, and accent colors. `main.gd` owns only the dialogue presentation and return flow. |
 | `mission_run_store.gd` | In-progress multi-encounter mission run state (current mission, encounter index, carried Conductor HP, and persisted Autobattle eligibility). |
@@ -84,7 +86,7 @@ The headless launcher is used for automated tests and tooling:
 
 ```bash
 ./tools/godot-headless.sh --script res://tests/smoke_test.gd
-./tools/godot-headless.sh --script res://tools/generate_unit_portraits.gd
+./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
 ```
 
 The launcher expects the native Linux binary at:
@@ -117,6 +119,17 @@ APPDATA="$(pwd -W)/.tools/godot-user-win" "/e/Tools/Godot/Godot.exe" --headless 
 - `balance_simulation.gd` — audits all 77 campaign missions: every configured enemy encounter has a valid squad, positive power, monotonic HP progression, and the difficulty curve stays within the allowed max jump.
 
 There is no separate test runner. Each script is a `SceneTree` that runs in `_init()` and exits with `quit()`.
+
+### Visual checks
+
+`tests/` also contains manual visual-check scripts that render a screen or board headlessly and save a screenshot PNG for human review. They are not part of the asserted test suite and do not need to run before every commit; run the relevant one after changing the screen it covers:
+
+```bash
+./tools/godot-headless.sh --script res://tests/main_menu_visual_check.gd
+```
+
+- `main_menu_visual_check.gd` (main menu), `battle_hud_visual_check.gd` (battle HUD), `board_visual_check.gd` (original unit art on the board), `operations_map_visual_check.gd` (operations map, one image per act), and `attack_animation_visual_check.gd` (attack-frame atlas compositing) write their screenshots into `tests/` as committed reference images.
+- `board_stage_visual_check.gd` (one image per campaign stage background), `gacha_visual_check.gd` (Requisition screen), `challenge_operations_visual_check.gd` (challenge map entry and operations screens), `progression_visual_check.gd` (Kinetic Crucible and duplicate-reward screens), and `squad_management_visual_check.gd` (named-squads screen) write into the gitignored `.tools/` directory.
 
 ## Code style guidelines
 
@@ -188,6 +201,7 @@ Godot `user://` resolves to the project-local user dir when run through `tools/g
 - `user://campaign.cfg` — completed missions, reward units, and debug-granted inventory.
 - `user://requisition.cfg` — Requisition Credit balance and idempotent reward claim IDs.
 - `user://challenges.cfg` — completed rotating-challenge claim IDs.
+- `user://gacha.cfg` — Requisition pull pity counter.
 - `user://mission_run.cfg` — active multi-encounter run.
 - `user://kinetic_crucible.cfg` — per-copy collection instances, levels, and points.
 - `user://last_replay.json` — legacy single latest replay.
