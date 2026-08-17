@@ -1,8 +1,9 @@
 # Original Unit Art Matrix
 
 This document defines the production boundary for playable unit art. Every live
-unit is an original autonomous chassis derived from project-owned class atlases
-or a standalone project-generated chassis source.
+unit is an original autonomous chassis with a direct project-generated source.
+The older project-owned class atlases remain committed as historical provenance
+and a development fallback, but no active runtime unit depends on them.
 No third-party sprite, portrait, character design, or extracted sheet is part of
 the runtime or source-art tree.
 
@@ -18,15 +19,19 @@ for future chassis.
 
 - `assets/units/original_sources/class_atlases/` contains seven original source
   atlases: one each for Warden, Duelist, Artillerist, Channeler, and Lifebinder,
-  plus two Strider atlases for additional silhouette variety.
-- `assets/units/original_sources/generated_chassis/chroma/` retains untouched
-  standalone generated sources; `cutouts/` contains their reproducible alpha
-  derivatives.
+  plus two Strider atlases for additional silhouette variety. They are retained
+  for provenance and fallback tooling only.
+- `assets/units/original_sources/generated_roster_atlases/chroma/` retains 42
+  untouched faction-and-class generation sheets. Its manifest maps their 157
+  cells to stable art IDs.
+- `assets/units/original_sources/generated_chassis/chroma/` contains individual
+  generated mattes: untouched standalone sources plus deterministic crops from
+  the roster sheets. `cutouts/` contains their reproducible alpha derivatives.
 - `assets/units/original_sources/faction_chassis/<Faction>/<Class>/` contains
   224 derived provenance images: 223 playable chassis and one mission-only
   ground transport.
-- `assets/units/gen/` contains transparent standalone generated art for every
-  active roster ID, including the fourteen sources that complete the set.
+- `assets/units/gen/` contains transparent generated art for every active roster
+  ID.
 - `assets/units/full/` contains exactly the same 224 art IDs as runtime
   full-body sprites.
 - `assets/units/portraits/` contains exactly the same 224 art IDs as cropped
@@ -35,6 +40,7 @@ for future chassis.
 Regenerate all derived assets with:
 
 ```bash
+./tools/godot-headless.sh --script res://tools/extract_generated_roster_atlases.gd
 ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
 ```
 

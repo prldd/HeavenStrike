@@ -1,0 +1,456 @@
+{
+  "version": 1,
+  "atlases": [
+    {
+      "file": "coal_artillerist_01.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        79,
+        80,
+        613,
+        103,
+        104,
+        629
+      ]
+    },
+    {
+      "file": "coal_artillerist_02.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        127,
+        128,
+        295,
+        296
+      ]
+    },
+    {
+      "file": "coal_channeler_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        93,
+        94,
+        105,
+        106
+      ]
+    },
+    {
+      "file": "coal_duelist_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        15,
+        16
+      ]
+    },
+    {
+      "file": "coal_lifebinder_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        435,
+        436
+      ]
+    },
+    {
+      "file": "coal_strider_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        17,
+        18,
+        101,
+        102
+      ]
+    },
+    {
+      "file": "coal_warden_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        61,
+        62
+      ]
+    },
+    {
+      "file": "fusion_artillerist_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        19,
+        20,
+        259,
+        260
+      ]
+    },
+    {
+      "file": "fusion_channeler_01.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        45,
+        46,
+        81,
+        82,
+        141,
+        142
+      ]
+    },
+    {
+      "file": "fusion_duelist_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        183,
+        184
+      ]
+    },
+    {
+      "file": "fusion_lifebinder_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        83,
+        84,
+        215,
+        216
+      ]
+    },
+    {
+      "file": "fusion_strider_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        29,
+        30,
+        487,
+        488
+      ]
+    },
+    {
+      "file": "fusion_warden_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        85,
+        86,
+        651,
+        652
+      ]
+    },
+    {
+      "file": "solar_artillerist_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        55,
+        56,
+        187,
+        188
+      ]
+    },
+    {
+      "file": "solar_channeler_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        33,
+        34,
+        57,
+        58
+      ]
+    },
+    {
+      "file": "solar_duelist_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        39,
+        40
+      ]
+    },
+    {
+      "file": "solar_lifebinder_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        47,
+        48,
+        1191,
+        1192
+      ]
+    },
+    {
+      "file": "solar_lifebinder_02.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        71,
+        72,
+        605,
+        95,
+        96
+      ]
+    },
+    {
+      "file": "solar_lifebinder_03.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        203,
+        204,
+        275,
+        276,
+        825,
+        826
+      ]
+    },
+    {
+      "file": "solar_strider_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        137,
+        138
+      ]
+    },
+    {
+      "file": "solar_warden_01.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        715,
+        716,
+        231,
+        232,
+        325,
+        326
+      ]
+    },
+    {
+      "file": "steam_artillerist_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        43,
+        44,
+        787,
+        788
+      ]
+    },
+    {
+      "file": "steam_channeler_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        177,
+        178,
+        791,
+        792
+      ]
+    },
+    {
+      "file": "steam_duelist_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        87,
+        88
+      ]
+    },
+    {
+      "file": "steam_lifebinder_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        59,
+        60
+      ]
+    },
+    {
+      "file": "steam_strider_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        41,
+        42,
+        89,
+        90
+      ]
+    },
+    {
+      "file": "steam_warden_01.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        289,
+        290,
+        73,
+        74,
+        607
+      ]
+    },
+    {
+      "file": "steam_warden_02.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        37,
+        38,
+        241,
+        242,
+        253,
+        254
+      ]
+    },
+    {
+      "file": "universal_artillerist_01.png",
+      "columns": 1,
+      "rows": 1,
+      "art_ids": [
+        10
+      ]
+    },
+    {
+      "file": "universal_channeler_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        11,
+        21,
+        22
+      ]
+    },
+    {
+      "file": "universal_duelist_01.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        423,
+        424,
+        75,
+        76,
+        609
+      ]
+    },
+    {
+      "file": "universal_duelist_02.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        195,
+        196,
+        521,
+        522,
+        429,
+        430
+      ]
+    },
+    {
+      "file": "universal_duelist_03.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        707,
+        708,
+        1199,
+        1200
+      ]
+    },
+    {
+      "file": "universal_lifebinder_01.png",
+      "columns": 1,
+      "rows": 1,
+      "art_ids": [
+        12
+      ]
+    },
+    {
+      "file": "universal_warden_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        13,
+        14
+      ]
+    },
+    {
+      "file": "wind_artillerist_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        535,
+        536,
+        31,
+        32
+      ]
+    },
+    {
+      "file": "wind_channeler_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        165,
+        166,
+        462,
+        463
+      ]
+    },
+    {
+      "file": "wind_duelist_01.png",
+      "columns": 2,
+      "rows": 1,
+      "art_ids": [
+        27,
+        28
+      ]
+    },
+    {
+      "file": "wind_lifebinder_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        23,
+        24,
+        167,
+        168
+      ]
+    },
+    {
+      "file": "wind_strider_01.png",
+      "columns": 3,
+      "rows": 2,
+      "art_ids": [
+        77,
+        78,
+        611,
+        149,
+        150
+      ]
+    },
+    {
+      "file": "wind_strider_02.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        363,
+        364,
+        597,
+        598
+      ]
+    },
+    {
+      "file": "wind_warden_01.png",
+      "columns": 2,
+      "rows": 2,
+      "art_ids": [
+        97,
+        98,
+        643,
+        644
+      ]
+    }
+  ]
+}

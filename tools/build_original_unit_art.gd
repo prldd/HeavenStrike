@@ -12,13 +12,6 @@ const GENERATED_CHROMA_ROOT := SOURCE_ROOT + "/generated_chassis/chroma"
 const GENERATED_CUTOUT_ROOT := SOURCE_ROOT + "/generated_chassis/cutouts"
 const LIVE_FULL_ROOT := "res://assets/units/full"
 const LIVE_PORTRAIT_ROOT := "res://assets/units/portraits"
-const STANDALONE_GENERATED_ART_IDS := [
-	35, 36, 69, 70, 107, 108, 217, 218, 219, 220, 221, 222, 223, 224,
-	263, 264, 321, 322, 567, 568, 603, 633, 693, 694, 697, 698, 747, 748,
-	865, 866, 887, 888, 947, 948, 965, 966, 979, 980, 1011, 1012, 1019,
-	1020, 1025, 1026, 1027, 1028, 1053, 1054, 1123, 1124, 1153, 1154,
-	1301, 1302, 1303, 1304, 1305, 1306
-]
 const NEW_STANDALONE_ART_IDS := [1301, 1302, 1303, 1304, 1305, 1306]
 const DIALOGUE_ATLAS := "res://assets/dialogue/original_sources/campaign-supporting-cast.png"
 const DIALOGUE_PORTRAIT_ROOT := "res://assets/dialogue/portraits"
@@ -85,6 +78,7 @@ func _build_generated_cutouts() -> int:
 		assert(art_id in active_art_ids, "Generated chroma source is not used by the roster: " + file_name)
 		var source := _load_image(GENERATED_CHROMA_ROOT + "/" + file_name)
 		_remove_generated_chroma(source)
+		_remove_edge_components(source)
 		var cutout := _fit_to_canvas(source)
 		_contract_alpha(cutout)
 		var bounds := _alpha_bounds(cutout)
@@ -120,6 +114,7 @@ func _contract_alpha(image: Image) -> void:
 func _remove_generated_chroma(image: Image) -> void:
 	image.convert(Image.FORMAT_RGBA8)
 	var key := image.get_pixel(0, 0)
+	var green_key := key.g > key.r + 0.25 and key.g > key.b + 0.25
 	for y in image.get_height():
 		for x in image.get_width():
 			var color := image.get_pixel(x, y)
@@ -127,6 +122,10 @@ func _remove_generated_chroma(image: Image) -> void:
 				color.r - key.r, color.g - key.g, color.b - key.b
 			).length()
 			var alpha := smoothstep(0.08, 0.32, distance)
+			if green_key:
+				var green_dominance := color.g - maxf(color.r, color.b)
+				var green_alpha := 1.0 - smoothstep(0.04, 0.20, green_dominance)
+				alpha = minf(alpha, green_alpha)
 			if alpha <= 0.01:
 				image.set_pixel(x, y, Color.TRANSPARENT)
 				continue
@@ -139,6 +138,43 @@ func _remove_generated_chroma(image: Image) -> void:
 				color.b = maxf(0.0, color.b - spill)
 			color.a = alpha
 			image.set_pixel(x, y, color)
+
+func _remove_edge_components(image: Image) -> void:
+	var width := image.get_width()
+	var height := image.get_height()
+	var visited := PackedByteArray()
+	visited.resize(width * height)
+	var pending: Array[int] = []
+	for x in width:
+		_queue_edge_pixel(image, x, 0, width, visited, pending)
+		_queue_edge_pixel(image, x, height - 1, width, visited, pending)
+	for y in range(1, height - 1):
+		_queue_edge_pixel(image, 0, y, width, visited, pending)
+		_queue_edge_pixel(image, width - 1, y, width, visited, pending)
+	while not pending.is_empty():
+		var index: int = pending.pop_back()
+		var x: int = index % width
+		var y: int = int(index / width)
+		image.set_pixel(x, y, Color.TRANSPARENT)
+		if x > 0:
+			_queue_edge_pixel(image, x - 1, y, width, visited, pending)
+		if x + 1 < width:
+			_queue_edge_pixel(image, x + 1, y, width, visited, pending)
+		if y > 0:
+			_queue_edge_pixel(image, x, y - 1, width, visited, pending)
+		if y + 1 < height:
+			_queue_edge_pixel(image, x, y + 1, width, visited, pending)
+
+func _queue_edge_pixel(
+	image: Image, x: int, y: int, width: int,
+	visited: PackedByteArray, pending: Array[int]
+) -> void:
+	var index := y * width + x
+	if visited[index] != 0:
+		return
+	visited[index] = 1
+	if image.get_pixel(x, y).a > 0.05:
+		pending.append(index)
 
 func _build_roster_originals() -> int:
 	var variant_counts := {}
@@ -153,8 +189,9 @@ func _build_roster_originals() -> int:
 		if art_id not in NEW_STANDALONE_ART_IDS:
 			variant_counts[key] = variant + 1
 		var generated_path := GENERATED_ROOT + "/%03d.png" % art_id
+		var generated_source_path := GENERATED_CHROMA_ROOT + "/%03d.png" % art_id
 		var canvas: Image
-		if art_id in STANDALONE_GENERATED_ART_IDS and FileAccess.file_exists(generated_path):
+		if FileAccess.file_exists(generated_source_path) and FileAccess.file_exists(generated_path):
 			canvas = _load_image(generated_path)
 			assert(
 				canvas.get_size() == Vector2i(CANVAS_SIZE, CANVAS_SIZE),

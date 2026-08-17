@@ -125,6 +125,52 @@ Faction and mechanic motifs were deliberately separated:
 canvas, and installs these sources under their existing numeric art IDs, so no
 catalog identity, promotion link, replay, or save mapping changes.
 
+### Roster-wide faction and class modernization
+
+The remaining 166 atlas-derived playable units were reprocessed on 2026-08-17
+with the built-in OpenAI image-generation tool. No external images, characters,
+artists, games, or franchises were referenced. Nine starting Reserve units
+(`001`–`009`) were generated as individual sources. The other 157 units were
+authored across 42 faction-and-class roster sheets, with promotion families kept
+in adjacent cells so each upgrade reads as the same chassis receiving a clear
+equipment refit rather than becoming an unrelated machine.
+
+Untouched generated sheets live under
+`assets/units/original_sources/generated_roster_atlases/chroma/`. Their committed
+manifest records the exact row-major art-ID mapping, and
+`tools/extract_generated_roster_atlases.gd` reproducibly crops the individual
+green-matte sources into `generated_chassis/chroma/` before the standard unit-art
+builder removes the matte and produces runtime sprites and portraits.
+
+The shared sheet brief required one complete, right-facing autonomous machine
+per equal cell; generous green gutter; modern enclosed armor; dark manufactured
+joints; sparse functional light; clean Ink and Cell contours; controlled cel
+shading; and no pilots, text, logos, scenery, floor, cast shadows, medieval
+armor, heraldry, Victorian machinery, exposed decorative gears, giant-mech
+proportions, or equal-density greebling. Every cell named its unit, promotion
+parent, star tier, and secondary skill so equipment differences remain authored
+rather than arbitrary.
+
+Faction identity was locked independently from class identity:
+
+- Universal: modular blue-grey and cool-white shells with cyan relay hardware.
+- Coal: graphite and heat-shield red with orange thermal systems and extraction
+  logistics hardware.
+- Steam: oxidized teal, cool steel, and pressure white with civic/transit
+  engineering modules, explicitly excluding historical steampunk motifs.
+- Wind: pale blue, silver, and cyan with swept navigation fins and lightweight
+  highland-network construction.
+- Fusion: graphite, silver, and restrained violet containment assemblies.
+- Solar: ceramic white, blue-black, and precise amber heliostat systems.
+
+Class silhouettes were equally explicit: Wardens carry shield mass and planted
+frames; Duelists use paired close-combat tools; Striders use long legs and a
+forward lean; Artillerists expose a barrel, recoil brace, and counterweight;
+Channelers carry coils, arc vanes, and a luminous core; Lifebinders carry repair
+manipulators, reservoirs, and protective halo geometry. This pass gives every
+active art ID a direct generated source while retaining all stable numeric IDs,
+catalog identities, promotion links, replay mappings, and save compatibility.
+
 ### Chassis-synergy atlas extensions
 
 Icons `217`–`224` were added on 2026-08-10 as four two-stage promotion
