@@ -150,8 +150,13 @@ func _run() -> void:
 	assert(not game.settings_panel.visible)
 	game._toggle_settings()
 	assert(game.settings_panel.visible)
-	game._toggle_settings()
+	assert(game.settings_dismiss_layer.visible)
+	var settings_outside_click := InputEventMouseButton.new()
+	settings_outside_click.button_index = MOUSE_BUTTON_LEFT
+	settings_outside_click.pressed = true
+	game.settings_dismiss_layer.gui_input.emit(settings_outside_click)
 	assert(not game.settings_panel.visible)
+	assert(not game.settings_dismiss_layer.visible)
 	game._toggle_animation_skip()
 	assert(game.skip_animations)
 	assert(not game.board.attack_frame_animation_enabled)

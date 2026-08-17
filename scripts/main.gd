@@ -160,6 +160,7 @@ var audio_button: Button
 var animation_button: Button
 var motion_button: Button
 var settings_button: Button
+var settings_dismiss_layer: Control
 var settings_panel: PanelContainer
 var command_bridge: PanelContainer
 var command_dock: PanelContainer
@@ -562,6 +563,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_end_player_turn()
 
 func _build_settings_menu() -> void:
+	settings_dismiss_layer = Control.new()
+	settings_dismiss_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	settings_dismiss_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	settings_dismiss_layer.z_index = 89
+	settings_dismiss_layer.visible = false
+	settings_dismiss_layer.gui_input.connect(_on_settings_dismiss_input)
+	add_child(settings_dismiss_layer)
+
 	settings_panel = PanelContainer.new()
 	settings_panel.set_anchor(SIDE_LEFT, 1.0)
 	settings_panel.set_anchor(SIDE_RIGHT, 1.0)
@@ -650,10 +659,25 @@ func _build_tutorial_panel() -> void:
 	actions.add_child(tutorial_continue_button)
 
 func _toggle_settings() -> void:
-	settings_panel.visible = not settings_panel.visible
+	_set_settings_visible(not settings_panel.visible)
+
+func _set_settings_visible(visible: bool) -> void:
+	settings_panel.visible = visible
+	settings_dismiss_layer.visible = visible
+
+func _on_settings_dismiss_input(event: InputEvent) -> void:
+	var pressed_outside := false
+	if event is InputEventMouseButton:
+		pressed_outside = event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	elif event is InputEventScreenTouch:
+		pressed_outside = event.pressed
+	if not pressed_outside:
+		return
+	get_viewport().set_input_as_handled()
+	_set_settings_visible(false)
 
 func _open_combat_log_from_settings() -> void:
-	settings_panel.visible = false
+	_set_settings_visible(false)
 	_toggle_combat_log()
 
 func _build_combat_log() -> void:
@@ -3523,7 +3547,7 @@ func _show_main_menu() -> void:
 		get_tree().paused = false
 	_leave_tutorial()
 	if settings_panel != null:
-		settings_panel.visible = false
+		_set_settings_visible(false)
 	replay_mode = false
 	replay_playing = false
 	autobattle_active = false
@@ -3587,7 +3611,7 @@ func _latest_campaign_mission_id() -> int:
 	return latest_available
 
 func _open_last_replay() -> void:
-	settings_panel.visible = false
+	_set_settings_visible(false)
 	replay_history = BattleSimulatorScript.load_replay_history(REPLAY_HISTORY_PATH)
 	if replay_history.is_empty():
 		var legacy_replay: Dictionary = BattleSimulatorScript.load_replay(REPLAY_PATH)
