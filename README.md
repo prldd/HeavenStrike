@@ -165,10 +165,19 @@ Run the automated gameplay-data and AI smoke tests:
 ./tools/godot-headless.sh --script res://tests/smoke_test.gd
 ./tools/godot-headless.sh --script res://tests/ui_smoke_test.gd
 ./tools/godot-headless.sh --script res://tests/balance_simulation.gd
+./tools/godot-headless.sh --script res://tests/collection_diversity_simulation.gd
 ```
 
 The launcher uses the repository-local native Linux Godot 4.7.1 installation
 and avoids WSL Windows-binary interoperability issues.
+
+The collection-diversity simulation runs 1,000 deterministic first-clear
+campaigns and reports unique-unit, rarity, duplicate, class, and faction
+coverage at each Act boundary. It models the 15 starting units, immediately
+spends the 1,000-Credit starter grant and each 100-Credit mission grant on
+single pulls, and awards one weighted card per mission. Repeat clears, rotating
+challenges, and player-directed Kinetic Crucible sacrifices are intentionally
+excluded so the audit measures the baseline campaign economy.
 
 Battle speed, audio, animation-skip, and reduced-motion preferences persist in
 the player configuration. Completed battles are added newest-first to

@@ -936,7 +936,16 @@ The replay and battle-interface cleanup is in a stable, tested state:
 Duplicate rewards and Kinetic Crucible progression now expose copy identity,
 low-copy sacrifice warnings, recovered donor investment, projected stat and
 level gains, overflow, and untouched queued donors. The next balance pass should
-validate the duplicate cadence and level curve over a representative campaign run.
+tune the measured late-campaign duplicate cadence and validate the Kinetic
+Crucible level curve over a representative campaign run.
+
+The deterministic first-clear collection audit now establishes the duplicate
+cadence baseline over 1,000 seeded campaigns. Median unique-unit counts are 33
+at the Act I boundary, 54 at Act II, and 58 at Act III; mean duplicate share
+rises from 51.7% to 64.0% and 67.5%. All six classes and all six faction buckets
+remain represented through the lower-decile runs, but the four-unit median gain
+through Act III identifies late-campaign collection diversity as the next
+economy-tuning target.
 
 ## First Milestone
 
