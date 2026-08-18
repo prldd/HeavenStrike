@@ -176,10 +176,18 @@ static func effect_summary(unit: Dictionary) -> String:
 		labels.append("Silenced (%d turns)" % unit.silenced_turns)
 	if unit.get("haste_turns", 0) > 0:
 		labels.append("Haste (%d turns)" % unit.haste_turns)
+	if unit.get("slow_turns", 0) > 0:
+		labels.append("Slowed (%d turns)" % unit.slow_turns)
 	if unit.get("doom_turns", 0) > 0:
 		labels.append("Doom (%d turns)" % unit.doom_turns)
 	if unit.get("summon_forth_turns", 0) > 0:
 		labels.append("Retaliation Screen (%d turns)" % unit.summon_forth_turns)
+	if unit.get("delayed_turns", 0) > 0:
+		labels.append("Delayed (%d turns)" % unit.delayed_turns)
+	if unit.get("cover_turns", 0) > 0:
+		labels.append("Guarded (%d turns)" % unit.cover_turns)
+	if unit.get("doublestrike_turns", 0) > 0:
+		labels.append("Twin Drive (%d turns)" % unit.doublestrike_turns)
 	return ", ".join(labels)
 
 static func _add_attack_effect(unit: Dictionary, effect_name: String, amount: int, turns: int) -> void:

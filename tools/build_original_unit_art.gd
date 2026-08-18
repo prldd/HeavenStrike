@@ -54,8 +54,8 @@ func _init() -> void:
 	var sprite_count := _build_roster_originals()
 	var portrait_count := _build_portraits()
 	var dialogue_count := _build_dialogue_portraits()
-	assert(sprite_count == 224, "Expected art for every playable and mission unit.")
-	assert(portrait_count == 224, "Expected portraits for every playable and mission unit.")
+	assert(sprite_count == 293, "Expected art for every playable and mission unit.")
+	assert(portrait_count == 293, "Expected portraits for every playable and mission unit.")
 	assert(dialogue_count == 3, "Expected all supporting-cast portraits.")
 	print("Original-art build complete: %d generated cutouts, %d sprites, %d portraits, %d dialogue portraits." % [
 		generated_count, sprite_count, portrait_count, dialogue_count
@@ -202,6 +202,10 @@ func _build_roster_originals() -> int:
 			_remove_magenta(cell)
 			canvas = _fit_to_canvas(cell)
 			_recolor_for_faction(canvas, faction, variant)
+			# Chroma-sourced units get their gen/ cutout from
+			# _build_generated_cutouts; atlas-derived units need one written here
+			# so gen/ keeps a transparent cutout for every live art ID.
+			_save_png(canvas, GENERATED_ROOT + "/%03d.png" % art_id)
 		var source_dir := "%s/%s/%s" % [FACTION_SOURCE_ROOT, faction, unit.kind]
 		_make_dir(source_dir)
 		var file_name := "%03d.png" % art_id
@@ -316,7 +320,7 @@ func _build_portraits() -> int:
 		var art_id: int = UnitCatalogScript.art_id(unit.icon)
 		if art_id not in art_ids:
 			art_ids.append(art_id)
-	assert(art_ids.size() == 224, "Every playable and mission unit needs a unique art ID.")
+	assert(art_ids.size() == 293, "Every playable and mission unit needs a unique art ID.")
 	for art_id in art_ids:
 		var full_path := LIVE_FULL_ROOT + "/%03d.png" % art_id
 		var full := _load_image(full_path)

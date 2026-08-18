@@ -10,7 +10,7 @@ func _init() -> void:
 	var roster_icons: Array = roster.map(func(unit): return unit.icon)
 	var assigned_icons: Array = []
 	var expected_faction_sizes := {
-		"Coal": 38, "Steam": 35, "Wind": 38, "Fusion": 36, "Solar": 38
+		"Coal": 56, "Steam": 48, "Wind": 50, "Fusion": 49, "Solar": 51
 	}
 	for faction in UnitCatalogScript.FACTION_ICON_IDS:
 		var faction_icons: Array = UnitCatalogScript.FACTION_ICON_IDS[faction]

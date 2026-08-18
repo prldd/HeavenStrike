@@ -22,7 +22,7 @@ const LegacyContentMigrationScript = preload("res://scripts/legacy_content_migra
 
 func _init() -> void:
 	var roster: Array = UnitCatalogScript.all_units()
-	assert(roster.size() == 223, "The playable roster must contain 223 units.")
+	assert(roster.size() == 292, "The playable roster must contain 292 units.")
 	var mission_units: Array = MissionUnitCatalogScript.all_units()
 	assert(mission_units.size() == 1)
 	var ground_transport: UnitData = mission_units[0]
@@ -331,26 +331,26 @@ func _init() -> void:
 	assert(conductor_hit.shield_absorbed == 2)
 	assert(conductor_state.player_hp == 17)
 	assert(roster.map(func(unit): return unit.icon).all(
-		func(icon_id): return icon_id >= 1 and icon_id <= 224 and icon_id != 216
+		func(icon_id): return icon_id >= 1 and icon_id <= 293 and icon_id != 216
 	))
 	assert(roster.filter(func(unit): return unit.stars == 1).size() == 15)
 	assert(roster.filter(func(unit): return unit.stars == 2).size() == 17)
-	assert(roster.filter(func(unit): return unit.stars == 3).size() == 48)
-	assert(roster.filter(func(unit): return unit.stars == 4).size() == 56)
-	assert(roster.filter(func(unit): return unit.stars == 5).size() == 61)
-	assert(roster.filter(func(unit): return unit.stars == 6).size() == 26)
+	assert(roster.filter(func(unit): return unit.stars == 3).size() == 73)
+	assert(roster.filter(func(unit): return unit.stars == 4).size() == 86)
+	assert(roster.filter(func(unit): return unit.stars == 5).size() == 73)
+	assert(roster.filter(func(unit): return unit.stars == 6).size() == 28)
 	var icon_ids: Array = roster.map(func(unit): return unit.icon)
 	var unique_icon_ids: Array = []
 	for icon_id in icon_ids:
 		if icon_id not in unique_icon_ids:
 			unique_icon_ids.append(icon_id)
 	assert(icon_ids.size() == unique_icon_ids.size())
-	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 32)
-	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 32)
-	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 40)
-	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 34)
-	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 40)
-	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 45)
+	assert(roster.filter(func(unit): return unit.kind == "Strider").size() == 44)
+	assert(roster.filter(func(unit): return unit.kind == "Duelist").size() == 41)
+	assert(roster.filter(func(unit): return unit.kind == "Warden").size() == 50)
+	assert(roster.filter(func(unit): return unit.kind == "Artillerist").size() == 43)
+	assert(roster.filter(func(unit): return unit.kind == "Channeler").size() == 58)
+	assert(roster.filter(func(unit): return unit.kind == "Lifebinder").size() == 56)
 	assert(UnitCatalogScript.by_name("Relay Bastion-013").stars == 2)
 	assert(UnitCatalogScript.by_name("Cinder Blade-015").cost == 2)
 	assert(UnitCatalogScript.by_name("Flux Battery-019").range == 3)
@@ -607,6 +607,29 @@ func _init() -> void:
 		assert(roster.filter(
 			func(unit): return unit.skill != null and unit.skill.name == skill_name
 		).size() == 1)
+	for new_skill_name in [
+		"Siphon Edge", "Static Lash", "Shrapnel Arc", "Grudge Capacitor",
+		"Mirror Plating", "Command Uplink", "Blackout Burst", "Seismic Salvo",
+		"Rally Drumbeat", "Second Wind", "Interference Net", "Siege Rhythm",
+		"Intimidating Presence", "Venom Harvest", "Corrosive Detonation",
+		"Volatile Core", "Execute Protocol", "Vanguard Doctrine", "Feint Step",
+		"Purge Wave", "Blade Doctrine", "Death Knell", "Gunner Doctrine",
+		"Frostbrand Strike", "Rampart Doctrine", "Conduit Doctrine", "Field Doctrine",
+		"Concussion Blow", "Executioner Spike", "Shieldbreaker", "Scatter Volley",
+		"Arc Cascade", "Hushing Resonance", "Leech Protocol", "Concussive Repulse",
+		"Retribution Jolt", "Venom Barb", "Emergency Protocol", "Stasis Bolt",
+		"Exposing Frequency", "Toxic Miasma", "Discordant Blast", "Resonant Warhorn",
+		"Absolution Pulse", "Sanitize Corridor", "Overdrive Charge", "Decommission",
+		"Gridlock Field", "Equalize", "Ballast Infusion", "Temporal Rewind",
+		"Ember Recoil", "Ramping Dynamo", "Bloodforge Cycle", "Patron's Dividend",
+		"Restoration Surge", "Entropy Field", "Ignition Sequence", "Backline Collapse",
+		"Slipstream Chorus", "Anchoring Snare", "Provoking Snare", "Apex Confluence",
+		"Clear Signal", "Command Presence", "Guardian Protocol", "Twin Drive",
+		"Lag Field", "Sacrificial Pyre"
+	]:
+		assert(roster.filter(
+			func(unit): return unit.skill != null and unit.skill.name == new_skill_name
+		).size() == 1)
 	assert(UnitCatalogScript.by_name("Brass Bastion-112").promotion_of == "Brass Bastion-111")
 	assert(UnitCatalogScript.by_name("Zephyr Bastion-114").promotion_of == "Zephyr Bastion-113")
 	assert(UnitCatalogScript.by_name("Cinder Weaver-116").promotion_of == "Cinder Weaver-115")
@@ -762,6 +785,10 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(42) == 1303)
 	assert(UnitCatalogScript.art_id(47) == 1304)
 	assert(UnitCatalogScript.art_id(48) == 1305)
+	assert(UnitCatalogScript.art_id(231) == 1307)
+	assert(UnitCatalogScript.art_id(232) == 1308)
+	assert(UnitCatalogScript.art_id(241) == 1309)
+	assert(UnitCatalogScript.art_id(242) == 1310)
 	assert(UnitCatalogScript.art_id(39) == 535)
 	assert(UnitCatalogScript.art_id(68) == 629)
 	assert(UnitCatalogScript.art_id(80) == 488)
@@ -837,6 +864,16 @@ func _init() -> void:
 	assert(UnitCatalogScript.art_id(214) == 108)
 	assert(UnitCatalogScript.art_id(215) == 633)
 	assert(UnitCatalogScript.art_id(216) == 1306)
+	assert(UnitCatalogScript.art_id(253) == 1311)
+	assert(UnitCatalogScript.art_id(254) == 1312)
+	assert(UnitCatalogScript.art_id(259) == 1313)
+	assert(UnitCatalogScript.art_id(260) == 1314)
+	assert(UnitCatalogScript.art_id(263) == 1315)
+	assert(UnitCatalogScript.art_id(264) == 1316)
+	assert(UnitCatalogScript.art_id(275) == 1317)
+	assert(UnitCatalogScript.art_id(276) == 1318)
+	assert(UnitCatalogScript.art_id(289) == 1319)
+	assert(UnitCatalogScript.art_id(290) == 1320)
 	for new_icon in range(217, 225):
 		assert(UnitCatalogScript.art_id(new_icon) == new_icon)
 	var art_units: Array = roster.duplicate()
@@ -873,10 +910,10 @@ func _init() -> void:
 				provenance_files.append_array(Array(
 					DirAccess.get_files_at(provenance_dir)
 				).filter(func(file_name): return file_name.ends_with(".png")))
-	assert(full_files.size() == 224)
-	assert(portrait_files.size() == 224)
-	assert(generated_files.size() == 224)
-	assert(provenance_files.size() == 224)
+	assert(full_files.size() == 293)
+	assert(portrait_files.size() == 293)
+	assert(generated_files.size() == 293)
+	assert(provenance_files.size() == 293)
 	full_files.sort()
 	portrait_files.sort()
 	generated_files.sort()
@@ -1829,6 +1866,1140 @@ func _init() -> void:
 		poison_striker, warcry_enemy, [], 0.49
 	).message.is_empty())
 	assert(warcry_enemy.poison_turns == 2)
+	# Secondary-skill batch two (catalog icons 225-236): one carrier per skill,
+	# exercised through every timing hook the batch uses. Fixtures carry no
+	# rank tables, so rank_value fallbacks drive the magnitudes.
+	var siphon_actor := {
+		"id": 240, "side": 0, "name": "Cinder Blade-225", "kind": "Duelist",
+		"atk": 4, "hp": 7, "max_hp": 7, "effects": [],
+		"skill": {"name": "Siphon Edge", "type": "Strike"}
+	}
+	var siphon_target := {
+		"id": 241, "side": 1, "name": "Siphon Target", "kind": "Warden",
+		"atk": 3, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var siphon_result := UnitSkillsScript.resolve_strike(
+		siphon_actor, siphon_target, [siphon_actor, siphon_target], 0.5
+	)
+	assert(not siphon_result.message.is_empty())
+	assert(siphon_target.atk == 2 and siphon_actor.atk == 5)
+	assert(UnitSkillsScript.resolve_strike(
+		siphon_actor, siphon_target, [siphon_actor, siphon_target], 0.99
+	).message.is_empty())
+	ConductorSkillsScript.expire_effects([siphon_target], 1)
+	ConductorSkillsScript.expire_effects([siphon_target], 1)
+	assert(siphon_target.atk == 3)
+	ConductorSkillsScript.expire_effects([siphon_actor], 0)
+	ConductorSkillsScript.expire_effects([siphon_actor], 0)
+	ConductorSkillsScript.expire_effects([siphon_actor], 0)
+	assert(siphon_actor.atk == 4)
+	var lash_actor := {
+		"id": 242, "side": 0, "name": "Flux Weaver-226", "kind": "Channeler",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Static Lash", "type": "Strike"}
+	}
+	assert(not UnitSkillsScript.resolve_strike(
+		lash_actor, siphon_target, [lash_actor, siphon_target], 0.2
+	).message.is_empty())
+	assert(siphon_target.silenced_turns == 1)
+	siphon_target.silenced_turns = 0
+	assert(UnitSkillsScript.resolve_strike(
+		lash_actor, siphon_target, [lash_actor, siphon_target], 0.9
+	).message.is_empty())
+	var shrapnel_actor := {
+		"id": 243, "side": 0, "name": "Brass Battery-227", "kind": "Artillerist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 0,
+		"skill": {"name": "Shrapnel Arc", "type": "Strike"}
+	}
+	var shrapnel_target := {
+		"id": 244, "side": 1, "name": "Shrapnel Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "row": 0, "col": 3
+	}
+	var shrapnel_victim := {
+		"id": 245, "side": 1, "name": "Shrapnel Victim", "kind": "Strider",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": [], "row": 0, "col": 4
+	}
+	var shrapnel_bystander := {
+		"id": 246, "side": 1, "name": "Other Lane", "kind": "Strider",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": [], "row": 1, "col": 3
+	}
+	var shrapnel_result := UnitSkillsScript.resolve_strike(
+		shrapnel_actor, shrapnel_target,
+		[shrapnel_actor, shrapnel_target, shrapnel_victim, shrapnel_bystander]
+	)
+	assert(shrapnel_result.affected == [245])
+	assert(shrapnel_victim.hp == 4 and shrapnel_target.hp == 8)
+	assert(shrapnel_bystander.hp == 5)
+	var grudge_carrier := {
+		"id": 247, "side": 0, "name": "Helio Bastion-228", "kind": "Warden",
+		"atk": 2, "hp": 10, "max_hp": 10, "effects": [],
+		"skill": {"name": "Grudge Capacitor", "type": "Reaction"}
+	}
+	var grudge_attacker := {
+		"id": 248, "side": 1, "name": "Grudge Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	assert(not UnitSkillsScript.resolve_reaction(
+		grudge_carrier, grudge_attacker, [grudge_carrier, grudge_attacker], 0.5
+	).message.is_empty())
+	assert(grudge_carrier.atk == 3)
+	assert(UnitSkillsScript.resolve_reaction(
+		grudge_carrier, grudge_attacker, [grudge_carrier, grudge_attacker], 0.99
+	).message.is_empty())
+	assert(grudge_carrier.atk == 3)
+	var plating_carrier := {
+		"id": 249, "side": 0, "name": "Cinder Bastion-229", "kind": "Warden",
+		"atk": 3, "hp": 9, "max_hp": 9, "effects": [],
+		"skill": {"name": "Mirror Plating", "type": "Reaction"}
+	}
+	var plating_result := UnitSkillsScript.resolve_reaction(
+		plating_carrier, grudge_attacker, [plating_carrier, grudge_attacker]
+	)
+	assert(plating_result.affected == [248])
+	assert(grudge_attacker.vulnerable_turns == 1)
+	assert(grudge_attacker.vulnerable_stacks == 1)
+	var uplink_actor := {
+		"id": 250, "side": 0, "name": "Zephyr Lancer-230", "kind": "Strider",
+		"atk": 3, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Command Uplink", "type": "Warcry"}
+	}
+	var uplink_warden := {
+		"id": 251, "side": 0, "name": "Allied Warden", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var uplink_weaver := {
+		"id": 252, "side": 0, "name": "Allied Weaver", "kind": "Channeler",
+		"atk": 3, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var uplink_result := UnitSkillsScript.resolve_warcry(
+		uplink_actor, [uplink_actor, uplink_warden, uplink_weaver, grudge_attacker]
+	)
+	assert(uplink_result.affected == [251])
+	assert(uplink_warden.haste_turns == 1)
+	assert(uplink_weaver.get("haste_turns", 0) == 0)
+	var blackout_actor := {
+		"id": 253, "side": 0, "name": "Flux Weaver-231", "kind": "Channeler",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 0,
+		"skill": {"name": "Blackout Burst", "type": "Warcry"}
+	}
+	var blackout_target := {
+		"id": 254, "side": 1, "name": "Lane One Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 1, "col": 5
+	}
+	var blackout_bystander := {
+		"id": 255, "side": 1, "name": "Lane Zero Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 5
+	}
+	var blackout_result := UnitSkillsScript.resolve_warcry(
+		blackout_actor,
+		[blackout_actor, blackout_target, blackout_bystander], -1, null, 1
+	)
+	assert(blackout_result.affected == [254])
+	assert(blackout_target.silenced_turns == 1)
+	assert(blackout_bystander.get("silenced_turns", 0) == 0)
+	var salvo_actor := {
+		"id": 256, "side": 0, "name": "Helio Battery-232", "kind": "Artillerist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 0,
+		"skill": {"name": "Seismic Salvo", "type": "Warcry"}
+	}
+	var salvo_target := {
+		"id": 257, "side": 1, "name": "Salvo Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "row": 0, "col": 3
+	}
+	var salvo_result := UnitSkillsScript.resolve_warcry(
+		salvo_actor, [salvo_actor, salvo_target], -1, null, 0
+	)
+	assert(salvo_result.affected == [257])
+	assert(salvo_target.hp == 7 and salvo_target.col == 4)
+	assert(salvo_result.moved == [{"id": 257, "row": 0, "from_col": 3}])
+	var drumbeat_carrier := {
+		"id": 258, "side": 0, "name": "Brass Mender-233", "kind": "Lifebinder",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Rally Drumbeat", "type": "Chant"}
+	}
+	var drumbeat_protected := {
+		"id": 259, "side": 0, "name": "Protected Ally", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "protect_turns": 1
+	}
+	var drumbeat_exposed := {
+		"id": 260, "side": 0, "name": "Exposed Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var drumbeat_results := UnitSkillsScript.resolve_chants(
+		0, [drumbeat_carrier, drumbeat_protected, drumbeat_exposed], "start"
+	)
+	assert(drumbeat_results.size() == 1)
+	assert(drumbeat_results[0].affected == [259])
+	assert(drumbeat_protected.atk == 3 and drumbeat_exposed.atk == 3)
+	ConductorSkillsScript.expire_effects([drumbeat_protected], 0)
+	assert(drumbeat_protected.atk == 2)
+	var wind_carrier := {
+		"id": 261, "side": 0, "name": "Zephyr Blade-234", "kind": "Duelist",
+		"atk": 3, "hp": 2, "max_hp": 6, "effects": [],
+		"skill": {"name": "Second Wind", "type": "Chant"}
+	}
+	var wind_results := UnitSkillsScript.resolve_chants(0, [wind_carrier], "start")
+	assert(wind_results.size() == 1)
+	assert(wind_carrier.regen_turns == 2 and wind_carrier.protect_turns == 2)
+	wind_carrier.hp = 6
+	assert(UnitSkillsScript.resolve_chants(0, [wind_carrier], "start").is_empty())
+	var net_carrier := {
+		"id": 262, "side": 0, "name": "Cinder Lancer-235", "kind": "Strider",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Interference Net", "type": "Chant"}
+	}
+	var net_victim := {
+		"id": 263, "side": 1, "name": "Net Victim", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var net_results := UnitSkillsScript.resolve_chants(
+		1, [net_carrier, net_victim], "start", null, -1.0, 263
+	)
+	assert(net_results.size() == 1)
+	assert(net_results[0].affected == [263])
+	assert(net_victim.atk == 2)
+	ConductorSkillsScript.expire_effects([net_victim], 1)
+	ConductorSkillsScript.expire_effects([net_victim], 1)
+	assert(net_victim.atk == 4)
+	assert(UnitSkillsScript.resolve_chants(
+		0, [net_carrier, net_victim], "start", null, -1.0, 263
+	).is_empty())
+	var rhythm_carrier := {
+		"id": 264, "side": 0, "name": "Helio Mender-236", "kind": "Lifebinder",
+		"atk": 3, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Siege Rhythm", "type": "Aura"}
+	}
+	var rhythm_hasted := {
+		"id": 265, "side": 0, "name": "Hasted Ally", "kind": "Strider",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": [], "haste_turns": 1
+	}
+	var rhythm_plain := {
+		"id": 266, "side": 0, "name": "Plain Ally", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var rhythm_units := [rhythm_carrier, rhythm_hasted, rhythm_plain]
+	UnitSkillsScript.refresh_auras(rhythm_units)
+	assert(rhythm_hasted.atk == 3 and rhythm_hasted.aura_atk == 1)
+	assert(rhythm_plain.atk == 2)
+	rhythm_carrier.hp = 0
+	UnitSkillsScript.refresh_auras(rhythm_units)
+	assert(rhythm_hasted.atk == 2 and rhythm_hasted.aura_atk == 0)
+	# Secondary-skill batch three (catalog icons 237-251): faction-specialised
+	# carriers, one per skill, including the class doctrines and Slow.
+	var presence_actor := {
+		"id": 270, "side": 0, "name": "Cinder Bastion-237", "kind": "Warden",
+		"atk": 2, "hp": 10, "max_hp": 10, "effects": [], "row": 1, "col": 0,
+		"skill": {"name": "Intimidating Presence", "type": "Warcry"}
+	}
+	var presence_lane_enemy := {
+		"id": 271, "side": 1, "name": "Same Lane", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 1, "col": 5
+	}
+	var presence_other_enemy := {
+		"id": 272, "side": 1, "name": "Other Lane", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 2, "col": 5
+	}
+	var presence_result := UnitSkillsScript.resolve_warcry(
+		presence_actor, [presence_actor, presence_lane_enemy, presence_other_enemy]
+	)
+	assert(presence_result.affected == [271])
+	assert(presence_lane_enemy.taunt_turns == 1)
+	assert(presence_other_enemy.get("taunt_turns", 0) == 0)
+	var harvest_carrier := {
+		"id": 273, "side": 0, "name": "Cinder Mender-238", "kind": "Lifebinder",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Venom Harvest", "type": "Chant"}
+	}
+	var harvest_poisoned := {
+		"id": 274, "side": 1, "name": "Poisoned Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "poison_turns": 2, "poison_damage": 1
+	}
+	var harvest_clean := {
+		"id": 275, "side": 1, "name": "Clean Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var harvest_results := UnitSkillsScript.resolve_chants(
+		0, [harvest_carrier, harvest_poisoned, harvest_clean], "end"
+	)
+	assert(harvest_results.size() == 1)
+	assert(harvest_results[0].affected == [274])
+	assert(harvest_poisoned.hp == 5 and harvest_clean.hp == 6)
+	assert(UnitSkillsScript.resolve_chants(
+		0, [harvest_carrier, harvest_poisoned, harvest_clean], "start"
+	).is_empty())
+	var detonation_actor := {
+		"id": 276, "side": 0, "name": "Cinder Weaver-239", "kind": "Channeler",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Corrosive Detonation", "type": "Warcry"}
+	}
+	var detonation_target := {
+		"id": 277, "side": 1, "name": "Detonation Target", "kind": "Warden",
+		"atk": 2, "hp": 9, "max_hp": 9, "effects": [], "poison_turns": 3, "poison_damage": 1
+	}
+	var detonation_result := UnitSkillsScript.resolve_warcry(
+		detonation_actor, [detonation_actor, detonation_target], 277
+	)
+	assert(detonation_result.affected == [277])
+	assert(detonation_target.hp == 6 and detonation_target.poison_turns == 0)
+	var volatile_carrier := {
+		"id": 278, "side": 0, "name": "Brass Battery-240", "kind": "Artillerist",
+		"atk": 3, "hp": 0, "max_hp": 5, "effects": [],
+		"skill": {"name": "Volatile Core", "type": "Reaction"}
+	}
+	var volatile_attacker := {
+		"id": 279, "side": 1, "name": "Volatile Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var volatile_result := UnitSkillsScript.resolve_reaction(
+		volatile_carrier, volatile_attacker, [volatile_carrier, volatile_attacker]
+	)
+	assert(volatile_result.affected == [279])
+	assert(volatile_attacker.hp == 4)
+	var execute_actor := {
+		"id": 280, "side": 0, "name": "Brass Blade-241", "kind": "Duelist",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Execute Protocol", "type": "Strike"}
+	}
+	var execute_wounded := {
+		"id": 281, "side": 1, "name": "Wounded Target", "kind": "Warden",
+		"atk": 2, "hp": 2, "max_hp": 8, "effects": []
+	}
+	var execute_result := UnitSkillsScript.resolve_strike(
+		execute_actor, execute_wounded, [execute_actor, execute_wounded]
+	)
+	assert(execute_result.affected == [281])
+	assert(execute_wounded.hp == 1)
+	execute_wounded.hp = 8
+	assert(UnitSkillsScript.resolve_strike(
+		execute_actor, execute_wounded, [execute_actor, execute_wounded]
+	).message.is_empty())
+	var feint_carrier := {
+		"id": 282, "side": 0, "name": "Zephyr Lancer-243", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Feint Step", "type": "Reaction"}
+	}
+	var feint_attacker := {
+		"id": 283, "side": 1, "name": "Feint Attacker", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var feint_result := UnitSkillsScript.resolve_reaction(
+		feint_carrier, feint_attacker, [feint_carrier, feint_attacker]
+	)
+	assert(feint_carrier.haste_turns == 1 and feint_attacker.atk == 3)
+	assert(feint_result.affected == [282, 283])
+	ConductorSkillsScript.expire_effects([feint_attacker], 1)
+	assert(feint_attacker.atk == 4)
+	var purge_actor := {
+		"id": 284, "side": 0, "name": "Zephyr Mender-244", "kind": "Lifebinder",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Purge Wave", "type": "Warcry"}
+	}
+	var purge_ally := {
+		"id": 285, "side": 0, "name": "Afflicted Ally", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [],
+		"stun_turns": 2, "poison_turns": 3, "poison_damage": 1, "immobilized_turns": 1
+	}
+	var purge_result := UnitSkillsScript.resolve_warcry(
+		purge_actor, [purge_actor, purge_ally], 285
+	)
+	assert(purge_result.affected == [285])
+	assert(purge_ally.stun_turns == 0 and purge_ally.poison_turns == 0)
+	assert(purge_ally.immobilized_turns == 0 and purge_ally.regen_turns == 2)
+	var knell_actor := {
+		"id": 286, "side": 0, "name": "Flux Weaver-246", "kind": "Channeler",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Death Knell", "type": "Warcry"}
+	}
+	var knell_target := {
+		"id": 287, "side": 1, "name": "Doomed Enemy", "kind": "Warden",
+		"atk": 2, "hp": 12, "max_hp": 12, "effects": []
+	}
+	var knell_result := UnitSkillsScript.resolve_warcry(
+		knell_actor, [knell_actor, knell_target], 287
+	)
+	assert(knell_result.affected == [287])
+	assert(knell_target.doom_turns == 4)
+	for doom_tick in 4:
+		UnitSkillsScript.expire_statuses([knell_target], 0)
+	assert(knell_target.hp == 0)
+	var frost_actor := {
+		"id": 288, "side": 0, "name": "Flux Lancer-248", "kind": "Strider",
+		"atk": 3, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Frostbrand Strike", "type": "Strike"}
+	}
+	var frost_target := {
+		"id": 289, "side": 1, "name": "Frost Target", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 4, "move": 2
+	}
+	assert(not UnitSkillsScript.resolve_strike(
+		frost_actor, frost_target, [frost_actor, frost_target], 0.4
+	).message.is_empty())
+	assert(frost_target.slow_turns == 1)
+	assert(BattleRulesScript.traversal_cells(frost_target, [frost_target]).size() == 1)
+	UnitSkillsScript.expire_statuses([frost_target], 1)
+	assert(frost_target.slow_turns == 0)
+	assert(BattleRulesScript.traversal_cells(frost_target, [frost_target]).size() == 2)
+	var doctrine_carrier := {
+		"id": 290, "side": 0, "name": "Helio Bastion-249", "kind": "Warden",
+		"atk": 2, "hp": 9, "max_hp": 9, "effects": [],
+		"skill": {"name": "Rampart Doctrine", "type": "Aura"}
+	}
+	var doctrine_warden := {
+		"id": 291, "side": 0, "name": "Allied Warden", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var doctrine_duelist := {
+		"id": 292, "side": 0, "name": "Allied Duelist", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var doctrine_enemy_warden := {
+		"id": 293, "side": 1, "name": "Enemy Warden", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var doctrine_units := [
+		doctrine_carrier, doctrine_warden, doctrine_duelist, doctrine_enemy_warden
+	]
+	UnitSkillsScript.refresh_auras(doctrine_units)
+	assert(doctrine_warden.atk == 3 and doctrine_warden.aura_atk == 1)
+	assert(doctrine_duelist.atk == 3 and doctrine_duelist.get("aura_atk", 0) == 0)
+	assert(doctrine_enemy_warden.atk == 2)
+	var concussion_actor := {
+		"id": 300, "side": 0, "name": "Cinder Blade-252", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Concussion Blow", "type": "Strike"}
+	}
+	var concussion_target := {
+		"id": 301, "side": 1, "name": "Concussion Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var concussion_result := UnitSkillsScript.resolve_strike(
+		concussion_actor, concussion_target, [concussion_actor, concussion_target], 0.2
+	)
+	assert(concussion_result.affected == [301])
+	assert(concussion_target.stun_turns == 1)
+	assert(UnitSkillsScript.resolve_strike(
+		concussion_actor, concussion_target, [concussion_actor, concussion_target], 0.9
+	).message.is_empty())
+	var spike_actor := {
+		"id": 302, "side": 0, "name": "Brass Blade-253", "kind": "Duelist",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Executioner Spike", "type": "Strike"}
+	}
+	var spike_target := {
+		"id": 303, "side": 1, "name": "Spike Target", "kind": "Warden",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var spike_result := UnitSkillsScript.resolve_strike(
+		spike_actor, spike_target, [spike_actor, spike_target], 0.2
+	)
+	assert(spike_result.affected == [303])
+	assert(spike_target.hp == 4)
+	assert(UnitSkillsScript.resolve_strike(
+		spike_actor, spike_target, [spike_actor, spike_target], 0.9
+	).message.is_empty())
+	var breaker_actor := {
+		"id": 304, "side": 0, "name": "Cinder Lancer-254", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Shieldbreaker", "type": "Strike"}
+	}
+	var breaker_target := {
+		"id": 305, "side": 1, "name": "Shielded Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "protect_turns": 2
+	}
+	var breaker_result := UnitSkillsScript.resolve_strike(
+		breaker_actor, breaker_target, [breaker_actor, breaker_target]
+	)
+	assert(breaker_result.affected == [305])
+	assert(breaker_target.protect_turns == 0 and breaker_target.hp == 7)
+	var volley_actor := {
+		"id": 306, "side": 0, "name": "Brass Battery-255", "kind": "Artillerist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Scatter Volley", "type": "Strike"}
+	}
+	var volley_target := {
+		"id": 307, "side": 1, "name": "Volley Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var volley_bystander := {
+		"id": 308, "side": 1, "name": "Volley Bystander", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var volley_result := UnitSkillsScript.resolve_strike(
+		volley_actor, volley_target,
+		[volley_actor, volley_target, volley_bystander], 0.2
+	)
+	assert(volley_result.affected == [308])
+	assert(volley_bystander.hp == 5 and volley_target.hp == 8)
+	assert(UnitSkillsScript.resolve_strike(
+		volley_actor, volley_target,
+		[volley_actor, volley_target, volley_bystander], 0.9
+	).message.is_empty())
+	var cascade_actor := {
+		"id": 309, "side": 0, "name": "Flux Lancer-256", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [], "row": 0, "col": 2,
+		"skill": {"name": "Arc Cascade", "type": "Strike"}
+	}
+	var cascade_target := {
+		"id": 310, "side": 1, "name": "Cascade Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "row": 0, "col": 4
+	}
+	var cascade_bystander := {
+		"id": 311, "side": 1, "name": "Cascade Bystander", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 5
+	}
+	var cascade_far := {
+		"id": 312, "side": 1, "name": "Cascade Far", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 1, "col": 5
+	}
+	var cascade_result := UnitSkillsScript.resolve_strike(
+		cascade_actor, cascade_target,
+		[cascade_actor, cascade_target, cascade_bystander, cascade_far], 0.1
+	)
+	assert(cascade_result.affected == [311])
+	assert(cascade_bystander.hp == 5 and cascade_bystander.stun_turns == 1)
+	assert(cascade_far.hp == 6)
+	var hush_actor := {
+		"id": 313, "side": 0, "name": "Flux Weaver-257", "kind": "Channeler",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [], "row": 0, "col": 2,
+		"skill": {"name": "Hushing Resonance", "type": "Strike"}
+	}
+	var hush_target := {
+		"id": 314, "side": 1, "name": "Hush Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "row": 0, "col": 3
+	}
+	var hush_adjacent := {
+		"id": 315, "side": 1, "name": "Hush Adjacent", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 1, "col": 3
+	}
+	var hush_far := {
+		"id": 316, "side": 1, "name": "Hush Far", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 2, "col": 6
+	}
+	var hush_result := UnitSkillsScript.resolve_strike(
+		hush_actor, hush_target,
+		[hush_actor, hush_target, hush_adjacent, hush_far], 0.3
+	)
+	assert(hush_result.affected == [314, 315])
+	assert(hush_target.silenced_turns == 1 and hush_adjacent.silenced_turns == 1)
+	assert(hush_far.get("silenced_turns", 0) == 0)
+	var leech_actor := {
+		"id": 317, "side": 0, "name": "Cinder Weaver-258", "kind": "Channeler",
+		"atk": 4, "hp": 3, "max_hp": 6, "effects": [],
+		"skill": {"name": "Leech Protocol", "type": "Strike"}
+	}
+	var leech_target := {
+		"id": 318, "side": 1, "name": "Leech Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var leech_result := UnitSkillsScript.resolve_strike(
+		leech_actor, leech_target, [leech_actor, leech_target], 0.4
+	)
+	assert(leech_result.affected == [317])
+	assert(leech_actor.hp == 5)
+	assert(UnitSkillsScript.resolve_strike(
+		leech_actor, leech_target, [leech_actor, leech_target], 0.9
+	).message.is_empty())
+	var repulse_actor := {
+		"id": 319, "side": 0, "name": "Zephyr Lancer-259", "kind": "Strider",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": [], "row": 0, "col": 2,
+		"skill": {"name": "Concussive Repulse", "type": "Strike"}
+	}
+	var repulse_target := {
+		"id": 320, "side": 1, "name": "Repulse Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "row": 0, "col": 4
+	}
+	var repulse_result := UnitSkillsScript.resolve_strike(
+		repulse_actor, repulse_target, [repulse_actor, repulse_target], 0.3
+	)
+	assert(repulse_result.affected == [320])
+	assert(repulse_target.col == 5 and repulse_target.silenced_turns == 1)
+	assert(repulse_result.moved.size() == 1)
+	var jolt_carrier := {
+		"id": 321, "side": 0, "name": "Brass Bastion-260", "kind": "Warden",
+		"atk": 2, "hp": 10, "max_hp": 10, "effects": [],
+		"skill": {"name": "Retribution Jolt", "type": "Reaction"}
+	}
+	var jolt_attacker := {
+		"id": 322, "side": 1, "name": "Jolt Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var jolt_result := UnitSkillsScript.resolve_reaction(
+		jolt_carrier, jolt_attacker, [jolt_carrier, jolt_attacker], 0.3
+	)
+	assert(jolt_result.affected == [322])
+	assert(jolt_attacker.hp == 5 and jolt_attacker.stun_turns == 1)
+	assert(UnitSkillsScript.resolve_reaction(
+		jolt_carrier, jolt_attacker, [jolt_carrier, jolt_attacker], 0.9
+	).message.is_empty())
+	var barb_carrier := {
+		"id": 323, "side": 0, "name": "Cinder Bastion-261", "kind": "Warden",
+		"atk": 3, "hp": 9, "max_hp": 9, "effects": [],
+		"skill": {"name": "Venom Barb", "type": "Reaction"}
+	}
+	var barb_attacker := {
+		"id": 324, "side": 1, "name": "Barb Attacker", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var barb_result := UnitSkillsScript.resolve_reaction(
+		barb_carrier, barb_attacker, [barb_carrier, barb_attacker]
+	)
+	assert(barb_result.affected == [324])
+	assert(barb_attacker.atk == 3 and barb_attacker.poison_turns == 2)
+	assert(barb_attacker.poison_damage == 1)
+	var emergency_carrier := {
+		"id": 325, "side": 0, "name": "Helio Bastion-262", "kind": "Warden",
+		"atk": 2, "hp": 3, "max_hp": 8, "effects": [],
+		"skill": {"name": "Emergency Protocol", "type": "Reaction"}
+	}
+	var emergency_attacker := {
+		"id": 326, "side": 1, "name": "Emergency Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var emergency_result := UnitSkillsScript.resolve_reaction(
+		emergency_carrier, emergency_attacker,
+		[emergency_carrier, emergency_attacker], 0.2
+	)
+	assert(emergency_result.affected == [325])
+	assert(emergency_carrier.hp == 5 and emergency_carrier.protect_turns == 1)
+	var stasis_actor := {
+		"id": 327, "side": 0, "name": "Flux Weaver-263", "kind": "Channeler",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Stasis Bolt", "type": "Warcry"}
+	}
+	var stasis_target := {
+		"id": 328, "side": 1, "name": "Stasis Target", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var stasis_result := UnitSkillsScript.resolve_warcry(
+		stasis_actor, [stasis_actor, stasis_target], 328
+	)
+	assert(stasis_target.stun_turns == 1)
+	assert(328 in stasis_result.affected)
+	var expose_actor := {
+		"id": 329, "side": 0, "name": "Cinder Weaver-264", "kind": "Channeler",
+		"atk": 4, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Exposing Frequency", "type": "Warcry"}
+	}
+	var expose_one := {
+		"id": 330, "side": 1, "name": "Expose One", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var expose_two := {
+		"id": 331, "side": 1, "name": "Expose Two", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var expose_result := UnitSkillsScript.resolve_warcry(
+		expose_actor, [expose_actor, expose_one, expose_two]
+	)
+	assert(expose_result.affected == [330, 331])
+	assert(expose_one.vulnerable_turns == 1 and expose_two.vulnerable_turns == 1)
+	var miasma_actor := {
+		"id": 332, "side": 0, "name": "Cinder Weaver-265", "kind": "Channeler",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Toxic Miasma", "type": "Warcry"}
+	}
+	var miasma_one := {
+		"id": 333, "side": 1, "name": "Miasma One", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var miasma_two := {
+		"id": 334, "side": 1, "name": "Miasma Two", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var miasma_result := UnitSkillsScript.resolve_warcry(
+		miasma_actor, [miasma_actor, miasma_one, miasma_two]
+	)
+	assert(miasma_result.affected == [333, 334])
+	assert(miasma_one.hp == 7 and miasma_one.poison_turns == 2)
+	assert(miasma_two.hp == 5 and miasma_two.poison_turns == 2)
+	var discord_actor := {
+		"id": 335, "side": 0, "name": "Flux Weaver-266", "kind": "Channeler",
+		"atk": 5, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Discordant Blast", "type": "Warcry"}
+	}
+	var discord_enemy := {
+		"id": 336, "side": 1, "name": "Discord Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var discord_result := UnitSkillsScript.resolve_warcry(
+		discord_actor, [discord_actor, discord_enemy]
+	)
+	assert(discord_result.affected == [336])
+	assert(discord_enemy.hp == 5 and discord_enemy.atk == 2)
+	ConductorSkillsScript.expire_effects([discord_enemy], 1)
+	ConductorSkillsScript.expire_effects([discord_enemy], 1)
+	assert(discord_enemy.atk == 3)
+	var warhorn_actor := {
+		"id": 337, "side": 0, "name": "Brass Lancer-267", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Resonant Warhorn", "type": "Warcry"}
+	}
+	var warhorn_ally := {
+		"id": 338, "side": 0, "name": "Warhorn Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var warhorn_result := UnitSkillsScript.resolve_warcry(
+		warhorn_actor, [warhorn_actor, warhorn_ally]
+	)
+	assert(warhorn_result.affected == [337, 338])
+	assert(warhorn_actor.atk == 4 and warhorn_ally.atk == 4)
+	ConductorSkillsScript.expire_effects([warhorn_actor, warhorn_ally], 0)
+	ConductorSkillsScript.expire_effects([warhorn_actor, warhorn_ally], 0)
+	assert(warhorn_actor.atk == 3 and warhorn_ally.atk == 3)
+	var absolution_actor := {
+		"id": 339, "side": 0, "name": "Helio Mender-268", "kind": "Lifebinder",
+		"atk": 2, "hp": 7, "max_hp": 7, "effects": [],
+		"skill": {"name": "Absolution Pulse", "type": "Warcry"}
+	}
+	var absolution_ally := {
+		"id": 340, "side": 0, "name": "Afflicted Ally", "kind": "Warden",
+		"atk": 2, "hp": 4, "max_hp": 8, "effects": [],
+		"stun_turns": 2, "immobilized_turns": 1, "poison_turns": 3, "poison_damage": 1,
+		"silenced_turns": 1, "vulnerable_turns": 2, "vulnerable_stacks": 1
+	}
+	var absolution_result := UnitSkillsScript.resolve_warcry(
+		absolution_actor, [absolution_actor, absolution_ally]
+	)
+	assert(absolution_result.affected == [339, 340])
+	assert(absolution_ally.stun_turns == 0 and absolution_ally.immobilized_turns == 0)
+	assert(absolution_ally.poison_turns == 0 and absolution_ally.silenced_turns == 0)
+	assert(absolution_ally.vulnerable_turns == 0 and absolution_ally.hp == 6)
+	var sanitize_actor := {
+		"id": 341, "side": 0, "name": "Zephyr Mender-269", "kind": "Lifebinder",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": [], "row": 0, "col": 1,
+		"skill": {"name": "Sanitize Corridor", "type": "Warcry"}
+	}
+	var sanitize_ally := {
+		"id": 342, "side": 0, "name": "Lane Ally", "kind": "Warden",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": [], "row": 1, "col": 2,
+		"immobilized_turns": 2, "stun_turns": 1
+	}
+	var sanitize_other := {
+		"id": 343, "side": 0, "name": "Other Lane Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 3,
+		"immobilized_turns": 2
+	}
+	var sanitize_result := UnitSkillsScript.resolve_warcry(
+		sanitize_actor, [sanitize_actor, sanitize_ally, sanitize_other], -1, null, 1
+	)
+	assert(sanitize_result.affected == [342])
+	assert(sanitize_ally.immobilized_turns == 0 and sanitize_ally.stun_turns == 0)
+	assert(sanitize_ally.hp == 5 and sanitize_ally.max_hp == 5)
+	assert(sanitize_other.immobilized_turns == 2)
+	var overdrive_actor := {
+		"id": 344, "side": 0, "name": "Brass Blade-270", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Overdrive Charge", "type": "Warcry"}
+	}
+	var overdrive_result := UnitSkillsScript.resolve_warcry(
+		overdrive_actor, [overdrive_actor]
+	)
+	assert(overdrive_result.affected == [344])
+	assert(overdrive_actor.overdrive_turns == 3)
+	UnitSkillsScript.resolve_chants(0, [overdrive_actor], "end")
+	UnitSkillsScript.resolve_chants(0, [overdrive_actor], "end")
+	assert(overdrive_actor.atk == 4 and overdrive_actor.overdrive_turns == 1)
+	var overdrive_results := UnitSkillsScript.resolve_chants(0, [overdrive_actor], "end")
+	assert(overdrive_results.size() == 1)
+	assert(overdrive_actor.atk == 6 and overdrive_actor.overdrive_turns == 0)
+	var decommission_actor := {
+		"id": 345, "side": 0, "name": "Flux Lancer-271", "kind": "Strider",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Decommission", "type": "Warcry"}
+	}
+	var decommission_weak := {
+		"id": 346, "side": 1, "name": "Weak Enemy", "kind": "Lifebinder",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var decommission_strong := {
+		"id": 347, "side": 1, "name": "Strong Enemy", "kind": "Duelist",
+		"atk": 5, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var decommission_result := UnitSkillsScript.resolve_warcry(
+		decommission_actor,
+		[decommission_actor, decommission_weak, decommission_strong], 346
+	)
+	assert(decommission_result.affected == [346])
+	assert(decommission_weak.hp == 0 and decommission_strong.hp == 6)
+	var decommission_miss := UnitSkillsScript.resolve_warcry(
+		decommission_actor, [decommission_actor, decommission_strong], 347
+	)
+	assert(decommission_miss.affected.is_empty())
+	assert(decommission_strong.hp == 6)
+	var gridlock_actor := {
+		"id": 348, "side": 0, "name": "Flux Weaver-272", "kind": "Channeler",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Gridlock Field", "type": "Warcry"}
+	}
+	var gridlock_heavy := {
+		"id": 349, "side": 1, "name": "Heavy Enemy", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var gridlock_light := {
+		"id": 350, "side": 1, "name": "Light Enemy", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var gridlock_result := UnitSkillsScript.resolve_warcry(
+		gridlock_actor, [gridlock_actor, gridlock_heavy, gridlock_light]
+	)
+	assert(gridlock_result.affected == [349])
+	assert(gridlock_heavy.immobilized_turns == 1)
+	assert(gridlock_light.get("immobilized_turns", 0) == 0)
+	var equalize_actor := {
+		"id": 351, "side": 0, "name": "Helio Weaver-273", "kind": "Channeler",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Equalize", "type": "Warcry"}
+	}
+	var equalize_enemy := {
+		"id": 352, "side": 1, "name": "Strong Enemy", "kind": "Duelist",
+		"atk": 5, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var equalize_ally := {
+		"id": 353, "side": 0, "name": "Weak Ally", "kind": "Lifebinder",
+		"atk": 2, "hp": 3, "max_hp": 6, "effects": []
+	}
+	var equalize_result := UnitSkillsScript.resolve_warcry(
+		equalize_actor, [equalize_actor, equalize_enemy, equalize_ally]
+	)
+	assert(equalize_result.affected == [352, 353])
+	assert(equalize_enemy.atk == 3)
+	assert(equalize_ally.hp == 5 and equalize_ally.max_hp == 8)
+	var ballast_actor := {
+		"id": 354, "side": 0, "name": "Brass Mender-274", "kind": "Lifebinder",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Ballast Infusion", "type": "Warcry"}
+	}
+	var ballast_ally := {
+		"id": 355, "side": 0, "name": "Ballast Ally", "kind": "Duelist",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var ballast_result := UnitSkillsScript.resolve_warcry(
+		ballast_actor, [ballast_actor, ballast_ally], 355
+	)
+	assert(ballast_result.affected == [355])
+	assert(ballast_ally.atk == 4 and ballast_ally.immobilized_turns == 2)
+	var rewind_actor := {
+		"id": 356, "side": 0, "name": "Zephyr Weaver-275", "kind": "Channeler",
+		"atk": 4, "hp": 7, "max_hp": 7, "effects": [], "row": 0, "col": 3,
+		"skill": {"name": "Temporal Rewind", "type": "Warcry"}
+	}
+	var rewind_ally := {
+		"id": 357, "side": 0, "name": "Rewind Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 4
+	}
+	var rewind_enemy := {
+		"id": 358, "side": 1, "name": "Rewind Enemy", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": [], "row": 1, "col": 2
+	}
+	var rewind_result := UnitSkillsScript.resolve_warcry(
+		rewind_actor, [rewind_actor, rewind_ally, rewind_enemy]
+	)
+	assert(rewind_result.affected == [357, 358])
+	assert(rewind_ally.col == 5 and rewind_ally.protect_turns == 1)
+	assert(rewind_enemy.col == 1 and rewind_enemy.vulnerable_turns == 1)
+	assert(rewind_result.moved.size() == 2)
+	var ember_carrier := {
+		"id": 359, "side": 0, "name": "Cinder Battery-276", "kind": "Artillerist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Ember Recoil", "type": "Chant"}
+	}
+	var ember_enemy := {
+		"id": 360, "side": 1, "name": "Ember Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	# End-phase chant: nothing at the start phase, a hit on a successful roll.
+	assert(UnitSkillsScript.resolve_chants(0, [ember_carrier, ember_enemy], "start", null, 0.2).is_empty())
+	var ember_results := UnitSkillsScript.resolve_chants(
+		0, [ember_carrier, ember_enemy], "end", null, 0.2
+	)
+	assert(ember_results.size() == 1 and ember_results[0].affected == [360])
+	assert(ember_enemy.hp == 4)
+	assert(UnitSkillsScript.resolve_chants(
+		0, [ember_carrier, ember_enemy], "end", null, 0.9
+	).is_empty())
+	assert(ember_enemy.hp == 4)
+	var ramping_carrier := {
+		"id": 361, "side": 0, "name": "Brass Battery-277", "kind": "Artillerist",
+		"atk": 2, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Ramping Dynamo", "type": "Chant"}
+	}
+	var ramping_results := UnitSkillsScript.resolve_chants(0, [ramping_carrier], "start", null, 0.2)
+	assert(ramping_results.size() == 1 and ramping_carrier.atk == 3)
+	assert(UnitSkillsScript.resolve_chants(0, [ramping_carrier], "start", null, 0.9).is_empty())
+	assert(ramping_carrier.atk == 3)
+	var forge_carrier := {
+		"id": 362, "side": 0, "name": "Cinder Blade-278", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Bloodforge Cycle", "type": "Chant"}
+	}
+	var forge_results := UnitSkillsScript.resolve_chants(0, [forge_carrier], "start")
+	assert(forge_results.size() == 1)
+	assert(forge_carrier.atk == 5 and forge_carrier.hp == 5)
+	forge_carrier.hp = 1
+	UnitSkillsScript.resolve_chants(0, [forge_carrier], "start")
+	assert(forge_carrier.atk == 6 and forge_carrier.hp == 1)
+	var dividend_carrier := {
+		"id": 363, "side": 0, "name": "Helio Mender-279", "kind": "Lifebinder",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": [],
+		"skill": {"name": "Patron's Dividend", "type": "Chant"}
+	}
+	var dividend_ally := {
+		"id": 364, "side": 0, "name": "Dividend Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var dividend_results := UnitSkillsScript.resolve_chants(
+		0, [dividend_carrier, dividend_ally], "start"
+	)
+	assert(dividend_results.size() == 1 and dividend_results[0].affected == [364])
+	assert(dividend_ally.hp == 7 and dividend_ally.max_hp == 7 and dividend_ally.atk == 4)
+	assert(dividend_carrier.atk == 2 and dividend_carrier.max_hp == 4)
+	var surge_carrier := {
+		"id": 365, "side": 0, "name": "Helio Mender-280", "kind": "Lifebinder",
+		"atk": 3, "hp": 5, "max_hp": 7, "effects": [],
+		"skill": {"name": "Restoration Surge", "type": "Chant"}
+	}
+	var surge_ally := {
+		"id": 366, "side": 0, "name": "Surge Ally", "kind": "Warden",
+		"atk": 2, "hp": 6, "max_hp": 8, "effects": []
+	}
+	var surge_results := UnitSkillsScript.resolve_chants(
+		0, [surge_carrier, surge_ally], "start", null, 0.2
+	)
+	assert(surge_results.size() == 1)
+	assert(surge_carrier.hp == 7 and surge_ally.hp == 8)
+	assert(surge_carrier.protect_turns == 1)
+	var entropy_carrier := {
+		"id": 367, "side": 0, "name": "Cinder Weaver-281", "kind": "Channeler",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Entropy Field", "type": "Chant"}
+	}
+	var entropy_enemy := {
+		"id": 368, "side": 1, "name": "Entropy Enemy", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var entropy_results := UnitSkillsScript.resolve_chants(
+		0, [entropy_carrier, entropy_enemy], "start"
+	)
+	assert(entropy_results.size() == 1)
+	assert(368 in entropy_results[0].affected and 367 in entropy_results[0].affected)
+	assert(entropy_enemy.hp == 7 and entropy_carrier.atk == 5)
+	var ignition_carrier := {
+		"id": 369, "side": 0, "name": "Cinder Battery-282", "kind": "Artillerist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Ignition Sequence", "type": "Chant"}
+	}
+	var ignition_burned := {
+		"id": 370, "side": 1, "name": "Vulnerable Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"vulnerable_turns": 2, "vulnerable_stacks": 1
+	}
+	var ignition_clean := {
+		"id": 371, "side": 1, "name": "Clean Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var ignition_results := UnitSkillsScript.resolve_chants(
+		0, [ignition_carrier, ignition_burned, ignition_clean], "start"
+	)
+	assert(ignition_results.size() == 1 and ignition_results[0].affected == [370])
+	assert(ignition_burned.hp == 4 and ignition_clean.hp == 6)
+	var collapse_chanter := {
+		"id": 372, "side": 0, "name": "Zephyr Lancer-283", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [], "row": 0, "col": 3,
+		"skill": {"name": "Backline Collapse", "type": "Chant"}
+	}
+	var collapse_behind := {
+		"id": 373, "side": 1, "name": "Behind Enemy", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [], "row": 1, "col": 2
+	}
+	var collapse_front := {
+		"id": 374, "side": 1, "name": "Front Enemy", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [], "row": 2, "col": 4
+	}
+	assert(UnitSkillsScript.resolve_chants(
+		0, [collapse_chanter, collapse_behind, collapse_front], "start"
+	).is_empty())
+	var collapse_results := UnitSkillsScript.resolve_chants(
+		0, [collapse_chanter, collapse_behind, collapse_front], "end"
+	)
+	assert(collapse_results.size() == 1 and collapse_results[0].affected == [373])
+	assert(collapse_behind.atk == 3 and collapse_behind.immobilized_turns == 1)
+	assert(collapse_front.atk == 4 and collapse_front.get("immobilized_turns", 0) == 0)
+	var slip_chanter := {
+		"id": 375, "side": 0, "name": "Zephyr Lancer-284", "kind": "Strider",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Slipstream Chorus", "type": "Chant"}
+	}
+	var slip_ally := {
+		"id": 376, "side": 0, "name": "Slip Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var slip_results := UnitSkillsScript.resolve_chants(
+		0, [slip_chanter, slip_ally], "start", null, 0.2
+	)
+	assert(slip_results.size() == 1)
+	assert(slip_ally.haste_turns == 1 and slip_chanter.protect_turns == 1)
+	var anchor_carrier := {
+		"id": 377, "side": 0, "name": "Zephyr Weaver-285", "kind": "Channeler",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": [],
+		"skill": {"name": "Anchoring Snare", "type": "Chant"}
+	}
+	var anchor_victim := {
+		"id": 378, "side": 1, "name": "Anchored Enemy", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var anchor_results := UnitSkillsScript.resolve_chants(
+		1, [anchor_carrier, anchor_victim], "start", null, -1.0, 378
+	)
+	assert(anchor_results.size() == 1 and anchor_results[0].affected == [378])
+	assert(anchor_victim.immobilized_turns == 1 and anchor_victim.atk == 3)
+	assert(anchor_victim.effects.size() == 1 and anchor_victim.effects[0].turns == 2)
+	var provoke_carrier := {
+		"id": 379, "side": 0, "name": "Cinder Bastion-286", "kind": "Warden",
+		"atk": 2, "hp": 9, "max_hp": 9, "effects": [],
+		"skill": {"name": "Provoking Snare", "type": "Chant"}
+	}
+	var provoke_victim := {
+		"id": 380, "side": 1, "name": "Provoked Enemy", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var provoke_results := UnitSkillsScript.resolve_chants(
+		1, [provoke_carrier, provoke_victim], "start", null, 0.2, 380
+	)
+	assert(provoke_results.size() == 1)
+	assert(provoke_victim.taunt_turns == 1 and provoke_carrier.protect_turns == 1)
+	assert(379 in provoke_results[0].affected and 380 in provoke_results[0].affected)
+	var apex_chanter := {
+		"id": 381, "side": 0, "name": "Flux Battery-287", "kind": "Artillerist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Apex Confluence", "type": "Chant"}
+	}
+	var apex_healthy := {
+		"id": 382, "side": 1, "name": "Healthy Enemy", "kind": "Warden",
+		"atk": 2, "hp": 8, "max_hp": 8, "effects": []
+	}
+	var apex_hurt := {
+		"id": 383, "side": 1, "name": "Hurt Enemy", "kind": "Warden",
+		"atk": 2, "hp": 2, "max_hp": 8, "effects": []
+	}
+	var apex_results := UnitSkillsScript.resolve_chants(
+		0, [apex_chanter, apex_healthy, apex_hurt], "start"
+	)
+	assert(apex_results.size() == 1 and apex_chanter.atk == 4)
+	assert(apex_chanter.effects.size() == 1 and apex_chanter.effects[0].attack == 1)
+	var clear_carrier := {
+		"id": 384, "side": 0, "name": "Helio Weaver-288", "kind": "Channeler",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Clear Signal", "type": "Chant"}
+	}
+	var clear_ally := {
+		"id": 385, "side": 0, "name": "Silenced Ally", "kind": "Duelist",
+		"atk": 3, "hp": 4, "max_hp": 6, "effects": [], "silenced_turns": 2
+	}
+	var clear_results := UnitSkillsScript.resolve_chants(
+		0, [clear_carrier, clear_ally], "start"
+	)
+	assert(clear_results.size() == 1 and clear_results[0].affected == [385])
+	assert(clear_ally.silenced_turns == 0 and clear_ally.hp == 6)
+	var presence_source := {
+		"id": 386, "side": 0, "name": "Helio Bastion-289", "kind": "Warden",
+		"atk": 3, "hp": 10, "max_hp": 10, "effects": [],
+		"skill": {"name": "Command Presence", "type": "Aura"}
+	}
+	var presence_ally := {
+		"id": 387, "side": 0, "name": "Presence Ally", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	UnitSkillsScript.refresh_auras([presence_source, presence_ally])
+	assert(presence_ally.aura_hp == 1 and presence_ally.aura_atk == 1)
+	assert(presence_ally.max_hp == 7 and presence_ally.hp == 7 and presence_ally.atk == 4)
+	presence_source.hp = 0
+	UnitSkillsScript.refresh_auras([presence_source, presence_ally])
+	assert(presence_ally.max_hp == 6 and presence_ally.atk == 3)
+	var guardian_carrier := {
+		"id": 388, "side": 0, "name": "Brass Bastion-290", "kind": "Warden",
+		"atk": 3, "hp": 10, "max_hp": 10, "effects": [],
+		"skill": {"name": "Guardian Protocol", "type": "Warcry"}
+	}
+	var guardian_ally := {
+		"id": 389, "side": 0, "name": "Guarded Ally", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var guardian_attacker := {
+		"id": 390, "side": 1, "name": "Attacker", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var guardian_squad: Array = [guardian_carrier, guardian_ally, guardian_attacker]
+	var guardian_result := UnitSkillsScript.resolve_warcry(
+		guardian_carrier, guardian_squad, 389
+	)
+	assert(guardian_result.affected == [389])
+	assert(guardian_ally.cover_turns == 1 and guardian_ally.cover_source_id == 388)
+	var cover_hit := BattleSimulatorScript.apply_unit_damage(
+		guardian_ally, 3, guardian_attacker, guardian_squad
+	)
+	assert(cover_hit.get("redirected_to", -1) == 388)
+	assert(guardian_carrier.hp == 7 and guardian_ally.hp == 6)
+	UnitSkillsScript.expire_statuses(guardian_squad, 1)
+	assert(guardian_ally.cover_turns == 0)
+	assert("cover_source_id" not in guardian_ally)
+	var open_hit := BattleSimulatorScript.apply_unit_damage(
+		guardian_ally, 3, guardian_attacker, guardian_squad
+	)
+	assert(open_hit.get("redirected_to", -1) == -1 and guardian_ally.hp == 3)
+	var drive_actor := {
+		"id": 391, "side": 0, "name": "Zephyr Blade-291", "kind": "Duelist",
+		"atk": 4, "hp": 6, "max_hp": 6, "effects": [],
+		"skill": {"name": "Twin Drive", "type": "Warcry"}
+	}
+	var drive_ally := {
+		"id": 392, "side": 0, "name": "Driven Ally", "kind": "Artillerist",
+		"atk": 3, "hp": 5, "max_hp": 5, "effects": []
+	}
+	var drive_result := UnitSkillsScript.resolve_warcry(drive_actor, [drive_actor, drive_ally], 392)
+	assert(drive_result.affected == [392])
+	assert(drive_ally.doublestrike_turns == 1)
+	UnitSkillsScript.expire_statuses([drive_actor, drive_ally], 0)
+	assert(drive_ally.doublestrike_turns == 0)
+	var lag_actor := {
+		"id": 393, "side": 0, "name": "Flux Weaver-292", "kind": "Channeler",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 1, "col": 2,
+		"skill": {"name": "Lag Field", "type": "Warcry"}
+	}
+	var lag_enemy := {
+		"id": 394, "side": 1, "name": "Delayed Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 0, "col": 4
+	}
+	var lag_bystander := {
+		"id": 395, "side": 1, "name": "Bystander Enemy", "kind": "Duelist",
+		"atk": 3, "hp": 6, "max_hp": 6, "effects": [], "row": 2, "col": 4
+	}
+	var lag_result := UnitSkillsScript.resolve_warcry(
+		lag_actor, [lag_actor, lag_enemy, lag_bystander], -1, null, 0
+	)
+	assert(lag_result.affected == [394])
+	assert(lag_enemy.delayed_turns == 1 and lag_bystander.get("delayed_turns", 0) == 0)
+	UnitSkillsScript.expire_statuses([lag_enemy], 1)
+	assert(lag_enemy.delayed_turns == 0)
+	var pyre_actor := {
+		"id": 396, "side": 0, "name": "Cinder Mender-293", "kind": "Lifebinder",
+		"atk": 3, "hp": 7, "max_hp": 7, "effects": [],
+		"skill": {"name": "Sacrificial Pyre", "type": "Warcry"}
+	}
+	var pyre_sacrifice := {
+		"id": 397, "side": 0, "name": "Sacrificed Ally", "kind": "Strider",
+		"atk": 2, "hp": 4, "max_hp": 4, "effects": []
+	}
+	var pyre_ally := {
+		"id": 398, "side": 0, "name": "Pyre Ally", "kind": "Duelist",
+		"atk": 2, "hp": 6, "max_hp": 6, "effects": []
+	}
+	var pyre_result := UnitSkillsScript.resolve_warcry(
+		pyre_actor, [pyre_actor, pyre_sacrifice, pyre_ally], 397
+	)
+	assert(pyre_sacrifice.hp == 0)
+	assert(397 in pyre_result.affected)
+	assert(pyre_actor.atk == 5 and pyre_ally.atk == 4)
+	assert(pyre_actor.effects.size() == 1 and pyre_actor.effects[0].turns == 2)
 	var sunder_actor := {
 		"id": 92, "side": 0, "name": "Brass Battery-083",
 		"skill": {"name": "Breach Charge", "type": "Warcry"}

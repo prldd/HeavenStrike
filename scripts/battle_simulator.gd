@@ -206,9 +206,26 @@ static func estimate_squad_power(cards: Array) -> float:
 ## Silent Cycle (0 damage from Silenced attackers while the carrier lives).
 ## The returned `immunity` names the immunity that zeroed the hit ("" when
 ## none) so callers can message it and fire Retaliation Screen's response.
+## When `units` is supplied, Guardian Protocol redirects attack damage: a hit
+## against a living unit with `cover_turns` lands on its living coverer
+## (`cover_source_id`) instead, exactly once per hit, and the result names
+## both units via `redirected_from`/`redirected_to`.
 static func apply_unit_damage(
-	unit: Dictionary, amount: int, source: Dictionary = {}
+	unit: Dictionary, amount: int, source: Dictionary = {}, units: Array = []
 ) -> Dictionary:
+	if (
+		not units.is_empty() and not source.is_empty()
+		and unit.get("cover_turns", 0) > 0
+	):
+		var coverer = unit_by_id(units, int(unit.get("cover_source_id", -1)))
+		if (
+			coverer != null and coverer.get("hp", 0) > 0
+			and coverer.get("id", -1) != unit.get("id", -1)
+		):
+			var redirected: Dictionary = apply_unit_damage(coverer, amount, source)
+			redirected["redirected_from"] = unit.get("id", -1)
+			redirected["redirected_to"] = coverer.get("id", -1)
+			return redirected
 	var before: int = unit.get("hp", 0)
 	var adjusted_amount := maxi(0, amount)
 	var protected: bool = unit.get("protect_turns", 0) > 0

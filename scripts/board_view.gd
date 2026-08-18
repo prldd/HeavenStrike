@@ -1757,6 +1757,14 @@ func _draw_status_badges(unit: Dictionary, rect: Rect2) -> void:
 		badges.append({"label": "SI%d" % unit.silenced_turns, "color": Color("#a8b8ff")})
 	if unit.get("haste_turns", 0) > 0:
 		badges.append({"label": "H", "color": Color("#f2c44f")})
+	if unit.get("slow_turns", 0) > 0:
+		badges.append({"label": "SL%d" % unit.slow_turns, "color": Color("#52cfff")})
+	if unit.get("delayed_turns", 0) > 0:
+		badges.append({"label": "DL%d" % unit.delayed_turns, "color": Color("#52cfff")})
+	if unit.get("cover_turns", 0) > 0:
+		badges.append({"label": "CV%d" % unit.cover_turns, "color": Color("#71e6f5")})
+	if unit.get("doublestrike_turns", 0) > 0:
+		badges.append({"label": "X2", "color": Color("#f2c44f")})
 	if unit.get("doom_turns", 0) > 0:
 		badges.append({"label": "D%d" % unit.doom_turns, "color": Color("#ff668f")})
 	if unit.get("summon_forth_turns", 0) > 0:

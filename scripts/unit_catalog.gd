@@ -25,11 +25,11 @@ const CLASS_COLORS := {
 # documentation/Unit_Faction_and_Sprite_Staging.md. Icons not listed here are
 # Universal: neutral units that can appear in any faction's squad.
 const FACTION_ICON_IDS := {
-	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 36, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215, 219, 220],
-	"Steam": [96, 97, 104, 105, 106, 111, 112, 136, 137, 138, 139, 186, 187, 200, 201, 117, 118, 43, 44, 77, 78, 83, 84, 98, 99, 28, 34, 158, 159, 51, 52, 180, 181, 196, 197],
-	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 42, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 221, 222, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209],
-	"Fusion": [53, 54, 154, 155, 73, 74, 25, 31, 79, 80, 19, 20, 140, 141, 45, 46, 47, 92, 93, 107, 108, 188, 189, 192, 193, 206, 207, 210, 211, 212, 27, 33, 184, 185, 194, 195],
-	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 223, 224, 48, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163]
+	"Coal": [119, 120, 166, 167, 15, 16, 17, 18, 36, 69, 70, 63, 64, 65, 66, 67, 68, 170, 171, 176, 177, 182, 183, 190, 191, 90, 91, 115, 116, 198, 199, 148, 149, 213, 214, 215, 219, 220, 225, 229, 235, 237, 238, 239, 252, 254, 258, 261, 264, 265, 276, 278, 281, 282, 286, 293],
+	"Steam": [96, 97, 104, 105, 106, 111, 112, 136, 137, 138, 139, 186, 187, 200, 201, 117, 118, 43, 44, 77, 78, 83, 84, 98, 99, 28, 34, 158, 159, 51, 52, 180, 181, 196, 197, 227, 233, 240, 241, 242, 253, 255, 260, 267, 270, 274, 277, 290],
+	"Wind": [113, 114, 152, 153, 75, 76, 37, 38, 41, 42, 109, 110, 144, 145, 178, 179, 202, 203, 204, 205, 221, 222, 39, 40, 88, 89, 59, 60, 150, 151, 168, 169, 23, 24, 71, 72, 208, 209, 230, 234, 243, 244, 245, 259, 269, 275, 283, 284, 285, 291],
+	"Fusion": [53, 54, 154, 155, 73, 74, 25, 31, 79, 80, 19, 20, 140, 141, 45, 46, 47, 92, 93, 107, 108, 188, 189, 192, 193, 206, 207, 210, 211, 212, 27, 33, 184, 185, 194, 195, 226, 231, 246, 247, 248, 256, 257, 263, 266, 271, 272, 287, 292],
+	"Solar": [128, 129, 134, 135, 172, 173, 81, 82, 130, 131, 57, 58, 61, 62, 26, 32, 55, 56, 223, 224, 48, 49, 50, 102, 103, 123, 124, 125, 126, 127, 132, 133, 142, 143, 160, 161, 162, 163, 228, 232, 236, 249, 250, 251, 262, 268, 273, 279, 280, 288, 289]
 }
 
 const ICON_ART_IDS := {
@@ -222,7 +222,21 @@ const ICON_ART_IDS := {
 	213: 107, # Cinder Mender-213
 	214: 108, # Cinder Mender-214
 	215: 633, # Cinder Mender-215
-	216: 1306 # Relay Ground Transport-216 (mission-only)
+	216: 1306, # Relay Ground Transport-216 (mission-only)
+	231: 1307, # Flux Weaver-231 (231 collides with Helio Bastion-134's art ID)
+	232: 1308, # Helio Battery-232 (232 collides with Helio Bastion-135's art ID)
+	241: 1309, # Brass Blade-241 (241 collides with Brass Bastion-136's art ID)
+	242: 1310, # Brass Lancer-242 (242 collides with Brass Bastion-137's art ID)
+	253: 1311, # Brass Blade-253 (253 collides with Brass Bastion-138's art ID)
+	254: 1312, # Cinder Lancer-254 (254 collides with Brass Bastion-139's art ID)
+	259: 1313, # Zephyr Lancer-259 (259 collides with Flux Battery-140's art ID)
+	260: 1314, # Brass Bastion-260 (260 collides with Flux Battery-141's art ID)
+	263: 1315, # Flux Weaver-263 (263 collides with Brass Mender-196's art ID)
+	264: 1316, # Cinder Weaver-264 (264 collides with Brass Mender-197's art ID)
+	275: 1317, # Zephyr Weaver-275 (275 collides with Helio Mender-142's art ID)
+	276: 1318, # Cinder Battery-276 (276 collides with Helio Mender-143's art ID)
+	289: 1319, # Helio Bastion-289 (289 collides with Brass Bastion-096's art ID)
+	290: 1320 # Brass Bastion-290 (290 collides with Brass Bastion-097's art ID)
 }
 
 ## Original chassis families keyed by project icon. Units missing from this
@@ -335,7 +349,73 @@ const CHASSIS_FAMILIES := {
 	221: "swift", # Zephyr Lancer-221
 	222: "swift", # Zephyr Lancer-222
 	223: "resonant", # Helio Mender-223
-	224: "resonant" # Helio Mender-224
+	224: "resonant", # Helio Mender-224
+	225: "bulwark", # Cinder Blade-225
+	226: "resonant", # Flux Weaver-226
+	228: "bulwark", # Helio Bastion-228
+	229: "bulwark", # Cinder Bastion-229
+	230: "swift", # Zephyr Lancer-230
+	231: "resonant", # Flux Weaver-231
+	232: "swift", # Helio Battery-232
+	233: "resonant", # Brass Mender-233
+	234: "swift", # Zephyr Blade-234
+	235: "swift", # Cinder Lancer-235
+	236: "resonant", # Helio Mender-236
+	237: "bulwark", # Cinder Bastion-237
+	238: "resonant", # Cinder Mender-238
+	239: "resonant", # Cinder Weaver-239
+	241: "bulwark", # Brass Blade-241
+	242: "swift", # Brass Lancer-242
+	243: "swift", # Zephyr Lancer-243
+	244: "resonant", # Zephyr Mender-244
+	245: "swift", # Zephyr Blade-245
+	246: "resonant", # Flux Weaver-246
+	248: "swift", # Flux Lancer-248
+	249: "bulwark", # Helio Bastion-249
+	250: "resonant", # Helio Weaver-250
+	251: "resonant", # Helio Mender-251
+	252: "bulwark", # Cinder Blade-252
+	253: "bulwark", # Brass Blade-253
+	254: "swift", # Cinder Lancer-254
+	255: "resonant", # Brass Battery-255
+	256: "swift", # Flux Lancer-256
+	257: "resonant", # Flux Weaver-257
+	258: "resonant", # Cinder Weaver-258
+	259: "swift", # Zephyr Lancer-259
+	260: "bulwark", # Brass Bastion-260
+	261: "bulwark", # Cinder Bastion-261
+	262: "bulwark", # Helio Bastion-262
+	263: "resonant", # Flux Weaver-263
+	264: "resonant", # Cinder Weaver-264
+	265: "resonant", # Cinder Weaver-265
+	266: "resonant", # Flux Weaver-266
+	267: "swift", # Brass Lancer-267
+	268: "resonant", # Helio Mender-268
+	269: "resonant", # Zephyr Mender-269
+	270: "bulwark", # Brass Blade-270
+	271: "swift", # Flux Lancer-271
+	272: "resonant", # Flux Weaver-272
+	273: "resonant", # Helio Weaver-273
+	274: "resonant", # Brass Mender-274
+	275: "resonant", # Zephyr Weaver-275
+	276: "resonant", # Cinder Battery-276
+	277: "resonant", # Brass Battery-277
+	278: "bulwark", # Cinder Blade-278
+	279: "resonant", # Helio Mender-279
+	280: "resonant", # Helio Mender-280
+	281: "resonant", # Cinder Weaver-281
+	282: "resonant", # Cinder Battery-282
+	283: "swift", # Zephyr Lancer-283
+	284: "swift", # Zephyr Lancer-284
+	285: "resonant", # Zephyr Weaver-285
+	286: "bulwark", # Cinder Bastion-286
+	287: "resonant", # Flux Battery-287
+	288: "resonant", # Helio Weaver-288
+	289: "bulwark", # Helio Bastion-289
+	290: "bulwark", # Brass Bastion-290
+	291: "bulwark", # Zephyr Blade-291
+	292: "resonant", # Flux Weaver-292
+	293: "resonant" # Cinder Mender-293
 }
 
 static var _units: Array[UnitData] = []
@@ -422,7 +502,76 @@ const RANK_VALUES := {
 	"Foundation Grid": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "1 ATK"], ["3 HP", "1 ATK"], ["3 HP", "2 ATK"]],
 	"Aegis Lattice": [["2 HP"], ["3 HP"], ["4 HP"], ["5 HP"], ["6 HP"]],
 	"Vector Manifold": [["1 Move"], ["1 Move"], ["1 Move"], ["2 Move"], ["2 Move"]],
-	"Resonance Pulse": [["1 HP", "1 turn"], ["1 HP", "2 turns"], ["2 HP", "2 turns"], ["2 HP", "3 turns"], ["3 HP", "3 turns"]]
+	"Resonance Pulse": [["1 HP", "1 turn"], ["1 HP", "2 turns"], ["2 HP", "2 turns"], ["2 HP", "3 turns"], ["3 HP", "3 turns"]],
+	"Siphon Edge": [["70% chance", "1 ATK", "2 turns"], ["80% chance", "1 ATK", "2 turns"], ["90% chance", "2 ATK", "2 turns"], ["100% chance", "2 ATK", "3 turns"], ["100% chance", "3 ATK", "3 turns"]],
+	"Static Lash": [["35% chance", "1 turn"], ["40% chance", "1 turn"], ["45% chance", "1 turn"], ["50% chance", "2 turns"], ["55% chance", "2 turns"]],
+	"Shrapnel Arc": [["1 damage"], ["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"]],
+	"Grudge Capacitor": [["60% chance", "1 ATK"], ["70% chance", "1 ATK"], ["80% chance", "1 ATK"], ["90% chance", "2 ATK"], ["100% chance", "2 ATK"]],
+	"Mirror Plating": [["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"]],
+	"Command Uplink": [["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"]],
+	"Blackout Burst": [["1 turn"], ["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"]],
+	"Seismic Salvo": [["1 damage", "1 space"], ["2 damage", "1 space"], ["2 damage", "2 spaces"], ["3 damage", "2 spaces"], ["3 damage", "3 spaces"]],
+	"Rally Drumbeat": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Second Wind": [["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"], ["4 turns"]],
+	"Interference Net": [["2 ATK", "2 turns"], ["2 ATK", "3 turns"], ["3 ATK", "3 turns"], ["3 ATK", "4 turns"], ["4 ATK", "4 turns"]],
+	"Siege Rhythm": [["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"], ["3 ATK"]],
+	"Intimidating Presence": [["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"]],
+	"Venom Harvest": [["1 damage"], ["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"]],
+	"Corrosive Detonation": [["1 damage"], ["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"]],
+	"Volatile Core": [["2 damage"], ["3 damage"], ["3 damage"], ["4 damage"], ["5 damage"]],
+	"Execute Protocol": [["1 damage"], ["2 damage"], ["2 damage"], ["3 damage"], ["4 damage"]],
+	"Vanguard Doctrine": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Feint Step": [["1 ATK", "1 turn"], ["1 ATK", "2 turns"], ["2 ATK", "2 turns"], ["2 ATK", "3 turns"], ["3 ATK", "3 turns"]],
+	"Purge Wave": [["2 turns"], ["3 turns"], ["3 turns"], ["4 turns"], ["4 turns"]],
+	"Blade Doctrine": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Death Knell": [["4 turns"], ["4 turns"], ["3 turns"], ["3 turns"], ["2 turns"]],
+	"Gunner Doctrine": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Frostbrand Strike": [["50% chance", "1 turn"], ["60% chance", "1 turn"], ["70% chance", "2 turns"], ["80% chance", "2 turns"], ["90% chance", "2 turns"]],
+	"Rampart Doctrine": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Conduit Doctrine": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Field Doctrine": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Concussion Blow": [["30% chance", "1 turn"], ["33% chance", "1 turn"], ["36% chance", "1 turn"], ["38% chance", "2 turns"], ["40% chance", "2 turns"]],
+	"Executioner Spike": [["25% chance", "2 damage"], ["35% chance", "2 damage"], ["45% chance", "3 damage"], ["55% chance", "3 damage"], ["65% chance", "4 damage"]],
+	"Shieldbreaker": [["1 damage"], ["2 damage"], ["3 damage"], ["4 damage"], ["5 damage"]],
+	"Scatter Volley": [["30% chance", "1 damage", "1 random"], ["40% chance", "1 damage", "1 random"], ["50% chance", "1 damage", "2 random"], ["60% chance", "2 damage", "2 random"], ["70% chance", "2 damage", "2 random"]],
+	"Arc Cascade": [["1 damage", "20% chance"], ["2 damage", "30% chance"], ["2 damage", "40% chance"], ["3 damage", "50% chance"], ["3 damage", "60% chance"]],
+	"Hushing Resonance": [["40% chance", "1 turn"], ["50% chance", "1 turn"], ["60% chance", "1 turn"], ["70% chance", "2 turns"], ["80% chance", "2 turns"]],
+	"Leech Protocol": [["50% chance", "2 HP"], ["60% chance", "2 HP"], ["70% chance", "3 HP"], ["80% chance", "3 HP"], ["90% chance", "4 HP"]],
+	"Concussive Repulse": [["1", "40% chance", "1 turn"], ["2", "50% chance", "1 turn"], ["2", "60% chance", "1 turn"], ["3", "70% chance", "2 turns"], ["3", "80% chance", "2 turns"]],
+	"Retribution Jolt": [["40% chance", "1 damage"], ["45% chance", "1 damage"], ["50% chance", "2 damage"], ["55% chance", "2 damage"], ["60% chance", "3 damage"]],
+	"Venom Barb": [["1 ATK", "2 turns"], ["2 ATK", "2 turns"], ["2 ATK", "3 turns"], ["3 ATK", "3 turns"], ["3 ATK", "4 turns"]],
+	"Emergency Protocol": [["4 HP", "2 HP", "30% chance"], ["4 HP", "3 HP", "40% chance"], ["5 HP", "3 HP", "50% chance"], ["5 HP", "4 HP", "55% chance"], ["6 HP", "4 HP", "60% chance"]],
+	"Stasis Bolt": [["1 turn", "30% chance"], ["1 turn", "40% chance"], ["2 turns", "45% chance"], ["2 turns", "50% chance"], ["2 turns", "60% chance"]],
+	"Exposing Frequency": [["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"]],
+	"Toxic Miasma": [["1 damage", "2 turns"], ["2 damage", "2 turns"], ["2 damage", "3 turns"], ["3 damage", "3 turns"], ["3 damage", "4 turns"]],
+	"Discordant Blast": [["1 damage", "1 ATK", "2 turns"], ["2 damage", "1 ATK", "2 turns"], ["2 damage", "2 ATK", "2 turns"], ["3 damage", "2 ATK", "3 turns"], ["3 damage", "2 ATK", "3 turns"]],
+	"Resonant Warhorn": [["1 ATK", "2 turns"], ["1 ATK", "3 turns"], ["2 ATK", "3 turns"], ["2 ATK", "4 turns"], ["2 ATK", "4 turns"]],
+	"Absolution Pulse": [["2 HP"], ["3 HP"], ["3 HP"], ["4 HP"], ["4 HP"]],
+	"Sanitize Corridor": [["1 HP"], ["2 HP"], ["2 HP"], ["3 HP"], ["4 HP"]],
+	"Overdrive Charge": [["3", "2 ATK"], ["3", "3 ATK"], ["2", "3 ATK"], ["2", "4 ATK"], ["2", "5 ATK"]],
+	"Decommission": [["2 ATK"], ["3 ATK"], ["3 ATK"], ["4 ATK"], ["5 ATK"]],
+	"Gridlock Field": [["4 ATK", "1 turn"], ["4 ATK", "1 turn"], ["3 ATK", "2 turns"], ["3 ATK", "2 turns"], ["2 ATK", "2 turns"]],
+	"Equalize": [["2 ATK", "2 HP"], ["2 ATK", "3 HP"], ["3 ATK", "3 HP"], ["3 ATK", "4 HP"], ["4 ATK", "4 HP"]],
+	"Ballast Infusion": [["2 ATK", "2 turns"], ["3 ATK", "2 turns"], ["3 ATK", "2 turns"], ["4 ATK", "3 turns"], ["4 ATK", "3 turns"]],
+	"Temporal Rewind": [["1 turn", "1 turn"], ["2 turns", "1 turn"], ["2 turns", "2 turns"], ["3 turns", "2 turns"], ["3 turns", "3 turns"]],
+	"Ember Recoil": [["30% chance", "1 damage"], ["35% chance", "1 damage"], ["40% chance", "2 damage"], ["45% chance", "2 damage"], ["50% chance", "3 damage"]],
+	"Ramping Dynamo": [["30% chance", "1 ATK"], ["35% chance", "1 ATK"], ["40% chance", "1 ATK"], ["45% chance", "2 ATK"], ["50% chance", "2 ATK"]],
+	"Bloodforge Cycle": [["1 ATK", "1 HP"], ["2 ATK", "1 HP"], ["2 ATK", "1 HP"], ["3 ATK", "2 HP"], ["3 ATK", "2 HP"]],
+	"Patron's Dividend": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "1 ATK"], ["3 HP", "2 ATK"], ["3 HP", "2 ATK"]],
+	"Restoration Surge": [["2 HP", "30% chance", "1 turn"], ["2 HP", "35% chance", "1 turn"], ["3 HP", "40% chance", "1 turn"], ["3 HP", "45% chance", "2 turns"], ["4 HP", "50% chance", "2 turns"]],
+	"Entropy Field": [["1 damage", "1 ATK"], ["1 damage", "1 ATK"], ["2 damage", "1 ATK"], ["2 damage", "2 ATK"], ["3 damage", "2 ATK"]],
+	"Ignition Sequence": [["1 damage"], ["2 damage"], ["2 damage"], ["3 damage"], ["3 damage"]],
+	"Backline Collapse": [["1 ATK", "1 turn"], ["1 ATK", "1 turn"], ["2 ATK", "1 turn"], ["2 ATK", "2 turns"], ["2 ATK", "2 turns"]],
+	"Slipstream Chorus": [["1 turn", "30% chance", "1 turn"], ["1 turn", "35% chance", "1 turn"], ["2 turns", "40% chance", "1 turn"], ["2 turns", "45% chance", "2 turns"], ["2 turns", "50% chance", "2 turns"]],
+	"Anchoring Snare": [["1 turn", "1 ATK", "2 turns"], ["2 turns", "1 ATK", "2 turns"], ["2 turns", "1 ATK", "3 turns"], ["2 turns", "2 ATK", "3 turns"], ["3 turns", "2 ATK", "3 turns"]],
+	"Provoking Snare": [["1 turn", "30% chance", "1 turn"], ["2 turns", "35% chance", "1 turn"], ["2 turns", "40% chance", "1 turn"], ["2 turns", "45% chance", "2 turns"], ["3 turns", "50% chance", "2 turns"]],
+	"Apex Confluence": [["1 ATK"], ["1 ATK"], ["2 ATK"], ["2 ATK"], ["3 ATK"]],
+	"Clear Signal": [["1 ally", "2 HP"], ["2 allies", "2 HP"], ["2 allies", "3 HP"], ["3 allies", "3 HP"], ["3 allies", "4 HP"]],
+	"Command Presence": [["1 HP", "1 ATK"], ["2 HP", "1 ATK"], ["2 HP", "1 ATK"], ["3 HP", "2 ATK"], ["3 HP", "2 ATK"]],
+	"Guardian Protocol": [["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"]],
+	"Twin Drive": [["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"], ["3 turns"]],
+	"Lag Field": [["1 turn"], ["1 turn"], ["2 turns"], ["2 turns"], ["3 turns"]],
+	"Sacrificial Pyre": [["2 ATK", "2 turns"], ["2 ATK", "3 turns"], ["3 ATK", "3 turns"], ["3 ATK", "4 turns"], ["4 ATK", "4 turns"]]
 }
 
 ## Player-facing copy is authored here rather than embedded in roster rows.
@@ -498,7 +647,76 @@ const SKILL_DESCRIPTIONS := {
 	"Foundation Grid": "Other allied Standard chassis gain {0} and {1} while this unit is active.",
 	"Aegis Lattice": "Other allied Bulwark chassis gain {0} while this unit is active.",
 	"Vector Manifold": "Other allied Swift chassis gain {0} while this unit is active.",
-	"Resonance Pulse": "At turn start, other allied Resonant chassis restore {0} and gain Regen for {1}."
+	"Resonance Pulse": "At turn start, other allied Resonant chassis restore {0} and gain Regen for {1}.",
+	"Siphon Edge": "Each attack has {0} to steal {1} from its target for {2}.",
+	"Static Lash": "Each attack has {0} to Silence its target for {1}.",
+	"Shrapnel Arc": "After attacking, deal {0} to every other enemy in the target's lane.",
+	"Grudge Capacitor": "After being attacked, this unit has {0} to permanently gain {1}.",
+	"Mirror Plating": "After being attacked, the attacker becomes Vulnerable for {0}.",
+	"Command Uplink": "On deployment, allied Defenders and Fighters gain Haste for {0}.",
+	"Blackout Burst": "On deployment, Silence enemies in one lane for {0}.",
+	"Seismic Salvo": "On deployment, deal {0} to enemies in a selected lane and knock them back {1}.",
+	"Rally Drumbeat": "At turn start, other allies with Protect gain {0} for 1 turn.",
+	"Second Wind": "At turn start, if this unit is below half HP it gains Regen and Protect for {0}.",
+	"Interference Net": "At the opponent's turn start, their newest unit loses {0} for {1}.",
+	"Siege Rhythm": "Other allied units with Haste gain {0} while this unit is active.",
+	"Intimidating Presence": "On deployment, Taunt enemies in this unit's lane for {0}.",
+	"Venom Harvest": "At turn end, Poisoned enemies take {0}.",
+	"Corrosive Detonation": "On deployment, consume a selected enemy's Poison to deal {0} for each remaining turn.",
+	"Volatile Core": "When this unit falls, its attacker takes {0}.",
+	"Execute Protocol": "Attacks against targets below half HP deal +{0}.",
+	"Vanguard Doctrine": "Other allied Scouts gain {0} while this unit is active.",
+	"Feint Step": "After being attacked, gain Haste and the attacker loses {0} for {1}.",
+	"Purge Wave": "On deployment, remove Immobilise, Stun, Silence, and Poison from a selected ally and grant it Regen for {0}.",
+	"Blade Doctrine": "Other allied Fighters gain {0} while this unit is active.",
+	"Death Knell": "On deployment, Doom a selected enemy; it falls in {0}.",
+	"Gunner Doctrine": "Other allied Gunners gain {0} while this unit is active.",
+	"Frostbrand Strike": "Each attack has {0} to Slow its target for {1}.",
+	"Rampart Doctrine": "Other allied Defenders gain {0} while this unit is active.",
+	"Conduit Doctrine": "Other allied Mages gain {0} while this unit is active.",
+	"Field Doctrine": "Other allied Priests gain {0} while this unit is active.",
+	"Concussion Blow": "Each attack has {0} to Stun its target for {1}.",
+	"Executioner Spike": "After attacking, this unit has {0} to deal {1} to its target.",
+	"Shieldbreaker": "After attacking, remove the target's Protect and deal {0} to it.",
+	"Scatter Volley": "Each attack has {0} to deal {1} to {2} enemies.",
+	"Arc Cascade": "After attacking, a random enemy in the target's lane takes {0}; {1} to Stun it for 1 turn.",
+	"Hushing Resonance": "Each attack has {0} to Silence its target and adjacent enemies for {1}.",
+	"Leech Protocol": "After attacking, this unit has {0} to restore {1} to itself.",
+	"Concussive Repulse": "After attacking, knock the target back {0} spaces; {1} to Silence it for {2}.",
+	"Retribution Jolt": "After being attacked, this unit has {0} to deal {1} to the attacker and Stun it for 1 turn.",
+	"Venom Barb": "After being attacked, the attacker loses {0} and is Poisoned for {1}.",
+	"Emergency Protocol": "After being attacked, if this unit has {0} or less, restore {1}; {2} to gain Protect for 1 turn.",
+	"Stasis Bolt": "On deployment, Stun a selected enemy for {0}; {1} to Stun another random enemy for the same duration.",
+	"Exposing Frequency": "On deployment, all enemies become Vulnerable for {0}.",
+	"Toxic Miasma": "On deployment, all enemies take {0} and are Poisoned for {1}.",
+	"Discordant Blast": "On deployment, all enemies take {0} and lose {1} for {2}.",
+	"Resonant Warhorn": "On deployment, all allies gain {0} for {1}.",
+	"Absolution Pulse": "On deployment, remove Stun, Immobilise, Poison, Silence, and Vulnerable from all allies and restore {0} to them.",
+	"Sanitize Corridor": "On deployment, allies in a selected lane remove Immobilise and Stun and gain {0}.",
+	"Overdrive Charge": "On deployment, begin charging: after {0} turns, this unit permanently gains {1}.",
+	"Decommission": "On deployment, Defeat a selected enemy with {0} or less.",
+	"Gridlock Field": "On deployment, Immobilise all enemies with {0} or more for {1}.",
+	"Equalize": "On deployment, the enemy with the highest ATK loses {0}; the ally with the lowest HP gains {1}.",
+	"Ballast Infusion": "On deployment, a selected ally gains {0} but is Immobilised for {1}.",
+	"Temporal Rewind": "On deployment, knock all other units back 1 space; allies gain Protect for {0} and enemies become Vulnerable for {1}.",
+	"Ember Recoil": "At the end of your turn, {0} to deal {1} to a random enemy.",
+	"Ramping Dynamo": "At the start of your turn, {0} to permanently gain {1}.",
+	"Bloodforge Cycle": "At the start of your turn, this unit permanently gains {0} and loses {1}.",
+	"Patron's Dividend": "At the start of your turn, a random other ally permanently gains {0} and {1}.",
+	"Restoration Surge": "At the start of your turn, restore {0} to all allies; {1} to gain Protect for {2}.",
+	"Entropy Field": "At the start of your turn, deal {0} to all enemies and permanently gain {1}.",
+	"Ignition Sequence": "At the start of your turn, deal {0} to every Vulnerable enemy.",
+	"Backline Collapse": "At the end of your turn, enemies behind this unit lose {0} and are Immobilised for {1}.",
+	"Slipstream Chorus": "At the start of your turn, other allies gain Haste for {0}; {1} to gain Protect for {2}.",
+	"Anchoring Snare": "When the enemy deploys a unit, it is Immobilised for {0} and loses {1} for {2}.",
+	"Provoking Snare": "When the enemy deploys a unit, it is Taunted for {0}; {1} to gain Protect for {2}.",
+	"Apex Confluence": "At the start of your turn, this unit gains {0} until end of turn for each enemy above half HP.",
+	"Clear Signal": "At the start of your turn, remove Silence from up to {0} and restore {1} to them.",
+	"Command Presence": "Other allies gain {0} and {1} while this unit is active.",
+	"Guardian Protocol": "On deployment, attack damage against a selected other ally is redirected to this unit for {0}.",
+	"Twin Drive": "On deployment, a selected other ally attacks twice per activation for {0}.",
+	"Lag Field": "On deployment, enemies in a selected lane are Delayed for {0}: they move but cannot attack.",
+	"Sacrificial Pyre": "On deployment, Defeat a selected other ally; all allies gain {0} for {1}."
 }
 
 static func _skill(name: String, type: String, chance: float) -> SkillData:
@@ -766,7 +984,76 @@ static func _build() -> void:
 		_unit('Zephyr Lancer-221', 221, 3, 'Strider', 3, 2, 4, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Vector Manifold', 'Aura', -1.0)),
 		_unit('Zephyr Lancer-222', 222, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', 'Zephyr Lancer-221', _skill('Vector Manifold', 'Aura', -1.0)),
 		_unit('Helio Mender-223', 223, 3, 'Lifebinder', 3, 2, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Resonance Pulse', 'Chant', -1.0)),
-		_unit('Helio Mender-224', 224, 4, 'Lifebinder', 3, 3, 6, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Helio Mender-223', _skill('Resonance Pulse', 'Chant', -1.0))
+		_unit('Helio Mender-224', 224, 4, 'Lifebinder', 3, 3, 6, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', 'Helio Mender-223', _skill('Resonance Pulse', 'Chant', -1.0)),
+		_unit('Cinder Blade-225', 225, 4, 'Duelist', 3, 4, 7, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Siphon Edge', 'Strike', -1.0)),
+		_unit('Flux Weaver-226', 226, 4, 'Channeler', 3, 4, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Static Lash', 'Strike', -1.0)),
+		_unit('Brass Battery-227', 227, 4, 'Artillerist', 3, 4, 6, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Shrapnel Arc', 'Strike', -1.0)),
+		_unit('Helio Bastion-228', 228, 4, 'Warden', 3, 2, 10, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Grudge Capacitor', 'Reaction', -1.0)),
+		_unit('Cinder Bastion-229', 229, 4, 'Warden', 2, 3, 9, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Mirror Plating', 'Reaction', -1.0)),
+		_unit('Zephyr Lancer-230', 230, 3, 'Strider', 3, 3, 4, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Command Uplink', 'Warcry', -1.0)),
+		_unit('Flux Weaver-231', 231, 5, 'Channeler', 3, 4, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Blackout Burst', 'Warcry', -1.0)),
+		_unit('Helio Battery-232', 232, 4, 'Artillerist', 3, 4, 6, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Seismic Salvo', 'Warcry', -1.0)),
+		_unit('Brass Mender-233', 233, 4, 'Lifebinder', 3, 3, 6, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Rally Drumbeat', 'Chant', -1.0)),
+		_unit('Zephyr Blade-234', 234, 3, 'Duelist', 2, 3, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Second Wind', 'Chant', -1.0)),
+		_unit('Cinder Lancer-235', 235, 5, 'Strider', 3, 3, 6, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Interference Net', 'Chant', -1.0)),
+		_unit('Helio Mender-236', 236, 3, 'Lifebinder', 2, 3, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Siege Rhythm', 'Aura', -1.0)),
+		_unit('Cinder Bastion-237', 237, 4, 'Warden', 3, 2, 10, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Intimidating Presence', 'Warcry', -1.0)),
+		_unit('Cinder Mender-238', 238, 4, 'Lifebinder', 2, 3, 5, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Venom Harvest', 'Chant', -1.0)),
+		_unit('Cinder Weaver-239', 239, 4, 'Channeler', 3, 4, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Corrosive Detonation', 'Warcry', -1.0)),
+		_unit('Brass Battery-240', 240, 3, 'Artillerist', 3, 3, 5, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Volatile Core', 'Reaction', -1.0)),
+		_unit('Brass Blade-241', 241, 3, 'Duelist', 2, 4, 5, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Execute Protocol', 'Strike', -1.0)),
+		_unit('Brass Lancer-242', 242, 3, 'Strider', 3, 2, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Vanguard Doctrine', 'Aura', -1.0)),
+		_unit('Zephyr Lancer-243', 243, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Feint Step', 'Reaction', -1.0)),
+		_unit('Zephyr Mender-244', 244, 3, 'Lifebinder', 2, 2, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Purge Wave', 'Warcry', -1.0)),
+		_unit('Zephyr Blade-245', 245, 3, 'Duelist', 2, 3, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Blade Doctrine', 'Aura', -1.0)),
+		_unit('Flux Weaver-246', 246, 5, 'Channeler', 3, 4, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Death Knell', 'Warcry', -1.0)),
+		_unit('Flux Battery-247', 247, 3, 'Artillerist', 3, 3, 6, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Gunner Doctrine', 'Aura', -1.0)),
+		_unit('Flux Lancer-248', 248, 4, 'Strider', 3, 3, 4, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Frostbrand Strike', 'Strike', -1.0)),
+		_unit('Helio Bastion-249', 249, 3, 'Warden', 3, 2, 9, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Rampart Doctrine', 'Aura', -1.0)),
+		_unit('Helio Weaver-250', 250, 3, 'Channeler', 3, 3, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Conduit Doctrine', 'Aura', -1.0)),
+		_unit('Helio Mender-251', 251, 3, 'Lifebinder', 2, 3, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Field Doctrine', 'Aura', -1.0)),
+		_unit('Cinder Blade-252', 252, 3, 'Duelist', 3, 3, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Concussion Blow', 'Strike', -1.0)),
+		_unit('Brass Blade-253', 253, 3, 'Duelist', 2, 4, 5, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Executioner Spike', 'Strike', -1.0)),
+		_unit('Cinder Lancer-254', 254, 3, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Shieldbreaker', 'Strike', -1.0)),
+		_unit('Brass Battery-255', 255, 3, 'Artillerist', 3, 3, 5, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Scatter Volley', 'Strike', -1.0)),
+		_unit('Flux Lancer-256', 256, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Arc Cascade', 'Strike', -1.0)),
+		_unit('Flux Weaver-257', 257, 4, 'Channeler', 3, 4, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Hushing Resonance', 'Strike', -1.0)),
+		_unit('Cinder Weaver-258', 258, 4, 'Channeler', 3, 4, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Leech Protocol', 'Strike', -1.0)),
+		_unit('Zephyr Lancer-259', 259, 3, 'Strider', 3, 2, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Concussive Repulse', 'Strike', -1.0)),
+		_unit('Brass Bastion-260', 260, 4, 'Warden', 3, 2, 10, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Retribution Jolt', 'Reaction', -1.0)),
+		_unit('Cinder Bastion-261', 261, 4, 'Warden', 2, 3, 9, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Venom Barb', 'Reaction', -1.0)),
+		_unit('Helio Bastion-262', 262, 3, 'Warden', 2, 2, 8, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Emergency Protocol', 'Reaction', -1.0)),
+		_unit('Flux Weaver-263', 263, 4, 'Channeler', 3, 4, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Stasis Bolt', 'Warcry', -1.0)),
+		_unit('Cinder Weaver-264', 264, 4, 'Channeler', 3, 4, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Exposing Frequency', 'Warcry', -1.0)),
+		_unit('Cinder Weaver-265', 265, 5, 'Channeler', 3, 4, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Toxic Miasma', 'Warcry', -1.0)),
+		_unit('Flux Weaver-266', 266, 5, 'Channeler', 4, 5, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Discordant Blast', 'Warcry', -1.0)),
+		_unit('Brass Lancer-267', 267, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Resonant Warhorn', 'Warcry', -1.0)),
+		_unit('Helio Mender-268', 268, 6, 'Lifebinder', 3, 2, 7, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Absolution Pulse', 'Warcry', -1.0)),
+		_unit('Zephyr Mender-269', 269, 3, 'Lifebinder', 2, 2, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Sanitize Corridor', 'Warcry', -1.0)),
+		_unit('Brass Blade-270', 270, 4, 'Duelist', 3, 4, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Overdrive Charge', 'Warcry', -1.0)),
+		_unit('Flux Lancer-271', 271, 5, 'Strider', 3, 3, 6, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Decommission', 'Warcry', -1.0)),
+		_unit('Flux Weaver-272', 272, 4, 'Channeler', 3, 3, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Gridlock Field', 'Warcry', -1.0)),
+		_unit('Helio Weaver-273', 273, 4, 'Channeler', 3, 3, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Equalize', 'Warcry', -1.0)),
+		_unit('Brass Mender-274', 274, 3, 'Lifebinder', 3, 2, 6, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Ballast Infusion', 'Warcry', -1.0)),
+		_unit('Zephyr Weaver-275', 275, 6, 'Channeler', 3, 4, 7, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Temporal Rewind', 'Warcry', -1.0)),
+		_unit('Cinder Battery-276', 276, 3, 'Artillerist', 3, 3, 5, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Ember Recoil', 'Chant', -1.0)),
+		_unit('Brass Battery-277', 277, 3, 'Artillerist', 3, 2, 5, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Ramping Dynamo', 'Chant', -1.0)),
+		_unit('Cinder Blade-278', 278, 4, 'Duelist', 3, 4, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Bloodforge Cycle', 'Chant', -1.0)),
+		_unit('Helio Mender-279', 279, 3, 'Lifebinder', 2, 2, 4, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill("Patron's Dividend", 'Chant', -1.0)),
+		_unit('Helio Mender-280', 280, 5, 'Lifebinder', 4, 3, 7, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Restoration Surge', 'Chant', -1.0)),
+		_unit('Cinder Weaver-281', 281, 5, 'Channeler', 4, 4, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Entropy Field', 'Chant', -1.0)),
+		_unit('Cinder Battery-282', 282, 4, 'Artillerist', 3, 3, 5, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Ignition Sequence', 'Chant', -1.0)),
+		_unit('Zephyr Lancer-283', 283, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Backline Collapse', 'Chant', -1.0)),
+		_unit('Zephyr Lancer-284', 284, 4, 'Strider', 3, 3, 5, 3, 1, 'Twin Actuator — Performs two attacks each action.', '', _skill('Slipstream Chorus', 'Chant', -1.0)),
+		_unit('Zephyr Weaver-285', 285, 3, 'Channeler', 3, 3, 5, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Anchoring Snare', 'Chant', -1.0)),
+		_unit('Cinder Bastion-286', 286, 3, 'Warden', 3, 2, 9, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Provoking Snare', 'Chant', -1.0)),
+		_unit('Flux Battery-287', 287, 4, 'Artillerist', 3, 3, 6, 1, 3, 'Rail Volley — Hits every reachable enemy in the same lane.', '', _skill('Apex Confluence', 'Chant', -1.0)),
+		_unit('Helio Weaver-288', 288, 4, 'Channeler', 3, 3, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Clear Signal', 'Chant', -1.0)),
+		_unit('Helio Bastion-289', 289, 5, 'Warden', 4, 3, 10, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Command Presence', 'Aura', -1.0)),
+		_unit('Brass Bastion-290', 290, 5, 'Warden', 4, 3, 10, 2, 1, 'Anchor Blow — The target cannot change lanes for 2 turns.', '', _skill('Guardian Protocol', 'Warcry', -1.0)),
+		_unit('Zephyr Blade-291', 291, 5, 'Duelist', 4, 4, 6, 2, 1, 'Momentum Core — Permanently gains 1 ATK after attacking.', '', _skill('Twin Drive', 'Warcry', -1.0)),
+		_unit('Flux Weaver-292', 292, 4, 'Channeler', 3, 3, 6, 1, 3, 'Arc Burst — Adjacent enemies take half of the primary hit.', '', _skill('Lag Field', 'Warcry', -1.0)),
+		_unit('Cinder Mender-293', 293, 5, 'Lifebinder', 4, 3, 7, 1, 2, 'Repair Field — Before moving, restores 2 HP to the most damaged ally.', '', _skill('Sacrificial Pyre', 'Warcry', -1.0))
 	]
 
 static func all_units() -> Array[UnitData]:

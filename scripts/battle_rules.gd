@@ -69,7 +69,12 @@ static func traversal_cells(
 		return cells
 	var direction := 1 if unit.side == PLAYER else -1
 	var final_col := COLS - 2 if unit.side == PLAYER else 1
-	var move: int = unit.move + (1 if unit.get("haste_turns", 0) > 0 else 0)
+	var move: int = unit.move + (1 if unit.get("haste_turns", 0) > 0 else 0) \
+		- (1 if unit.get("slow_turns", 0) > 0 else 0)
+	# Slow cannot reduce a mobile unit below 1, but move-0 units (Transports)
+	# never gain traversal from this floor.
+	if unit.move > 0:
+		move = maxi(1, move)
 	for step in range(1, move + 1):
 		var col: int = unit.col + direction * step
 		if (direction > 0 and col > final_col) or (direction < 0 and col < final_col):

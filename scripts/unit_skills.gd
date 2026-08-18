@@ -5,7 +5,20 @@ const BattleSimulatorScript = preload("res://scripts/battle_simulator.gd")
 const BattleRulesScript = preload("res://scripts/battle_rules.gd")
 
 ## Chants that resolve at the end of their side's turn instead of the start.
-const END_TURN_CHANTS := ["Lockdown Sweep", "Grounding Wave", "Dragnet"]
+const END_TURN_CHANTS := [
+	"Lockdown Sweep", "Grounding Wave", "Dragnet", "Venom Harvest",
+	"Ember Recoil", "Backline Collapse"
+]
+
+## Class doctrines: auras that grant ATK to other living allies of one class.
+const CLASS_DOCTRINE_KINDS := {
+	"Rampart Doctrine": "Warden",
+	"Blade Doctrine": "Duelist",
+	"Vanguard Doctrine": "Strider",
+	"Gunner Doctrine": "Artillerist",
+	"Conduit Doctrine": "Channeler",
+	"Field Doctrine": "Lifebinder"
+}
 
 ## Sentinel poison duration applied by Deployment Snare: resolve_start_statuses
 ## never ticks a counter this large down, so the Poison is permanent.
@@ -18,7 +31,7 @@ static func resolve_warcry(
 	rng: RandomNumberGenerator = null,
 	target_lane: int = -1
 ) -> Dictionary:
-	var result := {"message": "", "affected": []}
+	var result := {"message": "", "affected": [], "moved": []}
 	var skill: Dictionary = actor.get("skill", {})
 	if skill.get("type", "").to_lower() != "warcry":
 		return result
@@ -388,6 +401,142 @@ static func resolve_warcry(
 					target_count, "y" if target_count == 1 else "ies", lane + 1,
 					amount, _turn_label(turns)
 				]
+		"Command Uplink":
+			var turns := rank_value(skill, level, 0, 1)
+			for ally in units:
+				if (
+					ally.side != actor.side or ally.get("hp", 0) <= 0
+					or ally.get("kind", "") not in ["Warden", "Duelist"]
+				):
+					continue
+				ally.haste_turns = maxi(ally.get("haste_turns", 0), turns)
+				result.affected.append(ally.id)
+			if not result.affected.is_empty():
+				result.message = "Command Uplink grants %d all%s Haste for %s." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					_turn_label(turns)
+				]
+		"Blackout Burst":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_enemy_lane(actor, units, [])
+			var turns := rank_value(skill, level, 0, 1)
+			for target in units:
+				if (
+					target.side == actor.side or target.row != lane
+					or target.get("hp", 0) <= 0
+				):
+					continue
+				target.silenced_turns = maxi(target.get("silenced_turns", 0), turns)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Blackout Burst Silences %d enem%s in lane %d for %s." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					lane + 1, _turn_label(turns)
+				]
+		"Seismic Salvo":
+			var lane := target_lane
+			if lane < 0:
+				lane = _best_enemy_lane(actor, units, [])
+			var damage := rank_value(skill, level, 0, 1)
+			var spaces := rank_value(skill, level, 1, 1)
+			for target in units:
+				if (
+					target.side == actor.side or target.row != lane
+					or target.get("hp", 0) <= 0
+				):
+					continue
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				result.affected.append(target.id)
+				if target.get("hp", 0) > 0:
+					_knockback(actor, target, spaces, units, result)
+			if not result.affected.is_empty():
+				result.message = "Seismic Salvo deals %d damage to %d enem%s in lane %d and knocks them back %d space%s." % [
+					damage, result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					lane + 1, spaces, "" if spaces == 1 else "s"
+				]
+		"Intimidating Presence":
+			var turns := rank_value(skill, level, 0, 1)
+			for target in units:
+				if (
+					target.side == actor.side or target.row != actor.row
+					or target.get("hp", 0) <= 0
+				):
+					continue
+				target.taunt_turns = maxi(target.get("taunt_turns", 0), turns)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Intimidating Presence Taunts %d enem%s in lane %d for %s." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					actor.row + 1, _turn_label(turns)
+				]
+		"Death Knell":
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				target = _highest_health_enemy(actor, units)
+			if target != null:
+				var turns := rank_value(skill, level, 0, 4)
+				target.doom_turns = maxi(target.get("doom_turns", 0), turns)
+				result.message = "Death Knell Dooms %s; it falls in %s." % [
+					target.name, _turn_label(turns)
+				]
+				result.affected.append(target.id)
+		"Corrosive Detonation":
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				# AI fallback: the living enemy with the most Poison remaining.
+				for enemy in units:
+					if (
+						enemy.side == actor.side or enemy.get("hp", 0) <= 0
+						or enemy.get("poison_turns", 0) <= 0
+					):
+						continue
+					if target == null or enemy.poison_turns > target.poison_turns:
+						target = enemy
+			if target != null and target.get("poison_turns", 0) > 0:
+				var per_turn := rank_value(skill, level, 0, 1)
+				var poison_left: int = target.get("poison_turns", 0)
+				BattleSimulatorScript.apply_unit_damage(target, per_turn * poison_left)
+				target.poison_turns = 0
+				target.poison_damage = 0
+				result.message = "Corrosive Detonation consumes %s's Poison for %d damage." % [
+					target.name, per_turn * poison_left
+				]
+				result.affected.append(target.id)
+		"Purge Wave":
+			var target = _ally_by_id(actor, units, target_id)
+			if target == null:
+				# AI fallback: the first living ally carrying a clearable status.
+				for ally in units:
+					if (
+						ally.side != actor.side or ally.id == actor.id
+						or ally.get("hp", 0) <= 0
+					):
+						continue
+					if (
+						ally.get("immobilized_turns", 0) > 0
+						or ally.get("stun_turns", 0) > 0
+						or ally.get("silenced_turns", 0) > 0
+						or ally.get("poison_turns", 0) > 0
+					):
+						target = ally
+						break
+			if target != null:
+				var turns := rank_value(skill, level, 0, 2)
+				target.immobilized_turns = 0
+				target.stun_turns = 0
+				target.silenced_turns = 0
+				target.poison_turns = 0
+				target.poison_damage = 0
+				target.regen_turns = maxi(target.get("regen_turns", 0), turns)
+				result.message = "Purge Wave cleanses %s and grants Regen for %s." % [
+					target.name, _turn_label(turns)
+				]
+				result.affected.append(target.id)
 		"Thermal Burst":
 			var target = _enemy_by_id(actor, units, target_id)
 			if target == null:
@@ -509,6 +658,317 @@ static func resolve_warcry(
 				actor.name, _turn_label(turns)
 			]
 			result.affected.append(actor.id)
+		"Stasis Bolt":
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				target = _highest_health_enemy(actor, units)
+			if target != null:
+				var turns := rank_value(skill, level, 0, 1)
+				var extra_chance := rank_value(skill, level, 1, 30) / 100.0
+				target.stun_turns = maxi(target.get("stun_turns", 0), turns)
+				result.affected.append(target.id)
+				result.message = "Stasis Bolt Stuns %s for %s." % [
+					target.name, _turn_label(turns)
+				]
+				var others: Array = _enemies(actor, units).filter(
+					func(unit): return unit.id != target.id and unit.get("hp", 0) > 0
+				)
+				var chance_roll := randf() if rng == null else rng.randf()
+				if not others.is_empty() and chance_roll < extra_chance:
+					var second = (
+						others[rng.randi_range(0, others.size() - 1)]
+						if rng != null else others.pick_random()
+					)
+					second.stun_turns = maxi(second.get("stun_turns", 0), turns)
+					result.affected.append(second.id)
+					result.message += " %s is also Stunned." % second.name
+		"Exposing Frequency":
+			var turns := rank_value(skill, level, 0, 1)
+			for target in units:
+				if target.side == actor.side or target.get("hp", 0) <= 0:
+					continue
+				if target.get("vulnerable_turns", 0) > 0:
+					target.vulnerable_stacks = target.get("vulnerable_stacks", 1) + 1
+				else:
+					target.vulnerable_stacks = 1
+				target.vulnerable_turns = maxi(target.get("vulnerable_turns", 0), turns)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Exposing Frequency makes %d enem%s Vulnerable for %s." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies", _turn_label(turns)
+				]
+		"Toxic Miasma":
+			var damage := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
+			for target in units:
+				if target.side == actor.side or target.get("hp", 0) <= 0:
+					continue
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				if target.get("hp", 0) > 0:
+					target.poison_turns = maxi(target.get("poison_turns", 0), turns)
+					target.poison_damage = maxi(target.get("poison_damage", 0), 1)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Toxic Miasma deals %d damage to %d enem%s and Poisons them for %s." % [
+					damage, result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies", _turn_label(turns)
+				]
+		"Discordant Blast":
+			var damage := rank_value(skill, level, 0, 1)
+			var amount := rank_value(skill, level, 1, 1)
+			var turns := rank_value(skill, level, 2, 2)
+			for target in units:
+				if target.side == actor.side or target.get("hp", 0) <= 0:
+					continue
+				BattleSimulatorScript.apply_unit_damage(target, damage)
+				if target.get("hp", 0) > 0:
+					target.atk = maxi(0, target.get("atk", 0) - amount)
+					_add_effect(target, "Discordant Blast", turns, -amount, 0)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Discordant Blast deals %d damage to %d enem%s and gives them -%d ATK for %s." % [
+					damage, result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					amount, _turn_label(turns)
+				]
+		"Resonant Warhorn":
+			var amount := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
+			for ally in units:
+				if ally.side != actor.side or ally.get("hp", 0) <= 0:
+					continue
+				ally.atk += amount
+				_add_effect(ally, "Resonant Warhorn", turns, amount, 0)
+				result.affected.append(ally.id)
+			if not result.affected.is_empty():
+				result.message = "Resonant Warhorn grants %d all%s +%d ATK for %s." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					amount, _turn_label(turns)
+				]
+		"Absolution Pulse":
+			var healing := rank_value(skill, level, 0, 2)
+			for ally in units:
+				if ally.side != actor.side or ally.get("hp", 0) <= 0:
+					continue
+				ally.stun_turns = 0
+				ally.immobilized_turns = 0
+				ally.poison_turns = 0
+				ally.poison_damage = 0
+				ally.silenced_turns = 0
+				ally.vulnerable_turns = 0
+				ally.vulnerable_stacks = 0
+				BattleSimulatorScript.apply_unit_healing(ally, healing)
+				result.affected.append(ally.id)
+			if not result.affected.is_empty():
+				result.message = "Absolution Pulse cleanses %d all%s and restores %d HP to them." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies", healing
+				]
+		"Sanitize Corridor":
+			var lane := target_lane
+			if lane < 0:
+				lane = actor.row
+			var healing := rank_value(skill, level, 0, 1)
+			for ally in units:
+				if (
+					ally.side != actor.side or ally.row != lane
+					or ally.get("hp", 0) <= 0
+				):
+					continue
+				ally.immobilized_turns = 0
+				ally.stun_turns = 0
+				ally.hp += healing
+				ally.max_hp += healing
+				result.affected.append(ally.id)
+			if not result.affected.is_empty():
+				result.message = "Sanitize Corridor cleanses %d all%s in lane %d and grants +%d HP." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies", lane + 1, healing
+				]
+		"Overdrive Charge":
+			var turns := rank_value(skill, level, 0, 3)
+			actor.overdrive_turns = turns
+			result.message = "Overdrive Charge begins: +%d ATK after %s." % [
+				rank_value(skill, level, 1, 2), _turn_label(turns)
+			]
+			result.affected.append(actor.id)
+		"Decommission":
+			var threshold := rank_value(skill, level, 0, 2)
+			var target = _enemy_by_id(actor, units, target_id)
+			if target == null:
+				# AI fallback: the strongest living enemy inside the threshold.
+				var best = null
+				for enemy in units:
+					if (
+						enemy.side == actor.side or enemy.get("hp", 0) <= 0
+						or enemy.get("atk", 0) > threshold
+					):
+						continue
+					if best == null or enemy.atk > best.atk:
+						best = enemy
+				target = best
+			if target != null and target.get("atk", 0) <= threshold:
+				BattleSimulatorScript.apply_unit_damage(target, target.get("hp", 0))
+				result.message = "Decommission Defeats %s." % target.name
+				result.affected.append(target.id)
+			elif target != null:
+				result.message = "Decommission finds no target within %d ATK." % threshold
+		"Gridlock Field":
+			var threshold := rank_value(skill, level, 0, 4)
+			var turns := rank_value(skill, level, 1, 1)
+			for target in units:
+				if (
+					target.side == actor.side or target.get("hp", 0) <= 0
+					or target.get("atk", 0) < threshold
+				):
+					continue
+				target.immobilized_turns = maxi(target.get("immobilized_turns", 0), turns)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Gridlock Field Immobilises %d enem%s for %s." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies", _turn_label(turns)
+				]
+		"Equalize":
+			var amount := rank_value(skill, level, 0, 2)
+			var healing := rank_value(skill, level, 1, 2)
+			var strongest = null
+			for enemy in units:
+				if enemy.side == actor.side or enemy.get("hp", 0) <= 0:
+					continue
+				if strongest == null or enemy.atk > strongest.atk:
+					strongest = enemy
+			var weakest = _lowest_health_ally(actor, units)
+			if strongest != null:
+				strongest.atk = maxi(0, strongest.get("atk", 0) - amount)
+				result.affected.append(strongest.id)
+				result.message = "Equalize gives %s -%d ATK." % [strongest.name, amount]
+			if weakest != null:
+				weakest.hp += healing
+				weakest.max_hp += healing
+				result.affected.append(weakest.id)
+				if result.message.is_empty():
+					result.message = "Equalize grants %s +%d HP." % [weakest.name, healing]
+				else:
+					result.message += " %s gains +%d HP." % [weakest.name, healing]
+		"Ballast Infusion":
+			var target = _ally_by_id(actor, units, target_id)
+			if target == null:
+				target = _highest_attack_ally(actor, units)
+			if target != null:
+				var amount := rank_value(skill, level, 0, 2)
+				var turns := rank_value(skill, level, 1, 2)
+				target.atk += amount
+				target.immobilized_turns = maxi(target.get("immobilized_turns", 0), turns)
+				result.message = "Ballast Infusion grants %s +%d ATK but Immobilises it for %s." % [
+					target.name, amount, _turn_label(turns)
+				]
+				result.affected.append(target.id)
+		"Temporal Rewind":
+			var protect := rank_value(skill, level, 0, 1)
+			var vulnerable := rank_value(skill, level, 1, 1)
+			for target in units:
+				if target.id == actor.id or target.get("hp", 0) <= 0:
+					continue
+				_knockback(actor, target, 1, units, result)
+				if target.side == actor.side:
+					target.protect_turns = maxi(target.get("protect_turns", 0), protect)
+				else:
+					if target.get("vulnerable_turns", 0) > 0:
+						target.vulnerable_stacks = target.get("vulnerable_stacks", 1) + 1
+					else:
+						target.vulnerable_stacks = 1
+					target.vulnerable_turns = maxi(
+						target.get("vulnerable_turns", 0), vulnerable
+					)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Temporal Rewind knocks every unit back 1 space; allies gain Protect for %s and enemies become Vulnerable for %s." % [
+					_turn_label(protect), _turn_label(vulnerable)
+				]
+		"Guardian Protocol":
+			# The protected ally carries cover_turns/cover_source_id; attack
+			# damage against it redirects to the carrier in
+			# BattleSimulator.apply_unit_damage. cover_turns ticks on the
+			# opposing side's expiry pass ("enemy turns").
+			var cover_target = _ally_by_id(actor, units, target_id)
+			if cover_target == null:
+				cover_target = _highest_attack_ally(actor, units)
+			if cover_target != null:
+				var cover_turns := rank_value(skill, level, 0, 1)
+				cover_target.cover_turns = maxi(
+					cover_target.get("cover_turns", 0), cover_turns
+				)
+				cover_target.cover_source_id = actor.id
+				result.message = "Guardian Protocol redirects attack damage against %s to %s for %s." % [
+					cover_target.name, actor.name, _turn_label(cover_turns)
+				]
+				result.affected.append(cover_target.id)
+		"Twin Drive":
+			# doublestrike_turns ticks on the target's own side turns (like
+			# Haste); main.gd:_activate_unit grants a second strike while
+			# the counter holds.
+			var drive_target = _ally_by_id(actor, units, target_id)
+			if drive_target == null:
+				drive_target = _highest_attack_ally(actor, units)
+			if drive_target != null:
+				var drive_turns := rank_value(skill, level, 0, 1)
+				drive_target.doublestrike_turns = maxi(
+					drive_target.get("doublestrike_turns", 0), drive_turns
+				)
+				result.message = "Twin Drive lets %s attack twice per activation for %s." % [
+					drive_target.name, _turn_label(drive_turns)
+				]
+				result.affected.append(drive_target.id)
+		"Sacrificial Pyre":
+			# Defeats the selected other ally outright (skill damage, so it
+			# bypasses Protect and immunities), then buffs every living
+			# ally via the timed-effects mechanism.
+			var pyre_target = _ally_by_id(actor, units, target_id)
+			if pyre_target == null:
+				pyre_target = _lowest_health_ally(actor, units)
+			if pyre_target != null:
+				var pyre_attack := rank_value(skill, level, 0, 2)
+				var pyre_turns := rank_value(skill, level, 1, 2)
+				BattleSimulatorScript.apply_unit_damage(
+					pyre_target, pyre_target.get("hp", 0)
+				)
+				result.affected.append(pyre_target.id)
+				for ally in units:
+					if ally.side != actor.side or ally.get("hp", 0) <= 0:
+						continue
+					ally.atk += pyre_attack
+					_add_effect(ally, "Sacrificial Pyre", pyre_turns, pyre_attack, 0)
+					if ally.id not in result.affected:
+						result.affected.append(ally.id)
+				result.message = "Sacrificial Pyre Defeats %s; all allies gain +%d ATK for %s." % [
+					pyre_target.name, pyre_attack, _turn_label(pyre_turns)
+				]
+		"Lag Field":
+			# Delayed units move but cannot attack; the counter ticks on the
+			# affected unit's own side turns (like Stun).
+			var lag_lane := target_lane
+			if lag_lane < 0:
+				lag_lane = _best_enemy_lane(actor, units, [])
+			var lag_turns := rank_value(skill, level, 0, 1)
+			for target in units:
+				if (
+					target.side == actor.side or target.row != lag_lane
+					or target.get("hp", 0) <= 0
+				):
+					continue
+				target.delayed_turns = maxi(
+					target.get("delayed_turns", 0), lag_turns
+				)
+				result.affected.append(target.id)
+			if not result.affected.is_empty():
+				result.message = "Lag Field Delays %d enem%s in lane %d for %s; they move but cannot attack." % [
+					result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies",
+					lag_lane + 1, _turn_label(lag_turns)
+				]
 	return result
 
 ## Resolves the chant skills of every living unit on `side`. `phase` is
@@ -527,6 +987,9 @@ static func resolve_chants(
 	if phase == "start":
 		_append_roguish_snare(side, units, last_placed_id, rng, roll, results)
 		_append_quiet(side, units, rng, results)
+		_append_interference_net(side, units, last_placed_id, results)
+		_append_anchoring_snare(side, units, last_placed_id, results)
+		_append_provoking_snare(side, units, last_placed_id, rng, roll, results)
 	for unit in units:
 		if unit.side != side or unit.get("hp", 0) <= 0:
 			continue
@@ -825,6 +1288,55 @@ static func resolve_chants(
 						],
 						"affected": affected, "sound": "status"
 					})
+			"Rally Drumbeat":
+				var amount := rank_value(skill, level, 0, 1)
+				var affected: Array = []
+				for ally in units:
+					if (
+						ally.side != side or ally.id == unit.id or ally.get("hp", 0) <= 0
+						or ally.get("protect_turns", 0) <= 0
+					):
+						continue
+					ally.atk += amount
+					_add_effect(ally, "Rally Drumbeat", 1, amount, 0)
+					affected.append(ally.id)
+				if not affected.is_empty():
+					results.append({
+						"message": "Rally Drumbeat gives %d Protected all%s +%d ATK for 1 turn." % [
+							affected.size(), "y" if affected.size() == 1 else "ies", amount
+						],
+						"affected": affected, "sound": "status"
+					})
+			"Second Wind":
+				var turns := rank_value(skill, level, 0, 2)
+				if unit.hp * 2 < unit.get("max_hp", unit.hp):
+					unit.regen_turns = maxi(unit.get("regen_turns", 0), turns)
+					unit.protect_turns = maxi(unit.get("protect_turns", 0), turns)
+					results.append({
+						"message": "Second Wind grants %s Regen and Protect for %s." % [
+							unit.name, _turn_label(turns)
+						],
+						"affected": [unit.id], "sound": "status"
+					})
+			"Venom Harvest":
+				var damage := rank_value(skill, level, 0, 1)
+				var affected: Array = []
+				for enemy in units:
+					if (
+						enemy.side == side or enemy.get("hp", 0) <= 0
+						or enemy.get("poison_turns", 0) <= 0
+					):
+						continue
+					BattleSimulatorScript.apply_unit_damage(enemy, damage)
+					affected.append(enemy.id)
+				if not affected.is_empty():
+					results.append({
+						"message": "Venom Harvest deals %d damage to %d Poisoned enem%s." % [
+							damage, affected.size(),
+							"y" if affected.size() == 1 else "ies"
+						],
+						"affected": affected, "sound": "hit"
+					})
 			"Lockdown Sweep":
 				var turns := rank_value(skill, level, 0, 1)
 				var regen_chance := rank_value(skill, level, 1, 30) / 100.0
@@ -906,8 +1418,240 @@ static func resolve_chants(
 						spaces, "" if spaces == 1 else "s", amount
 					]
 					results.append(result)
+			"Ember Recoil":
+				# End-phase chant: {0} to deal {1} damage to one random living enemy.
+				var ember_chance := rank_value(skill, level, 0, 30) / 100.0
+				var ember_damage := rank_value(skill, level, 1, 1)
+				var ember_roll: float = roll if roll >= 0.0 else (
+					rng.randf() if rng != null else randf()
+				)
+				if ember_roll < ember_chance:
+					var ember_candidates: Array = units.filter(
+						func(enemy): return enemy.side != side and enemy.get("hp", 0) > 0
+					)
+					var ember_target = _pick_random(ember_candidates, rng)
+					if ember_target != null:
+						BattleSimulatorScript.apply_unit_damage(ember_target, ember_damage)
+						results.append({
+							"message": "Ember Recoil deals %d damage to %s." % [
+								ember_damage, ember_target.name
+							],
+							"affected": [ember_target.id], "sound": "hit"
+						})
+			"Ramping Dynamo":
+				var ramp_chance := rank_value(skill, level, 0, 30) / 100.0
+				var ramp_attack := rank_value(skill, level, 1, 1)
+				var ramp_roll: float = roll if roll >= 0.0 else (
+					rng.randf() if rng != null else randf()
+				)
+				if ramp_roll < ramp_chance:
+					unit.atk += ramp_attack
+					results.append({
+						"message": "Ramping Dynamo permanently grants %s +%d ATK." % [
+							unit.name, ramp_attack
+						],
+						"affected": [unit.id], "sound": "status"
+					})
+			"Bloodforge Cycle":
+				# The HP cost is non-lethal: the cycle never defeats its carrier.
+				var forge_attack := rank_value(skill, level, 0, 1)
+				var forge_health := rank_value(skill, level, 1, 1)
+				unit.atk += forge_attack
+				var forge_damage: int = mini(forge_health, maxi(0, unit.get("hp", 0) - 1))
+				if forge_damage > 0:
+					BattleSimulatorScript.apply_unit_damage(unit, forge_damage)
+				results.append({
+					"message": "Bloodforge Cycle grants %s +%d ATK; it takes %d damage." % [
+						unit.name, forge_attack, forge_damage
+					],
+					"affected": [unit.id], "sound": "status"
+				})
+			"Patron's Dividend":
+				var dividend_health := rank_value(skill, level, 0, 1)
+				var dividend_attack := rank_value(skill, level, 1, 1)
+				var dividend_candidates: Array = units.filter(
+					func(ally): return (
+						ally.side == side and ally.id != unit.id and ally.get("hp", 0) > 0
+					)
+				)
+				var dividend_target = _pick_random(dividend_candidates, rng)
+				if dividend_target != null:
+					dividend_target.hp += dividend_health
+					dividend_target.max_hp += dividend_health
+					dividend_target.atk += dividend_attack
+					results.append({
+						"message": "Patron's Dividend permanently grants %s +%d HP and +%d ATK." % [
+							dividend_target.name, dividend_health, dividend_attack
+						],
+						"affected": [dividend_target.id], "sound": "status"
+					})
+			"Restoration Surge":
+				var surge_healing := rank_value(skill, level, 0, 2)
+				var surge_chance := rank_value(skill, level, 1, 30) / 100.0
+				var surge_turns := rank_value(skill, level, 2, 1)
+				var surge_affected: Array = []
+				for ally in units:
+					if ally.side != side or ally.get("hp", 0) <= 0:
+						continue
+					BattleSimulatorScript.apply_unit_healing(ally, surge_healing)
+					surge_affected.append(ally.id)
+				var surge_roll: float = roll if roll >= 0.0 else (
+					rng.randf() if rng != null else randf()
+				)
+				var surge_protected: bool = surge_roll < surge_chance
+				if surge_protected:
+					unit.protect_turns = maxi(unit.get("protect_turns", 0), surge_turns)
+				if not surge_affected.is_empty():
+					results.append({
+						"message": "Restoration Surge restores %d HP to all allies%s." % [
+							surge_healing,
+							"; %s gains Protect for %s" % [
+								unit.name, _turn_label(surge_turns)
+							] if surge_protected else ""
+						],
+						"affected": surge_affected, "sound": "heal"
+					})
+			"Entropy Field":
+				var entropy_damage := rank_value(skill, level, 0, 1)
+				var entropy_attack := rank_value(skill, level, 1, 1)
+				var entropy_affected: Array = []
+				for enemy in units:
+					if enemy.side == side or enemy.get("hp", 0) <= 0:
+						continue
+					BattleSimulatorScript.apply_unit_damage(enemy, entropy_damage)
+					entropy_affected.append(enemy.id)
+				unit.atk += entropy_attack
+				entropy_affected.append(unit.id)
+				results.append({
+					"message": "Entropy Field deals %d damage to all enemies; %s permanently gains +%d ATK." % [
+						entropy_damage, unit.name, entropy_attack
+					],
+					"affected": entropy_affected, "sound": "mage"
+				})
+			"Ignition Sequence":
+				# The Vulnerable analog of Venom Harvest: burns every enemy
+				# currently carrying Vulnerable.
+				var ignition_damage := rank_value(skill, level, 0, 1)
+				var ignition_affected: Array = []
+				for enemy in units:
+					if (
+						enemy.side == side or enemy.get("hp", 0) <= 0
+						or enemy.get("vulnerable_turns", 0) <= 0
+					):
+						continue
+					BattleSimulatorScript.apply_unit_damage(enemy, ignition_damage)
+					ignition_affected.append(enemy.id)
+				if not ignition_affected.is_empty():
+					results.append({
+						"message": "Ignition Sequence deals %d damage to %d Vulnerable enem%s." % [
+							ignition_damage, ignition_affected.size(),
+							"y" if ignition_affected.size() == 1 else "ies"
+						],
+						"affected": ignition_affected, "sound": "hit"
+					})
+			"Backline Collapse":
+				# End-phase chant. "Behind" is the Frontline Relay column rule
+				# applied to enemies: columns further from the chanter's enemy
+				# edge than the chanter, across all lanes.
+				var collapse_amount := rank_value(skill, level, 0, 1)
+				var collapse_turns := rank_value(skill, level, 1, 1)
+				var collapse_forward := 1 if side == 0 else -1
+				var collapse_result := {"message": "", "affected": [], "sound": "status"}
+				for enemy in units:
+					if enemy.side == side or enemy.get("hp", 0) <= 0:
+						continue
+					var collapse_offset: int = (enemy.col - unit.col) * collapse_forward
+					if collapse_offset >= 0:
+						continue
+					enemy.atk = maxi(0, enemy.get("atk", 0) - collapse_amount)
+					_add_effect(enemy, "Backline Collapse", 1, -collapse_amount, 0)
+					enemy.immobilized_turns = maxi(
+						enemy.get("immobilized_turns", 0), collapse_turns
+					)
+					collapse_result.affected.append(enemy.id)
+				if not collapse_result.affected.is_empty():
+					collapse_result.message = "Backline Collapse gives %d enem%s behind it -%d ATK for 1 turn and Immobilises them for %s." % [
+						collapse_result.affected.size(),
+						"y" if collapse_result.affected.size() == 1 else "ies",
+						collapse_amount, _turn_label(collapse_turns)
+					]
+					results.append(collapse_result)
+			"Slipstream Chorus":
+				var slip_haste := rank_value(skill, level, 0, 1)
+				var slip_chance := rank_value(skill, level, 1, 30) / 100.0
+				var slip_turns := rank_value(skill, level, 2, 1)
+				var slip_affected: Array = []
+				for ally in units:
+					if ally.side != side or ally.id == unit.id or ally.get("hp", 0) <= 0:
+						continue
+					ally.haste_turns = maxi(ally.get("haste_turns", 0), slip_haste)
+					slip_affected.append(ally.id)
+				var slip_roll: float = roll if roll >= 0.0 else (
+					rng.randf() if rng != null else randf()
+				)
+				var slip_protected: bool = slip_roll < slip_chance
+				if slip_protected:
+					unit.protect_turns = maxi(unit.get("protect_turns", 0), slip_turns)
+					slip_affected.append(unit.id)
+				if not slip_affected.is_empty():
+					results.append({
+						"message": "Slipstream Chorus grants other allies Haste for %s%s." % [
+							_turn_label(slip_haste),
+							"; %s gains Protect for %s" % [
+								unit.name, _turn_label(slip_turns)
+							] if slip_protected else ""
+						],
+						"affected": slip_affected, "sound": "status"
+					})
+			"Apex Confluence":
+				# The 1-turn effect expires at the end of the chanter's own turn,
+				# so the buff is recomputed from current enemy HP every turn.
+				var apex_amount := rank_value(skill, level, 0, 1)
+				var apex_count := 0
+				for enemy in units:
+					if enemy.side == side or enemy.get("hp", 0) <= 0:
+						continue
+					if enemy.hp * 2 > enemy.get("max_hp", enemy.hp):
+						apex_count += 1
+				if apex_count > 0:
+					var apex_total: int = apex_amount * apex_count
+					unit.atk += apex_total
+					_add_effect(unit, "Apex Confluence", 1, apex_total, 0)
+					results.append({
+						"message": "Apex Confluence grants %s +%d ATK until end of turn (%d enem%s above half HP)." % [
+							unit.name, apex_total, apex_count,
+							"y" if apex_count == 1 else "ies"
+						],
+						"affected": [unit.id], "sound": "status"
+					})
+			"Clear Signal":
+				var clear_count := rank_value(skill, level, 0, 1)
+				var clear_healing := rank_value(skill, level, 1, 2)
+				var clear_candidates: Array = units.filter(
+					func(ally): return (
+						ally.side == side and ally.get("hp", 0) > 0
+						and ally.get("silenced_turns", 0) > 0
+					)
+				)
+				var clear_affected: Array = []
+				for i in mini(clear_count, clear_candidates.size()):
+					var pick = _pick_random(clear_candidates, rng)
+					clear_candidates.erase(pick)
+					pick.silenced_turns = 0
+					BattleSimulatorScript.apply_unit_healing(pick, clear_healing)
+					clear_affected.append(pick.id)
+				if not clear_affected.is_empty():
+					results.append({
+						"message": "Clear Signal removes Silence from %d all%s and restores %d HP to them." % [
+							clear_affected.size(),
+							"y" if clear_affected.size() == 1 else "ies",
+							clear_healing
+						],
+						"affected": clear_affected, "sound": "heal"
+					})
 	if phase == "end":
 		_append_sun_festival(side, units, results)
+		_append_overdrive(side, units, results)
 	return results
 
 ## Deployment Snare is a deployment trap: when the turn of the side OPPOSITE the
@@ -955,6 +1699,132 @@ static func _append_roguish_snare(
 		results.append({
 			"message": message,
 			"affected": [victim.id],
+			"sound": "status"
+		})
+		return
+
+## Interference Net is a deployment-reactive debuff: when the turn of the side
+## OPPOSITE the carrier starts, that side's most recently deployed unit
+## (`last_placed_id`, same trigger as Deployment Snare) loses {0} ATK for {1}
+## via the timed-effects mechanism, so the debuff expires on schedule.
+static func _append_interference_net(
+	side: int, units: Array, last_placed_id: int, results: Array
+) -> void:
+	if last_placed_id < 0:
+		return
+	var victim = BattleSimulatorScript.unit_by_id(units, last_placed_id)
+	if victim == null or victim.side != side or victim.get("hp", 0) <= 0:
+		return
+	for carrier in units:
+		if carrier.side == side or carrier.get("hp", 0) <= 0:
+			continue
+		if is_silenced(carrier):
+			continue
+		var skill: Dictionary = carrier.get("skill", {})
+		if skill.get("name", "") != "Interference Net":
+			continue
+		if skill.get("type", "").to_lower() != "chant":
+			continue
+		var level := int(carrier.get("level", 1))
+		var amount := rank_value(skill, level, 0, 2)
+		var turns := rank_value(skill, level, 1, 2)
+		victim.atk = maxi(0, victim.get("atk", 0) - amount)
+		_add_effect(victim, "Interference Net", turns, -amount, 0)
+		results.append({
+			"message": "Interference Net gives %s -%d ATK for %s." % [
+				victim.name, amount, _turn_label(turns)
+			],
+			"affected": [victim.id],
+			"sound": "status"
+		})
+		return
+
+## Anchoring Snare is a deployment-reactive lockdown (same trigger as
+## Interference Net): the opposing side's most recently deployed unit is
+## Immobilised for {0} and loses {1} ATK for {2} via the timed-effects
+## mechanism. Only the first living carrier triggers.
+static func _append_anchoring_snare(
+	side: int, units: Array, last_placed_id: int, results: Array
+) -> void:
+	if last_placed_id < 0:
+		return
+	var victim = BattleSimulatorScript.unit_by_id(units, last_placed_id)
+	if victim == null or victim.side != side or victim.get("hp", 0) <= 0:
+		return
+	for carrier in units:
+		if carrier.side == side or carrier.get("hp", 0) <= 0:
+			continue
+		if is_silenced(carrier):
+			continue
+		var skill: Dictionary = carrier.get("skill", {})
+		if skill.get("name", "") != "Anchoring Snare":
+			continue
+		if skill.get("type", "").to_lower() != "chant":
+			continue
+		var level := int(carrier.get("level", 1))
+		var turns := rank_value(skill, level, 0, 1)
+		var amount := rank_value(skill, level, 1, 1)
+		var debuff_turns := rank_value(skill, level, 2, 2)
+		victim.immobilized_turns = maxi(victim.get("immobilized_turns", 0), turns)
+		victim.atk = maxi(0, victim.get("atk", 0) - amount)
+		_add_effect(victim, "Anchoring Snare", debuff_turns, -amount, 0)
+		results.append({
+			"message": "Anchoring Snare Immobilises %s for %s and gives it -%d ATK for %s." % [
+				victim.name, _turn_label(turns), amount, _turn_label(debuff_turns)
+			],
+			"affected": [victim.id],
+			"sound": "status"
+		})
+		return
+
+## Provoking Snare is a deployment-reactive Taunt (same trigger as
+## Interference Net): the opposing side's most recently deployed unit is
+## Taunted for {0}, and at {1} the carrier gains Protect for {2}. Only the
+## first living carrier triggers.
+static func _append_provoking_snare(
+	side: int,
+	units: Array,
+	last_placed_id: int,
+	rng: RandomNumberGenerator,
+	roll: float,
+	results: Array
+) -> void:
+	if last_placed_id < 0:
+		return
+	var victim = BattleSimulatorScript.unit_by_id(units, last_placed_id)
+	if victim == null or victim.side != side or victim.get("hp", 0) <= 0:
+		return
+	for carrier in units:
+		if carrier.side == side or carrier.get("hp", 0) <= 0:
+			continue
+		if is_silenced(carrier):
+			continue
+		var skill: Dictionary = carrier.get("skill", {})
+		if skill.get("name", "") != "Provoking Snare":
+			continue
+		if skill.get("type", "").to_lower() != "chant":
+			continue
+		var level := int(carrier.get("level", 1))
+		var turns := rank_value(skill, level, 0, 1)
+		var protect_chance := rank_value(skill, level, 1, 30) / 100.0
+		var protect_turns := rank_value(skill, level, 2, 1)
+		victim.taunt_turns = maxi(victim.get("taunt_turns", 0), turns)
+		var message := "Provoking Snare Taunts %s for %s." % [
+			victim.name, _turn_label(turns)
+		]
+		var chance_roll: float = roll if roll >= 0.0 else (
+			rng.randf() if rng != null else randf()
+		)
+		var affected: Array = [victim.id]
+		if chance_roll < protect_chance:
+			carrier.protect_turns = maxi(carrier.get("protect_turns", 0), protect_turns)
+			message += " %s gains Protect for %s." % [
+				carrier.name, _turn_label(protect_turns)
+			]
+			affected.append(carrier.id)
+		results.append({
+			"message": message,
+			"affected": affected,
 			"sound": "status"
 		})
 		return
@@ -1063,6 +1933,28 @@ static func _append_sun_festival(side: int, units: Array, results: Array) -> voi
 				"affected": affected, "sound": "status"
 			})
 
+## Counts down Overdrive Charge timers at the end of the owner's turn; when one
+## reaches zero, the carrier permanently gains its rank-scaled ATK.
+static func _append_overdrive(side: int, units: Array, results: Array) -> void:
+	for unit in units:
+		if unit.side != side or unit.get("hp", 0) <= 0:
+			continue
+		if unit.get("overdrive_turns", 0) <= 0:
+			continue
+		unit.overdrive_turns -= 1
+		if unit.overdrive_turns > 0:
+			continue
+		var skill: Dictionary = unit.get("skill", {})
+		var level := int(unit.get("level", 1))
+		var attack := rank_value(skill, level, 1, 2)
+		unit.atk += attack
+		results.append({
+			"message": "Overdrive Charge permanently grants %s +%d ATK." % [
+				unit.name, attack
+			],
+			"affected": [unit.id], "sound": "status"
+		})
+
 static func resolve_start_statuses(side: int, units: Array) -> Array:
 	var results: Array = []
 	for unit in units:
@@ -1093,7 +1985,8 @@ static func resolve_start_statuses(side: int, units: Array) -> Array:
 	return results
 
 static func resolve_strike(
-	actor: Dictionary, target: Dictionary, _units: Array, roll: float = -1.0
+	actor: Dictionary, target: Dictionary, _units: Array, roll: float = -1.0,
+	rng: RandomNumberGenerator = null
 ) -> Dictionary:
 	var result := {"message": "", "affected": [], "moved": []}
 	var skill: Dictionary = actor.get("skill", {})
@@ -1284,6 +2177,195 @@ static func resolve_strike(
 			]
 			if resonance_counterpart_present:
 				result.message += " Its linked counterpart makes them Vulnerable for %s." % _turn_label(vulnerable_turns)
+	elif skill_name == "Siphon Edge":
+		var steal_chance := rank_value(skill, level, 0, 70) / 100.0
+		var amount := rank_value(skill, level, 1, 1)
+		var turns := rank_value(skill, level, 2, 2)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < steal_chance and target.hp > 0:
+			target.atk = maxi(0, target.get("atk", 0) - amount)
+			_add_effect(target, "Siphon Edge", turns, -amount, 0)
+			actor.atk += amount
+			# The actor buff must survive this side's end-of-turn expiry pass so
+			# its first listed turn applies to the actor's next activation.
+			_add_effect(actor, "Siphon Edge", turns, amount, 0, true)
+			result.message = "Siphon Edge steals %d ATK from %s for %s." % [
+				amount, target.name, _turn_label(turns)
+			]
+			result.affected.append(target.id)
+			result.affected.append(actor.id)
+	elif skill_name == "Static Lash":
+		var silence_chance := rank_value(skill, level, 0, 35) / 100.0
+		var turns := rank_value(skill, level, 1, 1)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < silence_chance and target.hp > 0:
+			target.silenced_turns = maxi(target.get("silenced_turns", 0), turns)
+			result.message = "Static Lash Silences %s for %s." % [
+				target.name, _turn_label(turns)
+			]
+			result.affected.append(target.id)
+	elif skill_name == "Shrapnel Arc":
+		var damage := rank_value(skill, level, 0, 1)
+		var victims: Array = _units.filter(
+			func(unit): return (
+				unit.side != actor.side and unit.id != target.id
+				and unit.row == target.row and unit.hp > 0
+			)
+		)
+		for victim in victims:
+			BattleSimulatorScript.apply_unit_damage(victim, damage)
+			result.affected.append(victim.id)
+		if not victims.is_empty():
+			result.message = "Shrapnel Arc deals %d damage to %d enem%s in the target's lane." % [
+				damage, victims.size(), "y" if victims.size() == 1 else "ies"
+			]
+	elif skill_name == "Execute Protocol":
+		if target.hp > 0 and target.hp * 2 < target.get("max_hp", target.hp):
+			var damage := rank_value(skill, level, 0, 1)
+			BattleSimulatorScript.apply_unit_damage(target, damage, actor)
+			result.message = "Execute Protocol deals +%d damage to %s." % [
+				damage, target.name
+			]
+			result.affected.append(target.id)
+	elif skill_name == "Frostbrand Strike":
+		var slow_chance := rank_value(skill, level, 0, 50) / 100.0
+		var turns := rank_value(skill, level, 1, 1)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < slow_chance and target.hp > 0:
+			target.slow_turns = maxi(target.get("slow_turns", 0), turns)
+			result.message = "Frostbrand Strike Slows %s for %s." % [
+				target.name, _turn_label(turns)
+			]
+			result.affected.append(target.id)
+	elif skill_name == "Concussion Blow":
+		var stun_chance := rank_value(skill, level, 0, 30) / 100.0
+		var turns := rank_value(skill, level, 1, 1)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < stun_chance and target.hp > 0:
+			target.stun_turns = maxi(target.get("stun_turns", 0), turns)
+			result.message = "Concussion Blow Stuns %s for %s." % [
+				target.name, _turn_label(turns)
+			]
+			result.affected.append(target.id)
+	elif skill_name == "Executioner Spike":
+		var spike_chance := rank_value(skill, level, 0, 25) / 100.0
+		var damage := rank_value(skill, level, 1, 2)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < spike_chance and target.hp > 0:
+			BattleSimulatorScript.apply_unit_damage(target, damage, actor)
+			result.message = "Executioner Spike deals +%d damage to %s." % [
+				damage, target.name
+			]
+			result.affected.append(target.id)
+	elif skill_name == "Shieldbreaker":
+		if target.hp > 0:
+			var damage := rank_value(skill, level, 0, 1)
+			var had_protect: bool = target.get("protect_turns", 0) > 0
+			target.protect_turns = 0
+			BattleSimulatorScript.apply_unit_damage(target, damage, actor)
+			if had_protect:
+				result.message = "Shieldbreaker strips %s's Protect and deals %d damage." % [
+					target.name, damage
+				]
+			else:
+				result.message = "Shieldbreaker deals %d damage to %s." % [
+					damage, target.name
+				]
+			result.affected.append(target.id)
+	elif skill_name == "Scatter Volley":
+		var volley_chance := rank_value(skill, level, 0, 30) / 100.0
+		var damage := rank_value(skill, level, 1, 1)
+		var count := rank_value(skill, level, 2, 1)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < volley_chance:
+			var candidates: Array = _units.filter(
+				func(unit): return (
+					unit.side != actor.side and unit.id != target.id and unit.hp > 0
+				)
+			)
+			for i in mini(count, candidates.size()):
+				var victim = (
+					candidates[rng.randi_range(0, candidates.size() - 1)]
+					if rng != null else candidates[i]
+				)
+				candidates.erase(victim)
+				BattleSimulatorScript.apply_unit_damage(victim, damage, actor)
+				result.affected.append(victim.id)
+			if not result.affected.is_empty():
+				result.message = "Scatter Volley deals %d damage to %d random enem%s." % [
+					damage, result.affected.size(),
+					"y" if result.affected.size() == 1 else "ies"
+				]
+	elif skill_name == "Arc Cascade":
+		var damage := rank_value(skill, level, 0, 1)
+		var stun_chance := rank_value(skill, level, 1, 20) / 100.0
+		var candidates: Array = _units.filter(
+			func(unit): return (
+				unit.side != actor.side and unit.id != target.id
+				and unit.row == target.row and unit.hp > 0
+			)
+		)
+		if not candidates.is_empty():
+			var victim = (
+				candidates[rng.randi_range(0, candidates.size() - 1)]
+				if rng != null else candidates[0]
+			)
+			BattleSimulatorScript.apply_unit_damage(victim, damage, actor)
+			result.affected.append(victim.id)
+			result.message = "Arc Cascade deals %d damage to %s." % [damage, victim.name]
+			var chance_roll := randf() if roll < 0.0 else roll
+			if chance_roll < stun_chance and victim.get("hp", 0) > 0:
+				victim.stun_turns = maxi(victim.get("stun_turns", 0), 1)
+				result.message += " %s is Stunned for 1 turn." % victim.name
+	elif skill_name == "Hushing Resonance":
+		var silence_chance := rank_value(skill, level, 0, 40) / 100.0
+		var turns := rank_value(skill, level, 1, 1)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < silence_chance and target.hp > 0:
+			target.silenced_turns = maxi(target.get("silenced_turns", 0), turns)
+			result.affected.append(target.id)
+			var hushed := 1
+			for other in _units:
+				if (
+					other.side == actor.side or other.id == target.id
+					or other.get("hp", 0) <= 0
+				):
+					continue
+				var gap: int = absi(other.row - target.row) + absi(other.col - target.col)
+				if gap != 1:
+					continue
+				other.silenced_turns = maxi(other.get("silenced_turns", 0), turns)
+				result.affected.append(other.id)
+				hushed += 1
+			result.message = "Hushing Resonance Silences %d enem%s for %s." % [
+				hushed, "y" if hushed == 1 else "ies", _turn_label(turns)
+			]
+	elif skill_name == "Leech Protocol":
+		var drain_chance := rank_value(skill, level, 0, 50) / 100.0
+		var healing := rank_value(skill, level, 1, 2)
+		var chance_roll := randf() if roll < 0.0 else roll
+		if chance_roll < drain_chance and actor.get("hp", 0) > 0:
+			BattleSimulatorScript.apply_unit_healing(actor, healing)
+			result.message = "Leech Protocol restores %d HP to %s." % [
+				healing, actor.name
+			]
+			result.affected.append(actor.id)
+	elif skill_name == "Concussive Repulse":
+		if target.hp > 0:
+			var spaces := rank_value(skill, level, 0, 1)
+			var silence_chance := rank_value(skill, level, 1, 40) / 100.0
+			var turns := rank_value(skill, level, 2, 1)
+			_knockback(actor, target, spaces, _units, result)
+			result.affected.append(target.id)
+			result.message = "Concussive Repulse knocks %s back %d space%s." % [
+				target.name, spaces, "" if spaces == 1 else "s"
+			]
+			var chance_roll := randf() if roll < 0.0 else roll
+			if chance_roll < silence_chance:
+				target.silenced_turns = maxi(target.get("silenced_turns", 0), turns)
+				result.message += " %s is Silenced for %s." % [
+					target.name, _turn_label(turns)
+				]
 	return result
 
 static func resolve_reaction(
@@ -1295,7 +2377,11 @@ static func resolve_reaction(
 		return result
 	if is_silenced(target):
 		return result
-	if target.get("hp", 0) <= 0 or attacker.get("hp", 0) <= 0:
+	if attacker.get("hp", 0) <= 0:
+		return result
+	# Volatile Core is the one Reaction meant for lethal hits: every other
+	# reaction needs a living carrier.
+	if target.get("hp", 0) <= 0 and skill.get("name", "") != "Volatile Core":
 		return result
 	var level := int(target.get("level", 1))
 	match skill.get("name", ""):
@@ -1392,6 +2478,82 @@ static func resolve_reaction(
 				target.regen_turns = maxi(target.get("regen_turns", 0), 1)
 				if target.id not in result.affected:
 					result.affected.append(target.id)
+		"Grudge Capacitor":
+			var grudge_chance := rank_value(skill, level, 0, 60) / 100.0
+			var amount := rank_value(skill, level, 1, 1)
+			var chance_roll := randf() if roll < 0.0 else roll
+			if chance_roll < grudge_chance:
+				target.atk += amount
+				result.message = "Grudge Capacitor permanently grants %s +%d ATK." % [
+					target.name, amount
+				]
+				result.affected.append(target.id)
+		"Mirror Plating":
+			var turns := rank_value(skill, level, 0, 1)
+			if attacker.get("vulnerable_turns", 0) > 0:
+				attacker.vulnerable_stacks = attacker.get("vulnerable_stacks", 1) + 1
+			else:
+				attacker.vulnerable_stacks = 1
+			attacker.vulnerable_turns = maxi(attacker.get("vulnerable_turns", 0), turns)
+			result.message = "Mirror Plating makes %s Vulnerable for %s." % [
+				attacker.name, _turn_label(turns)
+			]
+			result.affected.append(attacker.id)
+		"Feint Step":
+			var amount := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 1)
+			target.haste_turns = maxi(target.get("haste_turns", 0), turns)
+			attacker.atk = maxi(0, attacker.get("atk", 0) - amount)
+			_add_effect(attacker, "Feint Step", turns, -amount, 0)
+			result.message = "Feint Step grants %s Haste and gives %s -%d ATK for %s." % [
+				target.name, attacker.name, amount, _turn_label(turns)
+			]
+			result.affected.append(target.id)
+			result.affected.append(attacker.id)
+		"Volatile Core":
+			if target.get("hp", 0) <= 0:
+				var damage := rank_value(skill, level, 0, 2)
+				BattleSimulatorScript.apply_unit_damage(attacker, damage)
+				result.message = "Volatile Core: %s detonates for %d damage." % [
+					target.name, damage
+				]
+				result.affected.append(attacker.id)
+		"Retribution Jolt":
+			var jolt_chance := rank_value(skill, level, 0, 40) / 100.0
+			var damage := rank_value(skill, level, 1, 1)
+			var chance_roll := randf() if roll < 0.0 else roll
+			if chance_roll < jolt_chance and attacker.get("hp", 0) > 0:
+				BattleSimulatorScript.apply_unit_damage(attacker, damage)
+				if attacker.get("hp", 0) > 0:
+					attacker.stun_turns = maxi(attacker.get("stun_turns", 0), 1)
+				result.message = "Retribution Jolt deals %d damage to %s and Stuns it for 1 turn." % [
+					damage, attacker.name
+				]
+				result.affected.append(attacker.id)
+		"Venom Barb":
+			var amount := rank_value(skill, level, 0, 1)
+			var turns := rank_value(skill, level, 1, 2)
+			attacker.atk = maxi(0, attacker.get("atk", 0) - amount)
+			attacker.poison_turns = maxi(attacker.get("poison_turns", 0), turns)
+			attacker.poison_damage = maxi(attacker.get("poison_damage", 0), 1)
+			result.message = "Venom Barb gives %s -%d ATK and Poisons it for %s." % [
+				attacker.name, amount, _turn_label(turns)
+			]
+			result.affected.append(attacker.id)
+		"Emergency Protocol":
+			var threshold := rank_value(skill, level, 0, 4)
+			var healing := rank_value(skill, level, 1, 2)
+			var protect_chance := rank_value(skill, level, 2, 30) / 100.0
+			if target.get("hp", 0) <= threshold:
+				BattleSimulatorScript.apply_unit_healing(target, healing)
+				result.message = "Emergency Protocol restores %d HP to %s." % [
+					healing, target.name
+				]
+				result.affected.append(target.id)
+				var chance_roll := randf() if roll < 0.0 else roll
+				if chance_roll < protect_chance:
+					target.protect_turns = maxi(target.get("protect_turns", 0), 1)
+					result.message += " %s gains Protect for 1 turn." % target.name
 	return result
 
 ## Recomputes aura buffs from living sources. Each call strips the bonuses a
@@ -1415,6 +2577,24 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 		if skill.get("type", "").to_lower() != "aura":
 			continue
 		var level := int(source.get("level", 1))
+		var doctrine_kind: String = CLASS_DOCTRINE_KINDS.get(skill.get("name", ""), "")
+		if not doctrine_kind.is_empty():
+			var doctrine_amount := rank_value(skill, level, 0, 1)
+			var doctrine_name: String = skill.get("name", "")
+			for doctrine_ally in units:
+				if (
+					doctrine_ally.side == source.side and doctrine_ally.id != source.id
+					and doctrine_ally.get("hp", 0) > 0
+					and doctrine_ally.get("kind", "") == doctrine_kind
+				):
+					desired_atk[doctrine_ally.id] = (
+						int(desired_atk.get(doctrine_ally.id, 0)) + doctrine_amount
+					)
+					var doctrine_labels: Array = desired_labels.get(doctrine_ally.id, [])
+					if doctrine_name not in doctrine_labels:
+						doctrine_labels.append(doctrine_name)
+					desired_labels[doctrine_ally.id] = doctrine_labels
+			continue
 		match skill.get("name", ""):
 			"Dawn Circuit":
 				var hp_amount := rank_value(skill, level, 0, 1)
@@ -1430,6 +2610,18 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 						if "Dawn Circuit" not in labels:
 							labels.append("Dawn Circuit")
 						desired_labels[unit.id] = labels
+			"Siege Rhythm":
+				var atk_amount := rank_value(skill, level, 0, 1)
+				for unit in units:
+					if (
+						unit.side == source.side and unit.id != source.id
+						and unit.get("hp", 0) > 0 and unit.get("haste_turns", 0) > 0
+					):
+						desired_atk[unit.id] = int(desired_atk.get(unit.id, 0)) + atk_amount
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Siege Rhythm" not in labels:
+							labels.append("Siege Rhythm")
+						desired_labels[unit.id] = labels
 			"Lumen Shell":
 				var amount := rank_value(skill, level, 0, 4)
 				for unit in units:
@@ -1438,6 +2630,18 @@ static func refresh_auras(units: Array, events: Array = []) -> void:
 						var labels: Array = desired_labels.get(unit.id, [])
 						if "Lumen Shell" not in labels:
 							labels.append("Lumen Shell")
+						desired_labels[unit.id] = labels
+			"Command Presence":
+				# Unrestricted like Lumen Shell, but grants ATK as well as HP.
+				var presence_hp := rank_value(skill, level, 0, 1)
+				var presence_atk := rank_value(skill, level, 1, 1)
+				for unit in units:
+					if unit.side == source.side and unit.id != source.id:
+						desired[unit.id] = int(desired.get(unit.id, 0)) + presence_hp
+						desired_atk[unit.id] = int(desired_atk.get(unit.id, 0)) + presence_atk
+						var labels: Array = desired_labels.get(unit.id, [])
+						if "Command Presence" not in labels:
+							labels.append("Command Presence")
 						desired_labels[unit.id] = labels
 			"Resonant Chorus":
 				var hp_amount := rank_value(skill, level, 0, 1)
@@ -1547,6 +2751,15 @@ static func expire_statuses(units: Array, side: int) -> void:
 				unit.erase("defer_haste_expiry")
 			else:
 				unit.haste_turns -= 1
+		# Slow (Frostbrand Strike) mirrors Haste: -1 Move while the counter holds.
+		if unit.side == side and unit.get("slow_turns", 0) > 0:
+			unit.slow_turns -= 1
+		# Delayed (Lag Field) blocks attacking but not movement; ticks like Stun.
+		if unit.side == side and unit.get("delayed_turns", 0) > 0:
+			unit.delayed_turns -= 1
+		# Twin Drive's second strike ticks on the buffed unit's own side turns.
+		if unit.side == side and unit.get("doublestrike_turns", 0) > 0:
+			unit.doublestrike_turns -= 1
 		# Doom timers (Lasting Aegis) count the opposing side's turns; when one
 		# runs out the carrier is defeated.
 		if unit.side != side and unit.get("doom_turns", 0) > 0:
@@ -1558,6 +2771,11 @@ static func expire_statuses(units: Array, side: int) -> void:
 		# N opposing-side turns.
 		if unit.side != side and unit.get("summon_forth_turns", 0) > 0:
 			unit.summon_forth_turns -= 1
+		# Guardian Protocol cover also counts the opposing side's turns.
+		if unit.side != side and unit.get("cover_turns", 0) > 0:
+			unit.cover_turns -= 1
+			if unit.cover_turns <= 0:
+				unit.erase("cover_source_id")
 
 ## A Silenced unit's secondary skill does not trigger while the counter
 ## holds: it skips its Warcry, Strike, Chants, and Reaction, and stops

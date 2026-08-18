@@ -5339,6 +5339,10 @@ func _spawn_unit(card: Dictionary, side: int, row: int, col: int) -> Dictionary:
 		"stun_turns": 0,
 		"silenced_turns": 0,
 		"haste_turns": 0,
+		"slow_turns": 0,
+		"delayed_turns": 0,
+		"doublestrike_turns": 0,
+		"cover_turns": 0,
 		"doom_turns": 0,
 		"festival_turns": 0,
 		"summon_forth_turns": 0,
@@ -5372,7 +5376,7 @@ func _resolve_warcry(
 	if (
 		actor.side == PLAYER
 		and not autobattle_active
-		and skill.get("name", "") in ["Overclock Link", "Guard Link", "Purge Routine", "Refit Cycle", "Field Recovery", "Thermal Wrap"]
+		and skill.get("name", "") in ["Overclock Link", "Guard Link", "Purge Routine", "Refit Cycle", "Field Recovery", "Thermal Wrap", "Purge Wave", "Ballast Infusion", "Guardian Protocol", "Twin Drive", "Sacrificial Pyre"]
 		and target_id < 0
 		and has_other_ally
 	):
@@ -5380,7 +5384,7 @@ func _resolve_warcry(
 		return "Choose another allied unit as %s's target." % skill.get("name", "")
 	if (
 		actor.side == PLAYER and not autobattle_active
-		and skill.get("name", "") in ["Toxin Injector", "Thermal Burst", "Null Signal"]
+		and skill.get("name", "") in ["Toxin Injector", "Thermal Burst", "Null Signal", "Death Knell", "Corrosive Detonation", "Stasis Bolt", "Decommission"]
 		and target_id < 0 and units.any(func(unit): return unit.side == ENEMY)
 	):
 		pending_envenom_actor_id = actor.id
@@ -5390,7 +5394,7 @@ func _resolve_warcry(
 	if (
 		actor.side == PLAYER
 		and not autobattle_active
-		and skill.get("name", "") in ["Suppression Field", "Meteor Pattern", "Cryo Lock", "Lane Bulwark", "Umbral Clamp"]
+		and skill.get("name", "") in ["Suppression Field", "Meteor Pattern", "Cryo Lock", "Lane Bulwark", "Umbral Clamp", "Blackout Burst", "Seismic Salvo", "Sanitize Corridor", "Lag Field"]
 		and target_lane < 0 and units.any(
 			func(unit): return (
 				unit.side == lane_side
@@ -5411,22 +5415,32 @@ func _resolve_warcry(
 			)
 			if skill.get("name", "") in [
 				"Arc Lance", "Relay Storm", "Corrosion Bloom", "Anchor Shot", "Breach Charge",
-				"Heavy Target", "Chain Corrosion", "Meteor Pattern", "Cryo Lock", "Thermal Burst"
+				"Heavy Target", "Chain Corrosion", "Meteor Pattern", "Cryo Lock", "Thermal Burst",
+				"Seismic Salvo", "Toxic Miasma", "Discordant Blast", "Decommission",
+				"Sacrificial Pyre"
 			]:
 				battle_audio.play("mage")
 				await board.animate_hit(target.id, _animation_duration(0.16))
 			elif skill.get("name", "") in [
 				"Brace Protocol", "Overclock Link", "Repair Pulse", "Guard Link", "Combat Surge",
 				"Purge Routine", "Refit Cycle", "Field Recovery", "Cover Matrix", "Solar Crescendo", "Lane Bulwark",
-				"Retaliation Screen", "Thermal Wrap", "Failover Mantle"
+				"Retaliation Screen", "Thermal Wrap", "Failover Mantle", "Command Uplink", "Purge Wave",
+				"Resonant Warhorn", "Absolution Pulse", "Sanitize Corridor", "Equalize",
+				"Ballast Infusion", "Overdrive Charge", "Guardian Protocol", "Twin Drive"
 			]:
 				battle_audio.play("status")
 				await board.animate_heal(actor.id, target.id, _animation_duration(0.24))
 			elif skill.get("name", "") in [
 				"Toxin Injector", "Suppression Field", "Countermeasure", "Signal Jam", "Null Signal",
-				"Umbral Clamp"
+				"Umbral Clamp", "Blackout Burst", "Intimidating Presence", "Death Knell",
+				"Corrosive Detonation", "Stasis Bolt", "Exposing Frequency", "Gridlock Field",
+				"Temporal Rewind", "Lag Field"
 			]:
 				battle_audio.play("status")
+		for moved in result.get("moved", []):
+			await board.animate_unit_move(
+				moved.id, moved.row, moved.from_col, _animation_duration(0.2)
+			)
 	if not result.message.is_empty():
 		_log_action("%s [WARCRY · %s] %s" % [
 			actor.name, skill.get("name", "Unknown"), result.message
@@ -5460,7 +5474,7 @@ func _lane_target_kinds(skill_name: String) -> Array:
 ## Side whose units make a lane a valid target for a lane-targeted Warcry.
 ## Lane Bulwark buffs allies; the other lane Warcries target enemies.
 func _lane_target_side(skill_name: String) -> int:
-	return PLAYER if skill_name == "Lane Bulwark" else ENEMY
+	return PLAYER if skill_name in ["Lane Bulwark", "Sanitize Corridor"] else ENEMY
 
 func _use_player_power() -> void:
 	if player_power_used or not input_enabled:
@@ -5940,9 +5954,17 @@ func _activate_unit(actor: Dictionary) -> void:
 	else:
 		status_message = "%s cannot advance." % _actor_tag(actor)
 
+	# Delayed (Lag Field): the unit moves normally but cannot attack.
+	if actor.get("delayed_turns", 0) > 0:
+		status_message += " It is Delayed and cannot attack."
+		board.play_unit_effect(actor.id, "DELAYED", Color("#52cfff"))
+		return
+
 	var target = _find_target(actor)
 	if target != null:
-		var strikes := 2 if actor.kind == "Strider" else 1
+		var strikes := 2 if (
+			actor.kind == "Strider" or actor.get("doublestrike_turns", 0) > 0
+		) else 1
 		for hit in strikes:
 			if target == null or target.hp <= 0:
 				target = _find_target(actor)
@@ -5957,11 +5979,13 @@ func _activate_unit(actor: Dictionary) -> void:
 				actor.id, target.id, actor.kind, _animation_duration(0.24), hit, strikes
 			)
 			var damage_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
-				target, actor.atk, actor
+				target, actor.atk, actor, units
 			)
 			var damage_dealt: int = damage_result.damage
 			var was_protected: bool = damage_result.get("protected", false)
 			var immunity: String = damage_result.get("immunity", "")
+			# Guardian Protocol: the hit landed on the covering unit instead.
+			var coverer = _unit_by_id(int(damage_result.get("redirected_to", -1)))
 			var attack_event: Dictionary = battle_simulator.record("attack", {
 				"actor_id": actor.id,
 				"target_id": target.id,
@@ -5970,7 +5994,22 @@ func _activate_unit(actor: Dictionary) -> void:
 				"strike_index": hit,
 				"strike_count": strikes
 			})
-			if was_protected:
+			if coverer != null:
+				attack_event["redirected_to"] = coverer.id
+			if coverer != null and was_protected:
+				status_message = "%s's attack on %s is intercepted by %s, whose Protect blocks it." % [
+					_actor_tag(actor), target.name, coverer.name
+				]
+			elif coverer != null and not immunity.is_empty():
+				status_message = "%s's attack on %s is intercepted by %s, who is immune (%s)." % [
+					_actor_tag(actor), target.name, coverer.name,
+					"Retaliation Screen" if immunity == "summon_forth" else "Silent Cycle"
+				]
+			elif coverer != null:
+				status_message = "%s's attack on %s is intercepted by %s for %d." % [
+					_actor_tag(actor), target.name, coverer.name, damage_dealt
+				]
+			elif was_protected:
 				status_message = "%s's attack on %s is blocked by Protect." % [
 					_actor_tag(actor), target.name
 				]
@@ -5997,9 +6036,11 @@ func _activate_unit(actor: Dictionary) -> void:
 			elif actor.kind == "Artillerist":
 				impact_label += " PIERCE"
 				impact_color = Color("#ffd166")
-			board.play_unit_effect(target.id, impact_label, impact_color)
+			board.play_unit_effect(
+				coverer.id if coverer != null else target.id, impact_label, impact_color
+			)
 			var secondary_hits: Array = _apply_special_damage(actor, target)
-			var hit_ids: Array = [target.id]
+			var hit_ids: Array = [coverer.id if coverer != null else target.id]
 			var secondary_target_hps := {}
 			for secondary_id in secondary_hits:
 				battle_audio.play("hit")
@@ -6018,7 +6059,7 @@ func _activate_unit(actor: Dictionary) -> void:
 				if not was_protected:
 					board.play_unit_effect(target.id, "TAUNT 2", Color("#ff9d66"))
 			var strike_result: Dictionary = UnitSkillsScript.resolve_strike(
-				actor, target, units, battle_simulator.rng.randf()
+				actor, target, units, battle_simulator.rng.randf(), battle_simulator.rng
 			)
 			if not strike_result.message.is_empty():
 				status_message += " " + strike_result.message
@@ -6048,9 +6089,44 @@ func _activate_unit(actor: Dictionary) -> void:
 					"Twin Resonance":
 						strike_label = "+HP"
 						strike_color = Color("#8ee36b")
+					"Siphon Edge":
+						strike_label = "STEAL"
+						strike_color = Color("#ffd166")
+					"Static Lash":
+						strike_label = "SILENCED"
+						strike_color = Color("#52cfff")
+					"Shrapnel Arc":
+						strike_label = "SHRAPNEL"
+					"Execute Protocol":
+						strike_label = "EXECUTE"
+						strike_color = Color("#ff9d66")
+					"Frostbrand Strike":
+						strike_label = "SLOWED"
+						strike_color = Color("#52cfff")
+					"Concussion Blow":
+						strike_label = "STUNNED"
+						strike_color = Color("#ffd166")
+					"Executioner Spike":
+						strike_label = "SPIKE"
+						strike_color = Color("#ff9d66")
+					"Shieldbreaker":
+						strike_label = "SHATTER"
+						strike_color = Color("#ff9d66")
+					"Scatter Volley":
+						strike_label = "VOLLEY"
+					"Arc Cascade":
+						strike_label = "CASCADE"
+					"Hushing Resonance":
+						strike_label = "SILENCED"
+						strike_color = Color("#52cfff")
+					"Leech Protocol":
+						strike_label = "LEECH"
+						strike_color = Color("#8ee36b")
+					"Concussive Repulse":
+						strike_label = "KNOCKBACK"
 				if not was_protected:
 					var strike_effect_target: int = (
-						actor.id if strike_name == "Furnace Wake" else target.id
+						actor.id if strike_name in ["Furnace Wake", "Leech Protocol"] else target.id
 					)
 					board.play_unit_effect(strike_effect_target, strike_label, strike_color)
 			for moved in strike_result.get("moved", []):
@@ -6058,14 +6134,14 @@ func _activate_unit(actor: Dictionary) -> void:
 					moved.id, moved.row, moved.from_col, _animation_duration(0.2)
 				)
 			var reaction_result: Dictionary = UnitSkillsScript.resolve_reaction(
-				target, actor, units, battle_simulator.rng.randf()
+				coverer if coverer != null else target, actor, units, battle_simulator.rng.randf()
 			)
 			if not reaction_result.message.is_empty():
 				status_message += " " + reaction_result.message
-				var reaction_name: String = target.get("skill", {}).get("name", "")
+				var reaction_name: String = (coverer if coverer != null else target).get("skill", {}).get("name", "")
 				var buff_reactions := [
 					"Aegis Array", "Holdfast", "Pressure Sink", "Reversal Current", "Repulse Command", "Paired Circuit",
-					"Slipstream Reversal"
+					"Slipstream Reversal", "Grudge Capacitor", "Feint Step", "Emergency Protocol"
 				]
 				battle_audio.play("status" if reaction_name in buff_reactions else "hit")
 				var reaction_label := "COUNTER"
@@ -6089,6 +6165,27 @@ func _activate_unit(actor: Dictionary) -> void:
 					"Slipstream Reversal":
 						reaction_label = "SLIPSTREAM"
 						reaction_color = Color("#52cfff")
+					"Grudge Capacitor":
+						reaction_label = "+ATK"
+						reaction_color = Color("#ffd166")
+					"Mirror Plating":
+						reaction_label = "VULNERABLE"
+						reaction_color = Color("#ff9d66")
+					"Feint Step":
+						reaction_label = "FEINT"
+						reaction_color = Color("#52cfff")
+					"Volatile Core":
+						reaction_label = "DETONATION"
+						reaction_color = Color("#ff8b9f")
+					"Retribution Jolt":
+						reaction_label = "JOLT"
+						reaction_color = Color("#ffd166")
+					"Venom Barb":
+						reaction_label = "POISONED"
+						reaction_color = Color("#8ee36b")
+					"Emergency Protocol":
+						reaction_label = "+HP"
+						reaction_color = Color("#8ee36b")
 				for reaction_id in reaction_result.affected:
 					var reaction_target = _unit_by_id(reaction_id)
 					if reaction_target == null:
@@ -6109,8 +6206,10 @@ func _activate_unit(actor: Dictionary) -> void:
 			# A Retaliation Screen-immune defender retaliates once per blocked hit,
 			# animated like Reactor Leap's counter.
 			if immunity == "summon_forth":
+				# The immunity may belong to a Guardian Protocol coverer rather
+				# than the original target.
 				var summon_result: Dictionary = UnitSkillsScript.resolve_summon_forth(
-					target, actor, units, battle_simulator.rng
+					coverer if coverer != null else target, actor, units, battle_simulator.rng
 				)
 				if not summon_result.message.is_empty():
 					status_message += " " + summon_result.message
@@ -6138,7 +6237,9 @@ func _activate_unit(actor: Dictionary) -> void:
 		return
 
 	if _commander_in_range(actor):
-		var strikes := 2 if actor.kind == "Strider" else 1
+		var strikes := 2 if (
+			actor.kind == "Strider" or actor.get("doublestrike_turns", 0) > 0
+		) else 1
 		await _attack_commander(actor, strikes)
 		if actor.kind == "Duelist" and _unit_by_id(actor.id) != null:
 			actor.atk += 1
@@ -6192,15 +6293,16 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 		for other in units:
 			if other.id != target.id and other.side == target.side and Vector2i(other.col, other.row) in blast_cells:
 				var blast_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
-					other, splash_damage, actor
+					other, splash_damage, actor, units
 				)
-				affected_ids.append(other.id)
+				var blast_unit_id: int = int(blast_result.get("redirected_to", other.id))
+				affected_ids.append(blast_unit_id)
 				if blast_result.get("protected", false):
-					board.play_unit_effect(other.id, "PROTECTED", Color("#71e6f5"))
+					board.play_unit_effect(blast_unit_id, "PROTECTED", Color("#71e6f5"))
 				elif not String(blast_result.get("immunity", "")).is_empty():
-					board.play_unit_effect(other.id, "IMMUNE", Color("#a8b8ff"))
+					board.play_unit_effect(blast_unit_id, "IMMUNE", Color("#a8b8ff"))
 				else:
-					board.play_unit_effect(other.id, "-%d BLAST" % splash_damage, Color("#c99cff"))
+					board.play_unit_effect(blast_unit_id, "-%d BLAST" % splash_damage, Color("#c99cff"))
 		status_message += " Arc Burst deals %d damage to adjacent enemies." % splash_damage
 	elif actor.kind == "Artillerist":
 		var direction := 1 if actor.side == PLAYER else -1
@@ -6211,16 +6313,17 @@ func _apply_special_damage(actor: Dictionary, target: Dictionary) -> Array:
 			var distance: int = (other.col - actor.col) * direction
 			if distance > 0 and distance <= actor.range:
 				var pierce_result: Dictionary = BattleSimulatorScript.apply_unit_damage(
-					other, actor.atk, actor
+					other, actor.atk, actor, units
 				)
+				var pierce_unit_id: int = int(pierce_result.get("redirected_to", other.id))
 				if pierce_result.get("protected", false):
-					board.play_unit_effect(other.id, "PROTECTED", Color("#71e6f5"))
+					board.play_unit_effect(pierce_unit_id, "PROTECTED", Color("#71e6f5"))
 				elif not String(pierce_result.get("immunity", "")).is_empty():
-					board.play_unit_effect(other.id, "IMMUNE", Color("#a8b8ff"))
+					board.play_unit_effect(pierce_unit_id, "IMMUNE", Color("#a8b8ff"))
 				else:
 					pierced.append(other.name)
-					board.play_unit_effect(other.id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
-				affected_ids.append(other.id)
+					board.play_unit_effect(pierce_unit_id, "-%d PIERCE" % actor.atk, Color("#ffd166"))
+				affected_ids.append(pierce_unit_id)
 		if not pierced.is_empty():
 			status_message += " Rail Volley also hits %s." % ", ".join(pierced)
 	return affected_ids

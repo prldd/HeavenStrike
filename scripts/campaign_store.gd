@@ -50,7 +50,25 @@ const REWARD_UNITS := [
 	"Cinder Battery-170", "Cinder Battery-171",
 	"Zephyr Mender-208", "Zephyr Mender-209", "Cinder Mender-213", "Cinder Mender-214",
 	"Relay Battery-217", "Relay Battery-218", "Cinder Bastion-219", "Cinder Bastion-220",
-	"Zephyr Lancer-221", "Zephyr Lancer-222", "Helio Mender-223", "Helio Mender-224"
+	"Zephyr Lancer-221", "Zephyr Lancer-222", "Helio Mender-223", "Helio Mender-224",
+	"Cinder Blade-225", "Flux Weaver-226", "Brass Battery-227", "Helio Bastion-228",
+	"Cinder Bastion-229", "Zephyr Lancer-230", "Flux Weaver-231", "Helio Battery-232",
+	"Brass Mender-233", "Zephyr Blade-234", "Cinder Lancer-235", "Helio Mender-236",
+	"Cinder Bastion-237", "Cinder Mender-238", "Cinder Weaver-239", "Brass Battery-240",
+	"Brass Blade-241", "Brass Lancer-242", "Zephyr Lancer-243", "Zephyr Mender-244",
+	"Zephyr Blade-245", "Flux Weaver-246", "Flux Battery-247", "Flux Lancer-248",
+	"Helio Bastion-249", "Helio Weaver-250", "Helio Mender-251",
+	"Cinder Blade-252", "Brass Blade-253", "Cinder Lancer-254", "Brass Battery-255",
+	"Flux Lancer-256", "Flux Weaver-257", "Cinder Weaver-258", "Zephyr Lancer-259",
+	"Brass Bastion-260", "Cinder Bastion-261", "Helio Bastion-262", "Flux Weaver-263",
+	"Cinder Weaver-264", "Cinder Weaver-265", "Flux Weaver-266", "Brass Lancer-267",
+	"Helio Mender-268", "Zephyr Mender-269", "Brass Blade-270", "Flux Lancer-271",
+	"Flux Weaver-272", "Helio Weaver-273", "Brass Mender-274", "Zephyr Weaver-275",
+	"Cinder Battery-276", "Brass Battery-277", "Cinder Blade-278", "Helio Mender-279",
+	"Helio Mender-280", "Cinder Weaver-281", "Cinder Battery-282", "Zephyr Lancer-283",
+	"Zephyr Lancer-284", "Zephyr Weaver-285", "Cinder Bastion-286", "Flux Battery-287",
+	"Helio Weaver-288", "Helio Bastion-289", "Brass Bastion-290", "Zephyr Blade-291",
+	"Flux Weaver-292", "Cinder Mender-293"
 ]
 
 static var MISSIONS: Array = StoryQuestCatalogScript.build_missions()
