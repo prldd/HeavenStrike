@@ -1045,7 +1045,9 @@ func _init() -> void:
 	assert(StoryDialogueCatalogScript.CHARACTERS["First Conductor"].portrait_kind == "android")
 	for character in StoryDialogueCatalogScript.CHARACTERS.values():
 		assert(character.get("portrait_kind", "") in ["human", "android"])
-		assert(ResourceLoader.exists(character.get("portrait", "")))
+		var character_portrait := String(character.get("portrait", ""))
+		# Characters without portrait art render as an initials medallion.
+		assert(character_portrait.is_empty() or ResourceLoader.exists(character_portrait))
 	var opening_interlude := StoryDialogueCatalogScript.scene_for_mission(0)
 	assert(opening_interlude.title == "A Useful Kind of Impossible")
 	assert(opening_interlude.lines.size() >= 4)

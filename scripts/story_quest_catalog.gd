@@ -252,23 +252,23 @@ const MISSION_STORIES := {
 	# Chapter 1 — The Salvage
 	1: {
 		"chapter": "The Salvage",
-		"briefing": "Two reclaimed automatons are ready for their first field test. Deploy them along the relay site's perimeter and make sure they can hold formation.",
-		"debriefing": "The exercise goes cleanly. Impressed by the machines' response, Cassian restricts access to the site until the expedition understands what it has found."
+		"briefing": "Field test day. Two of the automatons we pulled from the lower galleries are walking again, and the patrons want proof the dig is worth their money before they fund the next phase. Run them along the relay site perimeter and put them through a live drill. If they do anything the manuals don't cover, I hear it from you first.",
+		"debriefing": "The drill goes clean — too clean. One of the machines moved half a second before your signal reached it. Cassian logs a success for the patrons, then seals the site to outside crews until the expedition knows what it has actually found. Off the record, he has started asking why the dig's funding arrived so quickly."
 	},
 	2: {
 		"chapter": "The Salvage",
-		"briefing": "Two more machines have come online. Bring them into formation and test the control link under pressure before tomorrow's relay activation.",
-		"debriefing": "The link remains stable throughout the exercise. In his ledger, Cassian writes a word beside your name that neither of you is ready to say aloud: Conductor."
+		"briefing": "Two more machines woke overnight — that makes four. Tomorrow the patrons fire the relay itself: full activation, sealed test, their observers on the roster. Today belongs to us. Form the squad up and lean on the control link until it complains. If anything down here wants to surprise us, it can do it now.",
+		"debriefing": "The link holds through everything we throw at it, and it shouldn't. Nobody has guided this many machines since the Empire, and nobody living is certified to try. None of that goes in the report. In his private ledger, Cassian writes one word beside your name and doesn't say it out loud: Conductor."
 	},
 	3: {
 		"chapter": "The Salvage",
-		"briefing": "The relay has activated on its own, waking the site's security machines and bringing down the gallery. Clear a path and get the expedition crew outside.",
-		"debriefing": "Most of the expedition reaches the upper gallery, but Cassian's locator still pulses below the fire line. You should not have survived the collapse, and the machines now answer your thoughts; when you turn back for him, they turn with you without being asked."
+		"briefing": "The relay fired early — hours ahead of schedule, nobody at the controls. The surge collapsed the lower gallery and tripped the site's Caelian security machines, and they are cutting our crew off from the exits. Hold the security line and get our people out.",
+		"debriefing": "Most of the crew reaches the upper gallery. Cassian's locator is still pulsing below the fire line. Three tons of stone came down on you and you walked out — and when you turned back for him, every machine turned with you, unasked. The relay is still humming, and no test schedule explains what it did to you."
 	},
 	4: {
 		"chapter": "The Salvage",
-		"briefing": "Fire is spreading through the lower galleries, and Cassian is trapped beyond the security line. Break through the remaining defenses and bring him out.",
-		"debriefing": "Cassian leaves the site alive because of you, a debt he does not take lightly. When the patrons close the site and declare the incident settled, he invokes the expedition's salvage contract and forces them to accept an independent assessment before anything can be removed."
+		"briefing": "The lower galleries are burning, and Cassian is trapped behind the security cordon — the site's warden core is still enforcing it, three hundred years dead or not. Break the line and bring him out. Nobody stays in a tomb we opened.",
+		"debriefing": "You bring Cassian out breathing. He doesn't say thank you — he starts writing. When the patrons' director arrives to seal the site and call the matter settled, Cassian is waiting at the gate with the salvage contract in hand and a clause that forces an independent assessment before anyone removes so much as a bolt."
 	},
 	# Chapter 2 — The Aftermath
 	5: {
@@ -651,6 +651,47 @@ const MISSION_STORIES := {
 	}
 }
 
+# Prologue shown the first time the operations map opens (replayable via the
+# WORLD BRIEF button). It establishes the believed history — Empire, Source,
+# collapse, five factions, operators versus true Conductors — so the later
+# reveals have something to break. Voice rules live in
+# documentation/Narrative_Style_Guide.md.
+const CAMPAIGN_PROLOGUE := (
+	"Three hundred years ago, the Caelian Empire ran its whole civilization on "
+	+ "the Source — one network that powered the cities, the transports, and the "
+	+ "automatons that kept them alive. Imperial Conductors guided those machines "
+	+ "through relay stations, lending them purpose with a thought.\n\n"
+	+ "Then the Empire fell. The Source went dark, the capital Caelis was lost, "
+	+ "and the Conductors died with it. That is the story every school in every "
+	+ "nation teaches.\n\n"
+	+ "Five successor nations rose from the provinces — Coal, Steam, Solar, Wind, "
+	+ "and Fusion. Each kept a fragment of the old network running, and each is "
+	+ "certain it alone can be trusted with what remains. Their armies field "
+	+ "machines of their own, driven by licensed operators with control rigs — "
+	+ "crude tools beside what the Empire's Conductors did with their minds.\n\n"
+	+ "You are a reclamation technician with a joint salvage expedition, paid to "
+	+ "pull working Caelian machinery out of a dead relay site. The patrons "
+	+ "funding the dig expect scrap value.\n\n"
+	+ "The site has other plans."
+)
+
+# Chapter intro cards, keyed by chapter name (the same strings used in
+# MISSION_STORIES and the operations-map regions). Shown once when a chapter
+# becomes the campaign frontier; they carry just-in-time exposition for the
+# institutions the chapter's missions are about to use.
+const CHAPTER_CARDS := {
+	"The Salvage": {
+		"text": (
+			"Your expedition works a dormant Caelian relay site under a patrons' "
+			+ "salvage contract: recover what still functions, catalogue what "
+			+ "doesn't, and make the dig look worth its funding.\n\n"
+			+ "The machines coming out of the lower galleries have been dead for "
+			+ "three centuries. They should not be waking up — and they definitely "
+			+ "should not be watching you work."
+		)
+	}
+}
+
 # Epilogue shown on completing the final mission (the Accord ending from
 # documentation/Resonance_War_Narrative_Foundation.md).
 const CAMPAIGN_EPILOGUE := (
@@ -958,6 +999,20 @@ const MISSION_ENEMY_SQUADS := [
 	["Cinder Bastion-167", "Zephyr Weaver-060", "Zephyr Lancer-110", "Flux Battery-141", "Brass Bastion-200", "Helio Mender-162", "Relay Blade-101", "Flux Mender-184"],
 	["Brass Weaver-159", "Helio Mender-161", "Helio Mender-133", "Flux Weaver-193", "Relay Blade-095", "Cinder Battery-182", "Helio Bastion-173", "Zephyr Lancer-038"]
 ]
+
+# 1-based chapter number for display ("CHAPTER 7"), derived from the order
+# chapters first appear in MISSION_STORIES. Returns 0 for unknown chapters.
+static func chapter_number(chapter_name: String) -> int:
+	var seen: Array = []
+	for index in QUESTS.size():
+		var chapter: String = MISSION_STORIES.get(index + 1, {}).get("chapter", "")
+		if chapter.is_empty():
+			continue
+		if chapter not in seen:
+			seen.append(chapter)
+		if chapter == chapter_name:
+			return seen.size()
+	return 0
 
 static func build_missions() -> Array:
 	var missions: Array = []

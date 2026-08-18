@@ -25,6 +25,8 @@ const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const UIThemeScript = preload("res://scripts/ui_theme.gd")
 const StoryDialogueCatalogScript = preload("res://scripts/story_dialogue_catalog.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
+const StoryQuestCatalogScript = preload("res://scripts/story_quest_catalog.gd")
+const LoreCardStoreScript = preload("res://scripts/lore_card_store.gd")
 const MAIN_MENU_BACKGROUND := preload("res://assets/main-menu-command-deck.png")
 const OPERATIONS_MAP_BACKGROUNDS := {
 	1: preload("res://assets/operations_maps/modern/act-1-reclamation.png"),
@@ -245,6 +247,12 @@ var dialogue_speaker_label: Label
 var dialogue_role_label: Label
 var dialogue_line_label: Label
 var dialogue_next_button: Button
+var lore_overlay: ColorRect
+var lore_kicker_label: Label
+var lore_title_label: Label
+var lore_body_label: Label
+var lore_continue_button: Button
+var lore_card_queue: Array = []
 var tutorial_panel: PanelContainer
 var tutorial_progress_label: Label
 var tutorial_title_label: Label
@@ -526,6 +534,7 @@ func _build_interface() -> void:
 	_build_mission_select()
 	_build_challenge_operations()
 	_build_dialogue_overlay()
+	_build_lore_cards()
 	_build_kinetic_crucible()
 	_build_gacha()
 	_build_hover_card()
@@ -534,6 +543,17 @@ func _build_interface() -> void:
 	_build_tutorial_panel()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]
+		and lore_overlay != null
+		and lore_overlay.visible
+	):
+		get_viewport().set_input_as_handled()
+		_advance_lore_card()
+		return
 	if (
 		event is InputEventKey
 		and event.pressed
@@ -2309,6 +2329,12 @@ func _build_mission_select() -> void:
 	campaign_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	campaign_progress_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
 	title_row.add_child(campaign_progress_label)
+	var world_brief := Button.new()
+	world_brief.text = "WORLD BRIEF"
+	world_brief.tooltip_text = "Re-read the campaign orientation and the current chapter brief."
+	world_brief.custom_minimum_size = Vector2(150, 38)
+	world_brief.pressed.connect(_show_world_brief)
+	title_row.add_child(world_brief)
 
 	var act_row := HBoxContainer.new()
 	act_row.add_theme_constant_override("separation", 8)
@@ -2551,6 +2577,58 @@ func _build_dialogue_overlay() -> void:
 	dialogue_next_button.custom_minimum_size = Vector2(150, 44)
 	dialogue_next_button.pressed.connect(_advance_interlude)
 	actions.add_child(dialogue_next_button)
+
+func _build_lore_cards() -> void:
+	lore_overlay = ColorRect.new()
+	lore_overlay.color = Color.TRANSPARENT
+	lore_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lore_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	lore_overlay.visible = false
+	add_child(lore_overlay)
+	_add_overlay_background(
+		lore_overlay,
+		MAIN_MENU_BACKGROUND,
+		Color(0.008, 0.025, 0.042, 0.86)
+	)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lore_overlay.add_child(center)
+
+	var plaque := PanelContainer.new()
+	plaque.custom_minimum_size = Vector2(680, 0)
+	plaque.add_theme_stylebox_override("panel", UIThemeScript.dark_plaque())
+	center.add_child(plaque)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	plaque.add_child(layout)
+
+	lore_kicker_label = Label.new()
+	lore_kicker_label.add_theme_font_size_override("font_size", 12)
+	lore_kicker_label.add_theme_color_override("font_color", UIThemeScript.muted_color())
+	layout.add_child(lore_kicker_label)
+
+	lore_title_label = Label.new()
+	lore_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lore_title_label.add_theme_font_size_override("font_size", 28)
+	lore_title_label.add_theme_color_override("font_color", UIThemeScript.title_color())
+	layout.add_child(lore_title_label)
+
+	layout.add_child(HSeparator.new())
+
+	lore_body_label = Label.new()
+	lore_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lore_body_label.add_theme_font_size_override("font_size", 16)
+	layout.add_child(lore_body_label)
+
+	var card_actions := HBoxContainer.new()
+	card_actions.alignment = BoxContainer.ALIGNMENT_END
+	layout.add_child(card_actions)
+	lore_continue_button = Button.new()
+	lore_continue_button.custom_minimum_size = Vector2(170, 44)
+	lore_continue_button.pressed.connect(_advance_lore_card)
+	card_actions.add_child(lore_continue_button)
 
 func _build_kinetic_crucible() -> void:
 	crucible_overlay = ColorRect.new()
@@ -3572,6 +3650,8 @@ func _show_main_menu() -> void:
 	gacha_overlay.visible = false
 	squad_overlay.visible = false
 	dialogue_overlay.visible = false
+	lore_overlay.visible = false
+	lore_card_queue = []
 	overlay.visible = false
 	result_redeploy_button.visible = false
 	result_autobattle_button.visible = false
@@ -3599,6 +3679,68 @@ func _open_mission_select(focus_mission_id: int = -1) -> void:
 	mission_overlay.visible = true
 	await get_tree().process_frame
 	_rebuild_mission_list(focus_mission_id)
+	_maybe_show_lore_cards()
+
+func _maybe_show_lore_cards() -> void:
+	var cards: Array = []
+	if not LoreCardStoreScript.prologue_seen():
+		cards.append({
+			"kicker": "EXPEDITION ORIENTATION",
+			"title": "THE WORLD THAT REMAINS",
+			"text": StoryQuestCatalogScript.CAMPAIGN_PROLOGUE,
+			"prologue": true
+		})
+	var focus_mission: Dictionary = CampaignStoreScript.MISSIONS[_latest_campaign_mission_id()]
+	var chapter := String(focus_mission.get("chapter", ""))
+	if (
+		StoryQuestCatalogScript.CHAPTER_CARDS.has(chapter)
+		and not LoreCardStoreScript.chapter_seen(chapter)
+	):
+		cards.append(_chapter_lore_card(chapter))
+	if cards.is_empty():
+		return
+	lore_card_queue = cards
+	_advance_lore_card()
+
+func _chapter_lore_card(chapter: String) -> Dictionary:
+	return {
+		"kicker": "CHAPTER %d" % StoryQuestCatalogScript.chapter_number(chapter),
+		"title": chapter.to_upper(),
+		"text": StoryQuestCatalogScript.CHAPTER_CARDS[chapter].get("text", ""),
+		"chapter": chapter
+	}
+
+func _show_world_brief() -> void:
+	var cards: Array = [{
+		"kicker": "EXPEDITION ORIENTATION",
+		"title": "THE WORLD THAT REMAINS",
+		"text": StoryQuestCatalogScript.CAMPAIGN_PROLOGUE
+	}]
+	var focus_id := mission_selected_id
+	if focus_id < 0 or focus_id >= CampaignStoreScript.MISSIONS.size():
+		focus_id = _latest_campaign_mission_id()
+	var chapter := String(CampaignStoreScript.MISSIONS[focus_id].get("chapter", ""))
+	if StoryQuestCatalogScript.CHAPTER_CARDS.has(chapter):
+		cards.append(_chapter_lore_card(chapter))
+	lore_card_queue = cards
+	_advance_lore_card()
+
+func _advance_lore_card() -> void:
+	if lore_card_queue.is_empty():
+		lore_overlay.visible = false
+		return
+	var card: Dictionary = lore_card_queue.pop_front()
+	lore_kicker_label.text = card.get("kicker", "")
+	lore_title_label.text = card.get("title", "")
+	lore_body_label.text = card.get("text", "")
+	lore_continue_button.text = "CONTINUE  →" if lore_card_queue.is_empty() else "NEXT  →"
+	lore_overlay.visible = true
+	lore_continue_button.grab_focus()
+	if card.get("prologue", false):
+		LoreCardStoreScript.mark_prologue_seen()
+	var chapter := String(card.get("chapter", ""))
+	if not chapter.is_empty():
+		LoreCardStoreScript.mark_chapter_seen(chapter)
 
 func _latest_campaign_mission_id() -> int:
 	var latest_available := 0

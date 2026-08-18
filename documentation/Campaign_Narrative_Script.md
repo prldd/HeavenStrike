@@ -13,9 +13,12 @@ text in the campaign, for review and revision outside the game code.
 
 - `scripts/story_quest_catalog.gd` — `QUESTS` (mission titles), `MISSION_STORIES`
   (chapter, briefing, debriefing), `ENCOUNTER_RULES` (special objective text),
-  `CAMPAIGN_EPILOGUE`.
+  `CAMPAIGN_PROLOGUE` (first-open orientation), `CHAPTER_CARDS` (per-chapter
+  intro briefings), `CAMPAIGN_EPILOGUE`.
 - `scripts/story_dialogue_catalog.gd` — `CHARACTERS` (cast) and `INTERLUDES`
   (post-mission dialogue scenes, keyed by 1-based mission number).
+
+Voice and structure rules live in `documentation/Narrative_Style_Guide.md`.
 
 Per mission: **Briefing** is the pre-battle description (the player's frame, the
 practical problem), **Objective** is the authored special win condition when one
@@ -30,6 +33,7 @@ political consequence), and **Interlude** is the post-mission dialogue scene.
 |---------|------|
 | Conductor | Reclamation technician · Conductor |
 | Cassian | Expedition logistics adjutant |
+| Director Rusk | Expedition patron liaison |
 | Lysa Vey | Salvage-rights assessor |
 | The Stranger | Unknown observer |
 | Archivist Serin | Order archivist |
@@ -43,53 +47,79 @@ political consequence), and **Interlude** is the post-mission dialogue scene.
 
 ---
 
+## Campaign Prologue
+
+*Shown the first time the operations map opens (replayable via WORLD BRIEF).*
+
+Three hundred years ago, the Caelian Empire ran its whole civilization on the Source — one network that powered the cities, the transports, and the automatons that kept them alive. Imperial Conductors guided those machines through relay stations, lending them purpose with a thought.
+
+Then the Empire fell. The Source went dark, the capital Caelis was lost, and the Conductors died with it. That is the story every school in every nation teaches.
+
+Five successor nations rose from the provinces — Coal, Steam, Solar, Wind, and Fusion. Each kept a fragment of the old network running, and each is certain it alone can be trusted with what remains. Their armies field machines of their own, driven by licensed operators with control rigs — crude tools beside what the Empire's Conductors did with their minds.
+
+You are a reclamation technician with a joint salvage expedition, paid to pull working Caelian machinery out of a dead relay site. The patrons funding the dig expect scrap value.
+
+The site has other plans.
+
+---
+
 # Act 1
 
 ## Chapter 1 — The Salvage
 
+*Chapter briefing (shown once when the chapter unlocks):*
+
+Your expedition works a dormant Caelian relay site under a patrons' salvage contract: recover what still functions, catalogue what doesn't, and make the dig look worth its funding.
+
+The machines coming out of the lower galleries have been dead for three centuries. They should not be waking up — and they definitely should not be watching you work.
+
 ### Mission 1 — First Synchrony
 
-- **Briefing:** Two reclaimed automatons are ready for their first field test. Deploy them along the relay site's perimeter and make sure they can hold formation.
-- **Debriefing:** The exercise goes cleanly. Impressed by the machines' response, Cassian restricts access to the site until the expedition understands what it has found.
+- **Briefing:** Field test day. Two of the automatons we pulled from the lower galleries are walking again, and the patrons want proof the dig is worth their money before they fund the next phase. Run them along the relay site perimeter and put them through a live drill. If they do anything the manuals don't cover, I hear it from you first.
+- **Debriefing:** The drill goes clean — too clean. One of the machines moved half a second before your signal reached it. Cassian logs a success for the patrons, then seals the site to outside crews until the expedition knows what it has actually found. Off the record, he has started asking why the dig's funding arrived so quickly.
 
 **Interlude — "A Useful Kind of Impossible"** *(Relay Site · Equipment Gallery)*
 
-- **Cassian:** Two intact machines, one functioning Relay, and no injuries. That is either excellent work or an accounting error.
-- **Conductor:** The left one anticipated my signal before I sent it.
-- **Cassian:** Then do me a favor and leave that detail out of the inventory sheet.
+- **Cassian:** Two intact machines, one working relay, zero injuries. That's either excellent work or an accounting error.
+- **Conductor:** The left one moved before I gave the signal.
+- **Cassian:** Then do me a favor and leave that detail off the inventory sheet.
 - **Brass Bastion-136:** Formation retained. Awaiting shared purpose.
+- **Conductor:** It's been saying that since it woke up. I don't think it's quoting a manual.
+- **Cassian:** No. I think it's asking a question.
 
 ### Mission 2 — Formation Trial
 
-- **Briefing:** Two more machines have come online. Bring them into formation and test the control link under pressure before tomorrow's relay activation.
-- **Debriefing:** The link remains stable throughout the exercise. In his ledger, Cassian writes a word beside your name that neither of you is ready to say aloud: Conductor.
+- **Briefing:** Two more machines woke overnight — that makes four. Tomorrow the patrons fire the relay itself: full activation, sealed test, their observers on the roster. Today belongs to us. Form the squad up and lean on the control link until it complains. If anything down here wants to surprise us, it can do it now.
+- **Debriefing:** The link holds through everything we throw at it, and it shouldn't. Nobody has guided this many machines since the Empire, and nobody living is certified to try. None of that goes in the report. In his private ledger, Cassian writes one word beside your name and doesn't say it out loud: Conductor.
 
 ### Mission 3 — The Second Pulse
 
-- **Briefing:** The relay has activated on its own, waking the site's security machines and bringing down the gallery. Clear a path and get the expedition crew outside.
+- **Briefing:** The relay fired early — hours ahead of schedule, nobody at the controls. The surge collapsed the lower gallery and tripped the site's Caelian security machines, and they are cutting our crew off from the exits. Hold the security line and get our people out.
 - **Objective — Evacuate the Gallery:** Hold the security machines back through round 4 while the expedition crew escapes.
-- **Debriefing:** Most of the expedition reaches the upper gallery, but Cassian's locator still pulses below the fire line. You should not have survived the collapse, and the machines now answer your thoughts; when you turn back for him, they turn with you without being asked.
+- **Debriefing:** Most of the crew reaches the upper gallery. Cassian's locator is still pulsing below the fire line. Three tons of stone came down on you and you walked out — and when you turned back for him, every machine turned with you, unasked. The relay is still humming, and no test schedule explains what it did to you.
 
 **Interlude — "The Second Pulse"** *(Relay Site · Collapsed Gallery)*
 
-- **Conductor:** The Relay is still active. I can feel every machine searching for a way out.
-- **Cassian:** You were beneath three tons of stone. You should not be feeling anything.
-- **Conductor:** Cassian, they are afraid.
-- **Cassian:** Then we get all of you outside before anyone decides fear is proof of ownership.
+- **Conductor:** The relay's still active. I can feel every machine in the dark, feeling for a way out.
+- **Cassian:** You were under three tons of stone an hour ago. You shouldn't be feeling anything.
+- **Conductor:** Cassian — they're afraid.
+- **Cassian:** Then we get all of you out before someone decides fear counts as proof of ownership.
 
 ### Mission 4 — Sealed Ignition
 
-- **Briefing:** Fire is spreading through the lower galleries, and Cassian is trapped beyond the security line. Break through the remaining defenses and bring him out.
+- **Briefing:** The lower galleries are burning, and Cassian is trapped behind the security cordon — the site's warden core is still enforcing it, three hundred years dead or not. Break the line and bring him out. Nobody stays in a tomb we opened.
 - **Objective — Break the Security Line:** Eliminate the marked security warden blocking Cassian's extraction route.
-- **Debriefing:** Cassian leaves the site alive because of you, a debt he does not take lightly. When the patrons close the site and declare the incident settled, he invokes the expedition's salvage contract and forces them to accept an independent assessment before anything can be removed.
+- **Debriefing:** You bring Cassian out breathing. He doesn't say thank you — he starts writing. When the patrons' director arrives to seal the site and call the matter settled, Cassian is waiting at the gate with the salvage contract in hand and a clause that forces an independent assessment before anyone removes so much as a bolt.
 
 **Interlude — "The Official Version"** *(Expedition Infirmary · Before Dawn)*
 
-- **Cassian:** The patrons are calling it an industrial accident.
-- **Conductor:** An accident does not schedule a sealed activation test.
-- **Cassian:** No. But an accident requires no culprit, no inquiry, and no compensation.
-- **Conductor:** You nearly died in there.
-- **Cassian:** Which is why I intend to become extremely inconvenient to the people writing this report.
+- **Director Rusk:** A tragic accident. The consortium grieves, of course. We'll be sealing the site pending a full inquiry — our inquiry.
+- **Cassian:** The activation was scheduled, sealed, and your observers signed the roster, Director. Accidents don't keep appointment books.
+- **Director Rusk:** Grief makes people imaginative, adjutant. Don't let it make you expensive.
+- **Cassian:** Clause nineteen of the salvage contract. Independent assessment before anything leaves that site. You signed it yourself.
+- **Director Rusk:** …I'll have my office send flowers.
+- **Conductor:** He's afraid of what the assessment finds.
+- **Cassian:** He's afraid of who finds it first. So am I.
 
 ## Chapter 2 — The Aftermath
 

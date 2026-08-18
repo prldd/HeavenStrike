@@ -15,6 +15,7 @@ func _init() -> void:
 	var lines: Array[String] = []
 	_append_header(lines)
 	_append_cast(lines)
+	_append_prologue(lines)
 	_append_missions(lines)
 	_append_epilogue(lines)
 
@@ -46,9 +47,12 @@ func _append_header(lines: Array[String]) -> void:
 		"",
 		"- `scripts/story_quest_catalog.gd` — `QUESTS` (mission titles), `MISSION_STORIES`",
 		"  (chapter, briefing, debriefing), `ENCOUNTER_RULES` (special objective text),",
-		"  `CAMPAIGN_EPILOGUE`.",
+		"  `CAMPAIGN_PROLOGUE` (first-open orientation), `CHAPTER_CARDS` (per-chapter",
+		"  intro briefings), `CAMPAIGN_EPILOGUE`.",
 		"- `scripts/story_dialogue_catalog.gd` — `CHARACTERS` (cast) and `INTERLUDES`",
 		"  (post-mission dialogue scenes, keyed by 1-based mission number).",
+		"",
+		"Voice and structure rules live in `documentation/Narrative_Style_Guide.md`.",
 		"",
 		"Per mission: **Briefing** is the pre-battle description (the player's frame, the",
 		"practical problem), **Objective** is the authored special win condition when one",
@@ -70,6 +74,18 @@ func _append_cast(lines: Array[String]) -> void:
 	for speaker in StoryDialogueCatalogScript.CHARACTERS:
 		var details: Dictionary = StoryDialogueCatalogScript.CHARACTERS[speaker]
 		lines.append("| %s | %s |" % [speaker, details.get("role", "")])
+	lines.append_array(["", "---", ""])
+
+
+func _append_prologue(lines: Array[String]) -> void:
+	lines.append_array([
+		"## Campaign Prologue",
+		"",
+		"*Shown the first time the operations map opens (replayable via WORLD BRIEF).*",
+		""
+	])
+	for prologue_line in StoryQuestCatalogScript.CAMPAIGN_PROLOGUE.split("\n"):
+		lines.append(prologue_line)
 	lines.append_array(["", "---", ""])
 
 
@@ -100,6 +116,15 @@ func _append_missions(lines: Array[String]) -> void:
 		if chapter != last_chapter:
 			chapter_number += 1
 			lines.append_array(["## Chapter %d — %s" % [chapter_number, chapter], ""])
+			var card_text := String(
+				StoryQuestCatalogScript.CHAPTER_CARDS.get(chapter, {}).get("text", "")
+			)
+			if not card_text.is_empty():
+				lines.append("*Chapter briefing (shown once when the chapter unlocks):*")
+				lines.append("")
+				for card_line in card_text.split("\n"):
+					lines.append(card_line)
+				lines.append("")
 			last_chapter = chapter
 
 		lines.append_array(["### Mission %d — %s" % [mission_number, name], ""])

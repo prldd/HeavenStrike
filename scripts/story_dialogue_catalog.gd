@@ -45,6 +45,13 @@ const CHARACTERS := {
 		"portrait": PORTRAITS.cassian,
 		"portrait_kind": "human"
 	},
+	"Director Rusk": {
+		"role": "Expedition patron liaison",
+		"initials": "DR",
+		"accent": "#d4b06a",
+		"portrait": "",
+		"portrait_kind": "human"
+	},
 	"Lysa Vey": {
 		"role": "Salvage-rights assessor",
 		"initials": "LV",
@@ -122,31 +129,35 @@ const INTERLUDES := {
 		"title": "A Useful Kind of Impossible",
 		"location": "Relay Site · Equipment Gallery",
 		"lines": [
-			{"speaker": "Cassian", "text": "Two intact machines, one functioning Relay, and no injuries. That is either excellent work or an accounting error."},
-			{"speaker": "Conductor", "text": "The left one anticipated my signal before I sent it."},
-			{"speaker": "Cassian", "text": "Then do me a favor and leave that detail out of the inventory sheet."},
-			{"speaker": "Brass Bastion-136", "text": "Formation retained. Awaiting shared purpose."}
+			{"speaker": "Cassian", "text": "Two intact machines, one working relay, zero injuries. That's either excellent work or an accounting error."},
+			{"speaker": "Conductor", "text": "The left one moved before I gave the signal."},
+			{"speaker": "Cassian", "text": "Then do me a favor and leave that detail off the inventory sheet."},
+			{"speaker": "Brass Bastion-136", "text": "Formation retained. Awaiting shared purpose."},
+			{"speaker": "Conductor", "text": "It's been saying that since it woke up. I don't think it's quoting a manual."},
+			{"speaker": "Cassian", "text": "No. I think it's asking a question."}
 		]
 	},
 	3: {
 		"title": "The Second Pulse",
 		"location": "Relay Site · Collapsed Gallery",
 		"lines": [
-			{"speaker": "Conductor", "text": "The Relay is still active. I can feel every machine searching for a way out."},
-			{"speaker": "Cassian", "text": "You were beneath three tons of stone. You should not be feeling anything."},
-			{"speaker": "Conductor", "text": "Cassian, they are afraid."},
-			{"speaker": "Cassian", "text": "Then we get all of you outside before anyone decides fear is proof of ownership."}
+			{"speaker": "Conductor", "text": "The relay's still active. I can feel every machine in the dark, feeling for a way out."},
+			{"speaker": "Cassian", "text": "You were under three tons of stone an hour ago. You shouldn't be feeling anything."},
+			{"speaker": "Conductor", "text": "Cassian — they're afraid."},
+			{"speaker": "Cassian", "text": "Then we get all of you out before someone decides fear counts as proof of ownership."}
 		]
 	},
 	4: {
 		"title": "The Official Version",
 		"location": "Expedition Infirmary · Before Dawn",
 		"lines": [
-			{"speaker": "Cassian", "text": "The patrons are calling it an industrial accident."},
-			{"speaker": "Conductor", "text": "An accident does not schedule a sealed activation test."},
-			{"speaker": "Cassian", "text": "No. But an accident requires no culprit, no inquiry, and no compensation."},
-			{"speaker": "Conductor", "text": "You nearly died in there."},
-			{"speaker": "Cassian", "text": "Which is why I intend to become extremely inconvenient to the people writing this report."}
+			{"speaker": "Director Rusk", "text": "A tragic accident. The consortium grieves, of course. We'll be sealing the site pending a full inquiry — our inquiry."},
+			{"speaker": "Cassian", "text": "The activation was scheduled, sealed, and your observers signed the roster, Director. Accidents don't keep appointment books."},
+			{"speaker": "Director Rusk", "text": "Grief makes people imaginative, adjutant. Don't let it make you expensive."},
+			{"speaker": "Cassian", "text": "Clause nineteen of the salvage contract. Independent assessment before anything leaves that site. You signed it yourself."},
+			{"speaker": "Director Rusk", "text": "…I'll have my office send flowers."},
+			{"speaker": "Conductor", "text": "He's afraid of what the assessment finds."},
+			{"speaker": "Cassian", "text": "He's afraid of who finds it first. So am I."}
 		]
 	},
 	5: {

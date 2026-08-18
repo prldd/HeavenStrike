@@ -898,7 +898,7 @@ func _run() -> void:
 	assert(not game.mission_overlay.visible)
 	assert(game.dialogue_scene_title.text == "A Useful Kind of Impossible")
 	assert(game.dialogue_speaker_label.text == "Cassian")
-	assert(game.dialogue_progress_label.text == "1  /  4")
+	assert(game.dialogue_progress_label.text == "1  /  6")
 	assert(game.dialogue_portrait.texture != null)
 	assert(game.dialogue_portrait.texture.resource_path.ends_with("cassian.png"))
 	assert(game.dialogue_portrait.texture_filter
