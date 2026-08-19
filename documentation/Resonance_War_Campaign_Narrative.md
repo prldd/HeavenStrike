@@ -43,6 +43,16 @@ supporting cast whose appearances are implemented in the dialogue catalog.
   at the end of Season Two as a warden of Caelis.
 - **The Archivist** (anchored to M41 "Contested Records") — an Order scholar met at
   Sanctuary who decodes Caelian records across Seasons Two and Three.
+- **Director Rusk** (anchored to M4 "Sealed Ignition", M42 "Patron's Reach") —
+  the expedition patrons' liaison: affable, corporate, signs everything. The
+  face of "the patrons" from Season One; later shown to have paid for the
+  relay experiment without asking what it was.
+- **Evaluator Marren** (anchored to M17–18) — a career Conductor Registry
+  evaluation officer, scrupulously fair; the system's honest face, and the one
+  who first puts the medical cost of conducting on the record.
+- **General Strosse** (anchored to M46–47) — the hardliner wing's field
+  commander and its doctrinaire voice; captured in the coup, unrepentant, and
+  not a fool.
 - **The machines** — the player's first reclaimed automatons recur as named
   individuals in briefing text (their unit names), accumulating the resonance
   scars and personality the foundation calls for.

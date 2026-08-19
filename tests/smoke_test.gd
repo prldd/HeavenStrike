@@ -1034,7 +1034,7 @@ func _init() -> void:
 	assert(CampaignStoreScript.MISSIONS[8].opponent_affiliation == "Scavenger Clans")
 	assert(CampaignStoreScript.MISSIONS[28].opponent_name == "Asha Vale")
 	assert(CampaignStoreScript.MISSIONS[76].opponent_affiliation == "Accord Rejectionists")
-	assert(StoryDialogueCatalogScript.INTERLUDES.size() == 46)
+	assert(StoryDialogueCatalogScript.INTERLUDES.size() == 47)
 	assert(StoryDialogueCatalogScript.PORTRAITS.size() == 10)
 	for portrait_path in StoryDialogueCatalogScript.PORTRAITS.values():
 		var portrait_texture: Texture2D = load(portrait_path)

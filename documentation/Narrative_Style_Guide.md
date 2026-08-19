@@ -85,11 +85,12 @@ Further rules:
 - **The Stranger / Warden Ilyra:** formal Caelian cadence, no contractions.
 - **Director Rusk (new):** affable corporate threat; condolences as
   punctuation. The face of the expedition's patrons, later implicated in the
-  patron chain (M42).
-- **Evaluation officer (new, arrives Ch. 4):** scrupulously fair career
+  patron chain (M42). Introduced in the M4 interlude.
+- **Evaluator Marren (new, arrives Ch. 4):** scrupulously fair career
   officer; the system's honest face. Scenes land at M17–18.
-- **Hardliner commander (new, arrives Season 2):** doctrine-first soldier;
-  the face of the Unity Day attack and the coup (M46–47).
+- **General Strosse (new, arrives Season 2):** doctrine-first soldier;
+  the face of the Unity Day attack and the coup (M46–47), introduced in the
+  M47 detention-block interlude.
 
 ## Canon clarifications (ratify before Season rewrites)
 
