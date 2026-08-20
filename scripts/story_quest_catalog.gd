@@ -1103,6 +1103,61 @@ const ENCOUNTER_RULES := {
 			{"unit": "Cinder Lancer-018", "side": 1, "round": 2, "row": 0, "col": 6},
 			{"unit": "Cinder Battery-063", "side": 1, "round": 4, "row": 2, "col": 6}
 		]
+	},
+	"33:0": {
+		"objective": {
+			"type": "survive",
+			"rounds": 5,
+			"title": "Hold the Junctions",
+			"description": "Keep the repair crews working through round 5 while the defense automata surge."
+		},
+		"reinforcements": [
+			{"unit": "Helio Weaver-055", "side": 1, "round": 2, "row": 0, "col": 6},
+			{"unit": "Relay Bastion-014", "side": 1, "round": 3, "row": 2, "col": 6},
+			{"unit": "Relay Blade-094", "side": 1, "round": 4, "row": 0, "col": 6}
+		]
+	},
+	"55:0": {
+		"objective": {
+			"type": "rout",
+			"kills": 10,
+			"title": "Break the Offensive",
+			"description": "Destroy 10 hardliner units. Their Conductor stays behind the line and cannot be attacked."
+		},
+		"turn_limit": 8,
+		"reinforcements": [
+			{"unit": "Cinder Bastion-166", "side": 1, "round": 2, "row": 1, "col": 6},
+			{"unit": "Relay Blade-175", "side": 1, "round": 3, "row": 0, "col": 6},
+			{"unit": "Zephyr Lancer-109", "side": 1, "round": 4, "row": 2, "col": 6},
+			{"unit": "Cinder Weaver-199", "side": 1, "round": 5, "row": 1, "col": 6}
+		]
+	},
+	"58:0": {
+		"objective": {
+			"type": "preserve",
+			"target_name": "the doorkeepers",
+			"title": "Trial of Passage",
+			"description": "Defeat the gatekeeper's Conductor without destroying the marked doorkeepers. We need them as doorkeepers, not casualties."
+		},
+		"predeployed": [
+			{
+				"unit": "Brass Bastion-139", "side": 1, "row": 0, "col": 4,
+				"role": "preserved", "stationary": true, "locks_mana": false
+			},
+			{
+				"unit": "Cinder Bastion-167", "side": 1, "row": 2, "col": 4,
+				"role": "preserved", "stationary": true, "locks_mana": false
+			}
+		]
+	},
+	"75:0": {
+		"objective": {
+			"type": "resonance",
+			"amount": 20,
+			"title": "Reconnect the Network",
+			"description": "Spend 20 total mana on deployments to bring the fragments into balance. Defeating the defense Conductor also wins."
+		},
+		"mana": {"player_start": 3, "enemy_start": 2, "growth": 3, "cap": 10}
 	}
 }
 

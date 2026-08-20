@@ -10,11 +10,17 @@ const OBJECTIVE_DEFEAT_CONDUCTOR := "defeat_conductor"
 const OBJECTIVE_SURVIVE := "survive"
 const OBJECTIVE_ELIMINATE_TARGET := "eliminate_target"
 const OBJECTIVE_PROTECT := "protect"
+const OBJECTIVE_ROUT := "rout"
+const OBJECTIVE_PRESERVE := "preserve"
+const OBJECTIVE_RESONANCE := "resonance"
 const OBJECTIVE_TYPES := [
 	OBJECTIVE_DEFEAT_CONDUCTOR,
 	OBJECTIVE_SURVIVE,
 	OBJECTIVE_ELIMINATE_TARGET,
-	OBJECTIVE_PROTECT
+	OBJECTIVE_PROTECT,
+	OBJECTIVE_ROUT,
+	OBJECTIVE_PRESERVE,
+	OBJECTIVE_RESONANCE
 ]
 
 ## Converts optional authored encounter data into the complete runtime shape.
@@ -31,6 +37,9 @@ static func normalize(authored: Dictionary = {}) -> Dictionary:
 		"objective": {
 			"type": objective_type,
 			"rounds": maxi(1, int(objective_source.get("rounds", 1))),
+			"kills": maxi(1, int(objective_source.get("kills", 8))),
+			"amount": maxi(1, int(objective_source.get("amount", 20))),
+			"max_losses": maxi(0, int(objective_source.get("max_losses", 0))),
 			"target_name": str(objective_source.get("target_name", "")),
 			"title": str(objective_source.get("title", "")),
 			"description": str(objective_source.get("description", ""))
@@ -39,7 +48,11 @@ static func normalize(authored: Dictionary = {}) -> Dictionary:
 		"blocked_cells": _valid_cells(authored.get("blocked_cells", [])),
 		"predeployed": _valid_deployments(authored.get("predeployed", [])),
 		"reinforcements": _valid_reinforcements(authored.get("reinforcements", [])),
-		"mana": _normalize_mana(authored.get("mana", {}))
+		"mana": _normalize_mana(authored.get("mana", {})),
+		# Rout implies fallback: recalling far-column units is its soft-lock valve.
+		"allow_fallback": bool(authored.get(
+			"allow_fallback", objective_type == OBJECTIVE_ROUT
+		))
 	}
 	return rules
 
@@ -55,6 +68,7 @@ static func has_authored_rules(rules: Dictionary) -> bool:
 		or not normalized.predeployed.is_empty()
 		or not normalized.reinforcements.is_empty()
 		or normalized.mana != _normalize_mana({})
+		or normalized.allow_fallback
 	)
 
 static func objective_title(rules: Dictionary) -> String:
@@ -68,6 +82,12 @@ static func objective_title(rules: Dictionary) -> String:
 			return "ELIMINATE THE PRIORITY TARGET"
 		OBJECTIVE_PROTECT:
 			return "PROTECT THE ASSET"
+		OBJECTIVE_ROUT:
+			return "ROUT THE ENEMY"
+		OBJECTIVE_PRESERVE:
+			return "SHOW RESTRAINT"
+		OBJECTIVE_RESONANCE:
+			return "CHARGE THE CONDUIT"
 	return "DEFEAT THE ENEMY CONDUCTOR"
 
 static func objective_description(rules: Dictionary) -> String:
@@ -86,6 +106,14 @@ static func objective_description(rules: Dictionary) -> String:
 			return "Keep %s operational and defeat the enemy Conductor." % (
 				objective.target_name if not objective.target_name.is_empty() else "the marked asset"
 			)
+		OBJECTIVE_ROUT:
+			return "Destroy %d enemy units. The enemy Conductor cannot be attacked." % objective.kills
+		OBJECTIVE_PRESERVE:
+			return "Defeat the enemy Conductor without destroying %s." % (
+				objective.target_name if not objective.target_name.is_empty() else "the marked units"
+			)
+		OBJECTIVE_RESONANCE:
+			return "Spend %d total mana on deployments. Defeating the enemy Conductor also wins." % objective.amount
 	return "Reduce the enemy Conductor to 0 HP."
 
 static func dossier_text(rules: Dictionary) -> String:
@@ -94,6 +122,14 @@ static func dossier_text(rules: Dictionary) -> String:
 		"OBJECTIVE  ·  %s" % objective_title(normalized),
 		objective_description(normalized)
 	]
+	var objective: Dictionary = normalized.objective
+	if objective.type == OBJECTIVE_PRESERVE and objective.max_losses > 0:
+		lines.append("RESTRAINT  ·  LOSE NO MORE THAN %d UNIT%s" % [
+			objective.max_losses,
+			"" if objective.max_losses == 1 else "S"
+		])
+	if normalized.allow_fallback:
+		lines.append("TACTIC  ·  FALL BACK ENABLED — UNITS ON THE FAR COLUMN CAN RETURN TO HAND")
 	if normalized.turn_limit > 0:
 		lines.append("LIMIT  ·  %d ROUNDS" % normalized.turn_limit)
 	if not normalized.blocked_cells.is_empty():
@@ -115,25 +151,39 @@ static func dossier_text(rules: Dictionary) -> String:
 		])
 	return "\n".join(lines)
 
-static func objective_banner(rules: Dictionary, round_number: int) -> String:
+static func objective_banner(
+	rules: Dictionary, round_number: int, context: Dictionary = {}
+) -> String:
 	var normalized := normalize(rules)
 	var objective: Dictionary = normalized.objective
 	var banner := objective_title(normalized)
 	if objective.type == OBJECTIVE_SURVIVE:
 		banner += "  ·  %d/%d" % [mini(round_number, objective.rounds), objective.rounds]
+	if objective.type == OBJECTIVE_ROUT:
+		banner += "  ·  %d/%d" % [
+			mini(int(context.get("kills", 0)), objective.kills), objective.kills
+		]
+	if objective.type == OBJECTIVE_RESONANCE:
+		banner += "  ·  %d/%d" % [
+			mini(int(context.get("mana_spent", 0)), objective.amount), objective.amount
+		]
 	if normalized.turn_limit > 0:
 		banner += "  ·  LIMIT %d" % normalized.turn_limit
 	return banner
 
 ## Evaluates only terminal state. Survival and turn-limit conditions are
 ## checked at enemy_end so “round N” includes both sides' actions.
+## context carries the battle counters rout/preserve/resonance need:
+## {"kills": enemy units destroyed, "losses": player units lost,
+##  "mana_spent": cumulative mana spent on player deployments}.
 static func evaluate(
 	rules: Dictionary,
 	units: Array,
 	round_number: int,
 	player_hp: int,
 	enemy_hp: int,
-	checkpoint: String = "action"
+	checkpoint: String = "action",
+	context: Dictionary = {}
 ) -> Dictionary:
 	var normalized := normalize(rules)
 	var objective: Dictionary = normalized.objective
@@ -143,12 +193,30 @@ static func evaluate(
 		return _result(true, ENEMY, "%s was lost." % (
 			objective.target_name if not objective.target_name.is_empty() else "The protected asset"
 		))
-	if enemy_hp <= 0:
+	if objective.type == OBJECTIVE_PRESERVE and not _living_role(units, "preserved"):
+		return _result(true, ENEMY, "%s fell. Restraint was the terms of passage." % (
+			objective.target_name if not objective.target_name.is_empty() else "A marked unit"
+		))
+	if (
+		objective.type == OBJECTIVE_PRESERVE and objective.max_losses > 0
+		and int(context.get("losses", 0)) > objective.max_losses
+	):
+		return _result(true, ENEMY, "Too many of your units were lost.")
+	if objective.type == OBJECTIVE_ROUT and int(context.get("kills", 0)) >= objective.kills:
+		return _result(true, PLAYER, "The enemy force was routed.")
+	# Rout removes the enemy Conductor as a target; every other objective keeps
+	# the Conductor kill as a (possibly alternate) win.
+	if objective.type != OBJECTIVE_ROUT and enemy_hp <= 0:
 		return _result(true, PLAYER, "The enemy Conductor was defeated.")
 	if objective.type == OBJECTIVE_ELIMINATE_TARGET and not _living_role(units, "priority"):
 		return _result(true, PLAYER, "%s was eliminated." % (
 			objective.target_name if not objective.target_name.is_empty() else "The priority target"
 		))
+	if (
+		objective.type == OBJECTIVE_RESONANCE
+		and int(context.get("mana_spent", 0)) >= objective.amount
+	):
+		return _result(true, PLAYER, "The conduit reached full resonance.")
 	if (
 		checkpoint == "enemy_end" and objective.type == OBJECTIVE_SURVIVE
 		and round_number >= objective.rounds

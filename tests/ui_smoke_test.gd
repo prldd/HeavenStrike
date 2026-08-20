@@ -204,6 +204,9 @@ func _run() -> void:
 	assert(game.win_button.tooltip_text.contains("campaign battle"))
 	assert(game.win_button.pressed.is_connected(game._win_campaign_battle))
 	assert(not game.win_button.visible)
+	assert(game.fallback_button.text == "FALL BACK")
+	assert(game.fallback_button.pressed.is_connected(game._fall_back_selected_unit))
+	assert(not game.fallback_button.visible)
 	assert(game.hand_row.get_child(0).get_theme_stylebox("normal") is StyleBoxFlat)
 	game.skip_animations = true
 	game.board.idle_animation_enabled = false

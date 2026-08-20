@@ -113,6 +113,7 @@ var end_button: Button
 var power_button: Button
 var menu_button: Button
 var win_button: Button
+var fallback_button: Button
 var overlay: ColorRect
 var overlay_title: Label
 var overlay_detail: Label
@@ -273,6 +274,9 @@ var player_conductor_skill := "Rally"
 var editing_conductor_skill := "Rally"
 var enemy_conductor_skill := "Rally"
 var active_mission_rules: Dictionary = MissionRulesScript.default_rules()
+var mission_kills := 0
+var mission_losses := 0
+var mission_mana_spent := 0
 var deployed_reinforcement_indices: Array[int] = []
 var mana_growth := 2
 var mana_cap := 10
@@ -507,6 +511,18 @@ func _build_interface() -> void:
 	_apply_instrument_button_style(settings_button, UIThemeScript.BRASS, false)
 	settings_button.pressed.connect(_toggle_settings)
 	utility_stack.add_child(settings_button)
+
+	fallback_button = Button.new()
+	fallback_button.text = "FALL BACK"
+	fallback_button.tooltip_text = (
+		"Recall the selected unit on your far column back to your hand."
+	)
+	fallback_button.custom_minimum_size = Vector2(104, 86)
+	fallback_button.add_theme_font_size_override("font_size", 12)
+	fallback_button.visible = false
+	_apply_instrument_button_style(fallback_button, Color("#bd6675"), true)
+	fallback_button.pressed.connect(_fall_back_selected_unit)
+	dock_row.add_child(fallback_button)
 
 	win_button = Button.new()
 	win_button.text = "WIN"
@@ -3796,6 +3812,9 @@ func _load_replay_at_index() -> void:
 	player_shield = 0
 	enemy_shield = 0
 	round_number = 1
+	mission_kills = 0
+	mission_losses = 0
+	mission_mana_spent = 0
 	active_mission_rules = MissionRulesScript.default_rules()
 	status_message = "Replay ready."
 	var metadata: Dictionary = replay_data.get("metadata", {})
@@ -3825,7 +3844,9 @@ func _load_replay_at_index() -> void:
 	battle_simulator.set_blocked_cells(active_mission_rules.blocked_cells)
 	board.set_mission_rules(
 		active_mission_rules.blocked_cells,
-		MissionRulesScript.objective_banner(active_mission_rules, round_number)
+		MissionRulesScript.objective_banner(
+			active_mission_rules, round_number, _mission_context()
+		)
 		if MissionRulesScript.has_authored_rules(active_mission_rules) else ""
 	)
 	_update_replay_timeline()
@@ -3964,8 +3985,19 @@ func _apply_next_replay_event() -> void:
 		"unit_defeated":
 			var defeated = _unit_by_id(event.get("unit_id", -1))
 			if defeated != null:
+				if defeated.side == ENEMY:
+					mission_kills += 1
+				elif defeated.side == PLAYER:
+					mission_losses += 1
 				await board.animate_defeat(defeated.id, _animation_duration(0.20))
 				units.erase(defeated)
+		"unit_recalled":
+			var recalled = _unit_by_id(event.get("unit_id", -1))
+			if recalled != null:
+				units.erase(recalled)
+			var recalled_card = event.get("card", {})
+			if recalled_card is Dictionary and not recalled_card.is_empty():
+				player_hand.append(recalled_card)
 		"state_snapshot":
 			_apply_replay_snapshot(event)
 		"mission_rule_triggered", "mission_objective_resolved":
@@ -4663,11 +4695,14 @@ func _start_new_match() -> void:
 	active_mission_rules = MissionRulesScript.normalize(
 		encounter.get("rules", {}) if authored_battle and not tutorial_mode else {}
 	)
+	mission_kills = 0
+	mission_losses = 0
+	mission_mana_spent = 0
 	deployed_reinforcement_indices.clear()
 	battle_simulator.set_blocked_cells(active_mission_rules.blocked_cells)
 	board.set_mission_rules(
 		active_mission_rules.blocked_cells,
-		MissionRulesScript.objective_banner(active_mission_rules, 1)
+		MissionRulesScript.objective_banner(active_mission_rules, 1, _mission_context())
 		if authored_battle and MissionRulesScript.has_authored_rules(active_mission_rules)
 		else ""
 	)
@@ -4899,6 +4934,20 @@ func _refresh() -> void:
 		and not main_menu_overlay.visible and not mission_overlay.visible
 	)
 	win_button.disabled = not input_enabled
+	fallback_button.visible = (
+		MissionRulesScript.normalize(active_mission_rules).get("allow_fallback", false)
+		and not battle_over and not replay_mode
+		and not main_menu_overlay.visible and not mission_overlay.visible
+	)
+	var fallback_unit = _unit_by_id(selected_board_unit_id)
+	fallback_button.disabled = (
+		not input_enabled or replay_mode or autobattle_active or battle_over
+		or fallback_unit == null
+		or fallback_unit.side != PLAYER
+		or fallback_unit.col != BattleRulesScript.COLS - 2
+		or not str(fallback_unit.get("mission_role", "")).is_empty()
+		or player_hand.size() >= BENCH_LIMIT
+	)
 	power_button.disabled = (
 		not input_enabled or player_power_used or battle_over
 		or (tutorial_mode and tutorial_step != TUTORIAL_POWER)
@@ -4971,7 +5020,9 @@ func _refresh() -> void:
 	)
 	board.set_mission_rules(
 		active_mission_rules.blocked_cells,
-		MissionRulesScript.objective_banner(active_mission_rules, round_number)
+		MissionRulesScript.objective_banner(
+			active_mission_rules, round_number, _mission_context()
+		)
 		if (
 			(campaign_battle or challenge_battle or replay_mode)
 			and MissionRulesScript.has_authored_rules(active_mission_rules)
@@ -4981,6 +5032,14 @@ func _refresh() -> void:
 	var tutorial_board_input := tutorial_step in [
 		TUTORIAL_DEPLOY, TUTORIAL_SELECT_UNIT, TUTORIAL_REPOSITION
 	]
+	var objective: Dictionary = MissionRulesScript.normalize(active_mission_rules).objective
+	var enemy_hp_text := "%d HP%s" % [
+		enemy_hp, "\n%d SHIELD" % enemy_shield if enemy_shield > 0 else ""
+	]
+	if objective.type == MissionRulesScript.OBJECTIVE_ROUT:
+		enemy_hp_text = "ROUT %d/%d" % [
+			mini(mission_kills, int(objective.kills)), int(objective.kills)
+		]
 	board.set_state(
 		units, selected, selected_board_unit_id,
 		input_enabled and not battle_over and (not tutorial_mode or tutorial_board_input),
@@ -4988,7 +5047,7 @@ func _refresh() -> void:
 		"%d / %d\n%d LOCKED" % [player_energy, player_max_energy, player_locked_mana],
 		"%d / %d\n%d LOCKED" % [enemy_energy, enemy_max_energy, enemy_locked_mana],
 		"%d HP%s" % [player_hp, "\n%d SHIELD" % player_shield if player_shield > 0 else ""],
-		"%d HP%s" % [enemy_hp, "\n%d SHIELD" % enemy_shield if enemy_shield > 0 else ""],
+		enemy_hp_text,
 		"DECK %d" % (battle_deck.size() - draw_index),
 		"DECK %d" % (enemy_deck.size() - enemy_draw_index),
 		targetable_rows
@@ -5422,6 +5481,7 @@ func _on_deployment_clicked(row: int) -> void:
 	if card.cost > player_energy:
 		return
 	player_energy -= card.cost
+	mission_mana_spent += card.cost
 	var spawned: Dictionary = _spawn_unit(card, PLAYER, row, 0)
 	battle_simulator.record("deploy", {
 		"side": PLAYER, "unit_id": spawned.id, "card": card.name, "row": row
@@ -5668,10 +5728,63 @@ func _strike_lightning_burst(target_unit_id: int, strike_conductor: bool) -> voi
 	if not _check_game_over("action"):
 		_refresh()
 
+## Rebuilds the recalled unit's card from catalog and collection data so
+## battle buffs and damage never travel back into the hand.
+func _recall_card(unit: Dictionary) -> Dictionary:
+	var definition := _unit_definition(str(unit.name))
+	if definition == null:
+		return {}
+	var card: Dictionary = definition.to_dict()
+	var instance := KineticCrucibleScript.instance_by_id(
+		collection_instances, str(unit.get("instance_id", ""))
+	)
+	if not instance.is_empty():
+		card.instance_id = instance.id
+		card.level = instance.level
+		card.level_points = instance.points
+	return card
+
+func _fall_back_selected_unit() -> void:
+	if replay_mode or autobattle_active or battle_over or not input_enabled:
+		return
+	if not MissionRulesScript.normalize(active_mission_rules).get("allow_fallback", false):
+		return
+	var unit = _unit_by_id(selected_board_unit_id)
+	if (
+		unit == null or unit.side != PLAYER
+		or unit.col != BattleRulesScript.COLS - 2
+		or not str(unit.get("mission_role", "")).is_empty()
+		or player_hand.size() >= BENCH_LIMIT
+	):
+		return
+	var card := _recall_card(unit)
+	if card.is_empty():
+		return
+	units.erase(unit)
+	if last_deployed_unit_id[PLAYER] == unit.id:
+		last_deployed_unit_id[PLAYER] = -1
+	selected_board_unit_id = -1
+	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
+	player_hand.append(card)
+	_refresh_auras()
+	battle_simulator.record("unit_recalled", {"unit_id": unit.id, "card": card})
+	var recall_message := "%s falls back and returns to your hand." % unit.name
+	_log_action(recall_message)
+	status_message = recall_message
+	battle_audio.play("move")
+	_refresh()
+
 func _win_campaign_battle() -> void:
 	if not campaign_battle or replay_mode or battle_over or not input_enabled:
 		return
-	enemy_hp = 0
+	var objective: Dictionary = MissionRulesScript.normalize(active_mission_rules).objective
+	match objective.type:
+		MissionRulesScript.OBJECTIVE_ROUT:
+			mission_kills = int(objective.kills)
+		MissionRulesScript.OBJECTIVE_RESONANCE:
+			mission_mana_spent = int(objective.amount)
+		_:
+			enemy_hp = 0
 	_check_game_over()
 
 func _end_player_turn() -> void:
@@ -5967,6 +6080,7 @@ func _autobattle_player_turn() -> void:
 			"side": PLAYER, "unit_id": spawned.id, "card": card.name, "row": row
 		})
 		player_energy -= card.cost
+		mission_mana_spent += card.cost
 		var hand_index: int = player_hand.find(card)
 		if hand_index >= 0:
 			player_hand.remove_at(hand_index)
@@ -6034,7 +6148,7 @@ func _resolve_side(side: int) -> void:
 				(campaign_battle or challenge_battle)
 				and MissionRulesScript.evaluate(
 					active_mission_rules, units, round_number,
-					player_hp, enemy_hp, "action"
+					player_hp, enemy_hp, "action", _mission_context()
 				).finished
 			)
 		):
@@ -6394,6 +6508,14 @@ func _attack_commander(
 	total_strike_count: int = -1
 ) -> void:
 	var commander_side := ENEMY if actor.side == PLAYER else PLAYER
+	if (
+		commander_side == ENEMY
+		and MissionRulesScript.normalize(active_mission_rules).objective.type
+			== MissionRulesScript.OBJECTIVE_ROUT
+	):
+		# Rout removes the enemy Conductor as a target; the unit holds its shot.
+		status_message = "%s holds its shot. The enemy Conductor is out of bounds." % _actor_tag(actor)
+		return
 	var total_dealt := 0
 	if total_strike_count < 0:
 		total_strike_count = strikes
@@ -6518,6 +6640,13 @@ func _tutorial_unit():
 	return null
 
 func _remove_defeated() -> void:
+	for unit in units:
+		if unit.hp > 0:
+			continue
+		if unit.side == ENEMY:
+			mission_kills += 1
+		elif unit.side == PLAYER:
+			mission_losses += 1
 	units = units.filter(func(unit): return unit.hp > 0)
 	player_energy = BattleRulesScript.available_mana(player_max_energy, units, PLAYER)
 	enemy_energy = BattleRulesScript.available_mana(enemy_max_energy, units, ENEMY)
@@ -6739,12 +6868,19 @@ func _emphasize_result_action(primary_action: Button) -> void:
 	primary_action.add_theme_color_override("font_pressed_color", UIThemeScript.PARCHMENT_LIGHT)
 	primary_action.grab_focus()
 
+func _mission_context() -> Dictionary:
+	return {
+		"kills": mission_kills,
+		"mana_spent": mission_mana_spent,
+		"losses": mission_losses
+	}
+
 func _check_game_over(checkpoint: String = "action") -> bool:
 	var outcome: Dictionary
 	if (campaign_battle or challenge_battle) and not tutorial_mode:
 		outcome = MissionRulesScript.evaluate(
 			active_mission_rules, units, round_number,
-			player_hp, enemy_hp, checkpoint
+			player_hp, enemy_hp, checkpoint, _mission_context()
 		)
 	else:
 		outcome = {

@@ -1102,7 +1102,7 @@ func _init() -> void:
 					or MissionUnitCatalogScript.by_name(reinforcement.unit) != null
 				)
 				assert(reinforcement.round >= 1)
-	assert(authored_encounters == 7)
+	assert(authored_encounters == 11)
 	var evacuation_rules: Dictionary = CampaignStoreScript.encounter(2, 0).rules
 	assert(evacuation_rules.objective.type == "survive")
 	assert(evacuation_rules.objective.rounds == 4)
@@ -1139,6 +1139,80 @@ func _init() -> void:
 		priority_rules,
 		[{"mission_role": "priority", "hp": 1}], 6, 20, 10, "enemy_end"
 	).winner == 1)
+	var holdout_rules: Dictionary = CampaignStoreScript.encounter(32, 0).rules
+	assert(holdout_rules.objective.type == "survive")
+	assert(holdout_rules.objective.rounds == 5)
+	assert(holdout_rules.reinforcements.size() == 3)
+	assert(MissionRulesScript.dossier_text(holdout_rules).contains("HOLD THE JUNCTIONS"))
+	var rout_rules: Dictionary = CampaignStoreScript.encounter(54, 0).rules
+	assert(rout_rules.objective.type == "rout")
+	assert(rout_rules.objective.kills == 10)
+	assert(rout_rules.allow_fallback)
+	assert(rout_rules.turn_limit == 8)
+	assert(MissionRulesScript.dossier_text(rout_rules).contains("FALL BACK"))
+	assert(MissionRulesScript.objective_banner(
+		rout_rules, 1, {"kills": 4}
+	).contains("4/10"))
+	# Rout ignores the enemy Conductor: enemy_hp 0 alone does not win.
+	assert(not MissionRulesScript.evaluate(
+		rout_rules, [], 1, 20, 0, "action", {"kills": 3}
+	).finished)
+	# Meeting the kill quota wins even with the enemy Conductor untouched.
+	assert(MissionRulesScript.evaluate(
+		rout_rules, [], 1, 20, 10, "action", {"kills": 10}
+	).winner == 0)
+	# Losing your own Conductor still loses, and the turn limit still closes.
+	assert(MissionRulesScript.evaluate(
+		rout_rules, [], 1, 0, 10, "action", {"kills": 10}
+	).winner == 1)
+	assert(MissionRulesScript.evaluate(
+		rout_rules, [], 8, 20, 10, "enemy_end", {"kills": 3}
+	).winner == 1)
+	var preserve_rules: Dictionary = CampaignStoreScript.encounter(57, 0).rules
+	assert(preserve_rules.objective.type == "preserve")
+	assert(preserve_rules.predeployed[0].role == "preserved")
+	assert(preserve_rules.predeployed[0].stationary)
+	assert(not MissionRulesScript.evaluate(
+		preserve_rules,
+		[{"mission_role": "preserved", "hp": 1}], 1, 20, 10
+	).finished)
+	# A dead doorkeeper loses even mid-battle; a Conductor kill still wins.
+	assert(MissionRulesScript.evaluate(preserve_rules, [], 1, 20, 10).winner == 1)
+	assert(MissionRulesScript.evaluate(
+		preserve_rules,
+		[{"mission_role": "preserved", "hp": 1}], 1, 20, 0
+	).winner == 0)
+	var restraint_rules: Dictionary = MissionRulesScript.normalize({
+		"objective": {"type": "preserve", "max_losses": 1}
+	})
+	var restraint_units := [{"mission_role": "preserved", "hp": 1}]
+	assert(MissionRulesScript.evaluate(
+		restraint_rules, restraint_units, 1, 20, 10, "action", {"losses": 2}
+	).winner == 1)
+	assert(not MissionRulesScript.evaluate(
+		restraint_rules, restraint_units, 1, 20, 10, "action", {"losses": 1}
+	).finished)
+	var resonance_rules: Dictionary = CampaignStoreScript.encounter(74, 0).rules
+	assert(resonance_rules.objective.type == "resonance")
+	assert(resonance_rules.objective.amount == 20)
+	assert(resonance_rules.mana.growth == 3)
+	assert(MissionRulesScript.objective_banner(
+		resonance_rules, 1, {"mana_spent": 7}
+	).contains("7/20"))
+	assert(not MissionRulesScript.evaluate(
+		resonance_rules, [], 1, 20, 10, "action", {"mana_spent": 19}
+	).finished)
+	assert(MissionRulesScript.evaluate(
+		resonance_rules, [], 1, 20, 10, "action", {"mana_spent": 20}
+	).winner == 0)
+	# The Conductor kill remains the alternate win.
+	assert(MissionRulesScript.evaluate(
+		resonance_rules, [], 1, 20, 0, "action", {"mana_spent": 0}
+	).winner == 0)
+	assert(default_mission_rules.objective.kills == 8)
+	assert(default_mission_rules.objective.amount == 20)
+	assert(default_mission_rules.objective.max_losses == 0)
+	assert(not default_mission_rules.allow_fallback)
 	assert(CampaignStoreScript.is_available(0, []))
 	assert(not CampaignStoreScript.is_available(1, []))
 	assert(CampaignStoreScript.is_available(1, [0]))
