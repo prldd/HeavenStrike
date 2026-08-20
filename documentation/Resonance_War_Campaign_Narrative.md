@@ -12,9 +12,9 @@ complete dramatic arc with its own question, escalation, and cliffhanger:
 
 | Season | Title | Missions | Source | Season question |
 |--------|-------|----------|--------|-----------------|
-| One | Reclamation | 1–22 | authored | What happened to me — and was it an accident? |
+| One | Reclamation | 1–22 | authored | What happened to me, and was it an accident? |
 | Two | The Crisis | 23–62 | authored | Who gets to own the future the player is rebuilding? |
-| Three | Caelis | 63–77 | implemented | Should the Empire's heirs resume control — or share it? |
+| Three | Caelis | 63–77 | implemented | Should the Empire's heirs resume control, or share it? |
 
 Each season is a playable stopping point: a player who stops at the end of
 Season One has a finished origin story; Season Two ends the political war;
@@ -58,8 +58,8 @@ supporting cast whose appearances are implemented in the dialogue catalog.
   scars and personality the foundation calls for.
 
 Faction flavor: the five civilizations (Coal, Steam, Solar, Wind, Fusion)
-never appear as monoliths. Every faction fight is against *someone specific*
-— a guild, a militia, a hardliner wing, a deniable contractor. Existing unit
+never appear as monoliths. Every faction fight is against *someone specific*:
+a guild, a militia, a hardliner wing, a deniable contractor. Existing unit
 families already suggest these sub-groups (guild engineers, local defense
 forces, scholarly orders, scavenger clans, undertakers' guilds, royalist
 remnants); briefings should use that texture rather than naming factions as
@@ -100,7 +100,7 @@ things; Cassian learns what the player is worth.
 - **M8 Salvage Claim** — Scavenger crews contest the expedition's salvage
   claim. Lawfully murky: everyone has paperwork, nobody has permission.
 - **M9 Passage Rights** — Raiders hit the convoy moving the reclaimed tech.
-  Cassian negotiates passage rights afterward — his first visible win.
+  Cassian negotiates passage rights afterward, his first visible win.
 
 ## Chapter 3 — Claims (M10–14)
 
@@ -117,7 +117,7 @@ things; Cassian learns what the player is worth.
   automatons begin showing distinct habits.
 - **M14 Safehouse Extraction** — Lysa returns with a dangerous plan to prove the
   ambush was staged, using a bought informant. It works and proves nothing
-  admissible — her first lesson in the difference between truth and leverage.
+  admissible, her first lesson in the difference between truth and leverage.
 
 ## Chapter 4 — The Proving (M15–20)
 
@@ -135,7 +135,7 @@ things; Cassian learns what the player is worth.
   medical tents) is shown for the first time.
 - **M19 Feral Signal** — Conductor-less automatons running on resonance scars
   threaten a township. The player chooses protecting people over recovering
-  priceless machines — and one of the ferals chooses to follow them home.
+  priceless machines, and one of the ferals chooses to follow them home.
 - **M20 Charter Ground** — The displaced township camps by the depot. Defending
   the refugee camp cements the player's folk-hero standing. Cassian starts
   writing his coalition charter on the back of it.
@@ -205,7 +205,7 @@ wins the peace; both discover that Caelis never died.
 
 - **M37 Return to the Township** — Return to the township from M19. An old
   caretaker recognizes one of the player's automatons from before the
-  collapse — a resonance scar with a name attached.
+  collapse: a resonance scar with a name attached.
 - **M38 Forced Relocation** — A commune refuses evacuation from degrading
   territory. The player defends people from a rescue they do not want.
   Not every fix is welcome; not every stubborn faction is wrong.
@@ -218,7 +218,7 @@ wins the peace; both discover that Caelis never died.
   records: Caelis was not destroyed. It was *removed from the maps*.
   Deliberately. By everyone, at once.
 - **M42 Patron's Reach** — The Stranger resurfaces with proof that someone
-  arranged the Season One relay activation — and that the someone is inside
+  arranged the Season One relay activation, and that the someone is inside
   the coalition's own patron chain.
 - **M43 Clan Terms** — The scavenger clans are squeezed into picking a
   side. They respect one currency; the player pays it in battle, then buys
@@ -230,7 +230,7 @@ wins the peace; both discover that Caelis never died.
 ## Chapter 9 — Cores (M45–52)
 
 - **M45 Core in Transit** — Source-cores are being quietly weaponized by
-  all five factions. The player seizes one to keep it out of play — and
+  all five factions. The player seizes one to keep it out of play, and
   becomes a power by owning it, exactly as Cassian warned.
 - **M46 Unity Day** — A Unity Day celebration is attacked by extremists
   who want the open war the moderates keep postponing. The coalition holds,
@@ -248,7 +248,7 @@ wins the peace; both discover that Caelis never died.
   truce. The player holds the line while it is signed, beside an enemy from
   Season One now enforcing the same truce.
 - **M51 Coalition Trial** — The oldest automatons begin declining certain
-  orders — old resonance scars against new purpose. The player must decide
+  orders: old resonance scars against new purpose. The player must decide
   what they owe the machines who made them a Conductor.
 - **M52 Managed Retreat** — A three-way negotiation collapses into a brawl
   the player loses on purpose to let Cassian save the talks. First
@@ -267,7 +267,7 @@ wins the peace; both discover that Caelis never died.
   interceptions at maximum strain; the medics start refusing to clear them
   for the field.
 - **M56 The Assassins** — Coalition delegates are assassinated one by one. The
-  player protects the survivors — and finally sees the full extent of
+  player protects the survivors, and finally sees the full extent of
   Cassian's information network when it saves them.
 - **M57 Tribunal Under Fire** — A public tribunal asks the only question
   that matters: who should govern the Source? Violence interrupts every
@@ -279,7 +279,7 @@ wins the peace; both discover that Caelis never died.
   itself. The player disables guns that every side will rebuild, and knows
   it. Repair versus control, at artillery scale.
 - **M60 Joint Formation** — Asha Vale returns leading a joint strike team of former
-  arena rivals — Cassian's coalition, armed at last. The player fights
+  arena rivals: Cassian's coalition, armed at last. The player fights
   beside people who tried to buy, beat, and bury them.
 - **M61 The Maintained Route** — The conduits converge on a single navigable route. The
   Stranger steps out of the shadows and introduces themselves properly: a
@@ -293,7 +293,7 @@ wins the peace; both discover that Caelis never died.
 
 The foundation's Act III, unwritten in code. Fifteen missions in five
 chapters; the count is a planning target, not a constraint. The Empire never
-fell — it resigned, and kept the keys.
+fell; it resigned, and kept the keys.
 
 ## Chapter 11 — The Outer City (M63–65)
 
@@ -312,7 +312,7 @@ fell — it resigned, and kept the keys.
 
 - **M66 The Buried Record** — The full record: the Source crisis, the vote to
   fragment, the deliberate destruction of the histories. Combat against the
-  archive's own custodial security — it protects truth from everyone alike.
+  archive's own custodial security; it protects truth from everyone alike.
 - **M67 Fivefold Claim** — Each faction's founding myth is here, annotated:
   what Coal, Steam, Solar, Wind, and Fusion each preserved, and what each
   was *meant* to preserve. The player reads their own war's syllabus.
@@ -327,7 +327,7 @@ fell — it resigned, and kept the keys.
   hospice. The player's medical future, walking and talking.
 - **M70 The Relay Experiment** — The player's origin recontextualized: the relay
   activation was a Caelian continuity test, arranged by the wardens through
-  expendable intermediaries — including, unknowingly, the expedition's own
+  expendable intermediaries, including, unknowingly, the expedition's own
   patrons. The Stranger's debt and Cassian's leverage both come due.
 - **M71 Crown Continuity** — The wardens offer the player the Vault's purpose:
   become the next warden of the system. A genuine offer, honestly meant,
@@ -336,7 +336,7 @@ fell — it resigned, and kept the keys.
 ## Chapter 14 — The Civic Core (M72–74)
 
 - **M72 Civic Petition** — Caelis petitions to resume stewardship of the
-  Source. The factions — via Cassian's coalition — arrive to answer. The
+  Source. The factions, via Cassian's coalition, arrive to answer. The
   ideological war the foundation promises: fought in chambers, lost in
   skirmishes outside them.
 - **M73 Extremes Aligned** — Hardliners on *both* sides (Caelian restorationists
@@ -392,7 +392,7 @@ visible escalation so the finale lands:
 - **S2 late:** his information network saves the delegates (M56); arrives
   at Caelis leading a coalition, not an army (M62).
 - **S3:** drafts and wins the Accord (M74, M77) and no longer needs the
-  player politically — staged as triumph, not betrayal.
+  player politically: staged as triumph, not betrayal.
 
 # Writing Rules for Briefings and Debriefings
 
@@ -407,13 +407,13 @@ visible escalation so the finale lands:
   end with the player worse off politically for having won.
 - The player is addressed by role, never by name; factions are described by
   actors and incentives, never by adjectives.
-- Keep existing mission titles — they are load-bearing in code and several
+- Keep existing mission titles; they are load-bearing in code and several
   recur through interludes and later campaign consequences.
 
 # Implementation Notes (when this plan is executed)
 
 - **Append-only:** new missions go at the end of `QUESTS` in
-  `scripts/story_quest_catalog.gd` (indices 63+). Never insert mid-list —
+  `scripts/story_quest_catalog.gd` (indices 63+). Never insert mid-list:
   `ADDITIONAL_DROPS`, `MISSION_ENEMY_SQUADS`, and the balance test all key
   off mission index.
 - **Acts:** Season Three needs `act: 3` support in
@@ -440,7 +440,7 @@ expansion answers one question and poses another:
   (The wardens arranged it; someone else sold them the access.)
 - What happens to the freed Relay candidates from M54 in a world where the
   coalition now governs the Source?
-- The sealed evidence from M68 — someone always unseals things eventually.
+- The sealed evidence from M68: someone always unseals things eventually.
 - The feral automaton from M19 and the oldest machines' declining orders
   (M51): what do machines want, once no one is conducting them?
 - The royalist remnant's forgotten charter (M58): what else is still under

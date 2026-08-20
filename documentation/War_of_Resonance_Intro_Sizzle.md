@@ -343,7 +343,7 @@ The final sound is one quiet machine heartbeat.
 - Keep Brass Bastion's shield, single lens, sensor crown, chest aperture, and
   weathering unchanged.
 - Robots communicate intention through head angle, lens movement, timing, and
-  protective actions—not human mouths or exaggerated cartoon expressions.
+  protective actions, not human mouths or exaggerated cartoon expressions.
 - Caelis must look maintained rather than ruined.
 - Caelis must remain modern and integrated: graphite monoliths, ceramic shells,
   precise apertures, and severe voids rather than temples, domes, arches, or

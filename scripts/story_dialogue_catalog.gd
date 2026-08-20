@@ -157,7 +157,7 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Conductor", "text": "The relay's still active. I can feel every machine in the dark, feeling for a way out."},
 			{"speaker": "Cassian", "text": "You were under three tons of stone an hour ago. You shouldn't be feeling anything."},
-			{"speaker": "Conductor", "text": "Cassian — they're afraid."},
+			{"speaker": "Conductor", "text": "Cassian, they're afraid."},
 			{"speaker": "Cassian", "text": "Then we get all of you out before someone decides fear counts as proof of ownership."}
 		]
 	},
@@ -165,7 +165,7 @@ const INTERLUDES := {
 		"title": "The Official Version",
 		"location": "Expedition Infirmary · Before Dawn",
 		"lines": [
-			{"speaker": "Director Rusk", "text": "A tragic accident. The consortium grieves, of course. We'll be sealing the site pending a full inquiry — our inquiry."},
+			{"speaker": "Director Rusk", "text": "A tragic accident. The consortium grieves, of course. We'll be sealing the site pending a full inquiry: our inquiry."},
 			{"speaker": "Cassian", "text": "The activation was scheduled, sealed, and your observers signed the roster, Director. Accidents don't keep appointment books."},
 			{"speaker": "Director Rusk", "text": "Grief makes people imaginative, adjutant. Don't let it make you expensive."},
 			{"speaker": "Cassian", "text": "Clause nineteen of the salvage contract. Independent assessment before anything leaves that site. You signed it yourself."},
@@ -212,7 +212,7 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Cassian", "text": "Congratulations. Five governments now agree that you exist."},
 			{"speaker": "Conductor", "text": "They certified me as an operator. The Relay's listed as restricted equipment."},
-			{"speaker": "Cassian", "text": "Operator is the only box the form has. Be grateful — one of the amendments wanted you listed as part of the equipment."},
+			{"speaker": "Cassian", "text": "Operator is the only box the form has. Be grateful. One of the amendments wanted you listed as part of the equipment."},
 			{"speaker": "Conductor", "text": "How many amendments were there?"},
 			{"speaker": "Cassian", "text": "Three. I framed the worst one."}
 		]
@@ -235,7 +235,7 @@ const INTERLUDES := {
 		"lines": [
 			{"speaker": "Evaluator Marren", "text": "For the record: you passed. Off the record, I want you to hear the medical section out loud."},
 			{"speaker": "Conductor", "text": "The squad was still moving. I could've finished the last exercise."},
-			{"speaker": "Evaluator Marren", "text": "You were unconscious for six minutes, and your heart did what we politely call an irregular event. That's what conducting does to you — every time, a little more. My instruments say it accumulates."},
+			{"speaker": "Evaluator Marren", "text": "You were unconscious for six minutes, and your heart did what we politely call an irregular event. That's what conducting does to you: every time, a little more. My instruments say it accumulates."},
 			{"speaker": "Conductor", "text": "Were the machines hurt?"},
 			{"speaker": "Brass Bastion-136", "text": "Formation intact. Conductor condition unacceptable."},
 			{"speaker": "Cassian", "text": "For once, the evaluator, the machine, and I all agree. Don't let the consensus go to your head."}
@@ -249,7 +249,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "It also needs to exist on paper before someone decides the land's empty."},
 			{"speaker": "Conductor", "text": "Can a charter stop rain?"},
 			{"speaker": "Cassian", "text": "No. It makes stealing the roof expensive. You keep them dry; I'll keep them legal."},
-			{"speaker": "Lysa Vey", "text": "Then write fast. I decoded the Stranger's coordinates — an Order sanctuary past the eastern border."},
+			{"speaker": "Lysa Vey", "text": "Then write fast. I decoded the Stranger's coordinates: an Order sanctuary past the eastern border."},
 			{"speaker": "Conductor", "text": "We leave at dawn."}
 		]
 	},
@@ -301,10 +301,10 @@ const INTERLUDES := {
 		"title": "The Hall Is Coming Down",
 		"location": "Ceasefire Hall · Moments After Detonation",
 		"lines": [
-			{"speaker": "Lysa Vey", "text": "DOWN! Away from the windows — there could be a second charge!"},
+			{"speaker": "Lysa Vey", "text": "DOWN! Away from the windows. There could be a second charge!"},
 			{"speaker": "Conductor", "text": "The west arch is folding. Rook, brace it! There are people under that gallery."},
 			{"speaker": "Cassian", "text": "The aides were at those doors. I put them there."},
-			{"speaker": "Lysa Vey", "text": "Cassian. Eyes on me. The exits might be trapped and the bombers might still be inside — I need you here, not in that doorway."},
+			{"speaker": "Lysa Vey", "text": "Cassian. Eyes on me. The exits might be trapped and the bombers might still be inside. I need you here, not in that doorway."},
 			{"speaker": "Cassian", "text": "They spared the principals and killed the people who made this summit possible. They wanted witnesses to carry the fear home."},
 			{"speaker": "Conductor", "text": "Then they don't get to pick what survives. We pull out everyone we can, and then we find who lit the fuse."}
 		]
@@ -359,7 +359,7 @@ const INTERLUDES := {
 			{"speaker": "Lysa Vey", "text": "Five enemies agreeing to erase one city."},
 			{"speaker": "Cassian", "text": "Which means the lie was worth more than their rivalry ever was."},
 			{"speaker": "Conductor", "text": "Put Caelis back on the map."},
-			{"speaker": "Archivist Serin", "text": "The map just answered. A dormant transit frequency is broadcasting coordinates — signed by your Stranger."}
+			{"speaker": "Archivist Serin", "text": "The map just answered. A dormant transit frequency is broadcasting coordinates, signed by your Stranger."}
 		]
 	},
 	42: {
@@ -370,7 +370,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "I know these names. Rusk's consortium, half the charter board. I've eaten at their tables."},
 			{"speaker": "Conductor", "text": "Did they know I might die?"},
 			{"speaker": "The Stranger", "text": "Rusk and the others paid. They were careful never to ask what they had bought. That is not the same as planning it."},
-			{"speaker": "Cassian", "text": "Then we ask for them, publicly — but not while they can still hire every clan between here and the capital. I need Dax Calder first."}
+			{"speaker": "Cassian", "text": "Then we ask for them, publicly, but not while they can still hire every clan between here and the capital. I need Dax Calder first."}
 		]
 	},
 	44: {
@@ -391,7 +391,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "We took the core so no faction could turn it into a weapon."},
 			{"speaker": "Cassian", "text": "And now every faction sees a weapon with our troops standing around it."},
 			{"speaker": "Lysa Vey", "text": "Intent doesn't show up on an inventory."},
-			{"speaker": "Conductor", "text": "Then the vault gets five locks and five different keys. Nobody opens it alone — including us."},
+			{"speaker": "Conductor", "text": "Then the vault gets five locks and five different keys. Nobody opens it alone, including us."},
 			{"speaker": "Cassian", "text": "That may be the first political solution you've ever proposed. I'll present it at Unity Day, where every faction answers in front of the public."}
 		]
 	},
@@ -403,7 +403,7 @@ const INTERLUDES := {
 			{"speaker": "Cassian", "text": "That story kept five armies from the gate."},
 			{"speaker": "General Strosse", "text": "For a season. Paper holds until the day it doesn't, and then the side with discipline takes the field. That's not treason. That's arithmetic."},
 			{"speaker": "Conductor", "text": "Your arithmetic put guns on a Unity Day crowd."},
-			{"speaker": "General Strosse", "text": "And your improvisation broke a prepared coup in four hours. I don't admire improvisation, Conductor — but I know soldiering when it beats mine."},
+			{"speaker": "General Strosse", "text": "And your improvisation broke a prepared coup in four hours. I don't admire improvisation, Conductor, but I know soldiering when it beats mine."},
 			{"speaker": "Cassian", "text": "Noted. For the tribunal."},
 			{"speaker": "General Strosse", "text": "Quote it exactly. I'd hate to be misrepresented."}
 		]
@@ -587,7 +587,7 @@ const INTERLUDES := {
 			{"speaker": "Conductor", "text": "I was never told anything."},
 			{"speaker": "Warden Ilyra", "text": "Caelis needed to know whether Conduction could take hold again. We were afraid it could not."},
 			{"speaker": "Cassian", "text": "You turned a person into a question because you were afraid of the answer."},
-			{"speaker": "Warden Ilyra", "text": "Yes. There is no honorable wording for it. The council will summon you to the Crown Relay — your survival was the answer it wanted."}
+			{"speaker": "Warden Ilyra", "text": "Yes. There is no honorable wording for it. The council will summon you to the Crown Relay: your survival was the answer it wanted."}
 		]
 	},
 	71: {

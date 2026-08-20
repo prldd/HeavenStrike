@@ -252,23 +252,23 @@ const MISSION_STORIES := {
 	# Chapter 1 — The Salvage
 	1: {
 		"chapter": "The Salvage",
-		"briefing": "Field test day. Two of the automatons we pulled from the lower galleries are walking again, and the patrons want proof the dig is worth their money before they fund the next phase. Run them along the relay site perimeter and put them through a live drill. If they do anything the manuals don't cover, I hear it from you first.",
-		"debriefing": "The drill goes clean — too clean. One of the machines moved half a second before your signal reached it. Cassian logs a success for the patrons, then seals the site to outside crews until the expedition knows what it has actually found. Off the record, he has started asking why the dig's funding arrived so quickly."
+		"briefing": "Two of the automatons we pulled from the lower galleries are walking again, and the patrons want proof the dig is worth their money before they fund the next phase. Run them along the relay site perimeter and put them through a live drill. If they do anything the manuals don't cover, I hear it from you first.",
+		"debriefing": "The drill goes clean. Too clean. One of the machines moved half a second before your signal reached it. Cassian logs a success for the patrons, then seals the site to outside crews until the expedition knows what it has actually found. Off the record, he has started asking why the dig's funding arrived so quickly."
 	},
 	2: {
 		"chapter": "The Salvage",
-		"briefing": "Two more machines woke overnight — that makes four. Tomorrow the patrons fire the relay itself: full activation, sealed test, their observers on the roster. Today belongs to us. Form the squad up and lean on the control link until it complains. If anything down here wants to surprise us, it can do it now.",
+		"briefing": "Two more machines woke overnight. That makes four. Tomorrow the patrons fire the relay itself: full activation, sealed test, their observers on the roster. Today belongs to us. Form the squad up and lean on the control link until it complains. If anything down here wants to surprise us, it can do it now.",
 		"debriefing": "The link holds through everything we throw at it, and it shouldn't. Nobody has guided this many machines since the Empire, and nobody living is certified to try. None of that goes in the report. In his private ledger, Cassian writes one word beside your name and doesn't say it out loud: Conductor."
 	},
 	3: {
 		"chapter": "The Salvage",
-		"briefing": "The relay fired early — hours ahead of schedule, nobody at the controls. The surge collapsed the lower gallery and tripped the site's Caelian security machines, and they are cutting our crew off from the exits. Hold the security line and get our people out.",
-		"debriefing": "Most of the crew reaches the upper gallery. Cassian's locator is still pulsing below the fire line. Three tons of stone came down on you and you walked out — and when you turned back for him, every machine turned with you, unasked. The relay is still humming, and no test schedule explains what it did to you."
+		"briefing": "The relay fired early, hours ahead of schedule, nobody at the controls. The surge collapsed the lower gallery and tripped the site's Caelian security machines, and they are cutting our crew off from the exits. Hold the security line and get our people out.",
+		"debriefing": "Most of the crew reaches the upper gallery. Cassian's locator is still pulsing below the fire line. Three tons of stone came down on you and you walked out, and when you turned back for him, every machine turned with you, unasked. The relay is still humming, and no test schedule explains what it did to you."
 	},
 	4: {
 		"chapter": "The Salvage",
-		"briefing": "The lower galleries are burning, and Cassian is trapped behind the security cordon — the site's warden core is still enforcing it, three hundred years dead or not. Break the line and bring him out. Nobody stays in a tomb we opened.",
-		"debriefing": "You bring Cassian out breathing. He doesn't say thank you — he starts writing. When the patrons' director arrives to seal the site and call the matter settled, Cassian is waiting at the gate with the salvage contract in hand and a clause that forces an independent assessment before anyone removes so much as a bolt."
+		"briefing": "The lower galleries are burning, and Cassian is trapped behind the security cordon. The site's warden core is still enforcing it, three hundred years dead or not. Break the line and bring him out. Nobody stays in a tomb we opened.",
+		"debriefing": "You bring Cassian out breathing. He doesn't say thank you; he starts writing. When the patrons' director arrives to seal the site and call the matter settled, Cassian is waiting at the gate with the salvage contract in hand and a clause that forces an independent assessment before anyone removes so much as a bolt."
 	},
 	# Chapter 2 — The Aftermath
 	5: {
@@ -278,8 +278,8 @@ const MISSION_STORIES := {
 	},
 	6: {
 		"chapter": "The Aftermath",
-		"briefing": "Director Rusk has sold the capital a morning of perfectly safe reclaimed machinery, and you're the demonstration. The grandstands are full, and someone in them doesn't want the show to go well — Lysa's people caught a saboteur crew at the staging. When it goes wrong, protect the crowd first and the patrons' story second.",
-		"debriefing": "The sabotage turns Rusk's publicity into yours: the footage everyone shares is you holding the field while the crowd runs. Invitations flood Cassian's desk. One bears no seal — only a request to meet on the depot roof, from someone who claims to know why the Relay woke. Cassian advises against going. He notes you'll go."
+		"briefing": "Director Rusk has sold the capital a morning of perfectly safe reclaimed machinery, and you're the demonstration. The grandstands are full, and someone in them doesn't want the show to go well. Lysa's people caught a saboteur crew at the staging. When it goes wrong, protect the crowd first and the patrons' story second.",
+		"debriefing": "The sabotage turns Rusk's publicity into yours: the footage everyone shares is you holding the field while the crowd runs. Invitations flood Cassian's desk. One bears no seal, only a request to meet on the depot roof, from someone who claims to know why the Relay woke. Cassian advises against going. He notes you'll go."
 	},
 	7: {
 		"chapter": "The Aftermath",
@@ -288,45 +288,45 @@ const MISSION_STORIES := {
 	},
 	8: {
 		"chapter": "The Aftermath",
-		"briefing": "The scavenger consortium's claim comes with an enforcement crew already in the stockyard — paperwork in one hand, pry bars in the other. Hold the yard while I pull their filing apart against the original contract. If their claim is forged, I want it to have been forged expensively.",
-		"debriefing": "Cassian proves the claim forged — skillfully forged, which is its own kind of evidence. The yard is compromised now, and the next attempt is a matter of patience, not doubt. He orders the Relay machines moved to a defensible depot beyond scavenger territory. The scavenger clans watch the convoy form up and start counting."
+		"briefing": "The scavenger consortium's claim comes with an enforcement crew already in the stockyard, paperwork in one hand, pry bars in the other. Hold the yard while I pull their filing apart against the original contract. If their claim is forged, I want it to have been forged expensively.",
+		"debriefing": "Cassian proves the claim forged, skillfully forged, which is its own kind of evidence. The yard is compromised now, and the next attempt is a matter of patience, not doubt. He orders the Relay machines moved to a defensible depot beyond scavenger territory. The scavenger clans watch the convoy form up and start counting."
 	},
 	9: {
 		"chapter": "The Aftermath",
 		"briefing": "The clans are shadowing the convoy, and their raider chief will make his try in the pass ahead. Stay on the flanks, keep the transports rolling, and don't let them drag a single machine off the road. Everything we pulled out of that site is on those trucks.",
-		"debriefing": "The convoy reaches the new depot intact, and Cassian buys passage rights from the clans with the footage of their chief losing. The base is defensible now — and conspicuous. Running it openly takes the one credential nobody sells: a Conductor registration, stamped by a licensing hall, in a world with no living Conductors."
+		"debriefing": "The convoy reaches the new depot intact, and Cassian buys passage rights from the clans with the footage of their chief losing. The base is defensible now, and conspicuous. Running it openly takes the one credential nobody sells: a Conductor registration, stamped by a licensing hall, in a world with no living Conductors."
 	},
 	# Chapter 3 — Claims
 	10: {
 		"chapter": "Claims",
-		"briefing": "No license means the depot counts as unregistered Relay equipment, and unregistered Relay equipment gets seized. The registry will certify you as an operator — the only box its forms have. The licensing examiner has arranged live opposition for the field evaluation. Pass it, and notice who's scoring you.",
-		"debriefing": "You leave certified — as an operator, because the registry has no form for what you are. Before the ink dries, the Joint Investigative Office cites your own evaluation in an evidence order: the depot and its machines are to be seized as material in an open inquiry. Their evidence detail is already mustering."
+		"briefing": "No license means the depot counts as unregistered Relay equipment, and unregistered Relay equipment gets seized. The registry will certify you as an operator, the only box its forms have. The licensing examiner has arranged live opposition for the field evaluation. Pass it, and notice who's scoring you.",
+		"debriefing": "You leave certified as an operator, because the registry has no form for what you are. Before the ink dries, the Joint Investigative Office cites your own evaluation in an evidence order: the depot and its machines are to be seized as material in an open inquiry. Their evidence detail is already mustering."
 	},
 	11: {
 		"chapter": "Claims",
 		"briefing": "The Joint Investigative Office's evidence detail is at the gates with a seizure order and an armed escort. Cassian is shredding their jurisdiction line by line, but paper moves slower than troops. Hold the depot. And understand: everything you do here will be read back to us as a confession.",
-		"debriefing": "The depot holds, and the official transcript turns the defense into proof: an armed compound resisting lawful inspection. No deliveries reach us under the seizure order. Cassian starts a private record of every falsification and routes essential supplies along an unmarked back road — a route known to a very short list of people."
+		"debriefing": "The depot holds, and the official transcript turns the defense into proof: an armed compound resisting lawful inspection. No deliveries reach us under the seizure order. Cassian starts a private record of every falsification and routes essential supplies along an unmarked back road, a route known to a very short list of people."
 	},
 	12: {
 		"chapter": "Claims",
-		"briefing": "The unmarked route leaked. The supply convoy is pinned in the flats by a contract crew — professionals, military drill, no markings. Break their line, recover the cargo, and pull anything that names who paid for this. Someone on a very short list sold us.",
-		"debriefing": "The contractors carried clean gear, every serial burned. Cassian locks it in the vault and shortens his list. The same week, three factions offer protection in exchange for say over your deployments; you refuse all three. Lysa takes the burned equipment to an informant who owes her — and he recognizes the batch."
+		"briefing": "The unmarked route leaked. The supply convoy is pinned in the flats by a contract crew: professionals, military drill, no markings. Break their line, recover the cargo, and pull anything that names who paid for this. Someone on a very short list sold us.",
+		"debriefing": "The contractors carried clean gear, every serial burned. Cassian locks it in the vault and shortens his list. The same week, three factions offer protection in exchange for say over your deployments; you refuse all three. Lysa takes the burned equipment to an informant who owes her, and he recognizes the batch."
 	},
 	13: {
 		"chapter": "Claims",
-		"briefing": "Three refusals, one answer: a joint safety commission from the three factions you declined, inspectors in front and troops behind. Their Inspector-General is running a search with a flag over it. Keep them outside the fence while Cassian challenges the mandate. And watch the old machines today — they've been restless.",
+		"briefing": "Three refusals, one answer: a joint safety commission from the three factions you declined, inspectors in front and troops behind. Their Inspector-General is running a search with a flag over it. Keep them outside the fence while Cassian challenges the mandate. And watch the old machines today; they've been restless.",
 		"debriefing": "The commission retires with a courteous Cassian letter per envoy and nothing to show. Inside the wire, the oldest machines have started keeping routines nobody taught them. Lysa calls after dark: her informant will name the contractors, but his handlers are moving him tonight, and the safehouse district is already crawling."
 	},
 	14: {
 		"chapter": "Claims",
 		"briefing": "Lysa's informant can put names to the convoy ambush, and the contractors' handlers are closing on his safehouse to move him somewhere quieter. Cover her extraction team, keep the man breathing, and bring him out before the district swallows him.",
-		"debriefing": "Lysa brings him out alive and leaves his handlers scattered across three streets. His testimony is true, detailed, and legally worthless — truth and leverage, she notes, are different currencies. Then a priority distress call pre-empts the paperwork: a Caelian transit bridge is failing under load with a full crossing of civilians on it."
+		"debriefing": "Lysa brings him out alive and leaves his handlers scattered across three streets. His testimony is true, detailed, and legally worthless. Truth and leverage, she notes, are different currencies. Then a priority distress call pre-empts the paperwork: a Caelian transit bridge is failing under load with a full crossing of civilians on it."
 	},
 	# Chapter 4 — The Proving
 	15: {
 		"chapter": "The Proving",
 		"briefing": "The distress call is real: the span is failing under load, and its old transit-security core has half-woken with it, reading the evacuation as an attack. Hold the crossing, keep its drones off the civilians, and don't come home until the last one is across.",
-		"debriefing": "Hundreds cross before the span drops. For the first time, the word Conductor travels ahead of the squad as something other than a threat — the person who came when the call went out. Across the river, a guild champion watches the same footage and issues a public challenge to the salvage Conductor."
+		"debriefing": "Hundreds cross before the span drops. For the first time, the word Conductor travels ahead of the squad as something other than a threat: the person who came when the call went out. Across the river, a guild champion watches the same footage and issues a public challenge to the salvage Conductor."
 	},
 	16: {
 		"chapter": "The Proving",
@@ -336,80 +336,80 @@ const MISSION_STORIES := {
 	17: {
 		"chapter": "The Proving",
 		"briefing": "The hearings have pulled rival crowds into the streets around the inquiry hall, and partisans on both sides are working them toward a riot. Delegates inside, demonstrators outside, one bad spark between. Keep the hall standing and the crowds apart until the testimony is in the record.",
-		"debriefing": "The testimony enters the record edited — trimmed before reading to serve positions you don't hold. One officer on the evaluation panel objects in open session: Evaluator Marren puts her name to the dissent and offers an honest account, produced by testing the Relay under controlled conditions. Cassian accepts before anyone can retract it."
+		"debriefing": "The testimony enters the record edited, trimmed before reading to serve positions you don't hold. One officer on the evaluation panel objects in open session: Evaluator Marren puts her name to the dissent and offers an honest account, produced by testing the Relay under controlled conditions. Cassian accepts before anyone can retract it."
 	},
 	18: {
 		"chapter": "The Proving",
-		"briefing": "Marren runs a clean evaluation: full registry protocol, proving-grounds conditions, no friends in the room. She means to find the squad's ceiling and yours. Show her everything. And when the strain starts telling on you, say so — she's the first official willing to write down what conducting costs.",
-		"debriefing": "Marren's report certifies the ability and documents the price: the strain, the collapse risk, the medical tent she makes you sit in afterward. Before release she asks one professional to another — a township nearby reports conductor-less automatons running old defense routines, and no one else will answer."
+		"briefing": "Marren runs a clean evaluation: full registry protocol, proving-grounds conditions, no friends in the room. She means to find the squad's ceiling and yours. Show her everything. And when the strain starts telling on you, say so; she's the first official willing to write down what conducting costs.",
+		"debriefing": "Marren's report certifies the ability and documents the price: the strain, the collapse risk, the medical tent she makes you sit in afterward. Before release she asks one professional to another: a township nearby reports conductor-less automatons running old defense routines, and no one else will answer."
 	},
 	19: {
 		"chapter": "The Proving",
-		"briefing": "The township's ferals are pre-collapse machines running scar loops — defense routines with nobody left to defend. They're dangerous, some are priceless, and those two facts can't both win today. Protect the residents. If a machine has to die for that, it dies.",
-		"debriefing": "The township stands; the salvage doesn't. The squad picks people over priceless machines, and one surviving feral chooses, unasked, to follow them home. Cassian adds the township to the supply roster without comment. Weeks later, displaced families from the district start camping against the depot fence — and thieves start working the camp."
+		"briefing": "The township's ferals are pre-collapse machines running scar loops, defense routines with nobody left to defend. They're dangerous, some are priceless, and those two facts can't both win today. Protect the residents. If a machine has to die for that, it dies.",
+		"debriefing": "The township stands; the salvage doesn't. The squad picks people over priceless machines, and one surviving feral chooses, unasked, to follow them home. Cassian adds the township to the supply roster without comment. Weeks later, displaced families from the district start camping against the depot fence, and thieves start working the camp."
 	},
 	20: {
 		"chapter": "The Proving",
 		"briefing": "Displaced families are camped against our fence, and infiltrators are using the crowd as cover to reach the stockpiles. Protect the refugees and the supplies both. These people are here because they trust the name on our gate. Don't make them wrong.",
-		"debriefing": "The infiltrators are run off, and the camp holds — then stays, tents becoming streets, a settlement growing beside the depot because people feel safer near it. Watching water lines and winter stores come together, Cassian starts drafting a charter so the squad can work openly where it's needed. The Stranger answers with coordinates."
+		"debriefing": "The infiltrators are run off, and the camp holds, then stays, tents becoming streets, a settlement growing beside the depot because people feel safer near it. Watching water lines and winter stores come together, Cassian starts drafting a charter so the squad can work openly where it's needed. The Stranger answers with coordinates."
 	},
 	# Chapter 5 — Sanctuary
 	21: {
 		"chapter": "Sanctuary",
-		"briefing": "The Stranger's coordinates lead to a pre-collapse sanctuary, and the Order's archivists got here first. Their gate scholar is polite, armed, and clear: outsiders don't enter. The charter says we don't force sites, so earn the threshold — show them enough strength to respect and enough restraint to trust.",
-		"debriefing": "The Order shares the sanctuary once you've shown you could have taken it and didn't. The lead archivist, Serin, accepts the arrangement with a scholar's grace — though her eyes keep returning to the oldest machines, as if she recognizes them. Inside the walls, custodial machines still guard an inner vault none of the Order's keys open."
+		"briefing": "The Stranger's coordinates lead to a pre-collapse sanctuary, and the Order's archivists got here first. Their gate scholar is polite, armed, and clear: outsiders don't enter. The charter says we don't force sites, so earn the threshold: show them enough strength to respect and enough restraint to trust.",
+		"debriefing": "The Order shares the sanctuary once you've shown you could have taken it and didn't. The lead archivist, Serin, accepts the arrangement with a scholar's grace, though her eyes keep returning to the oldest machines, as if she recognizes them. Inside the walls, custodial machines still guard an inner vault none of the Order's keys open."
 	},
 	22: {
 		"chapter": "Sanctuary",
-		"briefing": "The inner vault's custodians are three centuries into their orders and don't care that the war they guarded against is over. Disable them without wrecking what they protect — the archive is the point, not the rubble. Serin will be right behind you; keep her standing.",
-		"debriefing": "The archive opens intact, and its maintenance logs are dated after the Empire's supposed fall. The Empire didn't collapse; it dismantled itself, on purpose, with receipts. One unredacted manifest lists a destination every modern map has forgotten: Caelis. Reconstructing its routes takes the Order's cross-border collections — and an escort across a contested border."
+		"briefing": "The inner vault's custodians are three centuries into their orders and don't care that the war they guarded against is over. Disable them without wrecking what they protect. The archive is the point, not the rubble. Serin will be right behind you; keep her standing.",
+		"debriefing": "The archive opens intact, and its maintenance logs are dated after the Empire's supposed fall. The Empire didn't collapse; it dismantled itself, on purpose, with receipts. One unredacted manifest lists a destination every modern map has forgotten: Caelis. Reconstructing its routes takes the Order's cross-border collections, and an escort across a contested border."
 	},
 	# Chapter 6 — The Arena
 	23: {
 		"chapter": "The Arena",
 		"briefing": "Serin's routes need the Order's archives across a border nobody polices and everybody shoots over. A militia interdiction chief runs the crossing and sells passage to people he likes. This escort is the reclamation charter's first contract: scholars, copied records, no patron. Get them all through.",
-		"debriefing": "The scholars and their records come through whole; the charter has its first successful contract. Success travels. Within a week all five factions send invitations — each wants the Conductor displayed at its military exhibition, and every offer is a leash with a gift bow. Cassian replies to all five: the Conductor accepts every invitation."
+		"debriefing": "The scholars and their records come through whole; the charter has its first successful contract. Success travels. Within a week all five factions send invitations: each wants the Conductor displayed at its military exhibition, and every offer is a leash with a gift bow. Cassian replies to all five: the Conductor accepts every invitation."
 	},
 	24: {
 		"chapter": "The Arena",
-		"briefing": "Five exhibitions, one week, and every marshal running a show has orders to make his faction look like your natural home. Perform for all of them; sign with none. Stay sharp — staged exercises have a way of going live when someone wants to measure you honestly.",
-		"debriefing": "The circuit ends with the charter unbought and five bids on Cassian's desk. None can grant what the charter actually needs: a seat at the faction talks. One neutral road leads to that table — the Grand Circuit, where the nations settle disputes by proxy champion. The reigning champion's name is Asha Vale."
+		"briefing": "Five exhibitions, one week, and every marshal running a show has orders to make his faction look like your natural home. Perform for all of them; sign with none. Stay sharp. Staged exercises have a way of going live when someone wants to measure you honestly.",
+		"debriefing": "The circuit ends with the charter unbought and five bids on Cassian's desk. None can grant what the charter actually needs: a seat at the faction talks. One neutral road leads to that table: the Grand Circuit, where the nations settle disputes by proxy champion. The reigning champion's name is Asha Vale."
 	},
 	25: {
 		"chapter": "The Arena",
 		"briefing": "The Grand Circuit: five governments settling arguments in an arena because it costs less than war. Cassian's entered you, and the opening heat's champion is a working professional with a faction paycheck. Win the bout and start climbing. The name at the top of the bracket is Asha Vale.",
-		"debriefing": "The first heat falls, and the betting boards rewrite themselves overnight. Cassian works the patrons' boxes while the crowd learns your name, trading attention for credit and access. The next heat draws the tournament's darling — the crowd favorite, unbeaten this season, with the whole arena already chanting for him."
+		"debriefing": "The first heat falls, and the betting boards rewrite themselves overnight. Cassian works the patrons' boxes while the crowd learns your name, trading attention for credit and access. The next heat draws the tournament's darling: the crowd favorite, unbeaten this season, with the whole arena already chanting for him."
 	},
 	26: {
 		"chapter": "The Arena",
-		"briefing": "The crowd favorite is everything the posters promise — fast, clean, beloved — and the arena wants you cast as the villain who ends him. Oblige them on the result, not the story. Win the match while Cassian works the boxes, learning which patrons cheer for us and what they expect it to cost.",
-		"debriefing": "The favorite loses gracefully, and the crowd forgives you by the third replay. Two rival factions each toast the result as secretly theirs; neither understands why you're here. The bracket narrows, and this morning your quarter-final opponent refused a large payment to withdraw — which means the money will try another door."
+		"briefing": "The crowd favorite is everything the posters promise, fast, clean, beloved, and the arena wants you cast as the villain who ends him. Oblige them on the result, not the story. Win the match while Cassian works the boxes, learning which patrons cheer for us and what they expect it to cost.",
+		"debriefing": "The favorite loses gracefully, and the crowd forgives you by the third replay. Two rival factions each toast the result as secretly theirs; neither understands why you're here. The bracket narrows, and this morning your quarter-final opponent refused a large payment to withdraw, which means the money will try another door."
 	},
 	27: {
 		"chapter": "The Arena",
-		"briefing": "Your quarter-final opponent turned down a bribe to withdraw — a professional who wants his match honest. Expect a fair fight in the arena and unfair work outside it; whoever paid for a forfeit will settle for a weakened champion. Reach the bout intact, then give him the match he stayed for.",
+		"briefing": "Your quarter-final opponent turned down a bribe to withdraw: a professional who wants his match honest. Expect a fair fight in the arena and unfair work outside it; whoever paid for a forfeit will settle for a weakened champion. Reach the bout intact, then give him the match he stayed for.",
 		"debriefing": "The match is clean and the win owed to no one. Cassian makes sure every box in the arena learns who offered the bribe, and suspicion slides off the charter onto better targets. The semi-final brings the interference indoors: a patron has ordered your next opponent to surrender and present the match to you as a gift."
 	},
 	28: {
 		"chapter": "The Arena",
-		"briefing": "Your semi-final opponent has orders to throw the match — a patron means to own your title by giving it to you. He doesn't want to obey, and I don't want the gift. Force the honest contest: fight like he's free, win like it's real. A title handed over is a leash.",
-		"debriefing": "He fights honestly and loses honestly, and no patron alive can claim your final was bought. Cassian thanks him in print for refusing the arrangement; the fixers retreat to reconsider. One match remains. Asha Vale — three years unbeaten, the Circuit's champion and its conscience — is waiting."
+		"briefing": "Your semi-final opponent has orders to throw the match: a patron means to own your title by giving it to you. He doesn't want to obey, and I don't want the gift. Force the honest contest: fight like he's free, win like it's real. A title handed over is a leash.",
+		"debriefing": "He fights honestly and loses honestly, and no patron alive can claim your final was bought. Cassian thanks him in print for refusing the arrangement; the fixers retreat to reconsider. One match remains. Asha Vale, three years unbeaten, the Circuit's champion and its conscience, is waiting."
 	},
 	29: {
 		"chapter": "The Arena",
 		"briefing": "Asha Vale: the reigning champion, the best relay operator the modern armies have produced, and the last name between the charter and the talks. She's studied every bout you've fought. Beat the best there is, in front of everyone, and make the title mean what we need it to mean.",
-		"debriefing": "The Circuit has a new champion, and Cassian converts the title into formal recognition before the floor is swept — the charter sits at the talks. Vale files you under unfinished business, professional to the end. Lysa spends the patrons'-box access tracing old money: the contractor payments from the depot attacks run to a border camp, and its paymaster is still there."
+		"debriefing": "The Circuit has a new champion, and Cassian converts the title into formal recognition before the floor is swept. The charter sits at the talks. Vale files you under unfinished business, professional to the end. Lysa spends the patrons'-box access tracing old money: the contractor payments from the depot attacks run to a border camp, and its paymaster is still there."
 	},
 	# Chapter 7 — Fault Lines
 	30: {
 		"chapter": "Fault Lines",
 		"briefing": "Lysa's found the border camp where the depot raiders were paid, and its paymaster's chits will name the contracting house behind two years of attacks. She's scouting it now, and the camp knows she's close. Escort her in, take the records, and be gone before the paymaster burns his own books.",
-		"debriefing": "Lysa comes out with pay chits and seal records — proof the raiders were deniable contractors all along, and a contracting house's name that points toward a guild. The trail has to wait. A Wind city has invoked the charter: a Caelian war engine is waking beneath its streets, and every neighbor wants the machine more than it wants the city saved."
+		"debriefing": "Lysa comes out with pay chits and seal records: proof the raiders were deniable contractors all along, and a contracting house's name that points toward a guild. The trail has to wait. A Wind city has invoked the charter: a Caelian war engine is waking beneath its streets, and every neighbor wants the machine more than it wants the city saved."
 	},
 	31: {
 		"chapter": "Fault Lines",
 		"briefing": "The Wind city called us because we're the only help that arrives without an invoice for its sovereignty. A Caelian war engine is coming up under the streets, three centuries asleep and still following its last orders. Stop it, and keep it out of the populated districts while the neighbors circle overhead.",
-		"debriefing": "The engine dies in the empty districts and the city stands. Five factions inspect the machines under their own streets and blame one another for the wake-up. Cassian moves before the accusations can arm themselves: an emergency ceasefire summit in the capital, every aggrieved party at one table — a table every hardliner in five capitals wants overturned."
+		"debriefing": "The engine dies in the empty districts and the city stands. Five factions inspect the machines under their own streets and blame one another for the wake-up. Cassian moves before the accusations can arm themselves: an emergency ceasefire summit in the capital, every aggrieved party at one table: a table every hardliner in five capitals wants overturned."
 	},
 	32: {
 		"chapter": "Fault Lines",
@@ -424,48 +424,48 @@ const MISSION_STORIES := {
 	34: {
 		"chapter": "Fault Lines",
 		"briefing": "A hardliner retaliation column is aimed at a border district full of people who had nothing to do with the accusation. Both governments will condemn you for touching it. Touch it anyway. Intercept the column before the fighting reaches the streets.",
-		"debriefing": "The district survives, and both governments denounce the rescue — saving people without a flag is apparently the one unforgivable act left. Worse, the raids have severed the remaining grid links. Two districts are failing now, winter is coming, and exactly one repair crew is free to move. It cannot reach both."
+		"debriefing": "The district survives, and both governments denounce the rescue. Saving people without a flag is apparently the one unforgivable act left. Worse, the raids have severed the remaining grid links. Two districts are failing now, winter is coming, and exactly one repair crew is free to move. It cannot reach both."
 	},
 	35: {
 		"chapter": "Fault Lines",
-		"briefing": "Two dying districts, one repair crew, and a militia blockade chief holding the only road the crew can still use. You can clear one route before winter. Not two. Pick the district that can still be stabilized, break the blockade, and get the crew through — knowing what the other district becomes.",
-		"debriefing": "One district has heat and light. The other has a martyrdom story its leaders will spend for years, and the people freezing in it know exactly who chose. There was no version that saved both — Cassian checked — but he made sure the order came down signed by you. The capital's answer to the crisis is a stage: leaders announcing, on camera, that the emergency is over."
+		"briefing": "Two dying districts, one repair crew, and a militia blockade chief holding the only road the crew can still use. You can clear one route before winter. Not two. Pick the district that can still be stabilized, break the blockade, and get the crew through, knowing what the other district becomes.",
+		"debriefing": "One district has heat and light. The other has a martyrdom story its leaders will spend for years, and the people freezing in it know exactly who chose. There was no version that saved both, Cassian checked, but he made sure the order came down signed by you. The capital's answer to the crisis is a stage: leaders announcing, on camera, that the emergency is over."
 	},
 	36: {
 		"chapter": "Fault Lines",
-		"briefing": "The grid is still failing, and the leadership declares victory over it tomorrow — live, from a hall packed with dignitaries. Extremists who want the crisis louder plan to attend. Protect the gathering and the repair crews working beneath it. We don't have to believe the speech to keep the audience alive.",
+		"briefing": "The grid is still failing, and the leadership declares victory over it tomorrow, live, from a hall packed with dignitaries. Extremists who want the crisis louder plan to attend. Protect the gathering and the repair crews working beneath it. We don't have to believe the speech to keep the audience alive.",
 		"debriefing": "The attackers are stopped, the broadcast runs as written, and everyone on that stage knows the lights outside are still dying. 'Institutions lie to survive,' Cassian says, filing the speech. 'Remember who taught you that.' Then he gets the squad out of the manufactured celebration: an inspection trip to the township you saved, where a welcome is already being planned."
 	},
 	# Chapter 8 — Heroes and Costs
 	37: {
 		"chapter": "Heroes and Costs",
 		"briefing": "The township is turning our inspection into a festival, and an elderly caretaker just looked at one of our oldest machines and called it by a name three centuries dead. Raiders have picked the celebration for a grab at crowd and squad alike. Keep the square. Then I want to hear what she remembers.",
-		"debriefing": "The square holds and the festival finishes. The caretaker gets her private word about the machine she knew — a resonance scar with a name attached, and Cassian writes down every syllable. Before the lanterns come down, a messenger rides in from a commune up the line: a state relocation force is coming to empty it at gunpoint, and the commune refuses to go."
+		"debriefing": "The square holds and the festival finishes. The caretaker gets her private word about the machine she knew: a resonance scar with a name attached, and Cassian writes down every syllable. Before the lanterns come down, a messenger rides in from a commune up the line: a state relocation force is coming to empty it at gunpoint, and the commune refuses to go."
 	},
 	38: {
 		"chapter": "Heroes and Costs",
-		"briefing": "The commune sits on degrading ground, and the relocation authority has orders to empty it for the residents' own good — at gunpoint, since they won't go. The residents aren't wrong about the land and aren't safe on it either. Stand between the guns and the doorsteps. Nobody gets dragged out of their home today.",
-		"debriefing": "The commune keeps its homes and its defiance; the relocation commander withdraws to recount his arithmetic. On the return leg, the supply convoy traveling with the squad gets diverted through the narrow pass — and both exits close behind it. Deniable raiders, coordinated, waiting for exactly this route."
+		"briefing": "The commune sits on degrading ground, and the relocation authority has orders to empty it for the residents' own good, at gunpoint, since they won't go. The residents aren't wrong about the land and aren't safe on it either. Stand between the guns and the doorsteps. Nobody gets dragged out of their home today.",
+		"debriefing": "The commune keeps its homes and its defiance; the relocation commander withdraws to recount his arithmetic. On the return leg, the supply convoy traveling with the squad gets diverted through the narrow pass, and both exits close behind it. Deniable raiders, coordinated, waiting for exactly this route."
 	},
 	39: {
 		"chapter": "Heroes and Costs",
-		"briefing": "We're encircled in the pass — professionals again, and they knew our route before we took it. There's no clever exit, only a fought one. Break the encirclement and bring everyone home. When I say everyone, I am including the machines.",
-		"debriefing": "The squad comes home minus one. One of the oldest machines — the first gallery's own — went still holding the rear so the others could pass. Its presence lingers in the Relay anyway, faint and stubborn, carried by every machine it marched beside. Cassian writes nothing for a day. Then he orders the chassis recovered."
+		"briefing": "We're encircled in the pass, professionals again, and they knew our route before we took it. There's no clever exit, only a fought one. Break the encirclement and bring everyone home. When I say everyone, I am including the machines.",
+		"debriefing": "The squad comes home minus one. One of the oldest machines, the first gallery's own, went still holding the rear so the others could pass. Its presence lingers in the Relay anyway, faint and stubborn, carried by every machine it marched beside. Cassian writes nothing for a day. Then he orders the chassis recovered."
 	},
 	40: {
 		"chapter": "Heroes and Costs",
-		"briefing": "The chassis is still in the pass, and a salvage crew is moving to strip it — their recovery chief thinks dead metal is finders' property. No speeches. Go back up there, take our own back, and be off that slope before the people behind the ambush send anyone interested in prisoners.",
-		"debriefing": "The chassis comes home on a quiet truck, and the depot stands down for an evening. Waiting on Cassian's desk: a priority message from Serin. She's decoded the sanctuary's Caelian transport records — and at least two groups of claimants are moving to seize her convoy before she can reach the coalition with them."
+		"briefing": "The chassis is still in the pass, and a salvage crew is moving to strip it. Their recovery chief thinks dead metal is finders' property. No speeches. Go back up there, take our own back, and be off that slope before the people behind the ambush send anyone interested in prisoners.",
+		"debriefing": "The chassis comes home on a quiet truck, and the depot stands down for an evening. Waiting on Cassian's desk: a priority message from Serin. She's decoded the sanctuary's Caelian transport records, and at least two groups of claimants are moving to seize her convoy before she can reach the coalition with them."
 	},
 	41: {
 		"chapter": "Heroes and Costs",
-		"briefing": "Serin's convoy is an hour out with the decoded transport history, and a record-seizure team is on the road to take it — the claimants want the documents buried or rewritten before the coalition reads them. Meet her outside the Sanctuary and walk those records through. The history matters more than the fight.",
-		"debriefing": "Serin and the records reach headquarters intact; protected copies go into three separate vaults the same night. The decoded routes say what no faction archive admits: Caelis was not destroyed — it was removed from the maps, deliberately, by everyone at once. The Stranger resurfaces within the week with new coordinates and proof of who lit your Relay."
+		"briefing": "Serin's convoy is an hour out with the decoded transport history, and a record-seizure team is on the road to take it. The claimants want the documents buried or rewritten before the coalition reads them. Meet her outside the Sanctuary and walk those records through. The history matters more than the fight.",
+		"debriefing": "Serin and the records reach headquarters intact; protected copies go into three separate vaults the same night. The decoded routes say what no faction archive admits: Caelis was not destroyed; it was removed from the maps, deliberately, by everyone at once. The Stranger resurfaces within the week with new coordinates and proof of who lit your Relay."
 	},
 	42: {
 		"chapter": "Heroes and Costs",
 		"briefing": "The Stranger's coordinates lead to an abandoned relay station and an offer: proof your activation was arranged, paid for through the coalition's own patron chain. The patrons' retrieval agents will come to erase the evidence, and possibly the witness. Secure the meeting, take the proof, keep our mysterious friend breathing.",
-		"debriefing": "The proof escapes, and it reads badly: patrons inside the coalition paid for the relay experiment. Director Rusk knew only the payment — a signature, not the design — and his condolences arrive ahead of his lawyers. Cassian moves before the implicated patrons can arm themselves: they're negotiating to hire the scavenger clans, and Dax Calder can reach the clans first."
+		"debriefing": "The proof escapes, and it reads badly: patrons inside the coalition paid for the relay experiment. Director Rusk knew only the payment, a signature, not the design, and his condolences arrive ahead of his lawyers. Cassian moves before the implicated patrons can arm themselves: they're negotiating to hire the scavenger clans, and Dax Calder can reach the clans first."
 	},
 	43: {
 		"chapter": "Heroes and Costs",
@@ -474,179 +474,179 @@ const MISSION_STORIES := {
 	},
 	44: {
 		"chapter": "Heroes and Costs",
-		"briefing": "Lysa confronts her old guild with Calder's ledgers in hand, and the guildhall factor has already declined to answer — politely, behind armed clerks. Escort her in and keep her standing while she makes them produce their authorizations. She's waited years for this conversation. Don't let them end it early.",
-		"debriefing": "The guild produces paperwork older than the war, and responsibility climbs out of the hall into patron country — the trail points up, not back. Buried in the manifests is worse: all five factions are quietly shipping Source cores into weapons programs. One core moves this week under security sized for secrecy, not war."
+		"briefing": "Lysa confronts her old guild with Calder's ledgers in hand, and the guildhall factor has already declined to answer, politely, behind armed clerks. Escort her in and keep her standing while she makes them produce their authorizations. She's waited years for this conversation. Don't let them end it early.",
+		"debriefing": "The guild produces paperwork older than the war, and responsibility climbs out of the hall into patron country: the trail points up, not back. Buried in the manifests is worse: all five factions are quietly shipping Source cores into weapons programs. One core moves this week under security sized for secrecy, not war."
 	},
 	# Chapter 9 — Cores
 	45: {
 		"chapter": "Cores",
-		"briefing": "The manifests name a Source core in transit — one convoy, one route, guarded for secrecy rather than battle. Intercept it and take the core before it reaches a weapons program. Understand what winning buys: once we hold a core, every flag in the world calls us exactly what they feared.",
+		"briefing": "The manifests name a Source core in transit: one convoy, one route, guarded for secrecy rather than battle. Intercept it and take the core before it reaches a weapons program. Understand what winning buys: once we hold a core, every flag in the world calls us exactly what they feared.",
 		"debriefing": "The convoy surrenders the core, and Cassian's warning lands within hours: the coalition now owns the thing all five factions were arming in secret, which makes it a power whether it wanted to be one or not. Five competing custody demands arrive by morning. Cassian's answer is a shared-custody proposal, announced publicly at Unity Day."
 	},
 	46: {
 		"chapter": "Cores",
-		"briefing": "Cassian announces the shared-custody proposal at Unity Day, in the capital's most crowded square. A hardliner cell means to turn the celebration into the massacre that ends all talk of sharing — General Strosse's people want the open war the moderates keep postponing. Work the crowd, find the cell, stop the killing.",
+		"briefing": "Cassian announces the shared-custody proposal at Unity Day, in the capital's most crowded square. A hardliner cell means to turn the celebration into the massacre that ends all talk of sharing. General Strosse's people want the open war the moderates keep postponing. Work the crowd, find the cell, stop the killing.",
 		"debriefing": "The square empties frightened instead of dead, and the captured orders read worse than the attack: Unity Day was the opening move. While the crowd is still fleeing, General Strosse's armored columns leave their garrisons and advance on the council chambers. The coup Cassian has been predicting all season is finished hiding."
 	},
 	47: {
 		"chapter": "Cores",
 		"briefing": "Strosse's field marshal is driving armored columns at the council chambers, betting the government folds before breakfast. Break the advance in the streets before it reaches the government district. The moderates are watching from their windows, deciding which side to be brave on. Give them an easy choice.",
-		"debriefing": "The coup breaks at the government district's edge, and the moderates discover they were loyal all along; Cassian absorbs them, paperwork first. Clearing the underground approach turns up what the battle was sitting on: a powered Caelian transit line beneath the capital — still drawing energy, still maintained, pointing somewhere no map admits."
+		"debriefing": "The coup breaks at the government district's edge, and the moderates discover they were loyal all along; Cassian absorbs them, paperwork first. Clearing the underground approach turns up what the battle was sitting on: a powered Caelian transit line beneath the capital, still drawing energy, still maintained, pointing somewhere no map admits."
 	},
 	48: {
 		"chapter": "Cores",
-		"briefing": "The transit line's entrance is real, and the coup's rearguard still holds the surface above it — beaten troops with nothing to lose and orders to deny everything. Clear them off the station so Serin's team can go down and trace the route. Watch for demolition charges; dying coups love a buried secret.",
-		"debriefing": "Serin's team goes in, and the line's maintenance records are recent — someone has kept it alive for three centuries. Its terminus sits in a place missing from every modern map. The station's activation doesn't stay quiet: three faction armies detect the power draw and converge on the populated town above the next junction."
+		"briefing": "The transit line's entrance is real, and the coup's rearguard still holds the surface above it, beaten troops with nothing to lose and orders to deny everything. Clear them off the station so Serin's team can go down and trace the route. Watch for demolition charges; dying coups love a buried secret.",
+		"debriefing": "Serin's team goes in, and the line's maintenance records are recent; someone has kept it alive for three centuries. Its terminus sits in a place missing from every modern map. The station's activation doesn't stay quiet: three faction armies detect the power draw and converge on the populated town above the next junction."
 	},
 	49: {
 		"chapter": "Cores",
-		"briefing": "Three armies are converging on the town above the junction, and none of them plans to arrive second. We cannot win that battle — nobody can. What we can do is hold an evacuation corridor until every civilian is out, then be gone ourselves. Lives only. Nothing else is on the table.",
-		"debriefing": "The corridor holds until the last family is through; then the town belongs to the armies — the first true three-faction battle, fought over empty streets. The war everyone feared has begun, and history will record the coalition's part in its opening battle as a retreat. Cassian starts calling the enemies he can still talk to."
+		"briefing": "Three armies are converging on the town above the junction, and none of them plans to arrive second. We cannot win that battle. Nobody can. What we can do is hold an evacuation corridor until every civilian is out, then be gone ourselves. Lives only. Nothing else is on the table.",
+		"debriefing": "The corridor holds until the last family is through; then the town belongs to the armies, the first true three-faction battle, fought over empty streets. The war everyone feared has begun, and history will record the coalition's part in its opening battle as a retreat. Cassian starts calling the enemies he can still talk to."
 	},
 	50: {
 		"chapter": "Cores",
-		"briefing": "Cassian has talked several of the shooting enemies into a local truce, signed on a line you'll be standing on — beside troops we fought last month. Hardliner holdouts on every side want the signing buried with its signatories. Hold the truce line until the ink exists. Give peace the hour it needs.",
-		"debriefing": "The truce holds because former enemies enforce it shoulder to shoulder, and it spreads along the front faster than orders travel. On the first joint patrol, several of your oldest machines refuse a pursuit order — and move, unasked, to shield the wounded of both sides. The truce partners demand to know what the coalition is actually fielding. Cassian arranges a controlled demonstration."
+		"briefing": "Cassian has talked several of the shooting enemies into a local truce, signed on a line you'll be standing on, beside troops we fought last month. Hardliner holdouts on every side want the signing buried with its signatories. Hold the truce line until the ink exists. Give peace the hour it needs.",
+		"debriefing": "The truce holds because former enemies enforce it shoulder to shoulder, and it spreads along the front faster than orders travel. On the first joint patrol, several of your oldest machines refuse a pursuit order, and move, unasked, to shield the wounded of both sides. The truce partners demand to know what the coalition is actually fielding. Cassian arranges a controlled demonstration."
 	},
 	51: {
 		"chapter": "Cores",
-		"briefing": "The machines refused an order in front of three nervous armies, and the truce partners want data, not assurances. So: a controlled field trial, on the record — the coalition's own test conductor fields the opposing squad to give the observers honest resistance. Learn, in public, whether a truce can stand on machines that choose.",
-		"debriefing": "The trial ends without casualties and without comfort: the machines take some orders, decline others, and protect bystanders regardless of flag. All three signatories leave the observation post quietly alarmed. Their follow-up negotiation hardens into a demand that the dispute be settled the old way — champion combat, one staged battle, winner takes the point."
+		"briefing": "The machines refused an order in front of three nervous armies, and the truce partners want data, not assurances. So: a controlled field trial, on the record: the coalition's own test conductor fields the opposing squad to give the observers honest resistance. Learn, in public, whether a truce can stand on machines that choose.",
+		"debriefing": "The trial ends without casualties and without comfort: the machines take some orders, decline others, and protect bystanders regardless of flag. All three signatories leave the observation post quietly alarmed. Their follow-up negotiation hardens into a demand that the dispute be settled the old way: champion combat, one staged battle, winner takes the point."
 	},
 	52: {
 		"chapter": "Cores",
-		"briefing": "The three delegations have hired a provocateur to settle their dispute by staged battle and called it negotiation — Circuit rules, treaty language riding on the result. Cassian needs the coalition to lose this one: the ground yielded, no delegation humiliated. Control the fight, keep it clean, withdraw on his signal.",
-		"debriefing": "The withdrawal lands exactly as choreographed, and the talks survive because nobody won enough to gloat. Cassian no longer asks before he spends you; note it and move on. The staged battle's Source draw doesn't stay on the field — lights fail across the district, and dormant machines begin waking in sequence, answering something."
+		"briefing": "The three delegations have hired a provocateur to settle their dispute by staged battle and called it negotiation. Circuit rules, treaty language riding on the result. Cassian needs the coalition to lose this one: the ground yielded, no delegation humiliated. Control the fight, keep it clean, withdraw on his signal.",
+		"debriefing": "The withdrawal lands exactly as choreographed, and the talks survive because nobody won enough to gloat. Cassian no longer asks before he spends you; note it and move on. The staged battle's Source draw doesn't stay on the field. Lights fail across the district, and dormant machines begin waking in sequence, answering something."
 	},
 	# Chapter 10 — Coalition Fracture
 	53: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The blackout is spreading, and grid crews report the impossible: Source fragments synchronizing on their own, waking defense automata as they link. The Order confirms it's not an attack — it's a response, though nobody knows to what. Follow the crews outward and keep them alive while they contain the cascade.",
-		"debriefing": "The crews contain the first cascade, and the network keeps answering itself regardless. In the dark, a locked ward inside a faction recruitment center fails open — and the bureau's security mobilizes not to evacuate it but to reseal it. Lysa's contact inside says the ward holds people, not equipment, and the life support is on battery."
+		"briefing": "The blackout is spreading, and grid crews report the impossible: Source fragments synchronizing on their own, waking defense automata as they link. The Order confirms it's not an attack; it's a response, though nobody knows to what. Follow the crews outward and keep them alive while they contain the cascade.",
+		"debriefing": "The crews contain the first cascade, and the network keeps answering itself regardless. In the dark, a locked ward inside a faction recruitment center fails open, and the bureau's security mobilizes not to evacuate it but to reseal it. Lysa's contact inside says the ward holds people, not equipment, and the life support is on battery."
 	},
 	54: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The ward holds people who passed medical screening for possible Relay use and then refused the bureau's sponsorship contracts — no Relays, no Conductors, just candidates the recruitment bureau won't release. Its security chief is restoring the locks while their life support runs down. Get them out before either deadline lands.",
-		"debriefing": "The candidates reach the coalition clinic alive, and the bureau brands the rescue theft of state recruitment assets. The hardliner alliance takes up the phrase gratefully and launches the offensive it had already prepared — three fronts, timed to the hour. Cassian reads their declaration twice and starts moving pieces: only one force can intercept every breakthrough."
+		"briefing": "The ward holds people who passed medical screening for possible Relay use and then refused the bureau's sponsorship contracts: no Relays, no Conductors, just candidates the recruitment bureau won't release. Its security chief is restoring the locks while their life support runs down. Get them out before either deadline lands.",
+		"debriefing": "The candidates reach the coalition clinic alive, and the bureau brands the rescue theft of state recruitment assets. The hardliner alliance takes up the phrase gratefully and launches the offensive it had already prepared: three fronts, timed to the hour. Cassian reads their declaration twice and starts moving pieces: only one force can intercept every breakthrough."
 	},
 	55: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The hardliner alliance is driving three fronts at once, and the coalition has no second force — we're the interception. Run the breakthroughs one after another and keep running. The medics are already refusing to clear you for the field. Pace the strain: the Relay has to outlast this offensive, and so do you.",
+		"briefing": "The hardliner alliance is driving three fronts at once, and the coalition has no second force. We're the interception. Run the breakthroughs one after another and keep running. The medics are already refusing to clear you for the field. Pace the strain: the Relay has to outlast this offensive, and so do you.",
 		"debriefing": "The fronts hold at a cost the medical tents will count for weeks. The offensive's field command reports failure, and its sponsors change targets: if the coalition can't be broken in battle, its delegates can be removed one at a time. Cassian's network catches the first kill team before it reaches its hotel."
 	},
 	56: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The assassins are working down the delegate list, and Cassian's network is racing them name by name. Move the surviving representatives to the secure chamber and hunt the teams hunting them. Tonight you'll see how far his information web reaches — every warning on your map is one of his people paying a debt.",
-		"debriefing": "The delegates reach the secure chamber alive; the kill teams don't. Shaken and done hiding, the survivors invoke emergency procedure and call a public tribunal — one open session to decide who can legitimately govern the Source. Every armed claimant in the war now has a date, a place, and a target."
+		"briefing": "The assassins are working down the delegate list, and Cassian's network is racing them name by name. Move the surviving representatives to the secure chamber and hunt the teams hunting them. Tonight you'll see how far his information web reaches: every warning on your map is one of his people paying a debt.",
+		"debriefing": "The delegates reach the secure chamber alive; the kill teams don't. Shaken and done hiding, the survivors invoke emergency procedure and call a public tribunal: one open session to decide who can legitimately govern the Source. Every armed claimant in the war now has a date, a place, and a target."
 	},
 	57: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The tribunal convenes in public because secrecy is what killed the last answers. Rival claimants have sent disruptors to make sure no answer survives the asking. Keep the chamber standing and the witnesses breathing until every claimant has been heard. There is no correct side in that room — that's the point of protecting all of it.",
-		"debriefing": "The tribunal hears everyone and answers nothing: no claimant can impose control safely, and now that's on the record. Serin offers the buried Caelian conduits as neutral ground for a shared settlement. Fighting has already reached the western district above their only mapped entrance — and a royalist guard holds the gate under a charter nobody remembers signing."
+		"briefing": "The tribunal convenes in public because secrecy is what killed the last answers. Rival claimants have sent disruptors to make sure no answer survives the asking. Keep the chamber standing and the witnesses breathing until every claimant has been heard. There is no correct side in that room; that's the point of protecting all of it.",
+		"debriefing": "The tribunal hears everyone and answers nothing: no claimant can impose control safely, and now that's on the record. Serin offers the buried Caelian conduits as neutral ground for a shared settlement. Fighting has already reached the western district above their only mapped entrance, and a royalist guard holds the gate under a charter nobody remembers signing."
 	},
 	58: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The royalist gatekeeper at the western entrance has kept his post since the Empire — hereditary, formal, unimpressed by three centuries of successor states. His charter demands a trial of passage before the gates open, and he'll honor the result. Meet their terms exactly. We need them as doorkeepers, not casualties.",
-		"debriefing": "The gatekeepers honor the trial and open the western conduit, three hundred years of duty discharged with a bow. The coalition goes under the city. Above, ranging fire starts walking toward the buried route — a siege corps' long-range batteries, already solving the conduits' geometry. Someone means to close the door behind us permanently."
+		"briefing": "The royalist gatekeeper at the western entrance has kept his post since the Empire, hereditary, formal, unimpressed by three centuries of successor states. His charter demands a trial of passage before the gates open, and he'll honor the result. Meet their terms exactly. We need them as doorkeepers, not casualties.",
+		"debriefing": "The gatekeepers honor the trial and open the western conduit, three hundred years of duty discharged with a bow. The coalition goes under the city. Above, ranging fire starts walking toward the buried route: a siege corps' long-range batteries, already solving the conduits' geometry. Someone means to close the door behind us permanently."
 	},
 	59: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The siege corps' battery commander has his guns ranged on the conduit route, and the next barrage could drop the passage on the coalition inside it. Break through the surface defenses and silence the batteries before they fire again. No illusions — every side will rebuild these guns. Tonight the tunnels need them quiet.",
-		"debriefing": "The conduits survive the night; the batteries are scrap until someone rebuilds them, and everyone knows someone will. Cassian spends the victory the same hour: he calls Asha Vale and asks her to raise a joint force from the Circuit's old rivals — people who tried to buy, beat, and bury you — to hold the exposed route while Serin finishes the maps."
+		"briefing": "The siege corps' battery commander has his guns ranged on the conduit route, and the next barrage could drop the passage on the coalition inside it. Break through the surface defenses and silence the batteries before they fire again. No illusions: every side will rebuild these guns. Tonight the tunnels need them quiet.",
+		"debriefing": "The conduits survive the night; the batteries are scrap until someone rebuilds them, and everyone knows someone will. Cassian spends the victory the same hour: he calls Asha Vale and asks her to raise a joint force from the Circuit's old rivals, people who tried to buy, beat, and bury you, to hold the exposed route while Serin finishes the maps."
 	},
 	60: {
 		"chapter": "Coalition Fracture",
 		"briefing": "Asha Vale answers with a team built from the Circuit's old rivals, and the siege corps answers her with a route commander sent to retake the passage. Fight beside people who tried to buy, beat, and bury you, and hold the conduit line until Serin's survey is done.",
-		"debriefing": "Vale's team holds the route until the survey is complete, and Serin's finished maps show what the conduits were built toward: a single maintained passage beyond the known network, with a live signal waiting at its far terminus. The Stranger studies the map a long moment, then asks the coalition to walk it — and says she's done being a stranger."
+		"debriefing": "Vale's team holds the route until the survey is complete, and Serin's finished maps show what the conduits were built toward: a single maintained passage beyond the known network, with a live signal waiting at its far terminus. The Stranger studies the map a long moment, then asks the coalition to walk it, and says she's done being a stranger."
 	},
 	61: {
 		"chapter": "Coalition Fracture",
-		"briefing": "The Stranger finally gives a name — Ilyra, warden of Caelis, sent to bring the accidental Conductor home. The maintained route ends at a terminus its transit custodians still guard, and Vale's team can hold the junction behind us only so long. Secure the passage, reach the terminus, meet whatever's been signaling.",
-		"debriefing": "The terminus custodians stand down to Ilyra's authority, and the signal's source is what she promised: a transit gate, powered and waiting. Her report home doesn't stay secret. Intercepted military traffic shows five faction armies converging on the same route — every flag in the war is marching on Caelis at once."
+		"briefing": "The Stranger finally gives a name: Ilyra, warden of Caelis, sent to bring the accidental Conductor home. The maintained route ends at a terminus its transit custodians still guard, and Vale's team can hold the junction behind us only so long. Secure the passage, reach the terminus, meet whatever's been signaling.",
+		"debriefing": "The terminus custodians stand down to Ilyra's authority, and the signal's source is what she promised: a transit gate, powered and waiting. Her report home doesn't stay secret. Intercepted military traffic shows five faction armies converging on the same route. Every flag in the war is marching on Caelis at once."
 	},
 	62: {
 		"chapter": "Coalition Fracture",
 		"briefing": "Five armies are converging on the gate of Caelis, and Ilyra can hold the threshold open only so long. Cassian is assembling the delegations into something that arrives as a coalition instead of an invasion. Hold the gate approach against their vanguards until he's ready. The last battle of this war is keeping the war outside those walls.",
-		"debriefing": "Cassian reaches the gate leading a coalition, not an army, and the war stops at the threshold because you held the approach until it could. Caelis opens. The Wardens admit the delegation as far as an inspection court in the Outer City — no further. Three hundred years of sealed gates do not open on one good afternoon."
+		"debriefing": "Cassian reaches the gate leading a coalition, not an army, and the war stops at the threshold because you held the approach until it could. Caelis opens. The Wardens admit the delegation as far as an inspection court in the Outer City, no further. Three hundred years of sealed gates do not open on one good afternoon."
 	},
 	# Chapter 11 — The Outer City
 	63: {
 		"chapter": "The Outer City",
-		"briefing": "The Wardens will admit the delegation on one condition: their emergency protocol inspects you first. Their examiner wants to watch you conduct our machines without touching a Caelian system. Give the protocol a clean reading — three hundred years of procedure is watching, and it only says no once.",
-		"debriefing": "The examiner's verdict: an unregistered Conductor with an unauthorized Relay — an anomaly to be studied, not sealed out. The gates open onto an Outer City that is lit, swept, and kept for citizens who never came home, and its caretaker machines take one look at the delegation and file it under trespassers."
+		"briefing": "The Wardens will admit the delegation on one condition: their emergency protocol inspects you first. Their examiner wants to watch you conduct our machines without touching a Caelian system. Give the protocol a clean reading. Three hundred years of procedure is watching, and it only says no once.",
+		"debriefing": "The examiner's verdict: an unregistered Conductor with an unauthorized Relay: an anomaly to be studied, not sealed out. The gates open onto an Outer City that is lit, swept, and kept for citizens who never came home, and its caretaker machines take one look at the delegation and file it under trespassers."
 	},
 	64: {
 		"chapter": "The Outer City",
-		"briefing": "The Outer City's caretakers have kept it immaculate for three centuries of absent citizens, and their rules have no category for guests. They've classified the delegation as trespassers and started enforcing. Keep the machines off our people without wrecking the city they love — the Wardens are scoring how you win.",
+		"briefing": "The Outer City's caretakers have kept it immaculate for three centuries of absent citizens, and their rules have no category for guests. They've classified the delegation as trespassers and started enforcing. Keep the machines off our people without wrecking the city they love. The Wardens are scoring how you win.",
 		"debriefing": "The caretakers stand down once the squad proves it will protect their city instead of claiming it. The Wardens watch machines defended by a Conductor who could have taken them, and their answer is a second examination: stewardship, at a maintenance district whose own machines stay under Caelian command."
 	},
 	65: {
 		"chapter": "The Outer City",
 		"briefing": "The stewardship examination has one rule that matters: defend the maintenance district without conducting a single Caelian machine assigned to it. The examiner's own custodians will press you. Protect their district with only what we brought. Show them conducting can mean keeping, not taking.",
-		"debriefing": "The district holds, and not one Caelian machine changes hands to hold it. The Wardens record the result in whatever passes for their books and unlock the inner gates. Serin already knows where she's leading the delegation first: the Imperial Archive — whose custodians deny Wardens and outsiders alike."
+		"debriefing": "The district holds, and not one Caelian machine changes hands to hold it. The Wardens record the result in whatever passes for their books and unlock the inner gates. Serin already knows where she's leading the delegation first: the Imperial Archive, whose custodians deny Wardens and outsiders alike."
 	},
 	# Chapter 12 — The Imperial Archive
 	66: {
 		"chapter": "The Imperial Archive",
-		"briefing": "The Imperial Archive keeps the Empire's unedited account of its final years, and its custodians were built to keep that account from everyone — Wardens included. Serin needs the record intact, so disable the defenses without pulping what they guard. Precision work. The record is the prize, not the rubble.",
-		"debriefing": "The archive opens with its collection unharmed. Its record shows a Source crisis and an Empire that chose to fragment the network rather than trust any single power with it whole — and its index points to five sealed founding galleries. Alarms answer first: faction claimants are already breaching them to burn what weakens their histories."
+		"briefing": "The Imperial Archive keeps the Empire's unedited account of its final years, and its custodians were built to keep that account from everyone, Wardens included. Serin needs the record intact, so disable the defenses without pulping what they guard. Precision work. The record is the prize, not the rubble.",
+		"debriefing": "The archive opens with its collection unharmed. Its record shows a Source crisis and an Empire that chose to fragment the network rather than trust any single power with it whole, and its index points to five sealed founding galleries. Alarms answer first: faction claimants are already breaching them to burn what weakens their histories."
 	},
 	67: {
 		"chapter": "The Imperial Archive",
-		"briefing": "Five founding galleries, one per faction, each holding the annotated truth of what its nation preserved — and what it was meant to preserve. Claimant record-burners are inside already, destroying evidence in rooms their own capitals sent them to. Reach the galleries before the collection is gone.",
-		"debriefing": "The galleries survive with their records legible; the burners leave empty-handed and their sponsors unnamed, for now. Read together, the five sections stop being five myths and become one syllabus — and a cipher none of the Order's keys touches, pointing down to the archive's deepest sealed vault."
+		"briefing": "Five founding galleries, one per faction, each holding the annotated truth of what its nation preserved, and what it was meant to preserve. Claimant record-burners are inside already, destroying evidence in rooms their own capitals sent them to. Reach the galleries before the collection is gone.",
+		"debriefing": "The galleries survive with their records legible; the burners leave empty-handed and their sponsors unnamed, for now. Read together, the five sections stop being five myths and become one syllabus, and a cipher none of the Order's keys touches, pointing down to the archive's deepest sealed vault."
 	},
 	68: {
 		"chapter": "The Imperial Archive",
-		"briefing": "The deep vault holds the evidence that made the Empire break its own civilization — and guardians designed to resist Conductors, which means they were designed for someone like you. Take the record, keep the guardian network dormant, and let nothing in that vault leave with you except knowledge.",
-		"debriefing": "The deep record comes out and the vault seals behind it, guardians dormant, archive intact. What it names is worse than any weapon: living witnesses, kept in a Conductor Vault nearby — the people who paid the price behind the Empire's decision. Their hospice assesses visitors before it admits them."
+		"briefing": "The deep vault holds the evidence that made the Empire break its own civilization, and guardians designed to resist Conductors, which means they were designed for someone like you. Take the record, keep the guardian network dormant, and let nothing in that vault leave with you except knowledge.",
+		"debriefing": "The deep record comes out and the vault seals behind it, guardians dormant, archive intact. What it names is worse than any weapon: living witnesses, kept in a Conductor Vault nearby: the people who paid the price behind the Empire's decision. Their hospice assesses visitors before it admits them."
 	},
 	# Chapter 13 — The Conductor Vault
 	69: {
 		"chapter": "The Conductor Vault",
-		"briefing": "The Conductor Vault isn't a prison; it's a hospice — the last First Conductors, still alive, still paying for what the Relay program took from them. Its guardians assess every visitor for harm before they allow a word. Pass their assessment gently. Some of these witnesses have waited three centuries to be asked.",
-		"debriefing": "The guardians stand down, and the First Conductors receive the delegation in the Relay ward — your own medical future, walking and talking. They answer every question but one, and for that one they point at the Warden council. The council's own Continuity Directorate responds by sealing the witness chamber before anyone can testify."
+		"briefing": "The Conductor Vault isn't a prison; it's a hospice: the last First Conductors, still alive, still paying for what the Relay program took from them. Its guardians assess every visitor for harm before they allow a word. Pass their assessment gently. Some of these witnesses have waited three centuries to be asked.",
+		"debriefing": "The guardians stand down, and the First Conductors receive the delegation in the Relay ward: your own medical future, walking and talking. They answer every question but one, and for that one they point at the Warden council. The council's own Continuity Directorate responds by sealing the witness chamber before anyone can testify."
 	},
 	70: {
 		"chapter": "The Conductor Vault",
-		"briefing": "The Continuity Directorate authorized the relay experiment that made you — arranged through expendable intermediaries, our own patrons among them — and now it's sealed the council chamber and turned its custodians on the witnesses. Break the lockdown. The council's testimony and its records both survive this, or the truth dies with its keepers.",
-		"debriefing": "The lockdown breaks and the council records survive. Cornered by its own paper, the Warden council admits what your activation was: a deliberate continuity test, and you the result it hoped for. Then it summons the new Conductor to the Crown Relay — an invitation with an honor guard attached."
+		"briefing": "The Continuity Directorate authorized the relay experiment that made you, arranged through expendable intermediaries, our own patrons among them, and now it's sealed the council chamber and turned its custodians on the witnesses. Break the lockdown. The council's testimony and its records both survive this, or the truth dies with its keepers.",
+		"debriefing": "The lockdown breaks and the council records survive. Cornered by its own paper, the Warden council admits what your activation was: a deliberate continuity test, and you the result it hoped for. Then it summons the new Conductor to the Crown Relay: an invitation with an honor guard attached."
 	},
 	71: {
 		"chapter": "The Conductor Vault",
-		"briefing": "The council offers you the Vault's purpose: stay in Caelis, succeed the First Conductors, become the system's next warden. It's honestly meant — and it's the wrong answer, and the honor guard sealing the exits agrees with the offer more than the answer. Decline carefully, then leave anyway.",
-		"debriefing": "The containment breaks without a single guardian harmed; the Crown Relay stands, and so does the refusal. Caelis learns the new Conductor won't be kept — so it tries politics instead, petitioning for a public hearing on the Source's stewardship. Armed restorationists are already moving to take the council chambers first."
+		"briefing": "The council offers you the Vault's purpose: stay in Caelis, succeed the First Conductors, become the system's next warden. It's honestly meant, and it's the wrong answer, and the honor guard sealing the exits agrees with the offer more than the answer. Decline carefully, then leave anyway.",
+		"debriefing": "The containment breaks without a single guardian harmed; the Crown Relay stands, and so does the refusal. Caelis learns the new Conductor won't be kept, so it tries politics instead, petitioning for a public hearing on the Source's stewardship. Armed restorationists are already moving to take the council chambers first."
 	},
 	# Chapter 14 — The Civic Core
 	72: {
 		"chapter": "The Civic Core",
-		"briefing": "Caelis has asked for a public hearing on who should steward the Source, and every surviving delegation is coming to answer. Restorationist hardliners mean to seat a different answer by force — their seizure team is already moving on the Civic Core's chambers. Clear them out and hold the hall for the talks.",
+		"briefing": "Caelis has asked for a public hearing on who should steward the Source, and every surviving delegation is coming to answer. Restorationist hardliners mean to seat a different answer by force. Their seizure team is already moving on the Civic Core's chambers. Clear them out and hold the hall for the talks.",
 		"debriefing": "The Civic Core holds, and the delegations sit down under coalition guard to resume what the seizure was meant to end. The failure teaches the extremes something the moderates never could: neither can win alone. Caelian restorationists and faction hardliners open a channel neither admits to, and plan the talks' funeral together."
 	},
 	73: {
 		"chapter": "The Civic Core",
-		"briefing": "Restorationists and faction hardliners — the two ends of the argument, allied at last, against the middle. Their joint conductor leads the push to break the negotiations before a compromise exists. Protect the negotiators. You don't get a seat at their table; you get to make sure the table survives.",
-		"debriefing": "The alliance of extremes breaks — and needing each other at all tells the room how much both ends fear the middle. The talks continue. Cassian starts drafting the Accord in the next chamber, and you begin to read the room the way he always has — while every would-be signatory sends troops to underline its demands."
+		"briefing": "Restorationists and faction hardliners: the two ends of the argument, allied at last, against the middle. Their joint conductor leads the push to break the negotiations before a compromise exists. Protect the negotiators. You don't get a seat at their table; you get to make sure the table survives.",
+		"debriefing": "The alliance of extremes breaks, and needing each other at all tells the room how much both ends fear the middle. The talks continue. Cassian starts drafting the Accord in the next chamber, and you begin to read the room the way he always has, while every would-be signatory sends troops to underline its demands."
 	},
 	74: {
 		"chapter": "The Civic Core",
-		"briefing": "Cassian is drafting the Accord, and every proposed signatory wants one more concession — several have sent pressure forces to the negotiating hall to make the wanting persuasive. Keep the troops away from the draft. Your part in this story gets smaller from here; that's what winning looks like.",
+		"briefing": "Cassian is drafting the Accord, and every proposed signatory wants one more concession; several have sent pressure forces to the negotiating hall to make the wanting persuasive. Keep the troops away from the draft. Your part in this story gets smaller from here; that's what winning looks like.",
 		"debriefing": "The pressure forces withdraw, and with outside coercion off the table Cassian seals the completed draft for review. Its first article demands proof, not promises: a joint repair team from every signatory must enter the Source complex and reconnect the fragments. The complex's own defenses will read that as a seizure."
 	},
 	# Chapter 15 — The Source
 	75: {
 		"chapter": "The Source",
-		"briefing": "The Accord's first article sends a joint crew from every signatory into the Source complex to reconnect its fragments. The complex's distribution defenses were built against exactly this — one power reaching for the whole — and they can't read a treaty. Escort the crews and keep them working until the network understands.",
-		"debriefing": "The fragments reconnect, and the truth finishes coming out: the Source was never a generator — it's a balancing network, a bomb when any one hand holds it, a civilization when every hand does. The reconnection also lights the complex for every rejectionist force left in the world. They're already marching."
+		"briefing": "The Accord's first article sends a joint crew from every signatory into the Source complex to reconnect its fragments. The complex's distribution defenses were built against exactly this, one power reaching for the whole, and they can't read a treaty. Escort the crews and keep them working until the network understands.",
+		"debriefing": "The fragments reconnect, and the truth finishes coming out: the Source was never a generator; it's a balancing network, a bomb when any one hand holds it, a civilization when every hand does. The reconnection also lights the complex for every rejectionist force left in the world. They're already marching."
 	},
 	76: {
 		"chapter": "The Source",
-		"briefing": "Every rejectionist army left is converging on the Source complex, and their field marshal understands the war better than its owners do. Champions from every faction stand with you on the approach. Hold the field — all of it, every flag — and keep everyone alive long enough for their leaders to sign.",
+		"briefing": "Every rejectionist army left is converging on the Source complex, and their field marshal understands the war better than its owners do. Champions from every faction stand with you on the approach. Hold the field, all of it, every flag, and keep everyone alive long enough for their leaders to sign.",
 		"debriefing": "The allied line holds, faction champions shoulder to shoulder where the war's fronts used to be. In the assembly hall the signatures begin. The rejectionists fall back for one last advance, and their marshal gives the conflict its name before the histories do: the Resonance War, ending at a signing table."
 	},
 	77: {
 		"chapter": "The Source",
-		"briefing": "The Accord is ready for signatures, and the last rejectionists are coming up the approach to stop the pen. Defend the assembly and buy every signature the time it needs. End this the way Cassian built it — with everyone alive enough to sign.",
+		"briefing": "The Accord is ready for signatures, and the last rejectionists are coming up the approach to stop the pen. Defend the assembly and buy every signature the time it needs. End this the way Cassian built it: with everyone alive enough to sign.",
 		"debriefing": "The Accord is signed. The factions take home a shared account of the past, return the most dangerous evidence to its vault, and place the Source under an authority that belongs to no one flag. The war ends at a table, which is where Cassian always said it would."
 	}
 }
@@ -658,19 +658,19 @@ const MISSION_STORIES := {
 # documentation/Narrative_Style_Guide.md.
 const CAMPAIGN_PROLOGUE := (
 	"Three hundred years ago, the Caelian Empire ran its whole civilization on "
-	+ "the Source — one network that powered the cities, the transports, and the "
+	+ "the Source. One network powering the cities, transports, and the "
 	+ "automatons that kept them alive. Imperial Conductors guided those machines "
 	+ "through relay stations, lending them purpose with a thought.\n\n"
 	+ "Then the Empire fell. The Source went dark, the capital Caelis was lost, "
-	+ "and the Conductors died with it. That is the story every school in every "
+	+ "and the Conductors lost with it. That is the story every school in every "
 	+ "nation teaches.\n\n"
-	+ "Five successor nations rose from the provinces — Coal, Steam, Solar, Wind, "
+	+ "Five successor nations rose from the provinces. Coal, Steam, Solar, Wind, "
 	+ "and Fusion. Each kept a fragment of the old network running, and each is "
 	+ "certain it alone can be trusted with what remains. Their armies field "
-	+ "machines of their own, driven by licensed operators with control rigs — "
-	+ "crude tools beside what the Empire's Conductors did with their minds.\n\n"
+	+ "machines of their own, driven by licensed operators with control rigs. "
+	+ "Crude tools beside what the Empire's Conductors did with their minds.\n\n"
 	+ "You are a reclamation technician with a joint salvage expedition, paid to "
-	+ "pull working Caelian machinery out of a dead relay site. The patrons "
+	+ "pull working machinery out of a abandoned site. The patrons "
 	+ "funding the dig expect scrap value.\n\n"
 	+ "The site has other plans."
 )
@@ -685,33 +685,32 @@ const CHAPTER_CARDS := {
 			"Your expedition works a dormant Caelian relay site under a patrons' "
 			+ "salvage contract: recover what still functions, catalogue what "
 			+ "doesn't, and make the dig look worth its funding.\n\n"
-			+ "The machines coming out of the lower galleries have been dead for "
-			+ "three centuries. They should not be waking up — and they definitely "
-			+ "should not be watching you work."
+			+ "The machines coming out of the lower galleries have been nonfunctional for "
+			+ "three centuries."
 		)
 	},
 	"The Aftermath": {
 		"text": (
 			"Salvage law is older than the nations that enforce it: whoever pulls "
-			+ "working machinery out of a dead site owns it — if the claim survives "
+			+ "working machinery out of a dead site owns it, if the claim survives "
 			+ "challenge. Every scavenger consortium and half the guilds keep "
 			+ "lawyers who specialize in making claims not survive.\n\n"
 			+ "Your expedition's patrons are a private consortium with government "
 			+ "ties, and they didn't fund a dig out of curiosity. They want the "
 			+ "Relay machines declared safe, valuable, and theirs.\n\n"
 			+ "Five nations watch the dig without admitting it. None of them can "
-			+ "seize a licensed salvage operation outright — but every one of them "
+			+ "seize a licensed salvage operation outright, but every one of them "
 			+ "can pay someone who can."
 		)
 	},
 	"Claims": {
 		"text": (
-			"Every modern army fields machines driven by licensed relay operators "
-			+ "— technicians with manufactured control rigs, regulated, registered, "
+			"Every modern army fields machines driven by licensed relay operators: "
+			+ "technicians with manufactured control rigs, regulated, registered, "
 			+ "and deliberately limited. It is the only legal way to command a "
 			+ "machine, and the licensing halls keep it that way.\n\n"
-			+ "True Conduction — the Imperial kind, will lent directly, machines "
-			+ "choosing to share it — died with the Empire. The registry has no "
+			+ "True Conduction, the Imperial kind, will lent directly, machines "
+			+ "choosing to share it, died with the Empire. The registry has no "
 			+ "form for it, because the registry was built to never need one.\n\n"
 			+ "When governments quarrel over a machine, a claim, or a person, the "
 			+ "Joint Investigative Office decides whose evidence counts. Its "
@@ -751,7 +750,7 @@ const CHAPTER_CARDS := {
 			+ "spectating.\n\n"
 			+ "The champions are professionals with faction paychecks, and the "
 			+ "patrons' boxes above the arena are where the real matches happen. "
-			+ "A title buys more than glory — it buys a seat at tables soldiers "
+			+ "A title buys more than glory; it buys a seat at tables soldiers "
 			+ "never see.\n\n"
 			+ "The reigning champion has held the title for three years. Her name "
 			+ "is Asha Vale."
@@ -759,7 +758,7 @@ const CHAPTER_CARDS := {
 	},
 	"Fault Lines": {
 		"text": (
-			"Every nation's grid runs on a fragment of the old Source — one "
+			"Every nation's grid runs on a fragment of the old Source: one "
 			+ "broken piece of the network that once powered a civilization, "
 			+ "coaxed into lighting a single country at a time. Each fragment is "
 			+ "an heirloom, a weapon, and a secret.\n\n"
@@ -775,19 +774,19 @@ const CHAPTER_CARDS := {
 		"text": (
 			"Cassian's charter is outgrowing its paper. Townships, scholars, "
 			+ "clans, and defectors keep joining the one force in the war that "
-			+ "answers distress calls without an invoice — and the charter is "
+			+ "answers distress calls without an invoice, and the charter is "
 			+ "becoming a coalition whether anyone voted for it or not.\n\n"
 			+ "Coalitions are built out of people, and people cost. Every ally "
 			+ "added to the roster is another name that can be ambushed, bought, "
 			+ "or buried.\n\n"
 			+ "Meanwhile the decoded Caelian records keep saying the impossible: "
-			+ "the lost capital was not destroyed. It was removed from the maps — "
+			+ "the lost capital was not destroyed. It was removed from the maps, "
 			+ "carefully, deliberately, by everyone at once."
 		)
 	},
 	"Cores": {
 		"text": (
-			"A Source core is a fragment's heart — enough concentrated power to "
+			"A Source core is a fragment's heart: enough concentrated power to "
 			+ "run a city or end one. Every nation officially renounces "
 			+ "weaponizing them. Every nation is quietly doing it.\n\n"
 			+ "Inside each government, the hardliner wings have stopped waiting "
@@ -801,7 +800,7 @@ const CHAPTER_CARDS := {
 	},
 	"Coalition Fracture": {
 		"text": (
-			"The Source fragments have begun synchronizing on their own — "
+			"The Source fragments have begun synchronizing on their own: "
 			+ "blackouts rippling between grids, dormant machines waking in "
 			+ "sequence, the network answering something nobody sent. The Order "
 			+ "is certain of one thing only: it is not an attack. It is a "
@@ -816,7 +815,7 @@ const CHAPTER_CARDS := {
 	"The Outer City": {
 		"text": (
 			"Caelis was never destroyed. Behind three centuries of sealed gates, "
-			+ "the Imperial capital stands lit, swept, and maintained — a city "
+			+ "the Imperial capital stands lit, swept, and maintained, a city "
 			+ "kept ready for citizens who never came home.\n\n"
 			+ "The Wardens of Caelis keep it: hereditary custodians and their "
 			+ "machines, still executing a disaster protocol older than every "
@@ -834,7 +833,7 @@ const CHAPTER_CARDS := {
 			+ "The Imperial Archive holds the Empire's final years unedited: the "
 			+ "Source crisis, the votes, the signatures, the decision that no "
 			+ "single power could ever safely hold the whole network. Its "
-			+ "custodians protect that record from everyone — including the "
+			+ "custodians protect that record from everyone, including the "
 			+ "Empire's heirs.\n\n"
 			+ "Five modern nations were born from that record. All five have "
 			+ "reasons to want it burned."
@@ -843,7 +842,7 @@ const CHAPTER_CARDS := {
 	"The Conductor Vault": {
 		"text": (
 			"The Empire's Conductors did not all die with it. The survivors live "
-			+ "in the Conductor Vault — not a prison, a hospice — still paying, "
+			+ "in the Conductor Vault, not a prison, a hospice, still paying, "
 			+ "century after century, for what the Relay program took from "
 			+ "them.\n\n"
 			+ "They remember what true Conduction costs, and they remember why "
@@ -858,7 +857,7 @@ const CHAPTER_CARDS := {
 		"text": (
 			"Caelis has petitioned to resume stewardship of the Source. The "
 			+ "factions' answer is the Accord: a negotiated settlement placing "
-			+ "the network under shared authority — the first document in three "
+			+ "the network under shared authority, the first document in three "
 			+ "hundred years that every flag is asked to sign.\n\n"
 			+ "Cassian drafts; the delegations bargain; the extremes on both "
 			+ "sides reach for force. Restorationists who want the Empire back "
@@ -869,7 +868,7 @@ const CHAPTER_CARDS := {
 	},
 	"The Source": {
 		"text": (
-			"The Source was never a generator. It is a balancing network — the "
+			"The Source was never a generator. It is a balancing network: the "
 			+ "system that kept a civilization's power moving where it was "
 			+ "needed, stable because it was whole.\n\n"
 			+ "Fragmented, each piece is a bomb waiting for a hand. Reconnected "

@@ -51,6 +51,9 @@ Further rules:
 - **Seed, don't summon.** Enemies never arrive "moments later" for free. If
   an attack is coming, the previous debriefing or this briefing says who sent
   it and why.
+- **No emdashes in copy.** The em dash (—) is reserved for label separators
+  such as "Chapter 1 — The Salvage". It never appears inside narration,
+  briefings, debriefings, or dialogue; use a period, comma, or colon instead.
 
 ## Structure rules
 
