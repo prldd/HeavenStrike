@@ -15,8 +15,9 @@ text in the campaign, for review and revision outside the game code.
   (chapter, briefing, debriefing), `ENCOUNTER_RULES` (special objective text),
   `CAMPAIGN_PROLOGUE` (first-open orientation), `CHAPTER_CARDS` (per-chapter
   intro briefings), `CAMPAIGN_EPILOGUE`.
-- `scripts/story_dialogue_catalog.gd` — `CHARACTERS` (cast) and `INTERLUDES`
-  (post-mission dialogue scenes, keyed by 1-based mission number).
+- `scripts/story_dialogue_catalog.gd` — `CHARACTERS` (cast), `PRELUDES` (scenes
+  shown once before a mission unlocks), and `INTERLUDES` (post-mission dialogue
+  scenes, keyed by 1-based mission number).
 
 Voice and structure rules live in `documentation/Narrative_Style_Guide.md`.
 
@@ -76,6 +77,20 @@ Your expedition works a dormant Caelian relay site under a patrons' salvage cont
 The machines coming out of the lower galleries have been nonfunctional for three centuries.
 
 ### Mission 1 — First Synchrony
+
+
+**Prelude — "The Rented Rig"** *(Relay Site · Rig Tent, shown once before the mission unlocks)*
+
+- **Cassian:** Paperwork before pickaxe work. As of this morning the expedition leases one control rig: registered, inspected, and costing us a third of the dig's budget.
+- **Conductor:** A third of the budget? For one rig?
+- **Cassian:** The licensing halls build them for faction armies. Independents don't buy; we rent, and we say thank you. A leased rig is the only legal pair of hands a salvage crew can put on a machine.
+- **Conductor:** Legal, and three centuries behind. Everything out here runs on Empire leftovers anyway. Half the capital's grid is reverse-engineered Caelian scrap.
+- **Cassian:** Say that near a patron and we're both rewriting the funding report. The approved phrase is 'reclaimed heritage assets.'
+- **Cassian:** Now the find. Gallery Six gave up a relay hub, intact. Intact alone would make the dig. This one is better than intact: it answers.
+- **Conductor:** Two chassis walked out of the dark when I ran the calibration sweep. Nobody's seen a working Caelian machine in three hundred years.
+- **Cassian:** Which is why the official story stays boring. As far as the patrons and the registry are concerned, everything those machines do is the rental rig doing its job. You're a technician walking drones on leased equipment.
+- **Conductor:** And if they do something a rental rig can't do?
+- **Cassian:** Then we were never here and you never touched it. Now run the drill. The patrons want a show worth their money.
 
 - **Briefing:** Two of the automatons we pulled from the lower galleries are walking again, and the patrons want proof the dig is worth their money before they fund the next phase. Run them along the relay site perimeter and put them through a live drill. If they do anything the manuals don't cover, I hear it from you first.
 - **Debriefing:** The drill goes clean. Too clean. One of the machines moved half a second before your signal reached it. Cassian logs a success for the patrons, then seals the site to outside crews until the expedition knows what it has actually found. Off the record, he has started asking why the dig's funding arrived so quickly.

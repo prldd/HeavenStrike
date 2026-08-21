@@ -10,6 +10,7 @@ const SAVE_PATH := "user://player.cfg"
 const SECTION := "lore"
 const PROLOGUE_KEY := "prologue_seen"
 const CHAPTERS_KEY := "chapters_seen"
+const PRELUDES_KEY := "preludes_seen"
 
 static func prologue_seen() -> bool:
 	var config := ConfigFile.new()
@@ -36,4 +37,20 @@ static func mark_chapter_seen(chapter: String) -> bool:
 	if chapter not in seen:
 		seen.append(chapter)
 		config.set_value(SECTION, CHAPTERS_KEY, PackedStringArray(seen))
+	return config.save(SAVE_PATH) == OK
+
+static func prelude_seen(mission_number: int) -> bool:
+	var config := ConfigFile.new()
+	if config.load(SAVE_PATH) != OK:
+		return false
+	var seen: Array = Array(config.get_value(SECTION, PRELUDES_KEY, PackedStringArray()))
+	return str(mission_number) in seen
+
+static func mark_prelude_seen(mission_number: int) -> bool:
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	var seen: Array = Array(config.get_value(SECTION, PRELUDES_KEY, PackedStringArray()))
+	if str(mission_number) not in seen:
+		seen.append(str(mission_number))
+		config.set_value(SECTION, PRELUDES_KEY, PackedStringArray(seen))
 	return config.save(SAVE_PATH) == OK

@@ -657,6 +657,29 @@ const INTERLUDES := {
 	}
 }
 
+# Pre-mission scenes, keyed by the 1-based mission number they precede. A
+# prelude plays once when its mission is the campaign frontier and the player
+# opens the operations map, before the mission can be fought; seen-state lives
+# in the lore section of user://player.cfg (lore_card_store.gd).
+const PRELUDES := {
+	1: {
+		"title": "The Rented Rig",
+		"location": "Relay Site · Rig Tent",
+		"lines": [
+			{"speaker": "Cassian", "text": "Paperwork before pickaxe work. As of this morning the expedition leases one control rig: registered, inspected, and costing us a third of the dig's budget."},
+			{"speaker": "Conductor", "text": "A third of the budget? For one rig?"},
+			{"speaker": "Cassian", "text": "The licensing halls build them for faction armies. Independents don't buy; we rent, and we say thank you. A leased rig is the only legal pair of hands a salvage crew can put on a machine."},
+			{"speaker": "Conductor", "text": "Legal, and three centuries behind. Everything out here runs on Empire leftovers anyway. Half the capital's grid is reverse-engineered Caelian scrap."},
+			{"speaker": "Cassian", "text": "Say that near a patron and we're both rewriting the funding report. The approved phrase is 'reclaimed heritage assets.'"},
+			{"speaker": "Cassian", "text": "Now the find. Gallery Six gave up a relay hub, intact. Intact alone would make the dig. This one is better than intact: it answers."},
+			{"speaker": "Conductor", "text": "Two chassis walked out of the dark when I ran the calibration sweep. Nobody's seen a working Caelian machine in three hundred years."},
+			{"speaker": "Cassian", "text": "Which is why the official story stays boring. As far as the patrons and the registry are concerned, everything those machines do is the rental rig doing its job. You're a technician walking drones on leased equipment."},
+			{"speaker": "Conductor", "text": "And if they do something a rental rig can't do?"},
+			{"speaker": "Cassian", "text": "Then we were never here and you never touched it. Now run the drill. The patrons want a show worth their money."}
+		]
+	}
+}
+
 static func scene_for_mission(mission_id: int) -> Dictionary:
 	var scene: Dictionary = INTERLUDES.get(mission_id + 1, {})
 	if scene.is_empty():
@@ -667,6 +690,17 @@ static func scene_for_mission(mission_id: int) -> Dictionary:
 
 static func has_interlude(mission_id: int) -> bool:
 	return INTERLUDES.has(mission_id + 1)
+
+static func prelude_for_mission(mission_id: int) -> Dictionary:
+	var scene: Dictionary = PRELUDES.get(mission_id + 1, {})
+	if scene.is_empty():
+		return {}
+	var result := scene.duplicate(true)
+	result["background"] = background_for_scene(result)
+	return result
+
+static func has_prelude(mission_id: int) -> bool:
+	return PRELUDES.has(mission_id + 1)
 
 static func character(speaker: String) -> Dictionary:
 	var details: Dictionary = CHARACTERS.get(speaker, {

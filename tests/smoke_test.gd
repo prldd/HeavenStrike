@@ -1058,6 +1058,24 @@ func _init() -> void:
 	assert(StoryDialogueCatalogScript.scene_for_mission(62).is_empty())
 	assert(StoryDialogueCatalogScript.scene_for_mission(66).title == "Five True Stories")
 	assert(StoryDialogueCatalogScript.scene_for_mission(76).lines.size() == 6)
+	assert(StoryDialogueCatalogScript.PRELUDES.size() == 1)
+	assert(StoryDialogueCatalogScript.has_prelude(0))
+	assert(not StoryDialogueCatalogScript.has_prelude(1))
+	var opening_prelude := StoryDialogueCatalogScript.prelude_for_mission(0)
+	assert(opening_prelude.title == "The Rented Rig")
+	assert(not String(opening_prelude.get("location", "")).is_empty())
+	assert(opening_prelude.lines.size() >= 4)
+	assert(opening_prelude.background == StoryDialogueCatalogScript.BACKGROUNDS.technical)
+	assert(StoryDialogueCatalogScript.prelude_for_mission(1).is_empty())
+	for mission_number in StoryDialogueCatalogScript.PRELUDES:
+		var prelude: Dictionary = StoryDialogueCatalogScript.PRELUDES[mission_number]
+		assert(mission_number >= 1 and mission_number <= CampaignStoreScript.MISSIONS.size())
+		assert(prelude.get("lines", []).size() >= 4)
+		for dialogue_line in prelude.lines:
+			assert(not dialogue_line.get("speaker", "").is_empty())
+			assert(not dialogue_line.get("text", "").is_empty())
+			assert(StoryDialogueCatalogScript.CHARACTERS.has(dialogue_line.speaker))
+			assert(not String(dialogue_line.text).contains("—"))
 	for mission_number in StoryDialogueCatalogScript.INTERLUDES:
 		var interlude: Dictionary = StoryDialogueCatalogScript.INTERLUDES[mission_number]
 		var presented_scene := StoryDialogueCatalogScript.scene_for_mission(mission_number - 1)

@@ -289,6 +289,7 @@ var awaiting_next_encounter := false
 var mission_finished := false
 var autobattle_active := false
 var mission_interlude_pending := false
+var pending_prelude_mission := -1
 var campaign_battle := false
 var challenge_battle := false
 var active_challenge: Dictionary = {}
@@ -3391,7 +3392,18 @@ func _add_overlay_background(
 	return backdrop
 
 func _show_interlude(mission_id: int, return_action: String) -> bool:
-	var scene := StoryDialogueCatalogScript.scene_for_mission(mission_id)
+	return _present_dialogue_scene(
+		StoryDialogueCatalogScript.scene_for_mission(mission_id), return_action
+	)
+
+func _show_prelude(mission_id: int) -> bool:
+	var scene := StoryDialogueCatalogScript.prelude_for_mission(mission_id)
+	if scene.is_empty():
+		return false
+	LoreCardStoreScript.mark_prelude_seen(mission_id + 1)
+	return _present_dialogue_scene(scene, "mission_select")
+
+func _present_dialogue_scene(scene: Dictionary, return_action: String) -> bool:
 	if scene.is_empty() or scene.get("lines", []).is_empty():
 		_complete_interlude_return(return_action)
 		return false
@@ -3404,6 +3416,7 @@ func _show_interlude(mission_id: int, return_action: String) -> bool:
 	squad_overlay.visible = false
 	crucible_overlay.visible = false
 	gacha_overlay.visible = false
+	lore_overlay.visible = false
 	dialogue_overlay.visible = true
 	var scene_background := _dialogue_texture(scene.get("background", ""))
 	dialogue_backdrop.texture = scene_background if scene_background != null else MAIN_MENU_BACKGROUND
@@ -3668,6 +3681,7 @@ func _show_main_menu() -> void:
 	dialogue_overlay.visible = false
 	lore_overlay.visible = false
 	lore_card_queue = []
+	pending_prelude_mission = -1
 	overlay.visible = false
 	result_redeploy_button.visible = false
 	result_autobattle_button.visible = false
@@ -3706,17 +3720,31 @@ func _maybe_show_lore_cards() -> void:
 			"text": StoryQuestCatalogScript.CAMPAIGN_PROLOGUE,
 			"prologue": true
 		})
-	var focus_mission: Dictionary = CampaignStoreScript.MISSIONS[_latest_campaign_mission_id()]
+	var frontier_id := _latest_campaign_mission_id()
+	var focus_mission: Dictionary = CampaignStoreScript.MISSIONS[frontier_id]
 	var chapter := String(focus_mission.get("chapter", ""))
 	if (
 		StoryQuestCatalogScript.CHAPTER_CARDS.has(chapter)
 		and not LoreCardStoreScript.chapter_seen(chapter)
 	):
 		cards.append(_chapter_lore_card(chapter))
+	if _prelude_pending(frontier_id):
+		if cards.is_empty():
+			_show_prelude(frontier_id)
+		else:
+			# Plays after the last lore card is dismissed (see _advance_lore_card).
+			pending_prelude_mission = frontier_id
 	if cards.is_empty():
 		return
 	lore_card_queue = cards
 	_advance_lore_card()
+
+func _prelude_pending(mission_id: int) -> bool:
+	return (
+		StoryDialogueCatalogScript.has_prelude(mission_id)
+		and mission_id not in completed_missions
+		and not LoreCardStoreScript.prelude_seen(mission_id + 1)
+	)
 
 func _chapter_lore_card(chapter: String) -> Dictionary:
 	return {
@@ -3744,6 +3772,10 @@ func _show_world_brief() -> void:
 func _advance_lore_card() -> void:
 	if lore_card_queue.is_empty():
 		lore_overlay.visible = false
+		if pending_prelude_mission >= 0:
+			var prelude_mission := pending_prelude_mission
+			pending_prelude_mission = -1
+			_show_prelude(prelude_mission)
 		return
 	var card: Dictionary = lore_card_queue.pop_front()
 	lore_kicker_label.text = card.get("kicker", "")
@@ -4354,7 +4386,10 @@ func _refresh_operation_dossier() -> void:
 			stars.add_theme_font_size_override("font_size", 8)
 			stars.add_theme_color_override("font_color", UIThemeScript.title_color())
 			tile.add_child(stars)
-	mission_scene_button.visible = complete and StoryDialogueCatalogScript.has_interlude(mission.id)
+	mission_scene_button.visible = (
+		(complete and StoryDialogueCatalogScript.has_interlude(mission.id))
+		or (not complete and StoryDialogueCatalogScript.has_prelude(mission.id))
+	)
 	mission_launch_button.disabled = not available
 	mission_launch_button.text = (
 		"REDEPLOY SQUAD" if complete else (
@@ -4371,6 +4406,8 @@ func _view_selected_mission_scene() -> void:
 		and StoryDialogueCatalogScript.has_interlude(mission_selected_id)
 	):
 		_replay_interlude(mission_selected_id)
+	elif StoryDialogueCatalogScript.has_prelude(mission_selected_id):
+		_show_prelude(mission_selected_id)
 
 func _prepare_mission(mission_id: int) -> void:
 	if not CampaignStoreScript.is_available(mission_id, completed_missions):

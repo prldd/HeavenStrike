@@ -12,6 +12,7 @@ const ChallengeCatalogScript = preload("res://scripts/challenge_catalog.gd")
 const ChallengeStoreScript = preload("res://scripts/challenge_store.gd")
 const MissionRunStoreScript = preload("res://scripts/mission_run_store.gd")
 const TutorialStoreScript = preload("res://scripts/tutorial_store.gd")
+const LoreCardStoreScript = preload("res://scripts/lore_card_store.gd")
 const UnitCatalogScript = preload("res://scripts/unit_catalog.gd")
 
 func _init() -> void:
@@ -76,6 +77,21 @@ func _run() -> void:
 	# Weekly Challenge Operations lives on the campaign maps instead of adding
 	# another main-menu action. It exposes the active UTC rotation, authored
 	# rules, opposition, formation handoff, battle flow, and idempotent reward.
+	# A fresh campaign chains prologue lore cards into the mission-1 prelude.
+	if not LoreCardStoreScript.prelude_seen(1):
+		game._open_mission_select()
+		await process_frame
+		await process_frame
+		while game.lore_overlay.visible:
+			game._advance_lore_card()
+			await process_frame
+		assert(game.dialogue_overlay.visible)
+		assert(game.dialogue_scene_title.text == "The Rented Rig")
+		assert(LoreCardStoreScript.prelude_seen(1))
+		game._finish_interlude()
+		await process_frame
+		assert(game.mission_overlay.visible)
+		assert(not game.dialogue_overlay.visible)
 	game._open_mission_select()
 	await process_frame
 	await process_frame

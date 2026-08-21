@@ -49,8 +49,9 @@ func _append_header(lines: Array[String]) -> void:
 		"  (chapter, briefing, debriefing), `ENCOUNTER_RULES` (special objective text),",
 		"  `CAMPAIGN_PROLOGUE` (first-open orientation), `CHAPTER_CARDS` (per-chapter",
 		"  intro briefings), `CAMPAIGN_EPILOGUE`.",
-		"- `scripts/story_dialogue_catalog.gd` — `CHARACTERS` (cast) and `INTERLUDES`",
-		"  (post-mission dialogue scenes, keyed by 1-based mission number).",
+		"- `scripts/story_dialogue_catalog.gd` — `CHARACTERS` (cast), `PRELUDES` (scenes",
+		"  shown once before a mission unlocks), and `INTERLUDES` (post-mission dialogue",
+		"  scenes, keyed by 1-based mission number).",
 		"",
 		"Voice and structure rules live in `documentation/Narrative_Style_Guide.md`.",
 		"",
@@ -94,6 +95,7 @@ func _append_missions(lines: Array[String]) -> void:
 	var stories: Dictionary = StoryQuestCatalogScript.MISSION_STORIES
 	var rules: Dictionary = StoryQuestCatalogScript.ENCOUNTER_RULES
 	var interludes: Dictionary = StoryDialogueCatalogScript.INTERLUDES
+	var preludes: Dictionary = StoryDialogueCatalogScript.PRELUDES
 
 	var last_act := ""
 	var last_chapter := ""
@@ -128,6 +130,19 @@ func _append_missions(lines: Array[String]) -> void:
 			last_chapter = chapter
 
 		lines.append_array(["### Mission %d — %s" % [mission_number, name], ""])
+
+		if preludes.has(mission_number):
+			var prelude: Dictionary = preludes[mission_number]
+			lines.append_array([
+				"",
+				"**Prelude — \"%s\"** *(%s, shown once before the mission unlocks)*" % [
+					prelude.get("title", ""), prelude.get("location", "")
+				],
+				""
+			])
+			for line in prelude.get("lines", []):
+				lines.append("- **%s:** %s" % [line.get("speaker", ""), line.get("text", "")])
+			lines.append("")
 
 		var briefing := String(story.get("briefing", ""))
 		if briefing.is_empty():
