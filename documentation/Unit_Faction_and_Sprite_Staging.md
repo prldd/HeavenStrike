@@ -28,19 +28,20 @@ for future chassis.
   generated mattes: untouched standalone sources plus deterministic crops from
   the roster sheets. `cutouts/` contains their reproducible alpha derivatives.
 - `assets/units/original_sources/faction_chassis/<Faction>/<Class>/` contains
-  224 derived provenance images: 223 playable chassis and one mission-only
+  293 derived provenance images: 292 playable chassis and one mission-only
   ground transport.
 - `assets/units/gen/` contains transparent generated art for every active roster
   ID.
-- `assets/units/full/` contains exactly the same 224 art IDs as runtime
+- `assets/units/full/` contains exactly the same 293 art IDs as runtime
   full-body sprites.
-- `assets/units/portraits/` contains exactly the same 224 art IDs as cropped
+- `assets/units/portraits/` contains exactly the same 293 art IDs as cropped
   menu portraits.
 
 Regenerate all derived assets with:
 
 ```bash
 ./tools/godot-headless.sh --script res://tools/extract_generated_roster_atlases.gd
+./tools/godot-headless.sh --script res://tools/normalize_late_roster_chroma.gd
 ./tools/godot-headless.sh --script res://tools/build_original_unit_art.gd
 ```
 
